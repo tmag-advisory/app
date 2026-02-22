@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore, MOCK_INDIVIDUAL, MOCK_HR_ADMIN } from "../../stores/authStore";
 import { LucideUser, LucideBuilding2, LucideArrowRight, LucideArrowLeft } from "lucide-react";
+import AnimateIn from "../../components/animations/AnimateIn";
 
 const steps = ["User Type", "Profile", "Health"];
 
@@ -34,7 +35,7 @@ const Onboarding = () => {
     };
 
     return (
-        <div>
+        <AnimateIn type="fade">
             {/* Progress bar */}
             <div className="flex items-center gap-2 mb-8">
                 {steps.map((s, i) => (
@@ -201,7 +202,7 @@ const Onboarding = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </AnimateIn>
     );
 };
 

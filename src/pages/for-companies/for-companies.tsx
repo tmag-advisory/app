@@ -8,7 +8,10 @@ import {
     LucideFileText,
     LucidePlug,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
+import AnimateIn from "../../components/animations/AnimateIn";
+import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 
 const workflowSteps = [
     {
@@ -54,7 +57,7 @@ const ForCompanies = () => {
     return (
         <main>
             {/* Hero */}
-            <section className="flex flex-col items-center text-center pt-20 pb-12 px-6">
+            <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                     For companies
                 </span>
@@ -72,17 +75,18 @@ const ForCompanies = () => {
                         View pricing
                     </Button>
                 </div>
-            </section>
+            </AnimateIn>
 
             {/* Social proof bar */}
             <section className="px-8 lg:px-16 pb-16 max-w-5xl mx-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <StaggerGroup className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
                         { value: "500+", label: "Companies onboarded" },
                         { value: "98%", label: "Compliance rate achieved" },
                         { value: "< 2 min", label: "Average plan generation" },
                     ].map((stat) => (
-                        <div
+                        <motion.div
+                            variants={staggerItem}
                             key={stat.label}
                             className="bg-button-secondary rounded-2xl py-6 px-4 text-center"
                         >
@@ -92,15 +96,15 @@ const ForCompanies = () => {
                             <span className="text-xs text-muted">
                                 {stat.label}
                             </span>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </StaggerGroup>
             </section>
 
             {/* HR workflow */}
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
-                    <div className="text-center mb-14">
+                    <AnimateIn className="text-center mb-14">
                         <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                             How it works for HR
                         </span>
@@ -108,10 +112,11 @@ const ForCompanies = () => {
                             Four steps to full{" "}
                             <span className="italic">compliance.</span>
                         </h2>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    </AnimateIn>
+                    <StaggerGroup stagger={0.1} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {workflowSteps.map((step) => (
-                            <div
+                            <motion.div
+                                variants={staggerItem}
                                 key={step.title}
                                 className="bg-background-primary rounded-2xl p-6 flex flex-col gap-4"
                             >
@@ -124,16 +129,16 @@ const ForCompanies = () => {
                                 <p className="text-sm text-body leading-relaxed">
                                     {step.description}
                                 </p>
-                            </div>
+                            </motion.div>
                         ))}
-                    </div>
+                    </StaggerGroup>
                 </section>
             </div>
 
             {/* Compliance angle */}
             <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row gap-12 md:gap-20">
-                    <div className="md:w-1/2">
+                    <AnimateIn type="fadeLeft" className="md:w-1/2">
                         <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                             Compliance
                         </span>
@@ -162,8 +167,8 @@ const ForCompanies = () => {
                                 </div>
                             ))}
                         </div>
-                    </div>
-                    <div className="md:w-1/2">
+                    </AnimateIn>
+                    <AnimateIn type="fadeRight" delay={0.1} className="md:w-1/2">
                         <div className="relative rounded-3xl overflow-hidden p-8 md:p-10 h-full flex flex-col justify-center"
                             style={{
                                 background:
@@ -185,14 +190,14 @@ const ForCompanies = () => {
                                 </p>
                             </div>
                         </div>
-                    </div>
+                    </AnimateIn>
                 </div>
             </section>
 
             {/* Credit allocation */}
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
+                    <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                         <div>
                             <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                                 Credit allocation
@@ -207,8 +212,8 @@ const ForCompanies = () => {
                             departments, offices, or individual travelers.
                             Admins control the budget—managers use the credits.
                         </p>
-                    </div>
-                    <div className="bg-background-primary rounded-2xl p-8">
+                    </AnimateIn>
+                    <AnimateIn delay={0.15} className="bg-background-primary rounded-2xl p-8">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4">
                             {features.map((f) => (
                                 <div key={f} className="flex items-start gap-3 py-2">
@@ -219,13 +224,13 @@ const ForCompanies = () => {
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </AnimateIn>
                 </section>
             </div>
 
             {/* Integration */}
             <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
-                <div className="text-center mb-14">
+                <AnimateIn className="text-center mb-14">
                     <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                         Integrations
                     </span>
@@ -233,8 +238,8 @@ const ForCompanies = () => {
                         Fits into your{" "}
                         <span className="italic">existing</span> stack.
                     </h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                </AnimateIn>
+                <StaggerGroup stagger={0.12} className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {[
                         {
                             icon: <LucidePlug className="w-5 h-5" />,
@@ -252,7 +257,8 @@ const ForCompanies = () => {
                             desc: "Get notified when plans are generated, delivered, and reviewed. Pipe events to your BI tools.",
                         },
                     ].map((item) => (
-                        <div
+                        <motion.div
+                            variants={staggerItem}
                             key={item.title}
                             className="bg-button-secondary rounded-2xl p-8 flex flex-col gap-4"
                         >
@@ -265,9 +271,9 @@ const ForCompanies = () => {
                             <p className="text-sm text-body leading-relaxed">
                                 {item.desc}
                             </p>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </StaggerGroup>
             </section>
 
             {/* Demo CTA */}
@@ -288,7 +294,7 @@ const ForCompanies = () => {
                             filter: "blur(50px)",
                         }}
                     />
-                    <div className="relative z-10 max-w-xl mx-auto">
+                    <AnimateIn type="scaleUp" className="relative z-10 max-w-xl mx-auto">
                         <h2 className="text-4xl md:text-5xl text-white leading-[1.1] font-serif mb-4">
                             See it in action.
                         </h2>
@@ -302,7 +308,7 @@ const ForCompanies = () => {
                         >
                             Request a demo
                         </Button>
-                    </div>
+                    </AnimateIn>
                 </div>
             </section>
         </main>

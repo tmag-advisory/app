@@ -1,5 +1,8 @@
 import { LucideShieldCheck, LucideGraduationCap, LucideLock, LucideRefreshCw } from "lucide-react";
+import { motion } from "framer-motion";
 import StarRating from "../ui/StarRating";
+import AnimateIn from "../animations/AnimateIn";
+import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
 
 const badges = [
     {
@@ -42,7 +45,7 @@ const TrustSection = () => {
     return (
         <div className="bg-background-secondary">
             <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
-                <div className="text-center mb-14">
+                <AnimateIn className="text-center mb-14">
                     <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                         Trusted & verified
                     </span>
@@ -50,12 +53,13 @@ const TrustSection = () => {
                         Your health data is in{" "}
                         <span className="italic">safe</span> hands.
                     </h2>
-                </div>
+                </AnimateIn>
 
                 {/* Trust badges */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14">
+                <StaggerGroup className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14" stagger={0.1}>
                     {badges.map((b) => (
-                        <div
+                        <motion.div
+                            variants={staggerItem}
                             key={b.label}
                             className="flex flex-col items-center gap-3 bg-background-primary rounded-2xl py-6 px-4 text-center"
                         >
@@ -65,14 +69,15 @@ const TrustSection = () => {
                             <span className="text-sm font-semibold text-heading">
                                 {b.label}
                             </span>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </StaggerGroup>
 
                 {/* Testimonials */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6" stagger={0.12}>
                     {testimonials.map((t) => (
-                        <div
+                        <motion.div
+                            variants={staggerItem}
                             key={t.name}
                             className="bg-background-primary rounded-2xl p-8 flex flex-col justify-between"
                         >
@@ -90,9 +95,9 @@ const TrustSection = () => {
                                     {t.role}
                                 </p>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </StaggerGroup>
             </section>
         </div>
     );

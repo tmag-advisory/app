@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { LucideCompass, LucideArrowLeft, LucideHome } from "lucide-react";
+import AnimateIn from "../../components/animations/AnimateIn";
 
 const NotFound = () => {
     return (
@@ -13,7 +14,7 @@ const NotFound = () => {
 
             {/* Content */}
             <div className="flex-1 flex items-center justify-center px-6 pb-20">
-                <div className="text-center max-w-md">
+                <AnimateIn type="fade" className="text-center max-w-md">
                     {/* Animated compass */}
                     <div className="relative mx-auto w-24 h-24 mb-8">
                         <div className="absolute inset-0 rounded-full bg-accent/10 animate-ping opacity-20" />
@@ -48,7 +49,7 @@ const NotFound = () => {
                             <LucideArrowLeft className="w-4 h-4" /> Go back
                         </button>
                     </div>
-                </div>
+                </AnimateIn>
             </div>
         </div>
     );

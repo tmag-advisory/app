@@ -8,6 +8,8 @@ const brands = [
     "HealthRoute",
 ];
 
+import AnimateIn from "../animations/AnimateIn";
+
 const BrandLogo = ({ name }: { name: string }) => (
     <span className="text-2xl md:text-3xl font-bold text-brand-muted tracking-tight whitespace-nowrap select-none">
         {name}
@@ -31,7 +33,7 @@ const MarqueeRow = () => (
 
 const BrandsSection = () => {
     return (
-        <section className="py-10 max-w-7xl mx-auto overflow-hidden">
+        <AnimateIn as="section" type="fade" className="py-10 max-w-7xl mx-auto overflow-hidden">
             <p className="text-sm text-muted text-center mb-6 px-8">
                 Organizations we've helped stay healthy
             </p>
@@ -60,7 +62,7 @@ const BrandsSection = () => {
                     to   { transform: translateX(-50%); }
                 }
             `}</style>
-        </section>
+        </AnimateIn>
     );
 };
 

@@ -99,7 +99,7 @@ const FooterSection = () => {
             <div className="relative z-10 flex-1 flex flex-col justify-between px-8 lg:px-16 max-w-7xl mx-auto w-full">
                 {/* Top area: giant brand statement */}
                 <div className="pt-24 md:pt-32 lg:pt-40">
-                    <h2 className="text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-serif text-white/[0.07] leading-[0.9] select-none">
+                    <h2 className="text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-serif text-white/9 leading-[0.9] select-none">
                         Travel healthy.
                         <br />
                         Travel smart.

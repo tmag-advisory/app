@@ -5,6 +5,7 @@ import {
     LucideDroplets,
 } from "lucide-react";
 import Button from "../ui/Button";
+import AnimateIn from "../animations/AnimateIn";
 
 const planItems = [
     {
@@ -32,7 +33,7 @@ const planItems = [
 const SamplePlanSection = () => {
     return (
         <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
+            <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                 <div>
                     <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                         Sample plan
@@ -47,10 +48,10 @@ const SamplePlanSection = () => {
                     trip to Colombia. Your plan will be just as detailed—and
                     tailored to your needs.
                 </p>
-            </div>
+            </AnimateIn>
 
             {/* Plan preview card */}
-            <div className="bg-button-secondary rounded-3xl p-6 md:p-10">
+            <AnimateIn type="scaleUp" delay={0.15} className="bg-button-secondary rounded-3xl p-6 md:p-10">
                 {/* Plan header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-border">
                     <div>
@@ -102,7 +103,7 @@ const SamplePlanSection = () => {
                         Get your full plan
                     </Button>
                 </div>
-            </div>
+            </AnimateIn>
         </section>
     );
 };

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { LucideShieldOff, LucideArrowLeft, LucideHome } from "lucide-react";
+import AnimateIn from "../../components/animations/AnimateIn";
 
 const Unauthorized = () => {
     return (
@@ -11,7 +12,7 @@ const Unauthorized = () => {
             </div>
 
             <div className="flex-1 flex items-center justify-center px-6 pb-20">
-                <div className="text-center max-w-md">
+                <AnimateIn type="fade" className="text-center max-w-md">
                     <div className="relative mx-auto w-24 h-24 mb-8">
                         <div className="absolute inset-0 rounded-full bg-gold/10 animate-pulse" />
                         <div className="relative w-24 h-24 rounded-full bg-button-secondary flex items-center justify-center">
@@ -43,7 +44,7 @@ const Unauthorized = () => {
                             <LucideArrowLeft className="w-4 h-4" /> Go back
                         </button>
                     </div>
-                </div>
+                </AnimateIn>
             </div>
         </div>
     );

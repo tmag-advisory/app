@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LucidePlus, LucideMinus, LucideArrowRight } from "lucide-react";
 import Button from "../../components/ui/Button";
+import AnimateIn from "../../components/animations/AnimateIn";
 
 const faqCategories = [
     {
@@ -139,7 +140,7 @@ const FAQPage = () => {
     return (
         <main>
             {/* Hero */}
-            <section className="flex flex-col items-center text-center pt-20 pb-12 px-6">
+            <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                     FAQ
                 </span>
@@ -151,12 +152,12 @@ const FAQPage = () => {
                     Everything you need to know about TMAG, credits, data
                     privacy, and how our AI works.
                 </p>
-            </section>
+            </AnimateIn>
 
             {/* FAQ categories */}
             <section className="px-8 lg:px-16 pb-24 max-w-4xl mx-auto">
                 {faqCategories.map((cat) => (
-                    <div key={cat.category} className="mb-12 last:mb-0">
+                    <AnimateIn key={cat.category} className="mb-12 last:mb-0">
                         <h2 className="text-2xl font-serif text-heading mb-6">
                             {cat.category}
                         </h2>
@@ -177,26 +178,28 @@ const FAQPage = () => {
                                 );
                             })}
                         </div>
-                    </div>
+                    </AnimateIn>
                 ))}
             </section>
 
             {/* Still have questions */}
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-4xl mx-auto text-center">
-                    <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-4">
-                        Still have questions?
-                    </h2>
-                    <p className="text-sm text-body leading-relaxed max-w-md mx-auto mb-8">
-                        Our support team typically responds within 24 hours.
-                        We're happy to help with anything not covered above.
-                    </p>
-                    <div className="flex items-center justify-center gap-4 flex-wrap">
-                        <Button variant="primary">Contact support</Button>
-                        <Button variant="secondary" icon={<LucideArrowRight />}>
-                            hello@tmag.health
-                        </Button>
-                    </div>
+                    <AnimateIn type="fade">
+                        <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-4">
+                            Still have questions?
+                        </h2>
+                        <p className="text-sm text-body leading-relaxed max-w-md mx-auto mb-8">
+                            Our support team typically responds within 24 hours.
+                            We're happy to help with anything not covered above.
+                        </p>
+                        <div className="flex items-center justify-center gap-4 flex-wrap">
+                            <Button variant="primary">Contact support</Button>
+                            <Button variant="secondary" icon={<LucideArrowRight />}>
+                                hello@tmag.health
+                            </Button>
+                        </div>
+                    </AnimateIn>
                 </section>
             </div>
         </main>

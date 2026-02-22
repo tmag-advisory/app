@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore, MOCK_INDIVIDUAL, MOCK_HR_ADMIN } from "../../stores/authStore";
+import AnimateIn from "../../components/animations/AnimateIn";
 
 const Login = () => {
     const login = useAuthStore((s) => s.login);
@@ -19,7 +20,7 @@ const Login = () => {
     };
 
     return (
-        <div>
+        <AnimateIn type="fade">
             <h1 className="text-3xl md:text-4xl font-serif text-heading mb-2">
                 Welcome back.
             </h1>
@@ -100,7 +101,7 @@ const Login = () => {
                     </button>
                 </div>
             </div>
-        </div>
+        </AnimateIn>
     );
 };
 

@@ -1,5 +1,8 @@
 import { LucideArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import Button from "../ui/Button";
+import AnimateIn from "../animations/AnimateIn";
+import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
 
 const stats = [
     { value: "1,500+", label: "Travelers advised monthly" },
@@ -12,7 +15,7 @@ const WhoWeAreSection = () => {
         <div className="bg-background-secondary">
             <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
                 {/* Header area */}
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
+                <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                     <div>
                         <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                             Who we are
@@ -29,7 +32,7 @@ const WhoWeAreSection = () => {
                         personalized plans you'll actually use—without the confusion
                         or complexity.
                     </p>
-                </div>
+                </AnimateIn>
 
                 {/* Stats banner with background image */}
                 <div className="relative rounded-3xl overflow-hidden min-h-95 md:h-75">
@@ -54,9 +57,10 @@ const WhoWeAreSection = () => {
 
                     {/* Stat cards */}
                     <div className="relative z-10 h-full flex items-center justify-center px-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-4xl">
+                        <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-4xl" stagger={0.15}>
                             {stats.map((stat) => (
-                                <div
+                                <motion.div
+                                    variants={staggerItem}
                                     key={stat.value}
                                     className="flex flex-col items-center justify-center aspect-video w-2xs rounded-2xl text-center"
                                     style={{
@@ -72,14 +76,14 @@ const WhoWeAreSection = () => {
                                     <span className="text-sm text-white/70">
                                         {stat.label}
                                     </span>
-                                </div>
+                                </motion.div>
                             ))}
-                        </div>
+                        </StaggerGroup>
                     </div>
                 </div>
 
                 {/* Recruitment banner */}
-                <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-button-secondary rounded-2xl px-6 md:px-8 py-5">
+                <AnimateIn delay={0.2} className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-button-secondary rounded-2xl px-6 md:px-8 py-5">
                     <div>
                         <div className="flex items-center gap-3 mb-1 flex-wrap">
                             <h3 className="text-base font-semibold text-heading">
@@ -98,7 +102,7 @@ const WhoWeAreSection = () => {
                     <Button variant="primary" className="shrink-0 border" icon={<LucideArrowRight />}>
                         Apply now
                     </Button>
-                </div>
+                </AnimateIn>
             </section >
         </div >
     );

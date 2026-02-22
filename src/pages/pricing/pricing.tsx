@@ -1,11 +1,14 @@
 import { LucideCheck, LucideArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
+import AnimateIn from "../../components/animations/AnimateIn";
+import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 
 const PricingPage = () => {
     return (
         <main>
             {/* Hero */}
-            <section className="flex flex-col items-center text-center pt-20 pb-12 px-6">
+            <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                     Pricing
                 </span>
@@ -16,13 +19,13 @@ const PricingPage = () => {
                     No subscriptions, no hidden fees. Buy credits, generate
                     plans, travel safely. That's it.
                 </p>
-            </section>
+            </AnimateIn>
 
             {/* Pricing cards */}
             <section className="px-8 lg:px-16 pb-24 max-w-5xl mx-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Individual */}
-                    <div className="bg-button-secondary rounded-3xl p-8 md:p-10 flex flex-col justify-between">
+                    <AnimateIn type="fadeLeft" className="bg-button-secondary rounded-3xl p-8 md:p-10 flex flex-col justify-between">
                         <div>
                             <h3 className="text-2xl font-serif text-heading mb-1">
                                 Individual
@@ -98,10 +101,10 @@ const PricingPage = () => {
                         <Button variant="primary" className="self-stretch text-center justify-center flex">
                             Get started free
                         </Button>
-                    </div>
+                    </AnimateIn>
 
                     {/* Corporate */}
-                    <div className="relative rounded-3xl p-8 md:p-10 flex flex-col justify-between overflow-hidden">
+                    <AnimateIn type="fadeRight" delay={0.1} className="relative rounded-3xl p-8 md:p-10 flex flex-col justify-between overflow-hidden">
                         <div
                             className="absolute inset-0"
                             style={{
@@ -182,17 +185,19 @@ const PricingPage = () => {
                         >
                             Talk to sales
                         </Button>
-                    </div>
+                    </AnimateIn>
                 </div>
             </section>
 
             {/* FAQ-like section */}
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-5xl mx-auto">
-                    <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-10 text-center">
-                        Common questions about pricing.
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <AnimateIn>
+                        <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-10 text-center">
+                            Common questions about pricing.
+                        </h2>
+                    </AnimateIn>
+                    <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6" stagger={0.1}>
                         {[
                             {
                                 q: "Is the first plan really free?",
@@ -211,16 +216,16 @@ const PricingPage = () => {
                                 a: "Absolutely. Contact our sales team and we'll migrate your account. Any unused individual credits transfer over.",
                             },
                         ].map((item) => (
-                            <div key={item.q} className="bg-background-primary rounded-2xl p-6">
+                            <motion.div variants={staggerItem} key={item.q} className="bg-background-primary rounded-2xl p-6">
                                 <h4 className="text-sm font-semibold text-heading mb-2">
                                     {item.q}
                                 </h4>
                                 <p className="text-sm text-body leading-relaxed">
                                     {item.a}
                                 </p>
-                            </div>
+                            </motion.div>
                         ))}
-                    </div>
+                    </StaggerGroup>
                     <div className="text-center mt-10">
                         <Button variant="secondary" icon={<LucideArrowRight />} link="/faq">
                             View all FAQs

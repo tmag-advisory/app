@@ -5,6 +5,9 @@ import {
     LucideLock,
     LucideAlertTriangle,
 } from "lucide-react";
+import { motion } from "framer-motion";
+import AnimateIn from "../../components/animations/AnimateIn";
+import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 
 const values = [
     {
@@ -37,7 +40,7 @@ const About = () => {
     return (
         <main>
             {/* Hero */}
-            <section className="flex flex-col items-center text-center pt-20 pb-12 px-6">
+            <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                     About TMAG
                 </span>
@@ -50,13 +53,13 @@ const About = () => {
                     health advice shouldn't require a specialist appointment or
                     hours of research.
                 </p>
-            </section>
+            </AnimateIn>
 
             {/* Mission */}
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                     <div className="flex flex-col md:flex-row gap-12 md:gap-20">
-                        <div className="md:w-1/2">
+                        <AnimateIn type="fadeLeft" className="md:w-1/2">
                             <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                                 Our mission
                             </span>
@@ -65,8 +68,8 @@ const About = () => {
                                 <span className="italic">accessible</span> to
                                 everyone.
                             </h2>
-                        </div>
-                        <div className="md:w-1/2 flex flex-col justify-center">
+                        </AnimateIn>
+                        <AnimateIn type="fadeRight" delay={0.1} className="md:w-1/2 flex flex-col justify-center">
                             <p className="text-sm text-body leading-relaxed mb-4">
                                 Millions of people travel internationally every
                                 year without adequate health preparation. The
@@ -83,25 +86,26 @@ const About = () => {
                                 easy access to travel medicine clinics get
                                 critical guidance they'd otherwise miss.
                             </p>
-                        </div>
+                        </AnimateIn>
                     </div>
                 </section>
             </div>
 
             {/* Values */}
             <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
-                <div className="text-center mb-14">
+                <AnimateIn className="text-center mb-14">
                     <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                         Our values
                     </span>
                     <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
                         What we <span className="italic">stand</span> for.
                     </h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                </AnimateIn>
+                <StaggerGroup stagger={0.12} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {values.map((v) => (
-                        <div
+                        <motion.div
                             key={v.title}
+                            variants={staggerItem}
                             className="bg-button-secondary rounded-2xl p-8 md:p-10"
                         >
                             <div className="w-12 h-12 rounded-xl bg-dark text-background-primary flex items-center justify-center mb-6">
@@ -113,15 +117,15 @@ const About = () => {
                             <p className="text-sm text-body leading-relaxed">
                                 {v.description}
                             </p>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </StaggerGroup>
             </section>
 
             {/* Data ethics */}
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
+                    <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                         <div>
                             <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                                 Data ethics
@@ -136,8 +140,8 @@ const About = () => {
                             an afterthought, but as a foundation of everything
                             we build.
                         </p>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </AnimateIn>
+                    <StaggerGroup stagger={0.08} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {[
                             "Your data is never sold to third parties",
                             "Health profiles are encrypted at rest and in transit",
@@ -146,23 +150,24 @@ const About = () => {
                             "AI outputs are clearly labeled as AI-generated",
                             "All data processing follows HIPAA-compliant practices",
                         ].map((item) => (
-                            <div
+                            <motion.div
                                 key={item}
+                                variants={staggerItem}
                                 className="bg-background-primary rounded-2xl p-6 flex items-start gap-3"
                             >
                                 <LucideLock className="w-4 h-4 mt-0.5 text-accent shrink-0" />
                                 <span className="text-sm text-heading">
                                     {item}
                                 </span>
-                            </div>
+                            </motion.div>
                         ))}
-                    </div>
+                    </StaggerGroup>
                 </section>
             </div>
 
             {/* Disclaimers */}
             <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
-                <div className="bg-button-secondary rounded-3xl p-8 md:p-10">
+                <AnimateIn type="fade" className="bg-button-secondary rounded-3xl p-8 md:p-10">
                     <div className="flex items-start gap-4 mb-6">
                         <div className="w-10 h-10 rounded-xl bg-dark text-background-primary flex items-center justify-center shrink-0">
                             <LucideAlertTriangle className="w-5 h-5" />
@@ -199,7 +204,7 @@ const About = () => {
                             professional.
                         </p>
                     </div>
-                </div>
+                </AnimateIn>
             </section>
         </main>
     );

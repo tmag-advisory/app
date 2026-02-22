@@ -1,20 +1,24 @@
 import { Link } from "react-router-dom";
 import { LucideAlertTriangle } from "lucide-react";
+import AnimateIn from "../../components/animations/AnimateIn";
 
 const MedicalDisclaimer = () => {
     return (
         <main>
             <section className="px-8 lg:px-16 pt-20 pb-24 max-w-4xl mx-auto">
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    Legal
-                </span>
-                <h1 className="text-4xl md:text-5xl text-heading font-serif leading-[1.1] mb-4">
-                    Medical Disclaimer
-                </h1>
-                <p className="text-sm text-muted mb-12">
-                    Last updated: February 2026
-                </p>
+                <AnimateIn>
+                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
+                        Legal
+                    </span>
+                    <h1 className="text-4xl md:text-5xl text-heading font-serif leading-[1.1] mb-4">
+                        Medical Disclaimer
+                    </h1>
+                    <p className="text-sm text-muted mb-12">
+                        Last updated: February 2026
+                    </p>
+                </AnimateIn>
 
+                <AnimateIn type="fade" delay={0.15}>
                 {/* Prominent warning */}
                 <div className="bg-button-secondary rounded-2xl p-6 md:p-8 mb-12 flex items-start gap-4">
                     <div className="w-10 h-10 rounded-xl bg-dark text-background-primary flex items-center justify-center shrink-0">
@@ -27,7 +31,9 @@ const MedicalDisclaimer = () => {
                         professional medical advice, diagnosis, or treatment.
                     </p>
                 </div>
+                </AnimateIn>
 
+                <AnimateIn type="fade" delay={0.15}>
                 <div className="space-y-10 text-sm text-body leading-relaxed">
                     <section>
                         <h2 className="text-lg font-serif text-heading mb-3">
@@ -166,6 +172,7 @@ const MedicalDisclaimer = () => {
                         </p>
                     </section>
                 </div>
+                </AnimateIn>
             </section>
         </main>
     );

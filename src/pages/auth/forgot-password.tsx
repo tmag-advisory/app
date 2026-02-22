@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LucideArrowLeft } from "lucide-react";
+import AnimateIn from "../../components/animations/AnimateIn";
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState("");
@@ -13,7 +14,7 @@ const ForgotPassword = () => {
 
     if (sent) {
         return (
-            <div className="text-center">
+            <AnimateIn type="fade" className="text-center">
                 <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
                     <span className="text-2xl">✉️</span>
                 </div>
@@ -26,12 +27,12 @@ const ForgotPassword = () => {
                 <Link to="/login" className="text-sm text-accent font-medium hover:underline">
                     Back to sign in
                 </Link>
-            </div>
+            </AnimateIn>
         );
     }
 
     return (
-        <div>
+        <AnimateIn type="fade">
             <Link to="/login" className="inline-flex items-center gap-1 text-xs text-muted hover:text-heading transition-colors duration-200 mb-8">
                 <LucideArrowLeft className="w-3 h-3" /> Back to sign in
             </Link>
@@ -63,7 +64,7 @@ const ForgotPassword = () => {
                     Send reset link
                 </button>
             </form>
-        </div>
+        </AnimateIn>
     );
 };
 

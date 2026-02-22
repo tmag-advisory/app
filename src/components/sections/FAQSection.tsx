@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { LucidePlus, LucideMinus } from "lucide-react";
+import AnimateIn from "../animations/AnimateIn";
 
 const faqs = [
     {
@@ -69,7 +70,7 @@ const FAQSection = () => {
     return (
         <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row gap-12 md:gap-20">
-                <div className="md:w-1/3 shrink-0">
+                <AnimateIn type="fadeLeft" className="md:w-1/3 shrink-0">
                     <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                         FAQ
                     </span>
@@ -81,9 +82,9 @@ const FAQSection = () => {
                         Can't find what you're looking for? Reach out to our
                         support team and we'll get back to you within 24 hours.
                     </p>
-                </div>
+                </AnimateIn>
 
-                <div className="md:w-2/3">
+                <AnimateIn type="fadeRight" delay={0.15} className="md:w-2/3">
                     {faqs.map((faq, i) => (
                         <FAQItem
                             key={i}
@@ -94,7 +95,7 @@ const FAQSection = () => {
                             }
                         />
                     ))}
-                </div>
+                </AnimateIn>
             </div>
         </section>
     );

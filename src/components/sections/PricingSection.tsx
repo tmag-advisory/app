@@ -1,5 +1,8 @@
 import { LucideCheck, LucideArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import Button from "../ui/Button";
+import AnimateIn from "../animations/AnimateIn";
+import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
 
 const plans = [
     {
@@ -54,7 +57,7 @@ const PricingSection = () => {
     return (
         <div className="bg-background-secondary">
             <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
-                <div className="text-center mb-14">
+                <AnimateIn className="text-center mb-14">
                     <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                         Pricing
                     </span>
@@ -66,11 +69,12 @@ const PricingSection = () => {
                         No hidden fees, no surprise charges. Pick the plan that
                         matches how you travel.
                     </p>
-                </div>
+                </AnimateIn>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6" stagger={0.15}>
                     {plans.map((plan) => (
-                        <div
+                        <motion.div
+                            variants={staggerItem}
                             key={plan.name}
                             className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden ${
                                 plan.highlighted ? "" : "bg-background-primary"
@@ -142,9 +146,9 @@ const PricingSection = () => {
                                     {plan.cta}
                                 </Button>
                             )}
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </StaggerGroup>
             </section>
         </div>
     );

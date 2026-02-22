@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
+import AnimateIn from "../../components/animations/AnimateIn";
 
 const EmailVerification = () => {
     return (
-        <div className="text-center">
+        <AnimateIn type="fade" className="text-center">
             <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
                 <span className="text-2xl">📬</span>
             </div>
@@ -30,7 +31,7 @@ const EmailVerification = () => {
             >
                 Skip to onboarding (preview)
             </Link>
-        </div>
+        </AnimateIn>
     );
 };
 

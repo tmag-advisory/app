@@ -7,7 +7,10 @@ import {
     LucideCheck,
     LucideCoins,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
+import AnimateIn from "../../components/animations/AnimateIn";
+import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 
 const processSteps = [
     {
@@ -53,7 +56,7 @@ const HowItWorks = () => {
     return (
         <main>
             {/* Hero */}
-            <section className="flex flex-col items-center text-center pt-20 pb-12 px-6">
+            <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                     How it works
                 </span>
@@ -65,14 +68,15 @@ const HowItWorks = () => {
                     No appointments, no waiting rooms. Tell us where you're
                     going and we'll tell you how to stay healthy.
                 </p>
-            </section>
+            </AnimateIn>
 
             {/* Process steps */}
             <section className="px-8 lg:px-16 pb-24 max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <StaggerGroup stagger={0.12} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {processSteps.map((step) => (
-                        <div
+                        <motion.div
                             key={step.title}
+                            variants={staggerItem}
                             className="bg-button-secondary rounded-2xl p-8 md:p-10"
                         >
                             <div className="w-12 h-12 rounded-xl bg-dark text-background-primary flex items-center justify-center mb-6">
@@ -84,15 +88,15 @@ const HowItWorks = () => {
                             <p className="text-sm text-body leading-relaxed">
                                 {step.description}
                             </p>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </StaggerGroup>
             </section>
 
             {/* Data sources */}
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
+                    <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                         <div>
                             <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                                 Our data sources
@@ -107,30 +111,31 @@ const HowItWorks = () => {
                             established global health authorities and updated
                             continuously.
                         </p>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    </AnimateIn>
+                    <StaggerGroup stagger={0.1} className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
                             "World Health Organization (WHO)",
                             "U.S. Centers for Disease Control (CDC)",
                             "European Centre for Disease Prevention (ECDC)",
                             "Local health ministries & embassies",
                         ].map((source) => (
-                            <div
+                            <motion.div
                                 key={source}
+                                variants={staggerItem}
                                 className="bg-background-primary rounded-2xl p-6 text-center"
                             >
                                 <p className="text-sm font-semibold text-heading">
                                     {source}
                                 </p>
-                            </div>
+                            </motion.div>
                         ))}
-                    </div>
+                    </StaggerGroup>
                 </section>
             </div>
 
             {/* What's in a plan */}
             <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
-                <div className="text-center mb-14">
+                <AnimateIn className="text-center mb-14">
                     <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                         What's included
                     </span>
@@ -138,8 +143,8 @@ const HowItWorks = () => {
                         Everything in your{" "}
                         <span className="italic">plan.</span>
                     </h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
+                </AnimateIn>
+                <AnimateIn delay={0.15} className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
                     {planIncludes.map((item) => (
                         <div key={item} className="flex items-start gap-3 py-2">
                             <LucideCheck className="w-4 h-4 mt-0.5 text-accent shrink-0" />
@@ -148,14 +153,14 @@ const HowItWorks = () => {
                             </span>
                         </div>
                     ))}
-                </div>
+                </AnimateIn>
             </section>
 
             {/* How credits work */}
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                     <div className="flex flex-col md:flex-row gap-12 md:gap-20">
-                        <div className="md:w-1/2">
+                        <AnimateIn type="fadeLeft" className="md:w-1/2">
                             <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                                 Credits
                             </span>
@@ -168,8 +173,8 @@ const HowItWorks = () => {
                                 generation. No subscriptions, no recurring
                                 charges—just pay for what you use.
                             </p>
-                        </div>
-                        <div className="md:w-1/2 space-y-4">
+                        </AnimateIn>
+                        <AnimateIn type="fadeRight" delay={0.1} className="md:w-1/2 space-y-4">
                             {[
                                 {
                                     q: "What uses a credit?",
@@ -199,13 +204,13 @@ const HowItWorks = () => {
                                     </p>
                                 </div>
                             ))}
-                        </div>
+                        </AnimateIn>
                     </div>
                 </section>
             </div>
 
             {/* CTA */}
-            <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto text-center">
+            <AnimateIn as="section" type="fade" className="px-8 lg:px-16 py-24 max-w-7xl mx-auto text-center">
                 <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif mb-4">
                     Ready to try it?
                 </h2>
@@ -219,7 +224,7 @@ const HowItWorks = () => {
                         View pricing
                     </Button>
                 </div>
-            </section>
+            </AnimateIn>
         </main>
     );
 };

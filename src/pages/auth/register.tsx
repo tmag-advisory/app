@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import AnimateIn from "../../components/animations/AnimateIn";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -14,7 +15,7 @@ const Register = () => {
         setForm((f) => ({ ...f, [field]: value }));
 
     return (
-        <div>
+        <AnimateIn type="fade">
             <h1 className="text-3xl md:text-4xl font-serif text-heading mb-2">
                 Create your account.
             </h1>
@@ -90,7 +91,7 @@ const Register = () => {
                     Sign in
                 </Link>
             </p>
-        </div>
+        </AnimateIn>
     );
 };
 

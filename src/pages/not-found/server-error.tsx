@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { LucideServerCrash, LucideHome, LucideRefreshCw } from "lucide-react";
+import AnimateIn from "../../components/animations/AnimateIn";
 
 const ServerError = () => {
     return (
@@ -11,7 +12,7 @@ const ServerError = () => {
             </div>
 
             <div className="flex-1 flex items-center justify-center px-6 pb-20">
-                <div className="text-center max-w-md">
+                <AnimateIn type="fade" className="text-center max-w-md">
                     <div className="relative mx-auto w-24 h-24 mb-8">
                         <div className="absolute inset-0 rounded-full bg-red-500/10 animate-pulse" />
                         <div className="relative w-24 h-24 rounded-full bg-button-secondary flex items-center justify-center">
@@ -43,7 +44,7 @@ const ServerError = () => {
                             <LucideHome className="w-4 h-4" /> Back to home
                         </Link>
                     </div>
-                </div>
+                </AnimateIn>
             </div>
         </div>
     );

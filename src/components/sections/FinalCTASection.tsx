@@ -1,5 +1,6 @@
 import { LucideArrowRight } from "lucide-react";
 import Button from "../ui/Button";
+import AnimateIn from "../animations/AnimateIn";
 
 const FinalCTASection = () => {
     return (
@@ -24,7 +25,7 @@ const FinalCTASection = () => {
                     }}
                 />
 
-                <div className="relative z-10 max-w-xl mx-auto">
+                <AnimateIn type="scaleUp" className="relative z-10 max-w-xl mx-auto">
                     <h2 className="text-4xl md:text-5xl lg:text-6xl text-white leading-[1.1] font-serif mb-4">
                         Travel healthy.{" "}
                         <span className="italic">Travel&nbsp;smart.</span>
@@ -48,7 +49,7 @@ const FinalCTASection = () => {
                             Talk to sales
                         </Button>
                     </div>
-                </div>
+                </AnimateIn>
             </div>
         </section>
     );

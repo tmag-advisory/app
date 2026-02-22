@@ -1,19 +1,24 @@
 import { Link } from "react-router-dom";
+import AnimateIn from "../../components/animations/AnimateIn";
+
 
 const TermsOfService = () => {
     return (
         <main>
             <section className="px-8 lg:px-16 pt-20 pb-24 max-w-4xl mx-auto">
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    Legal
-                </span>
-                <h1 className="text-4xl md:text-5xl text-heading font-serif leading-[1.1] mb-4">
-                    Terms of Service
-                </h1>
-                <p className="text-sm text-muted mb-12">
-                    Last updated: February 2026
-                </p>
+                <AnimateIn>
+                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
+                        Legal
+                    </span>
+                    <h1 className="text-4xl md:text-5xl text-heading font-serif leading-[1.1] mb-4">
+                        Terms of Service
+                    </h1>
+                    <p className="text-sm text-muted mb-12">
+                        Last updated: February 2026
+                    </p>
+                </AnimateIn>
 
+                <AnimateIn type="fade" delay={0.15}>
                 <div className="space-y-10 text-sm text-body leading-relaxed">
                     <section>
                         <h2 className="text-lg font-serif text-heading mb-3">
@@ -164,6 +169,7 @@ const TermsOfService = () => {
                         </p>
                     </section>
                 </div>
+                </AnimateIn>
             </section>
         </main>
     );

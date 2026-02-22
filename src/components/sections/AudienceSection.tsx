@@ -5,6 +5,7 @@ import {
     LucideCheck,
 } from "lucide-react";
 import Button from "../ui/Button";
+import AnimateIn from "../animations/AnimateIn";
 
 const individualFeatures = [
     "Personalized vaccine checklist",
@@ -25,7 +26,7 @@ const companyFeatures = [
 const AudienceSection = () => {
     return (
         <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
-            <div className="text-center mb-14">
+            <AnimateIn className="text-center mb-14">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                     Built for everyone
                 </span>
@@ -33,11 +34,11 @@ const AudienceSection = () => {
                     Whether you travel <span className="italic">alone</span> or
                     <br className="hidden md:block" /> send a <span className="italic">team.</span>
                 </h2>
-            </div>
+            </AnimateIn>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Individuals */}
-                <div className="bg-button-secondary rounded-3xl p-8 md:p-10 flex flex-col justify-between">
+                <AnimateIn type="fadeLeft" className="bg-button-secondary rounded-3xl p-8 md:p-10 flex flex-col justify-between">
                     <div>
                         <div className="w-12 h-12 rounded-xl bg-heading text-background-primary flex items-center justify-center mb-6">
                             <LucideUser className="w-6 h-6" />
@@ -61,10 +62,10 @@ const AudienceSection = () => {
                     <Button variant="secondary" icon={<LucideArrowRight />} className="self-start">
                         Get your plan
                     </Button>
-                </div>
+                </AnimateIn>
 
                 {/* Companies */}
-                <div className="relative rounded-3xl p-8 md:p-10 flex flex-col justify-between overflow-hidden">
+                <AnimateIn type="fadeRight" delay={0.15} className="relative rounded-3xl p-8 md:p-10 flex flex-col justify-between overflow-hidden">
                     <div
                         className="absolute inset-0"
                         style={{
@@ -96,7 +97,7 @@ const AudienceSection = () => {
                     <Button variant="primary" className="relative z-10 self-start bg-white !text-dark hover:bg-white/90">
                         Contact sales
                     </Button>
-                </div>
+                </AnimateIn>
             </div>
         </section>
     );
