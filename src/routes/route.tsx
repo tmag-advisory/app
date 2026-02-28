@@ -1,3 +1,4 @@
+import {lazy} from "react";
 import { createBrowserRouter } from "react-router-dom";
 import HomeLayout from "../layouts/homelayouts";
 import AuthLayout from "../layouts/authlayouts";
@@ -6,50 +7,52 @@ import HRDashboardLayout from "../layouts/hrlayouts";
 import ProtectedRoute from "../components/guards/ProtectedRoute";
 import RoleGuard from "../components/guards/RoleGuard";
 
-// Marketing pages
-import Home from "../pages/home/home";
-import HowItWorks from "../pages/how-it-works/how-it-works";
-import PricingPage from "../pages/pricing/pricing";
-import ForCompanies from "../pages/for-companies/for-companies";
-import About from "../pages/about/about";
-import FAQPage from "../pages/faq/faq";
-import TermsOfService from "../pages/legal/terms";
-import PrivacyPolicy from "../pages/legal/privacy";
-import MedicalDisclaimer from "../pages/legal/medical-disclaimer";
-import HIPAACompliance from "../pages/legal/hipaa";
-import Careers from "../pages/careers/careers";
-import Blog from "../pages/blog/blog";
-import Press from "../pages/press/press";
-import HelpCenter from "../pages/help/help";
-import Documentation from "../pages/docs/docs";
-import Status from "../pages/status/status";
-import Community from "../pages/community/community";
+// Marketing pages (lazy-loaded)
+const Home = lazy(() => import("../pages/home/home"));
+const HowItWorks = lazy(() => import("../pages/how-it-works/how-it-works"));
+const PricingPage = lazy(() => import("../pages/pricing/pricing"));
+const ForCompanies = lazy(() => import("../pages/for-companies/for-companies"));
+const About = lazy(() => import("../pages/about/about"));
+const FAQPage = lazy(() => import("../pages/faq/faq"));
+const TermsOfService = lazy(() => import("../pages/legal/terms"));
+const PrivacyPolicy = lazy(() => import("../pages/legal/privacy"));
+const MedicalDisclaimer = lazy(() => import("../pages/legal/medical-disclaimer"));
+const HIPAACompliance = lazy(() => import("../pages/legal/hipaa"));
+const Careers = lazy(() => import("../pages/careers/careers"));
+const Blog = lazy(() => import("../pages/blog/blog"));
+const Press = lazy(() => import("../pages/press/press"));
+const HelpCenter = lazy(() => import("../pages/help/help"));
+const Documentation = lazy(() => import("../pages/docs/docs"));
+const Status = lazy(() => import("../pages/status/status"));
+const Community = lazy(() => import("../pages/community/community"));
 
-// Auth pages
-import Login from "../pages/auth/login";
-import Register from "../pages/auth/register";
-import ForgotPassword from "../pages/auth/forgot-password";
-import EmailVerification from "../pages/auth/email-verification";
-import Onboarding from "../pages/auth/onboarding";
+// Auth pages (lazy-loaded)
+const Login = lazy(() => import("../pages/auth/login"));
+const Register = lazy(() => import("../pages/auth/register"));
+const ForgotPassword = lazy(() => import("../pages/auth/forgot-password"));
+const EmailVerification = lazy(() => import("../pages/auth/email-verification"));
+const Onboarding = lazy(() => import("../pages/auth/onboarding"));
 
-// Individual dashboard
-import DashboardOverview from "../pages/dashboard/overview";
-import CreatePlan from "../pages/dashboard/create-plan";
-import PlanHistory from "../pages/dashboard/plan-history";
-import PlanDetails from "../pages/dashboard/plan-details";
-import Settings from "../pages/dashboard/settings";
+// Individual dashboard (lazy-loaded)
+const DashboardOverview = lazy(() => import("../pages/dashboard/overview"));
+const CreatePlan = lazy(() => import("../pages/dashboard/create-plan"));
+const PlanHistory = lazy(() => import("../pages/dashboard/plan-history"));
+const PlanDetails = lazy(() => import("../pages/dashboard/plan-details"));
+const Settings = lazy(() => import("../pages/dashboard/settings"));
 
-// HR dashboard
-import HROverview from "../pages/hr/overview";
-import Employees from "../pages/hr/employees";
-import HRCreatePlan from "../pages/hr/create-plan";
-import TravelRequests from "../pages/hr/travel-requests";
-import Reports from "../pages/hr/reports";
-import Billing from "../pages/hr/billing";
+// HR dashboard (lazy-loaded)
+const HROverview = lazy(() => import("../pages/hr/overview"));
+const Employees = lazy(() => import("../pages/hr/employees"));
+const HRCreatePlan = lazy(() => import("../pages/hr/create-plan"));
+const TravelRequests = lazy(() => import("../pages/hr/travel-requests"));
+const Reports = lazy(() => import("../pages/hr/reports"));
+const Billing = lazy(() => import("../pages/hr/billing"));
 
-import NotFound from "../pages/not-found/not-found";
-import ServerError from "../pages/not-found/server-error";
-import Unauthorized from "../pages/not-found/unauthorized";
+// Error pages (lazy-loaded)
+const NotFound = lazy(() => import("../pages/not-found/not-found"));
+const ServerError = lazy(() => import("../pages/not-found/server-error"));
+const Unauthorized = lazy(() => import("../pages/not-found/unauthorized"));
+
 
 const router = createBrowserRouter([
     // Marketing
