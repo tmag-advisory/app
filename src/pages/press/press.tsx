@@ -89,7 +89,7 @@ const Press = () => {
                                 <p className="text-sm text-body leading-relaxed mb-4">
                                     {pr.excerpt}
                                 </p>
-                                <Button variant="secondary" size="sm" icon={<LucideArrowRight />}>
+                                <Button variant="secondary"  icon={<LucideArrowRight />}>
                                     Read more
                                 </Button>
                             </motion.div>
@@ -113,7 +113,7 @@ const Press = () => {
                                 Download logos, brand guidelines, and product
                                 screenshots for editorial use.
                             </p>
-                            <Button variant="secondary" size="sm" icon={<LucideDownload />}>
+                            <Button variant="secondary"  icon={<LucideDownload />}>
                                 Download media kit
                             </Button>
                         </div>
@@ -130,7 +130,7 @@ const Press = () => {
                                 For interviews, quotes, or media inquiries, reach
                                 out to our communications team.
                             </p>
-                            <Button variant="secondary" size="sm" icon={<LucideArrowRight />}>
+                            <Button variant="secondary"  icon={<LucideArrowRight />}>
                                 press@tmag.health
                             </Button>
                         </div>

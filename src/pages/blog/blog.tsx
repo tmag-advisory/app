@@ -88,7 +88,7 @@ const Blog = () => {
                                 <LucideClock className="w-3.5 h-3.5" />
                                 <span>{featuredPost.date} · {featuredPost.readTime}</span>
                             </div>
-                            <Button variant="secondary" size="sm" icon={<LucideArrowRight />}>
+                            <Button variant="secondary" icon={<LucideArrowRight />}>
                                 Read article
                             </Button>
                         </div>

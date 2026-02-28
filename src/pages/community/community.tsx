@@ -111,7 +111,7 @@ const Community = () => {
                                 <p className="text-sm text-body leading-relaxed mb-6">
                                     {channel.description}
                                 </p>
-                                <Button variant="secondary" size="sm" icon={<LucideArrowRight />}>
+                                <Button variant="secondary"  icon={<LucideArrowRight />}>
                                     {channel.cta}
                                 </Button>
                             </motion.div>

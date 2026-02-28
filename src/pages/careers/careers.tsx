@@ -140,7 +140,7 @@ const Careers = () => {
                                         {job.team} · {job.location}
                                     </p>
                                 </div>
-                                <Button variant="secondary" size="sm" icon={<LucideArrowRight />}>
+                                <Button variant="secondary"  icon={<LucideArrowRight />}>
                                     View role
                                 </Button>
                             </motion.div>
