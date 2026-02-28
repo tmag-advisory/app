@@ -40,7 +40,7 @@ const HeroSection = () => {
             </p>
 
             <div data-hero-anim className="flex items-center gap-4 mt-8">
-                <Button variant="primary">Get a free Guide</Button>
+                <Button variant="primary" link="/register">Get a free Plan</Button>
                 <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>
                     How it work's
                 </Button>

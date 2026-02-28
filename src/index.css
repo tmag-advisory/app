@@ -3,7 +3,7 @@
 
 @theme {
     --background-color: #f6f0e9;
-    --font-sans: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+    --font-sans: 'Hanken Grotesk', system-ui, Avenir, Helvetica, Arial, sans-serif;
     --font-serif: 'Fraunces', serif;
     --font-mono: 'SF Mono', SF Mono Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace;
 
@@ -30,7 +30,7 @@
 }
 
 :root {
-    font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-family: 'Hanken Grotesk', system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
     font-weight: 400;
 
@@ -45,9 +45,12 @@
     font-size: 16px;
 }
 
-
+::selection {
+    background-color: var(--color-accent);
+    color: #fff;
+}
 
 body {
-    user-select: none;
+    /* user-select: none; */
     background-color: var(--background-color);
 }

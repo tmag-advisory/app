@@ -16,18 +16,18 @@ const footerLinks = [
         heading: "Company",
         links: [
             { label: "About us", href: "/about" },
-            { label: "Careers", href: "#" },
-            { label: "Blog", href: "#" },
-            { label: "Press", href: "#" },
+            { label: "Careers", href: "/careers" },
+            { label: "Blog", href: "/blog" },
+            { label: "Press", href: "/press" },
         ],
     },
     {
         heading: "Resources",
         links: [
-            { label: "Help center", href: "#" },
-            { label: "Documentation", href: "#" },
-            { label: "Status", href: "#" },
-            { label: "Community", href: "#" },
+            { label: "Help center", href: "/help" },
+            { label: "Documentation", href: "/docs" },
+            { label: "Status", href: "/status" },
+            { label: "Community", href: "/community" },
         ],
     },
     {
@@ -36,7 +36,7 @@ const footerLinks = [
             { label: "Privacy policy", href: "/privacy" },
             { label: "Terms of service", href: "/terms" },
             { label: "Medical disclaimer", href: "/medical-disclaimer" },
-            { label: "HIPAA compliance", href: "#" },
+            { label: "HIPAA compliance", href: "/hipaa" },
         ],
     },
 ];

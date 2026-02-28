@@ -1,5 +1,5 @@
 import { motion, type TargetAndTransition } from "framer-motion";
-import type { ReactNode, CSSProperties } from "react";
+import { useMemo, type ReactNode, type CSSProperties } from "react";
 
 type AnimationType = "fadeUp" | "fadeDown" | "fadeLeft" | "fadeRight" | "fade" | "scaleUp";
 
@@ -33,7 +33,7 @@ const AnimateIn = ({
     style,
     as = "div",
 }: AnimateInProps) => {
-    const Component = motion.create(as);
+    const Component = useMemo(() => motion.create(as), [as]);
 
     return (
         <Component

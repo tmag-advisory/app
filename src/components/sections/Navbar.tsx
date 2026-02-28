@@ -9,37 +9,37 @@ const Navbar = () => {
     return (
         <nav className="px-8 lg:px-16 py-5 max-w-350 mx-auto">
             {/* Desktop row */}
-            <div className="flex items-center justify-between">
+            <div className="grid grid-cols-3 items-center">
                 <div className="hidden md:flex items-center gap-6 font-medium">
                     <NavLink href="/about">About</NavLink>
                     <NavLink href="/pricing">Pricing</NavLink>
                     <NavLink href="/for-companies">For Companies</NavLink>
                 </div>
 
-                <Link to="/" className="text-heading tracking-tight text-xl font-serif font-medium">
+                <Link to="/" className="text-heading tracking-tight text-xl font-serif font-medium text-center">
                     TMAG
                 </Link>
 
-                <div className="hidden md:block">
-                    <Button variant="secondary" link="/pricing">Get Started</Button>
+                <div className="flex justify-end">
+                    <div className="hidden md:block">
+                        <Button variant="secondary" link="/pricing">Get Started</Button>
+                    </div>
+                    <button
+                        className="md:hidden flex flex-col gap-1.5 p-1 cursor-pointer"
+                        onClick={() => setOpen((o) => !o)}
+                        aria-label="Toggle menu"
+                    >
+                        <span
+                            className={`block h-0.5 w-6 bg-heading rounded transition-transform duration-300 origin-center ${open ? "translate-y-2 rotate-45" : ""}`}
+                        />
+                        <span
+                            className={`block h-0.5 w-6 bg-heading rounded transition-opacity duration-300 ${open ? "opacity-0" : ""}`}
+                        />
+                        <span
+                            className={`block h-0.5 w-6 bg-heading rounded transition-transform duration-300 origin-center ${open ? "-translate-y-2 -rotate-45" : ""}`}
+                        />
+                    </button>
                 </div>
-
-                {/* Hamburger — mobile only */}
-                <button
-                    className="md:hidden flex flex-col gap-1.5 p-1 cursor-pointer"
-                    onClick={() => setOpen((o) => !o)}
-                    aria-label="Toggle menu"
-                >
-                    <span
-                        className={`block h-0.5 w-6 bg-heading rounded transition-transform duration-300 origin-center ${open ? "translate-y-2 rotate-45" : ""}`}
-                    />
-                    <span
-                        className={`block h-0.5 w-6 bg-heading rounded transition-opacity duration-300 ${open ? "opacity-0" : ""}`}
-                    />
-                    <span
-                        className={`block h-0.5 w-6 bg-heading rounded transition-transform duration-300 origin-center ${open ? "-translate-y-2 -rotate-45" : ""}`}
-                    />
-                </button>
             </div>
 
             {/* Mobile drawer */}

@@ -16,6 +16,14 @@ import FAQPage from "../pages/faq/faq";
 import TermsOfService from "../pages/legal/terms";
 import PrivacyPolicy from "../pages/legal/privacy";
 import MedicalDisclaimer from "../pages/legal/medical-disclaimer";
+import HIPAACompliance from "../pages/legal/hipaa";
+import Careers from "../pages/careers/careers";
+import Blog from "../pages/blog/blog";
+import Press from "../pages/press/press";
+import HelpCenter from "../pages/help/help";
+import Documentation from "../pages/docs/docs";
+import Status from "../pages/status/status";
+import Community from "../pages/community/community";
 
 // Auth pages
 import Login from "../pages/auth/login";
@@ -58,6 +66,14 @@ const router = createBrowserRouter([
             { path: "terms", element: <TermsOfService /> },
             { path: "privacy", element: <PrivacyPolicy /> },
             { path: "medical-disclaimer", element: <MedicalDisclaimer /> },
+            { path: "hipaa", element: <HIPAACompliance /> },
+            { path: "careers", element: <Careers /> },
+            { path: "blog", element: <Blog /> },
+            { path: "press", element: <Press /> },
+            { path: "help", element: <HelpCenter /> },
+            { path: "docs", element: <Documentation /> },
+            { path: "status", element: <Status /> },
+            { path: "community", element: <Community /> },
         ],
     },
 
