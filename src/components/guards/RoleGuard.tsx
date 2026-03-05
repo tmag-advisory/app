@@ -1,23 +1,23 @@
 import { Navigate } from "react-router-dom";
-import { useAuthStore } from "../../stores/authStore";
-import type { UserType } from "../../stores/authStore";
+import { useAuth } from "../../context/AuthContext";
 import type { ReactNode } from "react";
+import { canAccessHR } from "../../lib/canAccessHr";
+
+type AllowedSection = "dashboard" | "hr";
 
 interface RoleGuardProps {
     children: ReactNode;
-    allowedType: UserType;
+    section: AllowedSection;
     redirectTo?: string;
 }
 
-const RoleGuard = ({ children, allowedType, redirectTo }: RoleGuardProps) => {
-    const user = useAuthStore((s) => s.user);
+const RoleGuard = ({ children, section, redirectTo }: RoleGuardProps) => {
+    const { user } = useAuth();
 
     if (!user) return <Navigate to="/login" replace />;
 
-    if (user.type !== allowedType) {
-        const fallback =
-            redirectTo ?? (user.type === "company" ? "/hr" : "/dashboard");
-        return <Navigate to={fallback} replace />;
+    if (section === "hr" && !canAccessHR(user)) {
+        return <Navigate to={redirectTo ?? "/dashboard"} replace />;
     }
 
     return <>{children}</>;

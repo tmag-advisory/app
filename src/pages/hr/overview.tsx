@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useAuthStore } from "../../stores/authStore";
+import { useAuth } from "../../context/AuthContext";
 import { usePlanStore } from "../../stores/planStore";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 const HROverview = () => {
-    const user = useAuthStore((s) => s.user);
+    const { user } = useAuth();
     const { companyPlans, companyEmployees, companyRequests, selectedCompany } = usePlanStore();
 
     const plans = companyPlans();
@@ -26,7 +26,7 @@ const HROverview = () => {
 
     return (
         <div>
-            <DashboardHeader title={`${company?.name ?? user?.companyIds?.[0] ?? "Company"} Dashboard`} />
+            <DashboardHeader title={`${company?.name ?? "Company"} Dashboard`} />
 
             {/* Stats grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

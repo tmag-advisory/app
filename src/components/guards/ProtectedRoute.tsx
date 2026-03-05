@@ -1,17 +1,20 @@
 import { Navigate } from "react-router-dom";
-import { useAuthStore } from "../../stores/authStore";
+import { useAuth } from "../../context/AuthContext";
 import type { ReactNode } from "react";
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-    const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-    const user = useAuthStore((s) => s.user);
+    const { isAuthenticated, isLoading } = useAuth();
 
-    if (!isAuthenticated || !user) {
-        return <Navigate to="/login" replace />;
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background-primary">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+            </div>
+        );
     }
 
-    if (!user.onboarded) {
-        return <Navigate to="/onboarding" replace />;
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
     }
 
     return <>{children}</>;

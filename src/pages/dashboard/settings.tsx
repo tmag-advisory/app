@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useAuthStore } from "../../stores/authStore";
+import { useAuth } from "../../context/AuthContext";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { LucideUser, LucideLock, LucideCreditCard } from "lucide-react";
 
 type Tab = "profile" | "password" | "billing";
 
 const Settings = () => {
-    const user = useAuthStore((s) => s.user);
+    const { user } = useAuth();
     const [tab, setTab] = useState<Tab>("profile");
 
     const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
@@ -46,7 +46,7 @@ const Settings = () => {
                                 <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Full name</label>
                                 <input
                                     type="text"
-                                    defaultValue={user?.name}
+                                    defaultValue={user ? `${user.first_name} ${user.last_name}` : ""}
                                     className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
                                 />
                             </div>
@@ -100,7 +100,7 @@ const Settings = () => {
                     <div className="bg-white rounded-2xl border border-border-light/50 p-6">
                         <h2 className="text-base font-semibold text-heading mb-4">Credits</h2>
                         <div className="flex items-baseline gap-2 mb-4">
-                            <span className="text-4xl font-serif text-heading">{user?.credits ?? 0}</span>
+                            <span className="text-4xl font-serif text-heading">0</span>
                             <span className="text-sm text-muted">credits remaining</span>
                         </div>
                         <button className="py-2.5 px-5 rounded-xl bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent/90 transition-colors duration-200">

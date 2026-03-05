@@ -9,7 +9,7 @@ const Navbar = () => {
     return (
         <nav className="px-8 lg:px-16 py-5 max-w-350 mx-auto">
             {/* Desktop row */}
-            <div className="grid grid-cols-3 items-center">
+            <div className="flex  justify-between md:grid grid-cols-3 items-center">
                 <div className="hidden md:flex items-center gap-6 font-medium">
                     <NavLink href="/about">About</NavLink>
                     <NavLink href="/pricing">Pricing</NavLink>
@@ -25,7 +25,7 @@ const Navbar = () => {
                         <Button variant="secondary" link="/pricing">Get Started</Button>
                     </div>
                     <button
-                        className="md:hidden flex flex-col gap-1.5 p-1 cursor-pointer"
+                        className="md:hidden flex flex-col gap-1.5 p-1 cursor-pointer  self-end"
                         onClick={() => setOpen((o) => !o)}
                         aria-label="Toggle menu"
                     >

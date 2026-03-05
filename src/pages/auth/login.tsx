@@ -1,22 +1,32 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuthStore, MOCK_INDIVIDUAL, MOCK_HR_ADMIN } from "../../stores/authStore";
+import { useAuth } from "../../context/AuthContext";
 import AnimateIn from "../../components/animations/AnimateIn";
+import { canAccessHR } from "../../lib/canAccessHr";
 
 const Login = () => {
-    const login = useAuthStore((s) => s.login);
+    const { login } = useAuth();
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Mock: email containing "hr" or "company" logs in as HR
-        const user = email.toLowerCase().includes("hr") || email.toLowerCase().includes("company")
-            ? MOCK_HR_ADMIN
-            : MOCK_INDIVIDUAL;
-        login(user);
-        navigate(user.type === "company" ? "/hr" : "/dashboard");
+        setError("");
+        setLoading(true);
+        try {
+            const user = await login({ email, password });
+            navigate(canAccessHR(user) ? "/hr" : "/dashboard");
+        } catch (err: unknown) {
+            const msg =
+                (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+                ?? "Invalid email or password";
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -27,6 +37,12 @@ const Login = () => {
             <p className="text-sm text-body mb-8">
                 Sign in to access your travel health plans.
             </p>
+
+            {error && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                    {error}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -68,9 +84,10 @@ const Login = () => {
 
                 <button
                     type="submit"
-                    className="w-full py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200"
+                    disabled={loading}
+                    className="w-full py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    Sign in
+                    {loading ? "Signing in…" : "Sign in"}
                 </button>
             </form>
 
@@ -83,7 +100,6 @@ const Login = () => {
             <div className="flex gap-3">
                 <button
                     type="button"
-                    onClick={() => { login(MOCK_INDIVIDUAL); navigate("/dashboard"); }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-border-light text-heading text-sm font-semibold cursor-pointer hover:bg-button-secondary transition-colors duration-200"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -96,7 +112,6 @@ const Login = () => {
                 </button>
                 <button
                     type="button"
-                    onClick={() => { login(MOCK_INDIVIDUAL); navigate("/dashboard"); }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-border-light text-heading text-sm font-semibold cursor-pointer hover:bg-button-secondary transition-colors duration-200"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 23 23">
@@ -109,7 +124,6 @@ const Login = () => {
                 </button>
                 <button
                     type="button"
-                    onClick={() => { login(MOCK_INDIVIDUAL); navigate("/dashboard"); }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-border-light text-heading text-sm font-semibold cursor-pointer hover:bg-button-secondary transition-colors duration-200"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -125,27 +139,6 @@ const Login = () => {
                     Create one
                 </Link>
             </p>
-
-            {/* Preview helper */}
-            <div className="mt-8 border-t border-border-light pt-6">
-                <p className="text-xs text-muted text-center mb-3">Quick preview login</p>
-                <div className="flex gap-3">
-                    <button
-                        type="button"
-                        onClick={() => { login(MOCK_INDIVIDUAL); navigate("/dashboard"); }}
-                        className="flex-1 py-2.5 rounded-xl bg-button-secondary text-heading text-xs font-semibold cursor-pointer hover:bg-border-light transition-colors duration-200"
-                    >
-                        Individual User
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => { login(MOCK_HR_ADMIN); navigate("/hr"); }}
-                        className="flex-1 py-2.5 rounded-xl bg-button-secondary text-heading text-xs font-semibold cursor-pointer hover:bg-border-light transition-colors duration-200"
-                    >
-                        HR Admin
-                    </button>
-                </div>
-            </div>
         </AnimateIn>
     );
 };

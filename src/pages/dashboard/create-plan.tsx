@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../stores/authStore";
 import { usePlanStore } from "../../stores/planStore";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { LucideLoader2 } from "lucide-react";
@@ -8,10 +7,8 @@ import type { TravelPlan } from "../../stores/planStore";
 
 const CreatePlan = () => {
     const navigate = useNavigate();
-    const consumeCredit = useAuthStore((s) => s.consumeCredit);
     const addPlan = usePlanStore((s) => s.addPlan);
-    const credits = useAuthStore((s) => s.user?.credits ?? 0);
-
+    const credits: number = 100
     const [form, setForm] = useState({
         destination: "",
         country: "",
@@ -26,7 +23,6 @@ const CreatePlan = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!consumeCredit()) return;
 
         setProcessing(true);
 

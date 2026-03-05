@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../stores/authStore";
 import { usePlanStore } from "../../stores/planStore";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { LucideLoader2 } from "lucide-react";
@@ -8,10 +7,10 @@ import type { TravelPlan } from "../../stores/planStore";
 
 const HRCreatePlan = () => {
     const navigate = useNavigate();
-    const consumeCredit = useAuthStore((s) => s.consumeCredit);
-    const { companyEmployees, addPlan, selectedCompanyId } = usePlanStore();
+    const { companyEmployees, addPlan, selectedCompanyId, selectedCompany } = usePlanStore();
     const employees = companyEmployees();
-    const credits = useAuthStore((s) => s.user?.credits ?? 0);
+    const company = selectedCompany();
+    const credits = company ? company.totalCredits - company.usedCredits : 0;
 
     const [form, setForm] = useState({
         employeeId: "",
@@ -30,7 +29,6 @@ const HRCreatePlan = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!consumeCredit()) return;
 
         setProcessing(true);
         setTimeout(() => {

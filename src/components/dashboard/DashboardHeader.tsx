@@ -1,16 +1,17 @@
-import { useAuthStore } from "../../stores/authStore";
+import { useAuth } from "../../context/AuthContext";
 import { usePlanStore } from "../../stores/planStore";
 import { LucideCoins, LucideMenu } from "lucide-react";
 import { useSidebarStore } from "../../stores/sidebarStore";
+import { canAccessHR } from "../../lib/canAccessHr";
 
 const DashboardHeader = ({ title }: { title: string }) => {
-    const user = useAuthStore((s) => s.user);
+    const { user } = useAuth();
     const toggle = useSidebarStore((s) => s.toggle);
     const selectedCompany = usePlanStore((s) => s.selectedCompany);
 
-    // Show company credits for HR, user credits for individuals
-    const company = user?.type === "company" ? selectedCompany() : null;
-    const credits = company ? (company.totalCredits - company.usedCredits) : (user?.credits ?? 0);
+    const isHR = canAccessHR(user);
+    const company = isHR ? selectedCompany() : null;
+    const credits = company ? (company.totalCredits - company.usedCredits) : 0;
 
     return (
         <header className="flex items-center justify-between mb-8 gap-4">

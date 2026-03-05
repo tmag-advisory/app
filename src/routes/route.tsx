@@ -97,7 +97,7 @@ const router = createBrowserRouter([
         path: "dashboard",
         element: (
             <ProtectedRoute>
-                <RoleGuard allowedType="individual">
+                <RoleGuard section="dashboard">
                     <UserDashboardLayout />
                 </RoleGuard>
             </ProtectedRoute>
@@ -116,7 +116,7 @@ const router = createBrowserRouter([
         path: "hr",
         element: (
             <ProtectedRoute>
-                <RoleGuard allowedType="company">
+                <RoleGuard section="hr">
                     <HRDashboardLayout />
                 </RoleGuard>
             </ProtectedRoute>

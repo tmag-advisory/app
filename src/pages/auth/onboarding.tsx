@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore, MOCK_INDIVIDUAL, MOCK_HR_ADMIN } from "../../stores/authStore";
 import { LucideUser, LucideBuilding2, LucideArrowRight, LucideArrowLeft } from "lucide-react";
 import AnimateIn from "../../components/animations/AnimateIn";
 
 const steps = ["User Type", "Profile", "Health"];
 
 const Onboarding = () => {
-    const login = useAuthStore((s) => s.login);
     const navigate = useNavigate();
     const [step, setStep] = useState(0);
     const [userType, setUserType] = useState<"individual" | "company" | null>(null);
@@ -27,11 +25,7 @@ const Onboarding = () => {
     const prev = () => setStep((s) => Math.max(s - 1, 0));
 
     const finish = () => {
-        const user = userType === "company"
-            ? { ...MOCK_HR_ADMIN, name: profile.name || MOCK_HR_ADMIN.name, onboarded: true }
-            : { ...MOCK_INDIVIDUAL, name: profile.name || MOCK_INDIVIDUAL.name, onboarded: true };
-        login(user);
-        navigate(user.type === "company" ? "/hr" : "/dashboard");
+        navigate(userType === "company" ? "/hr" : "/dashboard");
     };
 
     return (

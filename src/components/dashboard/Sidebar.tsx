@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { useAuthStore } from "../../stores/authStore";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { usePlanStore } from "../../stores/planStore";
 import { cn } from "../../lib/utils";
 import type { ReactNode } from "react";
@@ -46,6 +46,7 @@ const hrNav: NavItem[] = [
 import type { Company } from "../../stores/planStore";
 import { useState } from "react";
 import { useSidebarStore } from "../../stores/sidebarStore";
+import { canAccessHR } from "../../lib/canAccessHr";
 
 const CompanySwitcher = ({
     companies,
@@ -120,19 +121,21 @@ const CompanySwitcher = ({
 };
 
 const Sidebar = () => {
-    const user = useAuthStore((s) => s.user);
-    const logout = useAuthStore((s) => s.logout);
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const location = useLocation();
     const { open, close } = useSidebarStore();
     const { companies, selectedCompanyId, selectCompany } = usePlanStore();
 
-    const navItems = user?.type === "company" ? hrNav : individualNav;
+    const isHR = canAccessHR(user);
+    const navItems = isHR ? hrNav : individualNav;
 
-    // Filter companies to those assigned to the current user
-    const userCompanies = user?.companyIds
-        ? companies.filter((c) => user.companyIds!.includes(c.id))
-        : [];
     const currentCompany = companies.find((c) => c.id === selectedCompanyId);
+
+    const handleLogout = async () => {
+        await logout();
+        navigate("/login");
+    };
 
     // Close sidebar on route change (mobile)
     useEffect(() => {
@@ -176,9 +179,9 @@ const Sidebar = () => {
                 </div>
 
                 {/* Company switcher (HR only) */}
-                {user?.type === "company" && userCompanies.length > 0 && (
+                {isHR && companies.length > 0 && (
                     <CompanySwitcher
-                        companies={userCompanies}
+                        companies={companies}
                         currentCompany={currentCompany}
                         onSelect={selectCompany}
                     />
@@ -207,11 +210,11 @@ const Sidebar = () => {
                 <div className="px-4 py-4 border-t border-white/6">
                     <div className="flex items-center gap-3 mb-3 px-2">
                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-semibold text-white/70">
-                            {user?.name?.charAt(0) ?? "?"}
+                            {user?.first_name?.charAt(0) ?? "?"}
                         </div>
                         <div className="min-w-0">
                             <p className="text-sm font-medium text-white truncate">
-                                {user?.name}
+                                {user ? `${user.first_name} ${user.last_name}` : ""}
                             </p>
                             <p className="text-xs text-white/30 truncate">
                                 {user?.email}
@@ -219,7 +222,7 @@ const Sidebar = () => {
                         </div>
                     </div>
                     <button
-                        onClick={logout}
+                        onClick={handleLogout}
                         className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm text-white/40 hover:text-white hover:bg-white/4 transition-colors duration-150 cursor-pointer"
                     >
                         <LucideLogOut className="w-4 h-4" />
