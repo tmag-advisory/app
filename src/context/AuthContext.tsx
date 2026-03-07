@@ -9,6 +9,7 @@ import {
 import type { LoginRequest, RegisterRequest } from "../api/types";
 import { canAccessHR } from "../lib/canAccessHr";
 import api, { getAuthCookie, removeAuthCookie, setAuthCookie } from "../api/axios";
+import { useNavigate } from "react-router-dom";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -28,6 +29,8 @@ export interface AuthUser {
     role_name: string;
     avatar_url: string;
     last_login: string;
+    onboarding_stage: number;
+    is_verified: boolean;
     role: AuthRole;
 }
 
@@ -38,7 +41,7 @@ interface AuthContextValue {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (data: LoginRequest) => Promise<AuthUser>;
-    register: (data: RegisterRequest) => Promise<AuthUser>;
+    register: (data: Partial<RegisterRequest>) => Promise<AuthUser>;
     logout: () => Promise<void>;
     canAccessHR: boolean;
 }
@@ -58,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setIsLoading(false);
             return;
         }
-
         try {
             const res = await api.get("/profile");
             const d = res.data;
@@ -86,12 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return authUser;
     }, []);
 
-    const register = useCallback(async (data: RegisterRequest): Promise<AuthUser> => {
+    const register = useCallback(async (data: Partial<RegisterRequest>): Promise<AuthUser> => {
         const res = await api.post("/auth/register", data);
         const d = res.data;
-
         setAuthCookie(d.accessToken, d.exp);
-
         const authUser = buildAuthUserFromLogin(d);
         setUser(authUser);
         return authUser;
@@ -142,6 +142,8 @@ function buildAuthUser(d: Record<string, unknown>): AuthUser {
         email: (d.email as string) ?? "",
         role_id: (d.role_id as number) ?? 0,
         role_name: (d.role_name as string) ?? "",
+        onboarding_stage: (d.onboarding_stage as number) ?? 0,
+        is_verified: (d.is_verified as boolean) ?? false,
         avatar_url: (d.avatar_url as string) ?? "",
         last_login: (d.last_login as string) ?? "",
         role: {
@@ -168,6 +170,8 @@ function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
         email: (d.email as string) ?? "",
         role_id: role.id,
         role_name: role.name,
+        onboarding_stage: (d.onboarding_stage as number) ?? 0,
+        is_verified: (d.is_verified as boolean) ?? false,
         avatar_url: (d.avatar_url as string) ?? "",
         last_login: (d.last_login as string) ?? "",
         role,

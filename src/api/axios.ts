@@ -44,7 +44,8 @@ api.interceptors.response.use(
   (error) => {
     const url = error.config?.url || "";
     const isAuthEndpoint = url.includes("/auth/");
-    if (error.response?.status === 401 && !isAuthEndpoint) {
+    const isVerifyEndpoint = url.includes("/resend-verification");
+    if (error.response?.status === 401 && !isAuthEndpoint && !isVerifyEndpoint) {
       removeAuthCookie();
       window.location.href = "/login";
     }

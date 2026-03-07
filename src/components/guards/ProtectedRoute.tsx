@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import type { ReactNode } from "react";
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading, user } = useAuth();
 
     if (isLoading) {
         return (
@@ -15,6 +15,10 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
+    }
+
+    if (!user?.is_verified) {
+        return <Navigate to="/verify-email" replace />;
     }
 
     return <>{children}</>;

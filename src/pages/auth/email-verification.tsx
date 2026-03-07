@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import AnimateIn from "../../components/animations/AnimateIn";
+import { useResendVerificationEmail } from "../../api";
 
 const EmailVerification = () => {
+    const resend = useResendVerificationEmail();
+
     return (
         <AnimateIn type="fade" className="text-center">
             <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
@@ -17,20 +20,29 @@ const EmailVerification = () => {
 
             <div className="bg-button-secondary rounded-2xl p-6 mb-6">
                 <p className="text-xs text-muted mb-3">Didn't receive the email?</p>
-                <button
-                    className="text-sm text-accent font-semibold hover:underline cursor-pointer"
-                >
-                    Resend verification email
-                </button>
+                {resend.isSuccess ? (
+                    <p className="text-sm text-green-600 font-semibold">Verification email sent!</p>
+                ) : (
+                    <button
+                        onClick={() => resend.mutate()}
+                        disabled={resend.isPending}
+                        className="text-sm text-accent font-semibold hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {resend.isPending ? "Sending…" : "Resend verification email"}
+                    </button>
+                )}
+                {resend.isError && (
+                    <p className="text-xs text-red-500 mt-2">Failed to send. Please try again.</p>
+                )}
             </div>
 
             {/* Preview shortcut */}
-            <Link
+            {/*<Link
                 to="/onboarding"
                 className="inline-block py-3 px-6 rounded-xl bg-dark text-background-primary font-semibold text-sm hover:bg-darkest transition-colors duration-200"
             >
                 Skip to onboarding (preview)
-            </Link>
+            </Link>*/}
         </AnimateIn>
     );
 };

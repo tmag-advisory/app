@@ -1,9 +1,23 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AnimateIn from "../../components/animations/AnimateIn";
+import { useAuth } from "../../context/AuthContext";
+import { useOnboardingStore } from "../../context/OnboardingContext";
+import { toast } from "react-hot-toast";
+import { AxiosError } from "axios";
+import { LucideLoader } from "lucide-react";
 
 const Register = () => {
     const navigate = useNavigate();
+    const { register } = useAuth()
+    const [loading, setLoading] = useState(false)
+    const { setStage } = useOnboardingStore()
+    const toastkey = 'register'
+
+    useEffect(() => {
+        setStage(0)
+    }, [setStage])
+
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -11,9 +25,29 @@ const Register = () => {
         confirm: "",
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        navigate("/verify-email");
+    const handleSubmit = async (e: React.FormEvent) => {
+        try {
+            e.preventDefault();
+
+            toast.loading('Creating account...', { id: toastkey })
+            setLoading(true)
+            await register({
+                email: form.email,
+                password: form.password,
+                first_name: form.name.split(" ")[0],
+                last_name: form.name.split(" ")[1] ?? form.name,
+                username: String(form.email.split("@")[0] + form.name.split(" ")[0]).toLowerCase(),
+            })
+            setStage(1)
+            toast.success("Registration successful!", { id: toastkey })
+            navigate('/verify-email');
+            setLoading(false)
+        } catch (err) {
+            setLoading(false)
+            if (err instanceof AxiosError) {
+                toast.error(err.response?.data.error, { id: toastkey })
+            }
+        }
     };
 
     const update = useCallback((field: string, value: string) => {
@@ -85,9 +119,10 @@ const Register = () => {
 
                 <button
                     type="submit"
-                    className="w-full py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200"
+                    disabled={loading}
+                    className="w-full py-3 rounded-xl disabled:bg-gray-500 bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200"
                 >
-                    Create account
+                    {loading ? <LucideLoader className="animate-spin block m-auto" scale={0.9} /> : "Create Account"}
                 </button>
             </form>
 
@@ -166,5 +201,6 @@ const Register = () => {
         </AnimateIn>
     );
 };
+
 
 export default Register;

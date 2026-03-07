@@ -74,6 +74,7 @@ export interface UserResponse {
   role_id: number;
   role_name: string;
   avatar_url: string;
+  is_verified: boolean;
   last_login: string;
 }
 
@@ -101,7 +102,7 @@ export interface CreateCompanyRequest {
   employee_count: number;
 }
 
-export interface UpdateCompanyRequest extends Partial<CreateCompanyRequest> {}
+export interface UpdateCompanyRequest extends Partial<CreateCompanyRequest> { }
 
 // ─── Employee ────────────────────────────────────────────────
 
@@ -131,7 +132,7 @@ export interface CreateEmployeeRequest {
   plans_generated: number;
 }
 
-export interface UpdateEmployeeRequest extends Partial<CreateEmployeeRequest> {}
+export interface UpdateEmployeeRequest extends Partial<CreateEmployeeRequest> { }
 
 // ─── Travel Plan ─────────────────────────────────────────────
 
@@ -175,7 +176,7 @@ export interface CreateTravelPlanRequest {
   emergency_contacts?: string;
 }
 
-export interface UpdateTravelPlanRequest extends Partial<CreateTravelPlanRequest> {}
+export interface UpdateTravelPlanRequest extends Partial<CreateTravelPlanRequest> { }
 
 // ─── Travel Request ──────────────────────────────────────────
 
@@ -197,10 +198,11 @@ export interface CreateTravelRequestRequest {
   destination: string;
   dates: string;
   status: string;
+  user_id: number;
   submitted_at?: string;
 }
 
-export interface UpdateTravelRequestRequest extends Partial<CreateTravelRequestRequest> {}
+export interface UpdateTravelRequestRequest extends Partial<CreateTravelRequestRequest> { }
 
 // ─── Health Profile ──────────────────────────────────────────
 
@@ -226,7 +228,7 @@ export interface CreateHealthProfileRequest {
   emergency_contact_phone: string;
 }
 
-export interface UpdateHealthProfileRequest extends Partial<CreateHealthProfileRequest> {}
+export interface UpdateHealthProfileRequest extends Partial<CreateHealthProfileRequest> { }
 
 // ─── Country ─────────────────────────────────────────────────
 
@@ -265,7 +267,7 @@ export interface CreateCountryRequest {
   is_active: boolean;
 }
 
-export interface UpdateCountryRequest extends Partial<CreateCountryRequest> {}
+export interface UpdateCountryRequest extends Partial<CreateCountryRequest> { }
 
 // ─── Country Health Alert ────────────────────────────────────
 
@@ -344,7 +346,7 @@ export interface CreateNotificationRequest {
   is_read: boolean;
 }
 
-export interface UpdateNotificationRequest extends Partial<CreateNotificationRequest> {}
+export interface UpdateNotificationRequest extends Partial<CreateNotificationRequest> { }
 
 // ─── Pricing Plan ────────────────────────────────────────────
 
@@ -421,6 +423,36 @@ export interface FaqItemResponse {
   is_published: boolean;
 }
 
+// ─── Profile ─────────────────────────────────────────────────
+
+export interface ProfileResponse {
+  id: number;
+  first_name: string;
+  last_name: string;
+  username: string;
+  phone: string;
+  email: string;
+  role_id: number;
+  role_name: string;
+  avatar_url: string;
+  onboarding_stage: number;
+  is_verified: boolean;
+  last_login: string;
+}
+
+export interface UpdateProfileRequest {
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface UpdateProfilePasswordRequest {
+  OldPassword: string;
+  NewPassword: string;
+}
+
 // ─── Company User ────────────────────────────────────────────
 
 export interface CompanyUserResponse {
@@ -436,4 +468,28 @@ export interface CreateCompanyUserRequest {
   company_id: number;
   user_id: number;
   role: string;
+}
+
+// ─── Onboarding ──────────────────────────────────────────────
+
+export interface UserOnboardingResponse {
+  id: number;
+  user_id: number;
+  user_type: "individual" | "company" | "";
+  nationality: string;
+  company_code: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpsertOnboardingRequest {
+  user_type?: "individual" | "company";
+  nationality?: string;
+  company_code?: string;
+  complete?: boolean;
+}
+
+export interface AdvanceStageRequest {
+  stage: number;
 }

@@ -1,16 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LucideUser, LucideBuilding2, LucideArrowRight, LucideArrowLeft } from "lucide-react";
 import AnimateIn from "../../components/animations/AnimateIn";
+import { useUpsertOnboarding, useAdvanceOnboardingStage, useUpdateProfile, useCreateHealthProfile, useOnboarding, useMyHealthProfile, useUpdateHealthProfile } from "../../api/hooks";
+import { useOnboardingStore } from "../../context/OnboardingContext";
+import { useAuth } from "../../context/AuthContext";
 
 const steps = ["User Type", "Profile", "Health"];
 
 const Onboarding = () => {
     const navigate = useNavigate();
-    const [step, setStep] = useState(0);
+    const { user } = useAuth();
+    const { setUserType: storeSetUserType, reset: resetOnboarding } = useOnboardingStore();
+
+    const { data: onboardingData } = useOnboarding();
+    const { data: healthProfileData } = useMyHealthProfile();
+
+    // Derive initial step from the user's onboarding_stage stored on the server:
+    // stage 2 → step 0 (User Type), stage 3 → step 1 (Profile), stage 4 → step 2 (Health)
+    const initialStep = Math.min(Math.max((user?.onboarding_stage ?? 2) - 2, 0), 2);
+    const [step, setStep] = useState(initialStep);
     const [userType, setUserType] = useState<"individual" | "company" | null>(null);
     const [profile, setProfile] = useState({
-        name: "",
+        firstName: "",
+        lastName: "",
         phone: "",
         nationality: "",
         companyCode: "",
@@ -20,13 +33,129 @@ const Onboarding = () => {
         medications: "",
         allergies: "",
     });
+    const [error, setError] = useState("");
 
-    const next = () => setStep((s) => Math.min(s + 1, 2));
-    const prev = () => setStep((s) => Math.max(s - 1, 0));
+    // Populate state from fetched data
+    useEffect(() => {
+        if (user) {
+            setProfile(prev => ({
+                ...prev,
+                firstName: user.first_name || "",
+                lastName: user.last_name || "",
+                phone: user.phone || "",
+            }));
+        }
+    }, [user]);
 
-    const finish = () => {
-        navigate(userType === "company" ? "/hr" : "/dashboard");
+    useEffect(() => {
+        if (onboardingData) {
+            if (onboardingData.user_type) {
+                setUserType(onboardingData.user_type as "individual" | "company");
+            }
+            setProfile(prev => ({
+                ...prev,
+                nationality: onboardingData.nationality || "",
+                companyCode: onboardingData.company_code || "",
+            }));
+        }
+    }, [onboardingData]);
+
+    useEffect(() => {
+        if (healthProfileData) {
+            setHealth({
+                conditions: healthProfileData.conditions || "",
+                medications: healthProfileData.medications || "",
+                allergies: healthProfileData.allergies || "",
+            });
+        }
+    }, [healthProfileData]);
+
+    const upsertOnboarding = useUpsertOnboarding();
+    const advanceStage = useAdvanceOnboardingStage();
+    const updateProfile = useUpdateProfile();
+    const createHealthProfile = useCreateHealthProfile();
+    const updateHealthProfile = useUpdateHealthProfile();
+
+    const prev = () => { setError(""); setStep((s) => Math.max(s - 1, 0)); };
+
+    // Step 0 → Step 1: save user type and advance stage to 3
+    const handleUserTypeNext = async () => {
+        if (!userType) return;
+        setError("");
+        try {
+            storeSetUserType(userType);
+            await upsertOnboarding.mutateAsync({ user_type: userType });
+            await advanceStage.mutateAsync({ stage: 3 });
+            setStep(1);
+        } catch {
+            setError("Failed to save. Please try again.");
+        }
     };
+
+    // Step 1 → Step 2: save profile details and advance stage to 4
+    const handleProfileNext = async () => {
+        setError("");
+        try {
+            const [firstName, ...rest] = profile.firstName.trim().split(" ");
+            const lastName = rest.join(" ") || profile.lastName;
+            await updateProfile.mutateAsync({
+                first_name: firstName || profile.firstName,
+                last_name: lastName,
+                phone: profile.phone,
+            });
+            await upsertOnboarding.mutateAsync({
+                nationality: profile.nationality,
+                company_code: profile.companyCode,
+            });
+            await advanceStage.mutateAsync({ stage: 4 });
+            setStep(2);
+        } catch {
+            setError("Failed to save profile. Please try again.");
+        }
+    };
+
+    // Step 2: save health profile, complete onboarding and navigate
+    const handleFinish = async () => {
+        setError("");
+        try {
+            if (!user) {
+                setError("User not found");
+                return;
+            }
+            if (health.conditions || health.medications || health.allergies) {
+                if (healthProfileData?.id) {
+                    await updateHealthProfile.mutateAsync({
+                        id: healthProfileData.id,
+                        data: {
+                            conditions: health.conditions,
+                            medications: health.medications,
+                            allergies: health.allergies,
+                        }
+                    });
+                } else {
+                    await createHealthProfile.mutateAsync({
+                        conditions: health.conditions,
+                        medications: health.medications,
+                        allergies: health.allergies,
+                        user_id: user?.id as number,
+                    });
+                }
+            }
+            await upsertOnboarding.mutateAsync({ complete: true });
+            await advanceStage.mutateAsync({ stage: 5 });
+            resetOnboarding();
+            navigate(userType === "company" ? "/hr" : "/dashboard");
+        } catch {
+            setError("Failed to complete onboarding. Please try again.");
+        }
+    };
+
+    const isLoading =
+        upsertOnboarding.isPending ||
+        advanceStage.isPending ||
+        updateProfile.isPending ||
+        createHealthProfile.isPending ||
+        updateHealthProfile.isPending;
 
     return (
         <AnimateIn type="fade">
@@ -41,6 +170,12 @@ const Onboarding = () => {
                     </div>
                 ))}
             </div>
+
+            {error && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                    {error}
+                </div>
+            )}
 
             {/* Step 1: User type */}
             {step === 0 && (
@@ -72,11 +207,11 @@ const Onboarding = () => {
                         </button>
                     </div>
                     <button
-                        onClick={next}
-                        disabled={!userType}
+                        onClick={handleUserTypeNext}
+                        disabled={!userType || isLoading}
                         className="w-full mt-6 py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                     >
-                        Continue <LucideArrowRight className="w-4 h-4" />
+                        {isLoading ? "Saving…" : <>Continue <LucideArrowRight className="w-4 h-4" /></>}
                     </button>
                 </div>
             )}
@@ -95,8 +230,8 @@ const Onboarding = () => {
                             <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Full name</label>
                             <input
                                 type="text"
-                                value={profile.name}
-                                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                                value={profile.firstName}
+                                onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
                                 placeholder="Sarah Kimani"
                                 className="w-full bg-white border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
                             />
@@ -135,11 +270,11 @@ const Onboarding = () => {
                         )}
                     </div>
                     <div className="flex gap-3 mt-6">
-                        <button onClick={prev} className="py-3 px-5 rounded-xl bg-button-secondary text-heading font-semibold text-sm cursor-pointer hover:bg-border-light transition-colors duration-200 flex items-center gap-2">
+                        <button onClick={prev} disabled={isLoading} className="py-3 px-5 rounded-xl bg-button-secondary text-heading font-semibold text-sm cursor-pointer hover:bg-border-light transition-colors duration-200 flex items-center gap-2 disabled:opacity-40">
                             <LucideArrowLeft className="w-4 h-4" /> Back
                         </button>
-                        <button onClick={next} className="flex-1 py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200 flex items-center justify-center gap-2">
-                            Continue <LucideArrowRight className="w-4 h-4" />
+                        <button onClick={handleProfileNext} disabled={isLoading} className="flex-1 py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-40">
+                            {isLoading ? "Saving…" : <>Continue <LucideArrowRight className="w-4 h-4" /></>}
                         </button>
                     </div>
                 </div>
@@ -187,11 +322,11 @@ const Onboarding = () => {
                         </div>
                     </div>
                     <div className="flex gap-3 mt-6">
-                        <button onClick={prev} className="py-3 px-5 rounded-xl bg-button-secondary text-heading font-semibold text-sm cursor-pointer hover:bg-border-light transition-colors duration-200 flex items-center gap-2">
+                        <button onClick={prev} disabled={isLoading} className="py-3 px-5 rounded-xl bg-button-secondary text-heading font-semibold text-sm cursor-pointer hover:bg-border-light transition-colors duration-200 flex items-center gap-2 disabled:opacity-40">
                             <LucideArrowLeft className="w-4 h-4" /> Back
                         </button>
-                        <button onClick={finish} className="flex-1 py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200">
-                            Finish setup
+                        <button onClick={handleFinish} disabled={isLoading} className="flex-1 py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200 disabled:opacity-40">
+                            {isLoading ? "Finishing…" : "Finish setup"}
                         </button>
                     </div>
                 </div>

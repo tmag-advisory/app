@@ -56,6 +56,14 @@ import type {
   // Company User
   CompanyUserResponse,
   CreateCompanyUserRequest,
+  // Profile
+  ProfileResponse,
+  UpdateProfileRequest,
+  UpdateProfilePasswordRequest,
+  // Onboarding
+  UserOnboardingResponse,
+  UpsertOnboardingRequest,
+  AdvanceStageRequest,
 } from "./types";
 
 // ─── Generic CRUD helpers ────────────────────────────────────
@@ -88,6 +96,9 @@ export const authApi = {
 
   resetPassword: (data: ResetPasswordRequest) =>
     api.post("/auth/reset-password", data).then((r) => r.data),
+
+  verifyEmail: (token: string) =>
+    api.get<{ message: string }>("/auth/verify-email", { params: { token } }).then((r) => r.data),
 };
 
 // ─── Companies ───────────────────────────────────────────────
@@ -179,7 +190,7 @@ export const travelRequestsApi = {
   get: (id: number) =>
     api.get<TravelRequestResponse>(`/travel-requests/${id}`).then((r) => r.data),
 
-  create: (data: CreateTravelRequestRequest) =>
+  create: (data: Partial<CreateTravelRequestRequest>) =>
     api.post<TravelRequestResponse>("/travel-requests", data).then((r) => r.data),
 
   update: (id: number, data: UpdateTravelRequestRequest) =>
@@ -194,6 +205,9 @@ export const travelRequestsApi = {
 export const healthProfilesApi = {
   list: (params?: PaginationParams) =>
     api.get<PaginatedResponse<HealthProfileResponse>>("/health-profiles", { params: buildParams(params) }).then((r) => r.data),
+
+  getMine: () =>
+    api.get<HealthProfileResponse>("/health-profiles/my").then((r) => r.data),
 
   listAll: () =>
     api.get<SelectOption[]>("/health-profiles/all").then((r) => r.data),
@@ -383,4 +397,40 @@ export const companyUsersApi = {
 
   delete: (id: number) =>
     api.delete(`/company-users/${id}`).then((r) => r.data),
+};
+
+// ─── Profile ─────────────────────────────────────────────────
+
+export const profileApi = {
+  get: () =>
+    api.get<ProfileResponse>("/profile").then((r) => r.data),
+
+  update: (data: UpdateProfileRequest) =>
+    api.put<ProfileResponse>("/profile", data).then((r) => r.data),
+
+  updateAvatar: (file: File) => {
+    const form = new FormData();
+    form.append("avatar", file);
+    return api.put<ProfileResponse>("/profile/avatar", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data);
+  },
+
+  updatePassword: (data: UpdateProfilePasswordRequest) =>
+    api.put("/profile/password", data).then((r) => r.data),
+
+  resendVerificationEmail: () =>
+    api.post<{ message: string }>("/profile/resend-verification").then((r) => r.data),
+};
+
+// ─── Onboarding ──────────────────────────────────────────────
+export const onboardingApi = {
+  get: () =>
+    api.get<UserOnboardingResponse>("/onboarding").then((r) => r.data),
+
+  upsert: (data: UpsertOnboardingRequest) =>
+    api.post<UserOnboardingResponse>("/onboarding", data).then((r) => r.data),
+
+  advanceStage: (data: AdvanceStageRequest) =>
+    api.put<{ stage: number }>("/onboarding/stage", data).then((r) => r.data),
 };

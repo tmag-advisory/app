@@ -18,11 +18,25 @@ const Login = () => {
         setLoading(true);
         try {
             const user = await login({ email, password });
-            navigate(canAccessHR(user) ? "/hr" : "/dashboard");
+            const stage = user.onboarding_stage;
+
+            if (stage > 4) {
+                // Onboarding complete — go to dashboard
+                navigate(canAccessHR(user) ? "/hr" : "/dashboard");
+            } else if (stage <= 1) {
+                // Not yet verified
+                navigate("/verify-email");
+            } else {
+                // Stages 2–4: go to onboarding; the page reads onboarding_stage from the user
+                navigate("/onboarding");
+            }
         } catch (err: unknown) {
-            const msg =
-                (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-                ?? "Invalid email or password";
+            const errData = (err as { response?: { data?: { error?: string; message?: string }; status?: number } })?.response;
+            if (errData?.status === 403 && errData?.data?.error === "email_not_verified") {
+                navigate("/verify-email");
+                return;
+            }
+            const msg = errData?.data?.message ?? "Invalid email or password";
             setError(msg);
         } finally {
             setLoading(false);

@@ -17,6 +17,8 @@ import {
   blogPostsApi,
   faqItemsApi,
   companyUsersApi,
+  profileApi,
+  onboardingApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -40,6 +42,10 @@ import type {
   UpdateNotificationRequest,
   CreateInvoiceRequest,
   CreateCompanyUserRequest,
+  UpdateProfileRequest,
+  UpdateProfilePasswordRequest,
+  UpsertOnboardingRequest,
+  AdvanceStageRequest,
 } from "./types";
 
 // ─── Query Keys ──────────────────────────────────────────────
@@ -165,6 +171,14 @@ export const queryKeys = {
     details: () => [...queryKeys.companyUsers.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.companyUsers.details(), id] as const,
   },
+  profile: {
+    all: ["profile"] as const,
+    detail: () => [...["profile"], "detail"] as const,
+  },
+  onboarding: {
+    all: ["onboarding"] as const,
+    detail: () => [...["onboarding"], "detail"] as const,
+  },
 };
 
 // ─── Auth Hooks ──────────────────────────────────────────────
@@ -194,6 +208,15 @@ export function useForgotPassword() {
 export function useResetPassword() {
   return useMutation({
     mutationFn: (data: ResetPasswordRequest) => authApi.resetPassword(data),
+  });
+}
+
+export function useVerifyEmail(token: string) {
+  return useQuery({
+    queryKey: ["verify-email", token],
+    queryFn: () => authApi.verifyEmail(token),
+    enabled: !!token,
+    retry: false,
   });
 }
 
@@ -411,6 +434,14 @@ export function useHealthProfiles(params?: PaginationParams) {
   });
 }
 
+export function useMyHealthProfile() {
+  return useQuery({
+    queryKey: [...queryKeys.healthProfiles.all, "mine"],
+    queryFn: () => healthProfilesApi.getMine(),
+    retry: false, // Don't retry if not found
+  });
+}
+
 export function useHealthProfile(id: number) {
   return useQuery({
     queryKey: queryKeys.healthProfiles.detail(id),
@@ -422,7 +453,8 @@ export function useHealthProfile(id: number) {
 export function useCreateHealthProfile() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateHealthProfileRequest) => healthProfilesApi.create(data),
+    mutationFn: (data: Partial<CreateHealthProfileRequest>) =>
+      healthProfilesApi.create(data as CreateHealthProfileRequest),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.healthProfiles.all }),
   });
 }
@@ -739,5 +771,70 @@ export function useDeleteCompanyUser() {
   return useMutation({
     mutationFn: (id: number) => companyUsersApi.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.companyUsers.all }),
+  });
+}
+
+// ─── Profile Hooks ───────────────────────────────────────────
+
+export function useProfile() {
+  return useQuery({
+    queryKey: queryKeys.profile.detail(),
+    queryFn: () => profileApi.get(),
+  });
+}
+
+export function useUpdateProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: UpdateProfileRequest) => profileApi.update(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.profile.all }),
+  });
+}
+
+export function useUpdateProfileAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => profileApi.updateAvatar(file),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.profile.all }),
+  });
+}
+
+export function useUpdateProfilePassword() {
+  return useMutation({
+    mutationFn: (data: UpdateProfilePasswordRequest) => profileApi.updatePassword(data),
+  });
+}
+
+export function useResendVerificationEmail() {
+  return useMutation({
+    mutationFn: () => profileApi.resendVerificationEmail(),
+  });
+}
+
+// ─── Onboarding Hooks ─────────────────────────────────────────
+
+export function useOnboarding() {
+  return useQuery({
+    queryKey: queryKeys.onboarding.detail(),
+    queryFn: () => onboardingApi.get(),
+  });
+}
+
+export function useUpsertOnboarding() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: UpsertOnboardingRequest) => onboardingApi.upsert(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.onboarding.all }),
+  });
+}
+
+export function useAdvanceOnboardingStage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: AdvanceStageRequest) => onboardingApi.advanceStage(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.profile.all });
+      qc.invalidateQueries({ queryKey: queryKeys.onboarding.all });
+    },
   });
 }

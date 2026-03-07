@@ -31,6 +31,7 @@ const Login = lazy(() => import("../pages/auth/login"));
 const Register = lazy(() => import("../pages/auth/register"));
 const ForgotPassword = lazy(() => import("../pages/auth/forgot-password"));
 const EmailVerification = lazy(() => import("../pages/auth/email-verification"));
+const VerifyEmailCallback = lazy(() => import("../pages/auth/verify-email-callback"));
 const Onboarding = lazy(() => import("../pages/auth/onboarding"));
 
 // Individual dashboard (lazy-loaded)
@@ -89,6 +90,15 @@ const router = createBrowserRouter([
             { path: "forgot-password", element: <ForgotPassword /> },
             { path: "verify-email", element: <EmailVerification /> },
             { path: "onboarding", element: <Onboarding /> },
+        ],
+    },
+
+    // Email verification callback (from email link: /auth/verify-email?token=...)
+    {
+        path: "auth",
+        element: <AuthLayout />,
+        children: [
+            { path: "verify-email", element: <VerifyEmailCallback /> },
         ],
     },
 
