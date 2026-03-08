@@ -30,6 +30,7 @@ const Community = lazy(() => import("../pages/community/community"));
 const Login = lazy(() => import("../pages/auth/login"));
 const Register = lazy(() => import("../pages/auth/register"));
 const ForgotPassword = lazy(() => import("../pages/auth/forgot-password"));
+const ResetPassword = lazy(() => import("../pages/auth/reset-password"));
 const EmailVerification = lazy(() => import("../pages/auth/email-verification"));
 const VerifyEmailCallback = lazy(() => import("../pages/auth/verify-email-callback"));
 const Onboarding = lazy(() => import("../pages/auth/onboarding"));
@@ -88,6 +89,7 @@ const router = createBrowserRouter([
             { path: "login", element: <Login /> },
             { path: "register", element: <Register /> },
             { path: "forgot-password", element: <ForgotPassword /> },
+            { path: "reset-password", element: <ResetPassword /> },
             { path: "verify-email", element: <EmailVerification /> },
             { path: "onboarding", element: <Onboarding /> },
         ],

@@ -23,7 +23,7 @@ const ForgotPassword = () => {
                     Check your email.
                 </h1>
                 <p className="text-sm text-body mb-8">
-                    We sent a password reset link to <strong className="text-heading">{email}</strong>. It expires in 1 hour.
+                    We sent a password reset link to <strong className="text-heading">{email}</strong>. It expires in 15 minutes.
                 </p>
                 <Link to="/login" className="text-sm text-accent font-medium hover:underline">
                     Back to sign in

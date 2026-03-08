@@ -1,9 +1,18 @@
-import { Link } from "react-router-dom";
+
 import AnimateIn from "../../components/animations/AnimateIn";
 import { useResendVerificationEmail } from "../../api";
+import { useSearchParams } from "react-router-dom";
 
 const EmailVerification = () => {
     const resend = useResendVerificationEmail();
+    const [searchParams] = useSearchParams();
+    const email = searchParams.get("email");
+
+    const handleResend = () => {
+        if (email) {
+            resend.mutate({ email });
+        } 
+    };
 
     return (
         <AnimateIn type="fade" className="text-center">
@@ -24,8 +33,8 @@ const EmailVerification = () => {
                     <p className="text-sm text-green-600 font-semibold">Verification email sent!</p>
                 ) : (
                     <button
-                        onClick={() => resend.mutate()}
-                        disabled={resend.isPending}
+                        onClick={handleResend}
+                        disabled={resend.isPending || !email}
                         className="text-sm text-accent font-semibold hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {resend.isPending ? "Sending…" : "Resend verification email"}
@@ -33,6 +42,9 @@ const EmailVerification = () => {
                 )}
                 {resend.isError && (
                     <p className="text-xs text-red-500 mt-2">Failed to send. Please try again.</p>
+                )}
+                {!email && (
+                    <p className="text-xs text-amber-600 mt-2">Email address missing from request.</p>
                 )}
             </div>
 

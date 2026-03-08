@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { PaginationParams } from "./types";
+import type { PaginationParams, ResendVerificationRequest } from "./types";
 import {
   authApi,
   companiesApi,
@@ -47,6 +47,7 @@ import type {
   UpsertOnboardingRequest,
   AdvanceStageRequest,
 } from "./types";
+import api from "./axios";
 
 // ─── Query Keys ──────────────────────────────────────────────
 
@@ -807,7 +808,7 @@ export function useUpdateProfilePassword() {
 
 export function useResendVerificationEmail() {
   return useMutation({
-    mutationFn: () => profileApi.resendVerificationEmail(),
+    mutationFn: (data: ResendVerificationRequest) => authApi.resendVerificationEmail(data),
   });
 }
 

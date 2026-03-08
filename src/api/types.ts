@@ -41,6 +41,10 @@ export interface ForgotPasswordRequest {
   email: string;
 }
 
+export interface ResendVerificationRequest {
+  email: string;
+}
+
 export interface ResetPasswordRequest {
   email: string;
   token: string;
@@ -60,6 +64,10 @@ export interface AuthResponse {
   last_login: string;
   access_token: string;
   exp: number;
+}
+
+export interface ResendVerificationEmailRequest {
+  email: string;
 }
 
 // ─── User ────────────────────────────────────────────────────
@@ -452,6 +460,8 @@ export interface UpdateProfilePasswordRequest {
   OldPassword: string;
   NewPassword: string;
 }
+
+
 
 // ─── Company User ────────────────────────────────────────────
 

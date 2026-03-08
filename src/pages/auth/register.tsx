@@ -40,7 +40,7 @@ const Register = () => {
             })
             setStage(1)
             toast.success("Registration successful!", { id: toastkey })
-            navigate('/verify-email');
+            navigate('/verify-email?email=' + encodeURIComponent(form.email));
             setLoading(false)
         } catch (err) {
             setLoading(false)

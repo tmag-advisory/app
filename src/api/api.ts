@@ -7,6 +7,7 @@ import type {
   LoginRequest,
   RegisterRequest,
   ForgotPasswordRequest,
+  ResendVerificationRequest,
   ResetPasswordRequest,
   AuthResponse,
   // Company
@@ -96,6 +97,9 @@ export const authApi = {
 
   resetPassword: (data: ResetPasswordRequest) =>
     api.post("/auth/reset-password", data).then((r) => r.data),
+
+  resendVerificationEmail: (data: ResendVerificationRequest) =>
+    api.post<{ message: string }>("/auth/resend-verification", data).then((r) => r.data),
 
   verifyEmail: (token: string) =>
     api.get<{ message: string }>("/auth/verify-email", { params: { token } }).then((r) => r.data),
@@ -418,9 +422,6 @@ export const profileApi = {
 
   updatePassword: (data: UpdateProfilePasswordRequest) =>
     api.put("/profile/password", data).then((r) => r.data),
-
-  resendVerificationEmail: () =>
-    api.post<{ message: string }>("/profile/resend-verification").then((r) => r.data),
 };
 
 // ─── Onboarding ──────────────────────────────────────────────

@@ -23,9 +23,9 @@ const Login = () => {
             if (stage > 4) {
                 // Onboarding complete — go to dashboard
                 navigate(canAccessHR(user) ? "/hr" : "/dashboard");
-            } else if (stage <= 1) {
+            } else if (stage <= 1 && !user.is_verified) {
                 // Not yet verified
-                navigate("/verify-email");
+                navigate(`/verify-email?email=${encodeURIComponent(email)}`);
             } else {
                 // Stages 2–4: go to onboarding; the page reads onboarding_stage from the user
                 navigate("/onboarding");
@@ -33,7 +33,7 @@ const Login = () => {
         } catch (err: unknown) {
             const errData = (err as { response?: { data?: { error?: string; message?: string }; status?: number } })?.response;
             if (errData?.status === 403 && errData?.data?.error === "email_not_verified") {
-                navigate("/verify-email");
+                navigate(`/verify-email?email=${encodeURIComponent(email)}`);
                 return;
             }
             const msg = errData?.data?.message ?? "Invalid email or password";
