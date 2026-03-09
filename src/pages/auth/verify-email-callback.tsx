@@ -1,11 +1,10 @@
 import { useEffect } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import AnimateIn from "../../components/animations/AnimateIn";
 import { useVerifyEmail, useAdvanceOnboardingStage } from "../../api/hooks";
 
 const VerifyEmailCallback = () => {
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
     const token = searchParams.get("token") ?? "";
 
     const { isSuccess, isError, isPending, error } = useVerifyEmail(token);
@@ -16,9 +15,9 @@ const VerifyEmailCallback = () => {
         if (!isSuccess) return;
         advanceStage.mutate(
             { stage: 2 },
-            { onSettled: () => navigate("/onboarding") },
+            // { onSettled: () => navigate("/login") },
         );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isSuccess]);
 
     if (!token) {
@@ -82,6 +81,13 @@ const VerifyEmailCallback = () => {
             <p className="text-sm text-body mb-8">
                 Your account is now active. Taking you to setup…
             </p>
+            <Link
+                to={"/login"}
+                type="submit"
+                className="w-full inline-block py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                Proceed to login
+            </Link>
         </AnimateIn>
     );
 };

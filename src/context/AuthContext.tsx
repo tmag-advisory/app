@@ -9,7 +9,7 @@ import {
 import type { LoginRequest, RegisterRequest } from "../api/types";
 import { canAccessHR } from "../lib/canAccessHr";
 import api, { getAuthCookie, removeAuthCookie, setAuthCookie } from "../api/axios";
-import { useNavigate } from "react-router-dom";
+
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -57,13 +57,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Revalidate session on mount / page reload via GET /profile
     const getCurrentProfile = useCallback(async () => {
         const token = getAuthCookie();
+        console.log(token)
         if (!token) {
             setIsLoading(false);
             return;
         }
         try {
             const res = await api.get("/profile");
-            const d = res.data;
+            const d = res.data.data
             setUser(buildAuthUser(d));
         } catch {
             removeAuthCookie();
@@ -79,8 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = useCallback(async (data: LoginRequest): Promise<AuthUser> => {
         const res = await api.post("/auth/login", data);
-        const d = res.data;
-
+        const d = res.data.data;
         setAuthCookie(d.accessToken, d.exp);
 
         const authUser = buildAuthUserFromLogin(d);
@@ -89,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const register = useCallback(async (data: Partial<RegisterRequest>): Promise<AuthUser> => {
+        console.log("register data", data)
         const res = await api.post("/auth/register", data);
         const d = res.data;
         setAuthCookie(d.accessToken, d.exp);

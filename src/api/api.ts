@@ -208,25 +208,25 @@ export const travelRequestsApi = {
 
 export const healthProfilesApi = {
   list: (params?: PaginationParams) =>
-    api.get<PaginatedResponse<HealthProfileResponse>>("/v1/health-profiles", { params: buildParams(params) }).then((r) => r.data),
+    api.get<PaginatedResponse<HealthProfileResponse>>("/health-profiles", { params: buildParams(params) }).then((r) => r.data),
 
   getMine: () =>
-    api.get<HealthProfileResponse>("/v1/health-profiles/my").then((r) => r.data),
+    api.get<HealthProfileResponse>("/health-profiles/my").then((r) => r.data),
 
   listAll: () =>
-    api.get<SelectOption[]>("/v1/health-profiles/all").then((r) => r.data),
+    api.get<SelectOption[]>("/health-profiles/all").then((r) => r.data),
 
   get: (id: number) =>
-    api.get<HealthProfileResponse>(`/v1/health-profiles/${id}`).then((r) => r.data),
+    api.get<HealthProfileResponse>(`/health-profiles/${id}`).then((r) => r.data),
 
   create: (data: CreateHealthProfileRequest) =>
-    api.post<HealthProfileResponse>("/v1/health-profiles", data).then((r) => r.data),
+    api.post<HealthProfileResponse>("/health-profiles", data).then((r) => r.data),
 
   update: (id: number, data: UpdateHealthProfileRequest) =>
-    api.put<HealthProfileResponse>(`/v1/health-profiles/${id}`, data).then((r) => r.data),
+    api.put<HealthProfileResponse>(`/health-profiles/${id}`, data).then((r) => r.data),
 
   delete: (id: number) =>
-    api.delete(`/v1/health-profiles/${id}`).then((r) => r.data),
+    api.delete(`/health-profiles/${id}`).then((r) => r.data),
 };
 
 // ─── Countries ───────────────────────────────────────────────
@@ -407,31 +407,31 @@ export const companyUsersApi = {
 
 export const profileApi = {
   get: () =>
-    api.get<ProfileResponse>("/v1/profile").then((r) => r.data),
+    api.get<ProfileResponse>("/profile").then((r) => r.data),
 
   update: (data: UpdateProfileRequest) =>
-    api.put<ProfileResponse>("/v1/profile", data).then((r) => r.data),
+    api.put<ProfileResponse>("/profile", data).then((r) => r.data),
 
   updateAvatar: (file: File) => {
     const form = new FormData();
     form.append("avatar", file);
-    return api.put<ProfileResponse>("/v1/profile/avatar", form, {
+    return api.put<ProfileResponse>("/profile/avatar", form, {
       headers: { "Content-Type": "multipart/form-data" },
     }).then((r) => r.data);
   },
 
   updatePassword: (data: UpdateProfilePasswordRequest) =>
-    api.put("/v1/profile/password", data).then((r) => r.data),
+    api.put("/profile/password", data).then((r) => r.data),
 };
 
 // ─── Onboarding ──────────────────────────────────────────────
 export const onboardingApi = {
   get: () =>
-    api.get<UserOnboardingResponse>("/v1/onboarding").then((r) => r.data),
+    api.get<UserOnboardingResponse>("/onboarding").then((r) => r.data),
 
   upsert: (data: UpsertOnboardingRequest) =>
-    api.post<UserOnboardingResponse>("/v1/onboarding", data).then((r) => r.data),
+    api.post<UserOnboardingResponse>("/onboarding", data).then((r) => r.data),
 
   advanceStage: (data: AdvanceStageRequest) =>
-    api.put<{ stage: number }>("/v1/onboarding/stage", data).then((r) => r.data),
+    api.put<{ stage: number }>("/onboarding/stage", data).then((r) => r.data),
 };

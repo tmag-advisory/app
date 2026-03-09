@@ -1,4 +1,4 @@
-import {lazy} from "react";
+import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import HomeLayout from "../layouts/homelayouts";
 import AuthLayout from "../layouts/authlayouts";
@@ -91,8 +91,11 @@ const router = createBrowserRouter([
             { path: "forgot-password", element: <ForgotPassword /> },
             { path: "reset-password", element: <ResetPassword /> },
             { path: "verify-email", element: <EmailVerification /> },
-            { path: "onboarding", element: <Onboarding /> },
         ],
+    },
+
+    {
+        path: "onboarding", element: <ProtectedRoute><Onboarding /></ProtectedRoute>
     },
 
     // Email verification callback (from email link: /auth/verify-email?token=...)
