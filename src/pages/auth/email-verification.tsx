@@ -2,6 +2,7 @@
 import AnimateIn from "../../components/animations/AnimateIn";
 import { useResendVerificationEmail } from "../../api";
 import { useSearchParams } from "react-router-dom";
+import { AxiosError } from "axios";
 
 const EmailVerification = () => {
     const resend = useResendVerificationEmail();
@@ -11,7 +12,7 @@ const EmailVerification = () => {
     const handleResend = () => {
         if (email) {
             resend.mutate({ email });
-        } 
+        }
     };
 
     return (
@@ -41,7 +42,9 @@ const EmailVerification = () => {
                     </button>
                 )}
                 {resend.isError && (
-                    <p className="text-xs text-red-500 mt-2">Failed to send. Please try again.</p>
+                    <p className="text-xs text-red-500 mt-2">
+                        {resend.error instanceof AxiosError && resend.error.response ? resend.error.response?.data.error : "An unknown error occurred"}
+                    </p>
                 )}
                 {!email && (
                     <p className="text-xs text-amber-600 mt-2">Email address missing from request.</p>

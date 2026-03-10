@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlanStore } from "../../stores/planStore";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
+import CountryPicker from "../../components/CountryPicker";
 import { LucideLoader2 } from "lucide-react";
 import type { TravelPlan } from "../../stores/planStore";
 
@@ -109,12 +110,10 @@ const CreatePlan = () => {
                             <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                                 Country
                             </label>
-                            <input
-                                type="text"
+                            <CountryPicker
                                 value={form.country}
-                                onChange={(e) => update("country", e.target.value)}
+                                onChange={(name) => update("country", name)}
                                 placeholder="e.g. Colombia"
-                                className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
                                 required
                             />
                         </div>

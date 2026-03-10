@@ -1,19 +1,39 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { usePlanStore } from "../../stores/planStore";
+import { useOnboarding } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
-import { LucideCoins, LucideFileText, LucidePlusCircle, LucideArrowRight } from "lucide-react";
+import { LucideCoins, LucideFileText, LucidePlusCircle, LucideArrowRight, LucideClipboardList } from "lucide-react";
 const riskColors = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
 const riskBg = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
 
 const DashboardOverview = () => {
     const { user } = useAuth();
     const plans = usePlanStore((s) => s.plans);
+    const { data: onboardingData } = useOnboarding();
+    const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaire_completed;
 
     return (
         <div>
             <DashboardHeader title={`Welcome back, ${user?.first_name ?? ""}.`} />
+
+            {/* Questionnaire banner */}
+            {showQuestionnaireBanner && (
+                <Link
+                    to="/onboarding/questionnaire"
+                    className="mb-6 flex items-center gap-4 p-5 rounded-2xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-colors duration-200 group"
+                >
+                    <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center flex-shrink-0">
+                        <LucideClipboardList className="w-5 h-5 text-accent" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-heading">Complete your health questionnaire</p>
+                        <p className="text-xs text-muted">Help our AI provide personalised travel health recommendations.</p>
+                    </div>
+                    <LucideArrowRight className="w-4 h-4 text-accent flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+            )}
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">

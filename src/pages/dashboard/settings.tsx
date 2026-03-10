@@ -1,12 +1,16 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useOnboarding } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
-import { LucideUser, LucideLock, LucideCreditCard } from "lucide-react";
+import { LucideUser, LucideLock, LucideCreditCard, LucideClipboardList, LucideArrowRight } from "lucide-react";
 
 type Tab = "profile" | "password" | "billing";
 
 const Settings = () => {
     const { user } = useAuth();
+    const { data: onboardingData } = useOnboarding();
+    const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaire_completed;
     const [tab, setTab] = useState<Tab>("profile");
 
     const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
@@ -38,6 +42,7 @@ const Settings = () => {
 
             {/* Profile tab */}
             {tab === "profile" && (
+                <>
                 <div className="bg-white rounded-2xl border border-border-light/50 p-6 md:p-8 max-w-2xl">
                     <h2 className="text-base font-semibold text-heading mb-6">Personal information</h2>
                     <div className="space-y-5">
@@ -66,6 +71,24 @@ const Settings = () => {
                         </button>
                     </div>
                 </div>
+
+                {/* Questionnaire card */}
+                {showQuestionnaireBanner && (
+                    <Link
+                        to="/onboarding/questionnaire"
+                        className="mt-6 max-w-2xl flex items-center gap-4 p-5 rounded-2xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-colors duration-200 group"
+                    >
+                        <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
+                            <LucideClipboardList className="w-5 h-5 text-accent" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-heading">Health questionnaire</p>
+                            <p className="text-xs text-muted">Complete your travel health questionnaire for personalised recommendations.</p>
+                        </div>
+                        <LucideArrowRight className="w-4 h-4 text-accent shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                    </Link>
+                )}
+                </>
             )}
 
             {/* Password tab */}

@@ -14,9 +14,10 @@ import api, { getAuthCookie, removeAuthCookie, setAuthCookie } from "../api/axio
 // ─── Types ───────────────────────────────────────────────────
 
 export interface AuthRole {
-    id: number;
-    name: string;
+    role_id: number;
+    role_name: string;
 }
+
 
 export interface AuthUser {
     id: number;
@@ -25,13 +26,11 @@ export interface AuthUser {
     username: string;
     phone: string;
     email: string;
-    role_id: number;
-    role_name: string;
     avatar_url: string;
     last_login: string;
     onboarding_stage: number;
     is_verified: boolean;
-    role: AuthRole;
+    extend: AuthRole;
 }
 
 
@@ -57,7 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Revalidate session on mount / page reload via GET /profile
     const getCurrentProfile = useCallback(async () => {
         const token = getAuthCookie();
-        console.log(token)
         if (!token) {
             setIsLoading(false);
             return;
@@ -89,7 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const register = useCallback(async (data: Partial<RegisterRequest>): Promise<AuthUser> => {
-        console.log("register data", data)
         const res = await api.post("/auth/register", data);
         const d = res.data;
         setAuthCookie(d.accessToken, d.exp);
@@ -134,6 +131,8 @@ export const useAuth = (): AuthContextValue => {
 // ─── Helpers ─────────────────────────────────────────────────
 
 function buildAuthUser(d: Record<string, unknown>): AuthUser {
+    const extend = d.extend as { role_id?: number; role_name?: string } | undefined;
+
     return {
         id: d.id as number,
         first_name: (d.first_name as string) ?? "",
@@ -141,26 +140,20 @@ function buildAuthUser(d: Record<string, unknown>): AuthUser {
         username: (d.username as string) ?? "",
         phone: (d.phone as string) ?? "",
         email: (d.email as string) ?? "",
-        role_id: (d.role_id as number) ?? 0,
-        role_name: (d.role_name as string) ?? "",
         onboarding_stage: (d.onboarding_stage as number) ?? 0,
         is_verified: (d.is_verified as boolean) ?? false,
         avatar_url: (d.avatar_url as string) ?? "",
         last_login: (d.last_login as string) ?? "",
-        role: {
-            id: (d.role_id as number) ?? 0,
-            name: (d.role_name as string) ?? "",
+        extend: {
+            role_id: extend?.role_id ?? 0,
+            role_name: extend?.role_name ?? "",
         },
     };
 }
 
 // Login/register responses include extend.role
 function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
-    const extend = d.extend as { role?: { id: number; name: string } } | undefined;
-    const role: AuthRole = extend?.role ?? {
-        id: (d.role_id as number) ?? 0,
-        name: (d.role_name as string) ?? "",
-    };
+    const extend = d.extend as { role_id?: number; role_name?: string } | undefined;
 
     return {
         id: d.id as number,
@@ -169,12 +162,13 @@ function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
         username: (d.username as string) ?? "",
         phone: (d.phone as string) ?? "",
         email: (d.email as string) ?? "",
-        role_id: role.id,
-        role_name: role.name,
         onboarding_stage: (d.onboarding_stage as number) ?? 0,
         is_verified: (d.is_verified as boolean) ?? false,
         avatar_url: (d.avatar_url as string) ?? "",
         last_login: (d.last_login as string) ?? "",
-        role,
+        extend: {
+            role_id: extend?.role_id ?? 0,
+            role_name: extend?.role_name ?? "",
+        },
     };
 }

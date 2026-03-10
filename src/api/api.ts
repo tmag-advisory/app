@@ -57,6 +57,7 @@ import type {
   // Company User
   CompanyUserResponse,
   CreateCompanyUserRequest,
+  MyCompanyMembership,
   // Profile
   ProfileResponse,
   UpdateProfileRequest,
@@ -65,6 +66,9 @@ import type {
   UserOnboardingResponse,
   UpsertOnboardingRequest,
   AdvanceStageRequest,
+  OnboardingQuestionCategoryResponse,
+  SubmitQuestionnaireRequest,
+  QuestionnaireProgressRequest,
 } from "./types";
 
 // ─── Generic CRUD helpers ────────────────────────────────────
@@ -236,7 +240,8 @@ export const countriesApi = {
     api.get<PaginatedResponse<CountryResponse>>("/countries", { params: buildParams(params) }).then((r) => r.data),
 
   listAll: () =>
-    api.get<SelectOption[]>("/countries/all").then((r) => r.data),
+    api.get<{ message: string; success: boolean; data: CountryResponse[] }>("/countries/all")
+      .then((r) => r.data.data),
 
   get: (id: number) =>
     api.get<CountryResponse>(`/countries/${id}`).then((r) => r.data),
@@ -401,6 +406,10 @@ export const companyUsersApi = {
 
   delete: (id: number) =>
     api.delete(`/company-users/${id}`).then((r) => r.data),
+
+  mine: () =>
+    api.get<{ success: boolean; data: MyCompanyMembership[] }>("/profile/companies")
+      .then((r) => r.data.data),
 };
 
 // ─── Profile ─────────────────────────────────────────────────
@@ -434,4 +443,16 @@ export const onboardingApi = {
 
   advanceStage: (data: AdvanceStageRequest) =>
     api.put<{ stage: number }>("/onboarding/stage", data).then((r) => r.data),
+
+  getQuestions: () =>
+    api.get<{ success: boolean; data: OnboardingQuestionCategoryResponse[] }>("/onboarding/questions").then((r) => r.data.data),
+
+  submitQuestionnaire: (data: SubmitQuestionnaireRequest) =>
+    api.post("/onboarding/questionnaire", data).then((r) => r.data),
+
+  saveProgress: (data: QuestionnaireProgressRequest) =>
+    api.post("/onboarding/progress", data).then((r) => r.data),
+
+  getProgress: () =>
+    api.get<{ success: boolean; data: unknown }>("/onboarding/progress").then((r) => r.data.data),
 };

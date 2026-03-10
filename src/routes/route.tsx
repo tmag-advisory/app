@@ -34,6 +34,7 @@ const ResetPassword = lazy(() => import("../pages/auth/reset-password"));
 const EmailVerification = lazy(() => import("../pages/auth/email-verification"));
 const VerifyEmailCallback = lazy(() => import("../pages/auth/verify-email-callback"));
 const Onboarding = lazy(() => import("../pages/auth/onboarding"));
+const TravelHealthQuestionnaire = lazy(() => import("../pages/auth/travel-health-questionnaire"));
 
 // Individual dashboard (lazy-loaded)
 const DashboardOverview = lazy(() => import("../pages/dashboard/overview"));
@@ -96,6 +97,10 @@ const router = createBrowserRouter([
 
     {
         path: "onboarding", element: <ProtectedRoute><Onboarding /></ProtectedRoute>
+    },
+
+    {
+        path: "onboarding/questionnaire", element: <ProtectedRoute><TravelHealthQuestionnaire /></ProtectedRoute>
     },
 
     // Email verification callback (from email link: /auth/verify-email?token=...)

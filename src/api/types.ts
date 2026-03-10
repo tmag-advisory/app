@@ -474,6 +474,18 @@ export interface CompanyUserResponse {
   user?: { id: number; name: string };
 }
 
+export interface MyCompanyMembership {
+  id: number;
+  name: string;
+  industry: string;
+  plan: string;
+  company_code: string;
+  total_credits: number;
+  used_credits: number;
+  employee_count: number;
+  role: string;
+}
+
 export interface CreateCompanyUserRequest {
   company_id: number;
   user_id: number;
@@ -489,6 +501,7 @@ export interface UserOnboardingResponse {
   nationality: string;
   company_code: string;
   completed_at?: string;
+  questionnaire_completed?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -502,4 +515,28 @@ export interface UpsertOnboardingRequest {
 
 export interface AdvanceStageRequest {
   stage: number;
+}
+
+// ─── Onboarding Questionnaire ───────────────────────────────
+
+export interface OnboardingQuestionCategoryResponse {
+  id: number;
+  category_key: string;
+  category_name: string;
+  category_icon: string;
+  category_description: string;
+  display_order: number;
+  is_optional: boolean;
+  questions: string; // JSON string of Question[]
+}
+
+export interface SubmitQuestionnaireRequest {
+  responses: string;
+  complete: boolean;
+}
+
+export interface QuestionnaireProgressRequest {
+  answers: Record<string, unknown>;
+  categoryIndex: number;
+  questionIndex: number;
 }

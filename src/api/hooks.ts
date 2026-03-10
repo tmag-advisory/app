@@ -46,8 +46,9 @@ import type {
   UpdateProfilePasswordRequest,
   UpsertOnboardingRequest,
   AdvanceStageRequest,
+  SubmitQuestionnaireRequest,
+  QuestionnaireProgressRequest,
 } from "./types";
-import api from "./axios";
 
 // ─── Query Keys ──────────────────────────────────────────────
 
@@ -171,6 +172,7 @@ export const queryKeys = {
     selectAll: () => [...queryKeys.companyUsers.all, "select"] as const,
     details: () => [...queryKeys.companyUsers.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.companyUsers.details(), id] as const,
+    mine: () => [...queryKeys.companyUsers.all, "mine"] as const,
   },
   profile: {
     all: ["profile"] as const,
@@ -487,7 +489,7 @@ export function useCountries(params?: PaginationParams) {
 }
 
 export function useCountriesSelect() {
-  return useQuery({
+  return useQuery<import("./types").CountryResponse[]>({
     queryKey: queryKeys.countries.selectAll(),
     queryFn: () => countriesApi.listAll(),
   });
@@ -775,6 +777,14 @@ export function useDeleteCompanyUser() {
   });
 }
 
+export function useMyCompanies(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.companyUsers.mine(),
+    queryFn: () => companyUsersApi.mine(),
+    enabled: options?.enabled ?? true,
+  });
+}
+
 // ─── Profile Hooks ───────────────────────────────────────────
 
 export function useProfile() {
@@ -837,5 +847,39 @@ export function useAdvanceOnboardingStage() {
       qc.invalidateQueries({ queryKey: queryKeys.profile.all });
       qc.invalidateQueries({ queryKey: queryKeys.onboarding.all });
     },
+  });
+}
+
+// ─── Onboarding Questionnaire Hooks ──────────────────────────
+
+export function useOnboardingQuestions() {
+  return useQuery({
+    queryKey: [...queryKeys.onboarding.all, "questions"],
+    queryFn: () => onboardingApi.getQuestions(),
+  });
+}
+
+export function useSubmitQuestionnaire() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SubmitQuestionnaireRequest) => onboardingApi.submitQuestionnaire(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.onboarding.all });
+      qc.invalidateQueries({ queryKey: queryKeys.profile.all });
+    },
+  });
+}
+
+export function useSaveQuestionnaireProgress() {
+  return useMutation({
+    mutationFn: (data: QuestionnaireProgressRequest) => onboardingApi.saveProgress(data),
+  });
+}
+
+export function useGetQuestionnaireProgress() {
+  return useQuery({
+    queryKey: [...queryKeys.onboarding.all, "progress"],
+    queryFn: () => onboardingApi.getProgress(),
+    retry: false,
   });
 }

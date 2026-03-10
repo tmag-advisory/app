@@ -59,38 +59,6 @@ export interface Employee {
   plansGenerated: number;
 }
 
-// ─── Mock companies ──────────────────────────────────────────
-
-const MOCK_COMPANIES: Company[] = [
-  {
-    id: "c1",
-    name: "TechCorp",
-    industry: "Technology",
-    totalCredits: 200,
-    usedCredits: 15,
-    employeeCount: 5,
-    plan: "professional",
-  },
-  {
-    id: "c2",
-    name: "GlobalHealth Inc.",
-    industry: "Healthcare",
-    totalCredits: 500,
-    usedCredits: 48,
-    employeeCount: 8,
-    plan: "enterprise",
-  },
-  {
-    id: "c3",
-    name: "Meridian Consulting",
-    industry: "Consulting",
-    totalCredits: 100,
-    usedCredits: 7,
-    employeeCount: 3,
-    plan: "starter",
-  },
-];
-
 // ─── Mock plans ──────────────────────────────────────────────
 
 const MOCK_PLANS: TravelPlan[] = [
@@ -303,6 +271,7 @@ interface PlanState {
   travelRequests: TravelRequest[];
 
   // Company actions
+  setCompanies: (companies: Company[]) => void;
   selectCompany: (companyId: string) => void;
   getCompany: (id: string) => Company | undefined;
   selectedCompany: () => Company | undefined;
@@ -320,20 +289,22 @@ interface PlanState {
 
 export const usePlanStore = create<PlanState>()(
   persist((set, get) => ({
-    companies: MOCK_COMPANIES,
-    selectedCompanyId: MOCK_COMPANIES[0].id,
+    companies: [],
+    selectedCompanyId: null,
     plans: MOCK_PLANS,
     employees: MOCK_EMPLOYEES,
     travelRequests: MOCK_REQUESTS,
 
     // Company actions
+    setCompanies: (companies) => set({ companies }),
     selectCompany: (companyId) => set({ selectedCompanyId: companyId }),
 
     getCompany: (id) => get().companies.find((c) => c.id === id),
 
     selectedCompany: () => {
       const { companies, selectedCompanyId } = get();
-      return companies.find((c) => c.id === selectedCompanyId);
+      if (companies.length === 0) return undefined;
+      return companies.find((c) => c.id === selectedCompanyId) ?? companies[0];
     },
 
     // Filtered selectors

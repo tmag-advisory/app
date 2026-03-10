@@ -1,6 +1,4 @@
-import { create } from "zustand"
-import { createJSONStorage, persist } from "zustand/middleware"
-
+import { create } from "zustand";
 
 export type OnboardingStage = 0 | 1 | 2 | 3 | 4;
 
@@ -21,25 +19,20 @@ export type OnboardingState = {
     reset: () => void;
 };
 
-
 const steps: OnboardingStep[] = [
     { stage: 0, title: "Register", content: "Welcome to the onboarding process.", link: "/register", skippable: false, nextStage: 1 },
     { stage: 1, title: "Verify Email", content: "Please verify your email.", link: "/verify-email", skippable: false, nextStage: 2 },
     { stage: 2, title: "User Type", content: "Select Between an Individual and a Company", link: "/user-type", skippable: false, nextStage: 3 },
     { stage: 3, title: "Profile", content: "Update Some Other Core Details on the Profile", link: "/profile", skippable: false, nextStage: 4 },
-    { stage: 4, title: "Health", content: "Update Health Related Details", link: "/health", skippable: true }
-]
+    { stage: 4, title: "Health", content: "Update Health Related Details", link: "/health", skippable: true },
+];
 
-
-export const useOnboardingStore = create<OnboardingState>()(persist((set) => ({
+export const useOnboardingStore = create<OnboardingState>()((set) => ({
     stage: null,
     userType: null,
     setStage: (stage?: OnboardingStage) => {
-        return set({ stage: steps.find((step) => step.stage === stage) })
+        return set({ stage: steps.find((step) => step.stage === stage) });
     },
     setUserType: (userType: "individual" | "company") => set({ userType }),
     reset: () => set({ stage: null, userType: null }),
-}), {
-    name: "onboarding-store",
-    storage: createJSONStorage(() => localStorage)
 }));

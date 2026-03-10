@@ -47,6 +47,7 @@ import type { Company } from "../../stores/planStore";
 import { useState } from "react";
 import { useSidebarStore } from "../../stores/sidebarStore";
 import { canAccessHR } from "../../lib/canAccessHr";
+import { useMyCompanies } from "../../api/hooks";
 
 const CompanySwitcher = ({
     companies,
@@ -125,12 +126,32 @@ const Sidebar = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { open, close } = useSidebarStore();
-    const { companies, selectedCompanyId, selectCompany } = usePlanStore();
+    const { companies, selectedCompanyId, selectCompany, setCompanies } = usePlanStore();
 
     const isHR = canAccessHR(user);
     const navItems = isHR ? hrNav : individualNav;
 
-    const currentCompany = companies.find((c) => c.id === selectedCompanyId);
+    const { data: myCompanies, isSuccess } = useMyCompanies({ enabled: isHR });
+
+    // Sync API companies into planStore and auto-select on load
+    useEffect(() => {
+        if (!isSuccess || !myCompanies || myCompanies.length === 0) return;
+        const mapped: Company[] = myCompanies.map((c) => ({
+            id: String(c.id),
+            name: c.name,
+            industry: c.industry ?? "",
+            totalCredits: c.total_credits ?? 0,
+            usedCredits: c.used_credits ?? 0,
+            employeeCount: c.employee_count ?? 0,
+            plan: (c.plan as Company["plan"]) ?? "starter",
+        }));
+        setCompanies(mapped);
+        if (!selectedCompanyId || !mapped.some((c) => c.id === selectedCompanyId)) {
+            selectCompany(mapped[0].id);
+        }
+    }, [isSuccess, myCompanies]);
+
+    const currentCompany = companies.find((c) => c.id === selectedCompanyId) ?? companies[0];
 
     const handleLogout = async () => {
         await logout();
