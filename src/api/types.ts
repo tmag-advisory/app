@@ -1,11 +1,25 @@
+// ─── Billing ─────────────────────────────────────────────────
+
+export type BillingCurrency = "USD" | "NGN" | "EUR" | "GBP";
+
 // ─── Common ──────────────────────────────────────────────────
+
+export interface ApiResponse<T> {
+  message: string;
+  success: boolean;
+  data: T;
+}
+
+export interface Pagination {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
 
 export interface PaginatedResponse<T> {
   data: T[];
-  total: number;
-  page: number;
-  per_page: number;
-  total_pages: number;
+  pagination: Pagination;
 }
 
 export interface SelectOption {
@@ -19,6 +33,7 @@ export interface PaginationParams {
   search?: string;
   sort?: string;
   order?: "asc" | "desc";
+  companyId?: number;
 }
 
 // ─── Auth ────────────────────────────────────────────────────
@@ -61,53 +76,59 @@ export interface AuthResponse {
   role_id: number;
   role_name: string;
   avatar_url: string;
+  onboarding_stage: number;
+  is_verified: boolean;
   last_login: string;
-  access_token: string;
+  accessToken: string; // Backend uses accessToken (camelCase) in AuthResponse.java @JsonProperty("accessToken")
   exp: number;
-}
-
-export interface ResendVerificationEmailRequest {
-  email: string;
+  extend?: any;
 }
 
 // ─── User ────────────────────────────────────────────────────
 
 export interface UserResponse {
   id: number;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
+  name: string;
   username: string;
   phone: string;
   email: string;
-  role_id: number;
-  role_name: string;
-  avatar_url: string;
-  is_verified: boolean;
-  last_login: string;
+  onboardingStage: number;
+  onboarded: boolean;
+  isVerified: boolean;
+  lastLogin: string;
+  avatarUrl: string;
+  credits: number;
+  type: string;
+  roleId: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Company ─────────────────────────────────────────────────
 
 export interface CompanyResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   name: string;
   industry: string;
+  totalCredits: number;
+  usedCredits: number;
+  employeeCount: number;
   plan: string;
-  total_credits: number;
-  used_credits: number;
-  employee_count: number;
-  logo?: { url: string; name: string };
+  companyCode: string;
+  logoId?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateCompanyRequest {
   name: string;
   industry: string;
   plan: string;
-  total_credits: number;
-  used_credits: number;
-  employee_count: number;
+  totalCredits: number;
+  usedCredits: number;
+  employeeCount: number;
 }
 
 export interface UpdateCompanyRequest extends Partial<CreateCompanyRequest> { }
@@ -116,28 +137,29 @@ export interface UpdateCompanyRequest extends Partial<CreateCompanyRequest> { }
 
 export interface EmployeeResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   name: string;
   email: string;
   department: string;
+  creditsUsed: number;
+  creditsAllocated: number;
   status: string;
-  credits_used: number;
-  credits_allocated: number;
-  plans_generated: number;
-  company?: { id: number; name: string };
+  plansGenerated: number;
+  companyId: number;
+  userId?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateEmployeeRequest {
-  company_id: number;
-  user_id?: number;
+  companyId: number;
+  userId?: number;
   name: string;
   email: string;
   department: string;
   status: string;
-  credits_used: number;
-  credits_allocated: number;
-  plans_generated: number;
+  creditsUsed: number;
+  creditsAllocated: number;
+  plansGenerated: number;
 }
 
 export interface UpdateEmployeeRequest extends Partial<CreateEmployeeRequest> { }
@@ -146,42 +168,43 @@ export interface UpdateEmployeeRequest extends Partial<CreateEmployeeRequest> { 
 
 export interface TravelPlanResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   destination: string;
   country: string;
-  duration: string;
+  duration: number;
   purpose: string;
-  risk_score: string;
+  riskScore: number;
   status: string;
-  medical_considerations: string;
+  medicalConsiderations: string;
   vaccinations: string;
-  health_alerts: string;
-  safety_advisories: string;
+  healthAlerts: string;
+  safetyAdvisories: string;
   medications: string;
-  water_food: string;
-  emergency_contacts: string;
-  company?: { id: number; name: string };
-  employee?: { id: number; name: string };
+  waterFood: string;
+  emergencyContacts: string;
+  companyId?: number;
+  employeeId?: number;
+  userId?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateTravelPlanRequest {
-  company_id?: number;
-  employee_id?: number;
-  user_id?: number;
+  companyId?: number;
+  employeeId?: number;
+  userId?: number;
   destination: string;
   country: string;
-  duration: string;
+  duration: number;
   purpose: string;
-  risk_score?: string;
+  riskScore?: number;
   status?: string;
-  medical_considerations?: string;
+  medicalConsiderations?: string;
   vaccinations?: string;
-  health_alerts?: string;
-  safety_advisories?: string;
+  healthAlerts?: string;
+  safetyAdvisories?: string;
   medications?: string;
-  water_food?: string;
-  emergency_contacts?: string;
+  waterFood?: string;
+  emergencyContacts?: string;
 }
 
 export interface UpdateTravelPlanRequest extends Partial<CreateTravelPlanRequest> { }
@@ -190,24 +213,25 @@ export interface UpdateTravelPlanRequest extends Partial<CreateTravelPlanRequest
 
 export interface TravelRequestResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   destination: string;
   dates: string;
   status: string;
-  submitted_at?: string;
-  company?: { id: number; name: string };
-  employee?: { id: number; name: string };
+  submittedAt?: string;
+  companyId?: number;
+  employeeId?: number;
+  userId?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateTravelRequestRequest {
-  company_id: number;
-  employee_id: number;
+  companyId: number;
+  employeeId: number;
   destination: string;
   dates: string;
   status: string;
-  user_id: number;
-  submitted_at?: string;
+  userId: number;
+  submittedAt?: string;
 }
 
 export interface UpdateTravelRequestRequest extends Partial<CreateTravelRequestRequest> { }
@@ -216,14 +240,15 @@ export interface UpdateTravelRequestRequest extends Partial<CreateTravelRequestR
 
 export interface HealthProfileResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   conditions: string;
   medications: string;
   allergies: string;
   blood_type: string;
   emergency_contact_name: string;
   emergency_contact_phone: string;
+  user_id: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateHealthProfileRequest {
@@ -242,21 +267,21 @@ export interface UpdateHealthProfileRequest extends Partial<CreateHealthProfileR
 
 export interface CountryResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   name: string;
   code: string;
   region: string;
   continent: string;
-  risk_level: string;
-  visa_info: string;
+  riskLevel: string;
+  visaInfo: string;
   currency: string;
   language: string;
   timezone: string;
-  health_advisory: string;
-  travel_advisory: string;
-  emergency_number: string;
-  is_active: boolean;
+  healthAdvisory: string;
+  travelAdvisory: string;
+  emergencyNumber: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateCountryRequest {
@@ -264,15 +289,15 @@ export interface CreateCountryRequest {
   code: string;
   region: string;
   continent: string;
-  risk_level: string;
-  visa_info: string;
+  riskLevel: string;
+  visaInfo: string;
   currency: string;
   language: string;
   timezone: string;
-  health_advisory: string;
-  travel_advisory: string;
-  emergency_number: string;
-  is_active: boolean;
+  healthAdvisory: string;
+  travelAdvisory: string;
+  emergencyNumber: string;
+  isActive: boolean;
 }
 
 export interface UpdateCountryRequest extends Partial<CreateCountryRequest> { }
@@ -281,53 +306,54 @@ export interface UpdateCountryRequest extends Partial<CreateCountryRequest> { }
 
 export interface CountryHealthAlertResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   title: string;
   description: string;
   severity: string;
   source: string;
-  is_active: boolean;
-  published_at?: string;
-  expires_at?: string;
-  country?: { id: number; name: string };
+  isActive: boolean;
+  publishedAt?: string;
+  expiresAt?: string;
+  countryId?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Country Accommodation ───────────────────────────────────
 
 export interface CountryAccommodationResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   name: string;
   type: string;
   address: string;
   city: string;
-  price_range: string;
+  priceRange: string;
   rating: number;
-  has_medical_facility: boolean;
+  hasMedicalFacility: boolean;
   notes: string;
-  country?: { id: number; name: string };
+  countryId?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Credit ──────────────────────────────────────────────────
 
 export interface CreditResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   amount: number;
-  balance_after: number;
+  balanceAfter: number;
   type: string;
   reference: string;
-  company?: { id: number; name: string };
+  companyId?: number;
+  userId?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateCreditRequest {
-  company_id?: number;
-  user_id?: number;
+  companyId?: number;
+  userId?: number;
   amount: number;
-  balance_after: number;
+  balanceAfter: number;
   type: string;
   reference: string;
 }
@@ -336,22 +362,23 @@ export interface CreateCreditRequest {
 
 export interface NotificationResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   title: string;
   message: string;
   type: string;
   link: string;
-  is_read: boolean;
+  isRead: boolean;
+  userId: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateNotificationRequest {
-  user_id: number;
+  userId: number;
   title: string;
   message: string;
   type: string;
   link: string;
-  is_read: boolean;
+  isRead: boolean;
 }
 
 export interface UpdateNotificationRequest extends Partial<CreateNotificationRequest> { }
@@ -360,92 +387,99 @@ export interface UpdateNotificationRequest extends Partial<CreateNotificationReq
 
 export interface PricingPlanResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   name: string;
   period: string;
   description: string;
   features: string;
   price: number;
-  credits_included: number;
+  creditsIncluded: number;
   position: number;
-  is_active: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Invoice ─────────────────────────────────────────────────
 
 export interface InvoiceResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   amount: number;
   currency: string;
   status: string;
   description: string;
-  payment_method: string;
-  issued_at?: string;
-  due_date?: string;
-  paid_at?: string;
+  paymentMethod: string;
+  issuedAt?: string;
+  dueDate?: string;
+  paidAt?: string;
+  userId?: number;
+  companyId?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateInvoiceRequest {
-  user_id?: number;
-  company_id?: number;
+  userId?: number;
+  companyId?: number;
   amount: number;
   currency: string;
   status: string;
   description: string;
-  payment_method: string;
-  issued_at?: string;
-  due_date?: string;
-  paid_at?: string;
+  paymentMethod: string;
+  issuedAt?: string;
+  dueDate?: string;
+  paidAt?: string;
 }
 
 // ─── Blog Post ───────────────────────────────────────────────
 
 export interface BlogPostResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   title: string;
   slug: string;
   excerpt: string;
   content: string;
   category: string;
-  read_time: number;
-  is_published: boolean;
-  published_at?: string;
-  featured_image?: { url: string; name: string };
+  readTime: number;
+  isPublished: boolean;
+  publishedAt?: string;
+  featuredImageId?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── FAQ Item ────────────────────────────────────────────────
 
 export interface FaqItemResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   question: string;
   answer: string;
   category: string;
   position: number;
-  is_published: boolean;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Profile ─────────────────────────────────────────────────
 
 export interface ProfileResponse {
   id: number;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
+  name: string;
   username: string;
   phone: string;
   email: string;
-  role_id: number;
-  role_name: string;
-  avatar_url: string;
-  onboarding_stage: number;
-  is_verified: boolean;
-  last_login: string;
+  onboardingStage: number;
+  onboarded: boolean;
+  isVerified: boolean;
+  lastLogin: string;
+  avatarUrl: string;
+  credits: number;
+  type: string;
+  roleId: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UpdateProfileRequest {
@@ -454,6 +488,7 @@ export interface UpdateProfileRequest {
   username?: string;
   phone?: string;
   email?: string;
+  billing_currency?: BillingCurrency;
 }
 
 export interface UpdateProfilePasswordRequest {
@@ -467,11 +502,11 @@ export interface UpdateProfilePasswordRequest {
 
 export interface CompanyUserResponse {
   id: number;
-  created_at: string;
-  updated_at: string;
   role: string;
-  company?: { id: number; name: string };
-  user?: { id: number; name: string };
+  companyId: number;
+  userId: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MyCompanyMembership {
@@ -483,12 +518,13 @@ export interface MyCompanyMembership {
   total_credits: number;
   used_credits: number;
   employee_count: number;
+  billing_currency: BillingCurrency;
   role: string;
 }
 
 export interface CreateCompanyUserRequest {
-  company_id: number;
-  user_id: number;
+  companyId: number;
+  userId: number;
   role: string;
 }
 
@@ -496,20 +532,20 @@ export interface CreateCompanyUserRequest {
 
 export interface UserOnboardingResponse {
   id: number;
-  user_id: number;
-  user_type: "individual" | "company" | "";
+  userId: number;
+  userType: "individual" | "company" | "";
   nationality: string;
-  company_code: string;
-  completed_at?: string;
-  questionnaire_completed?: boolean;
-  created_at: string;
-  updated_at: string;
+  companyCode: string;
+  completedAt?: string;
+  questionnaireCompleted?: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UpsertOnboardingRequest {
-  user_type?: "individual" | "company";
+  userType?: "individual" | "company";
   nationality?: string;
-  company_code?: string;
+  companyCode?: string;
   complete?: boolean;
 }
 

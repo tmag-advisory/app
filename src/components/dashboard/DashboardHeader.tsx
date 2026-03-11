@@ -11,7 +11,9 @@ const DashboardHeader = ({ title }: { title: string }) => {
 
     const isHR = canAccessHR(user);
     const company = isHR ? selectedCompany() : null;
-    const credits = company ? (company.totalCredits - company.usedCredits) : 0;
+    
+    // For HR view, show company credits. For individual view, show user credits.
+    const credits = isHR ? (company ? company.totalCredits - company.usedCredits : 0) : (user?.credits ?? 0);
 
     return (
         <header className="flex items-center justify-between mb-8 gap-4">

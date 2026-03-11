@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { usePlanStore } from "../../stores/planStore";
+import { useTravelRequests, useUpdateTravelRequest } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
-import type { TravelRequest } from "../../stores/planStore";
+import { LucideLoader2 } from "lucide-react";
 
-type Filter = "all" | TravelRequest["status"];
+type RequestStatus = "pending" | "approved" | "completed" | "rejected";
 
-const statusStyles: Record<TravelRequest["status"], string> = {
+const statusStyles: Record<string, string> = {
     pending: "text-gold bg-gold/10",
     approved: "text-accent bg-accent/10",
     completed: "text-muted bg-button-secondary",
@@ -13,11 +14,20 @@ const statusStyles: Record<TravelRequest["status"], string> = {
 };
 
 const TravelRequests = () => {
-    const { companyRequests, updateRequestStatus } = usePlanStore();
-    const travelRequests = companyRequests();
-    const [filter, setFilter] = useState<Filter>("all");
+    const { selectedCompanyId } = usePlanStore();
+    const companyIdNum = selectedCompanyId ? parseInt(selectedCompanyId) : undefined;
+    
+    const [filter, setFilter] = useState<string>("all");
 
-    const filters: { id: Filter; label: string; count: number }[] = [
+    const { data: requestsData, isLoading } = useTravelRequests({ 
+        companyId: companyIdNum 
+    });
+    
+    const updateRequest = useUpdateTravelRequest();
+
+    const travelRequests = requestsData?.data || [];
+
+    const filters = [
         { id: "all", label: "All", count: travelRequests.length },
         { id: "pending", label: "Pending", count: travelRequests.filter((r) => r.status === "pending").length },
         { id: "approved", label: "Approved", count: travelRequests.filter((r) => r.status === "approved").length },
@@ -25,6 +35,10 @@ const TravelRequests = () => {
     ];
 
     const filtered = filter === "all" ? travelRequests : travelRequests.filter((r) => r.status === filter);
+
+    const handleUpdateStatus = (id: number, status: RequestStatus) => {
+        updateRequest.mutate({ id, data: { status } as any });
+    };
 
     return (
         <div>
@@ -62,43 +76,53 @@ const TravelRequests = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border-light/50">
-                        {filtered.map((req) => (
-                            <tr key={req.id} className="hover:bg-background-secondary/50 transition-colors duration-150">
-                                <td className="px-6 py-4">
-                                    <p className="text-sm font-medium text-heading">{req.employeeName}</p>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-body">{req.destination}</td>
-                                <td className="px-6 py-4 text-sm text-muted hidden sm:table-cell">{req.dates}</td>
-                                <td className="px-6 py-4">
-                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusStyles[req.status]}`}>
-                                        {req.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-xs text-muted hidden sm:table-cell">{req.submittedAt}</td>
-                                <td className="px-6 py-4">
-                                    {req.status === "pending" && (
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => updateRequestStatus(req.id, "approved")}
-                                                className="text-xs font-semibold text-accent hover:underline cursor-pointer"
-                                            >
-                                                Approve
-                                            </button>
-                                            <button
-                                                onClick={() => updateRequestStatus(req.id, "rejected")}
-                                                className="text-xs font-semibold text-red-500 hover:underline cursor-pointer"
-                                            >
-                                                Reject
-                                            </button>
-                                        </div>
-                                    )}
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan={6} className="px-6 py-12 text-center">
+                                    <LucideLoader2 className="w-6 h-6 text-accent animate-spin mx-auto" />
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            filtered.map((req) => (
+                                <tr key={req.id} className="hover:bg-background-secondary/50 transition-colors duration-150">
+                                    <td className="px-6 py-4">
+                                        <p className="text-sm font-medium text-heading">{req.employeeName || `Employee #${req.employeeId}`}</p>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-body">{req.destination}</td>
+                                    <td className="px-6 py-4 text-sm text-muted hidden sm:table-cell">{req.dates}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusStyles[req.status] || statusStyles.pending}`}>
+                                            {req.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-muted hidden sm:table-cell">
+                                        {req.submittedAt ? new Date(req.submittedAt).toLocaleDateString() : "N/A"}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {req.status === "pending" && (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleUpdateStatus(req.id, "approved")}
+                                                    className="text-xs font-semibold text-accent hover:underline cursor-pointer"
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    onClick={() => handleUpdateStatus(req.id, "rejected")}
+                                                    className="text-xs font-semibold text-red-500 hover:underline cursor-pointer"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
                 </div>
-                {filtered.length === 0 && (
+                {!isLoading && filtered.length === 0 && (
                     <div className="px-6 py-12 text-center">
                         <p className="text-sm text-muted">No {filter === "all" ? "" : filter} requests found.</p>
                     </div>

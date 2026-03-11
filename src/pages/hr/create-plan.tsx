@@ -1,17 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlanStore } from "../../stores/planStore";
+import { useCreateTravelPlan, useEmployees } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import CountryPicker from "../../components/CountryPicker";
 import { LucideLoader2 } from "lucide-react";
-import type { TravelPlan } from "../../stores/planStore";
+import toast from "react-hot-toast";
 
 const HRCreatePlan = () => {
     const navigate = useNavigate();
-    const { companyEmployees, addPlan, selectedCompanyId, selectedCompany } = usePlanStore();
-    const employees = companyEmployees();
+    const { selectedCompanyId, selectedCompany } = usePlanStore();
     const company = selectedCompany();
+    const companyIdNum = selectedCompanyId ? parseInt(selectedCompanyId) : undefined;
+    
+    const { data: employeesData } = useEmployees({ companyId: companyIdNum });
+    const employees = employeesData?.data || [];
     const credits = company ? company.totalCredits - company.usedCredits : 0;
+
+    const createPlan = useCreateTravelPlan();
 
     const [form, setForm] = useState({
         employeeId: "",
@@ -21,48 +27,47 @@ const HRCreatePlan = () => {
         purpose: "Business",
         medicalConsiderations: "",
     });
-    const [processing, setProcessing] = useState(false);
 
     const update = (field: string, value: string) =>
         setForm((f) => ({ ...f, [field]: value }));
 
-    const selectedEmployee = employees.find((e) => e.id === form.employeeId);
+    const selectedEmployee = employees.find((e) => String(e.id) === form.employeeId);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        setProcessing(true);
-        setTimeout(() => {
-            const newPlan: TravelPlan = {
-                id: `p${Date.now()}`,
+        if (credits <= 0) {
+            toast.error("Company has no remaining credits.");
+            return;
+        }
+
+        try {
+            await createPlan.mutateAsync({
                 destination: form.destination,
                 country: form.country,
-                duration: form.duration,
+                duration: parseInt(form.duration) || 0,
                 purpose: form.purpose,
-                riskScore: "Moderate",
+                medicalConsiderations: form.medicalConsiderations,
+                companyId: companyIdNum,
+                employeeId: parseInt(form.employeeId),
                 status: "completed",
-                createdAt: new Date().toISOString().slice(0, 10),
-                companyId: selectedCompanyId ?? undefined,
-                vaccinations: [
-                    { name: "Hepatitis A", status: "Recommended" },
-                    { name: "Typhoid", status: "Recommended" },
-                ],
-                healthAlerts: ["Review local health advisories before departure"],
-                safetyAdvisories: ["Carry copies of prescriptions", "Register with embassy"],
-                medications: ["Standard travel first-aid kit"],
-                waterFood: ["Check local water safety"],
-                emergencyContacts: [{ label: "Local emergency", value: "Check destination" }],
-                employeeId: form.employeeId,
-                employeeName: selectedEmployee?.name,
-                medicalConsiderations: form.medicalConsiderations || undefined,
-            };
-            addPlan(newPlan);
-            setProcessing(false);
+                riskScore: 1,
+                vaccinations: "[]",
+                healthAlerts: "[]",
+                safetyAdvisories: "[]",
+                medications: "[]",
+                waterFood: "[]",
+                emergencyContacts: "[]",
+            });
+            
+            toast.success("Plan generated for employee!");
             navigate("/hr");
-        }, 2500);
+        } catch (error) {
+            toast.error("Failed to generate plan.");
+        }
     };
 
-    if (processing) {
+    if (createPlan.isPending) {
         return (
             <div>
                 <DashboardHeader title="Generating plan" />
@@ -114,8 +119,8 @@ const HRCreatePlan = () => {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Duration</label>
-                            <input type="text" value={form.duration} onChange={(e) => update("duration", e.target.value)} placeholder="e.g. 7 days" className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200" required />
+                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Duration (days)</label>
+                            <input type="number" value={form.duration} onChange={(e) => update("duration", e.target.value)} placeholder="e.g. 7" className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200" required />
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Purpose</label>
@@ -136,7 +141,7 @@ const HRCreatePlan = () => {
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-8 pt-6 border-t border-border-light/50">
                     <p className="text-xs text-muted">Uses <strong className="text-heading">1 credit</strong>. {credits} remaining.</p>
-                    <button type="submit" disabled={credits === 0} className="py-3 px-6 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200">
+                    <button type="submit" disabled={credits === 0 || createPlan.isPending} className="py-3 px-6 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200">
                         Generate plan
                     </button>
                 </div>

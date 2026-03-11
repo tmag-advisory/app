@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePlanStore } from "../../stores/planStore";
+import { useAuth } from "../../context/AuthContext";
+import { useCreateTravelPlan } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import CountryPicker from "../../components/CountryPicker";
 import { LucideLoader2 } from "lucide-react";
-import type { TravelPlan } from "../../stores/planStore";
+import toast from "react-hot-toast";
 
 const CreatePlan = () => {
     const navigate = useNavigate();
-    const addPlan = usePlanStore((s) => s.addPlan);
-    const credits: number = 100
+    const { user, refreshProfile } = useAuth();
+    const createPlan = useCreateTravelPlan();
+
+    const credits = user?.credits ?? 0;
+
     const [form, setForm] = useState({
         destination: "",
         country: "",
@@ -17,46 +21,45 @@ const CreatePlan = () => {
         purpose: "Leisure",
         medicalConsiderations: "",
     });
-    const [processing, setProcessing] = useState(false);
 
     const update = (field: string, value: string) =>
         setForm((f) => ({ ...f, [field]: value }));
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        setProcessing(true);
+        if (credits <= 0) {
+            toast.error("You don't have enough credits.");
+            return;
+        }
 
-        // Simulate AI processing
-        setTimeout(() => {
-            const newPlan: TravelPlan = {
-                id: `p${Date.now()}`,
+        try {
+            const result = await createPlan.mutateAsync({
                 destination: form.destination,
                 country: form.country,
-                duration: form.duration,
+                duration: parseInt(form.duration) || 0,
                 purpose: form.purpose,
-                riskScore: "Moderate",
-                status: "completed",
-                createdAt: new Date().toISOString().slice(0, 10),
-                vaccinations: [
-                    { name: "Hepatitis A", status: "Recommended" },
-                    { name: "Typhoid", status: "Recommended" },
-                    { name: "Tdap", status: "Optional" },
-                ],
-                healthAlerts: ["Review local health advisories before departure"],
-                safetyAdvisories: ["Carry copies of prescriptions", "Register with your embassy"],
-                medications: ["Standard travel first-aid kit", "Oral rehydration salts"],
-                waterFood: ["Check local water safety", "Eat at reputable establishments"],
-                emergencyContacts: [{ label: "Local emergency", value: "Check destination" }],
-                medicalConsiderations: form.medicalConsiderations || undefined,
-            };
-            addPlan(newPlan);
-            setProcessing(false);
-            navigate(`/dashboard/plans/${newPlan.id}`);
-        }, 2500);
+                medicalConsiderations: form.medicalConsiderations,
+                userId: user?.id,
+                status: "completed", // In a real app, AI might set this to 'processing'
+                riskScore: 1, // Default to Low risk for now
+                vaccinations: "[]",
+                healthAlerts: "[]",
+                safetyAdvisories: "[]",
+                medications: "[]",
+                waterFood: "[]",
+                emergencyContacts: "[]",
+            });
+
+            await refreshProfile(); // Refresh credits
+            toast.success("Plan generated successfully!");
+            navigate(`/dashboard/plans/${result.id}`);
+        } catch (error) {
+            toast.error("Failed to generate plan. Please try again.");
+        }
     };
 
-    if (processing) {
+    if (createPlan.isPending) {
         return (
             <div>
                 <DashboardHeader title="Generating your plan" />
@@ -121,13 +124,13 @@ const CreatePlan = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
                             <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                Duration
+                                Duration (days)
                             </label>
                             <input
-                                type="text"
+                                type="number"
                                 value={form.duration}
                                 onChange={(e) => update("duration", e.target.value)}
-                                placeholder="e.g. 10 days"
+                                placeholder="e.g. 10"
                                 className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
                                 required
                             />
@@ -169,7 +172,7 @@ const CreatePlan = () => {
                     </p>
                     <button
                         type="submit"
-                        disabled={credits === 0}
+                        disabled={credits === 0 || createPlan.isPending}
                         className="py-3 px-6 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
                     >
                         Generate plan

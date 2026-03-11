@@ -43,7 +43,7 @@ const fadeUp = {
 
 const Onboarding = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const { setUserType: storeSetUserType, reset: resetOnboarding } = useOnboardingStore();
 
     const { data: onboardingData } = useOnboarding();
@@ -85,13 +85,13 @@ const Onboarding = () => {
 
     useEffect(() => {
         if (onboardingData) {
-            if (onboardingData.user_type) {
-                setUserType(onboardingData.user_type as "individual" | "company");
+            if (onboardingData.userType) {
+                setUserType(onboardingData.userType as "individual" | "company");
             }
             setProfile(prev => ({
                 ...prev,
                 nationality: onboardingData.nationality || "",
-                companyCode: onboardingData.company_code || "",
+                companyCode: onboardingData.companyCode || "",
             }));
         }
     }, [onboardingData]);
@@ -124,8 +124,9 @@ const Onboarding = () => {
         setError("");
         try {
             storeSetUserType(userType);
-            await upsertOnboarding.mutateAsync({ user_type: userType });
+            await upsertOnboarding.mutateAsync({ userType: userType });
             await advanceStage.mutateAsync({ stage: 3 });
+            await refreshProfile();
             goTo(1);
         } catch {
             setError("Failed to save. Please try again.");
@@ -139,18 +140,20 @@ const Onboarding = () => {
             return;
         }
         try {
-            const [firstName, ...rest] = profile.firstName.trim().split(" ");
-            const lastName = rest.join(" ") || profile.lastName;
+            const firstName = profile.firstName.trim();
+            const lastName = profile.lastName.trim();
+
             await updateProfile.mutateAsync({
-                first_name: firstName || profile.firstName,
+                first_name: firstName,
                 last_name: lastName,
                 phone: profile.phone,
             });
             await upsertOnboarding.mutateAsync({
                 nationality: profile.nationality,
-                company_code: profile.companyCode,
+                companyCode: profile.companyCode,
             });
             await advanceStage.mutateAsync({ stage: 4 });
+            await refreshProfile();
             goTo(2);
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -186,6 +189,7 @@ const Onboarding = () => {
             }
             await upsertOnboarding.mutateAsync({ complete: true });
             await advanceStage.mutateAsync({ stage: 5 });
+            await refreshProfile();
 
             // HR users skip the questionnaire and go directly to the HR dashboard
             if (canAccessHR(user)) {
@@ -199,8 +203,9 @@ const Onboarding = () => {
         }
     };
 
-    const handleSkipQuestionnaire = () => {
+    const handleSkipQuestionnaire = async () => {
         resetOnboarding();
+        await refreshProfile();
         navigate(userType === "company" ? "/hr" : "/dashboard");
     };
 
@@ -229,7 +234,7 @@ const Onboarding = () => {
             </div>
 
             {/* Progress */}
-            <div className="px-6 sm:px-8 max-w-lg mx-auto w-full">
+            <div className="px-6 sm:px-8 max-w-2xl mx-auto w-full">
                 <div className="flex items-center gap-2">
                     {steps.map((s, i) => (
                         <div key={s} className="flex-1">
@@ -307,8 +312,8 @@ const Onboarding = () => {
                                             type="button"
                                             onClick={() => setUserType(opt.type)}
                                             className={`p-7 rounded-2xl border-2 text-left cursor-pointer transition-all duration-200 ${userType === opt.type
-                                                    ? "border-accent bg-accent/5 shadow-sm"
-                                                    : "border-border-light hover:border-border"
+                                                ? "border-accent bg-accent/5 shadow-sm"
+                                                : "border-border-light hover:border-border"
                                                 }`}
                                         >
                                             <opt.icon className={`w-7 h-7 mb-4 transition-colors ${userType === opt.type ? "text-accent" : "text-muted"
@@ -369,15 +374,27 @@ const Onboarding = () => {
                                     animate="visible"
                                     className="space-y-5"
                                 >
-                                    <div>
-                                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Full name</label>
-                                        <input
-                                            type="text"
-                                            value={profile.firstName}
-                                            onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
-                                            placeholder="Sarah Kimani"
-                                            className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
-                                        />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">First name</label>
+                                            <input
+                                                type="text"
+                                                value={profile.firstName}
+                                                onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
+                                                placeholder="Sarah"
+                                                className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Last name</label>
+                                            <input
+                                                type="text"
+                                                value={profile.lastName}
+                                                onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
+                                                placeholder="Kimani"
+                                                className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
+                                            />
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Phone (optional)</label>

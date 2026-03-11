@@ -1,18 +1,26 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { usePlanStore } from "../../stores/planStore";
-import { useOnboarding } from "../../api/hooks";
+import { useTravelPlans, useOnboarding } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
-import { LucideCoins, LucideFileText, LucidePlusCircle, LucideArrowRight, LucideClipboardList } from "lucide-react";
-const riskColors = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
-const riskBg = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
+import { LucideCoins, LucideFileText, LucidePlusCircle, LucideArrowRight, LucideClipboardList, LucideLoader2 } from "lucide-react";
+
+const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
+const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
+
+const getRiskLabel = (score: number) => {
+    if (score <= 1) return "Low";
+    if (score === 2) return "Moderate";
+    return "High";
+};
 
 const DashboardOverview = () => {
     const { user } = useAuth();
-    const plans = usePlanStore((s) => s.plans);
+    const { data: plansData, isLoading: plansLoading } = useTravelPlans({ per_page: 5 });
     const { data: onboardingData } = useOnboarding();
-    const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaire_completed;
+    
+    const plans = plansData?.data || [];
+    const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
 
     return (
         <div>
@@ -29,7 +37,7 @@ const DashboardOverview = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-heading">Complete your health questionnaire</p>
-                        <p className="text-xs text-muted">Help our AI provide personalised travel health recommendations.</p>
+                        <p className="text-xs text-muted">Help us provide personalised travel health recommendations.</p>
                     </div>
                     <LucideArrowRight className="w-4 h-4 text-accent flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
@@ -39,13 +47,13 @@ const DashboardOverview = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <StatCard
                     label="Credits remaining"
-                    value={0}
+                    value={user?.credits ?? 0}
                     icon={<LucideCoins className="w-4 h-4" />}
                     accent
                 />
                 <StatCard
                     label="Plans generated"
-                    value={plans.length}
+                    value={plansData?.pagination.total ?? 0}
                     icon={<LucideFileText className="w-4 h-4" />}
                 />
                 <Link
@@ -72,27 +80,42 @@ const DashboardOverview = () => {
                         View all <LucideArrowRight className="w-3 h-3" />
                     </Link>
                 </div>
-                <div className="divide-y divide-border-light/50">
-                    {plans.slice(0, 5).map((plan) => (
-                        <Link
-                            key={plan.id}
-                            to={`/dashboard/plans/${plan.id}`}
-                            className="flex items-center justify-between px-4 sm:px-6 py-4 hover:bg-background-secondary/50 transition-colors duration-150 gap-3"
-                        >
-                            <div>
-                                <p className="text-sm font-medium text-heading">
-                                    {plan.destination}
-                                </p>
-                                <p className="text-xs text-muted">
-                                    {plan.country} · {plan.duration} · {plan.createdAt}
-                                </p>
+                
+                {plansLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <LucideLoader2 className="w-6 h-6 text-accent animate-spin" />
+                    </div>
+                ) : (
+                    <div className="divide-y divide-border-light/50">
+                        {plans.map((plan) => {
+                            const riskLabel = getRiskLabel(plan.riskScore);
+                            return (
+                                <Link
+                                    key={plan.id}
+                                    to={`/dashboard/plans/${plan.id}`}
+                                    className="flex items-center justify-between px-4 sm:px-6 py-4 hover:bg-background-secondary/50 transition-colors duration-150 gap-3"
+                                >
+                                    <div>
+                                        <p className="text-sm font-medium text-heading">
+                                            {plan.destination}
+                                        </p>
+                                        <p className="text-xs text-muted">
+                                            {plan.country} · {plan.duration} days · {new Date(plan.createdAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${riskColors[riskLabel]} ${riskBg[riskLabel]}`}>
+                                        {riskLabel} risk
+                                    </span>
+                                </Link>
+                            );
+                        })}
+                        {plans.length === 0 && (
+                            <div className="px-6 py-12 text-center">
+                                <p className="text-sm text-muted">No plans generated yet.</p>
                             </div>
-                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${riskColors[plan.riskScore]} ${riskBg[plan.riskScore]}`}>
-                                {plan.riskScore} risk
-                            </span>
-                        </Link>
-                    ))}
-                </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -6,9 +6,10 @@ import {
     useCallback,
     type ReactNode,
 } from "react";
-import type { LoginRequest, RegisterRequest } from "../api/types";
+import type { BillingCurrency, LoginRequest, RegisterRequest } from "../api/types";
 import { canAccessHR } from "../lib/canAccessHr";
 import api, { getAuthCookie, removeAuthCookie, setAuthCookie } from "../api/axios";
+import { queryclient } from "../lib/queryclient";
 
 
 // ─── Types ───────────────────────────────────────────────────
@@ -30,6 +31,8 @@ export interface AuthUser {
     last_login: string;
     onboarding_stage: number;
     is_verified: boolean;
+    credits: number;
+    billing_currency: BillingCurrency;
     extend: AuthRole;
 }
 
@@ -43,6 +46,7 @@ interface AuthContextValue {
     register: (data: Partial<RegisterRequest>) => Promise<AuthUser>;
     logout: () => Promise<void>;
     canAccessHR: boolean;
+    refreshProfile: () => Promise<void>;
 }
 
 // ─── Context ─────────────────────────────────────────────────
@@ -88,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const register = useCallback(async (data: Partial<RegisterRequest>): Promise<AuthUser> => {
         const res = await api.post("/auth/register", data);
-        const d = res.data;
+        const d = res.data.data;
         setAuthCookie(d.accessToken, d.exp);
         const authUser = buildAuthUserFromLogin(d);
         setUser(authUser);
@@ -103,6 +107,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         removeAuthCookie();
         setUser(null);
+        queryclient.clear();
+    }, []);
+
+    const refreshProfile = useCallback(async () => {
+        try {
+            const res = await api.get("/profile");
+            const d = res.data.data;
+            setUser(buildAuthUser(d));
+        } catch (error) {
+            console.error("Failed to refresh profile:", error);
+        }
     }, []);
 
     return (
@@ -115,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 register,
                 logout,
                 canAccessHR: canAccessHR(user),
+                refreshProfile,
             }}
         >
             {children}
@@ -142,6 +158,8 @@ function buildAuthUser(d: Record<string, unknown>): AuthUser {
         email: (d.email as string) ?? "",
         onboarding_stage: (d.onboarding_stage as number) ?? 0,
         is_verified: (d.is_verified as boolean) ?? false,
+        credits: (d.credits as number) ?? 0,
+        billing_currency: ((d.billing_currency as BillingCurrency) ?? "NGN"),
         avatar_url: (d.avatar_url as string) ?? "",
         last_login: (d.last_login as string) ?? "",
         extend: {
@@ -164,6 +182,8 @@ function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
         email: (d.email as string) ?? "",
         onboarding_stage: (d.onboarding_stage as number) ?? 0,
         is_verified: (d.is_verified as boolean) ?? false,
+        credits: (d.credits as number) ?? 0,
+        billing_currency: ((d.billing_currency as BillingCurrency) ?? "NGN"),
         avatar_url: (d.avatar_url as string) ?? "",
         last_login: (d.last_login as string) ?? "",
         extend: {

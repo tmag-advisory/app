@@ -1,23 +1,20 @@
 import { usePlanStore } from "../../stores/planStore";
+import { useCredits } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
-import { LucideCoins, LucideTrendingUp, LucideCalendar } from "lucide-react";
+import { LucideCoins, LucideTrendingUp, LucideCalendar, LucideLoader2 } from "lucide-react";
 
 const Billing = () => {
-    const { companyEmployees, selectedCompany } = usePlanStore();
-    const employees = companyEmployees();
+    const { selectedCompanyId, selectedCompany, companyEmployees } = usePlanStore();
     const company = selectedCompany();
+    const employees = companyEmployees();
+    const companyIdNum = selectedCompanyId ? parseInt(selectedCompanyId) : undefined;
+
+    const { data: creditsData, isLoading } = useCredits({ companyId: companyIdNum });
+    const creditHistory = creditsData?.data || [];
 
     const totalAllocated = company?.totalCredits ?? 0;
     const totalUsed = company?.usedCredits ?? 0;
-
-    const creditHistory = [
-        { date: "Feb 15, 2026", action: "Purchased 50 credits", amount: "+50", balance: 142 },
-        { date: "Feb 10, 2026", action: "Plan generated — Anna Chen (Singapore)", amount: "-1", balance: 92 },
-        { date: "Feb 8, 2026", action: "Plan generated — Michael Osei (Lagos)", amount: "-1", balance: 93 },
-        { date: "Jan 20, 2026", action: "Purchased 100 credits", amount: "+100", balance: 94 },
-        { date: "Jan 15, 2026", action: "Plan generated — Priya Sharma (São Paulo)", amount: "-1", balance: -6 },
-    ];
 
     return (
         <div>
@@ -58,19 +55,33 @@ const Billing = () => {
                 <div className="px-4 sm:px-6 py-4 border-b border-border-light/50">
                     <h2 className="text-base font-semibold text-heading">Credit history</h2>
                 </div>
-                <div className="divide-y divide-border-light/50">
-                    {creditHistory.map((entry, i) => (
-                        <div key={i} className="flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
-                            <div>
-                                <p className="text-sm text-heading">{entry.action}</p>
-                                <p className="text-xs text-muted">{entry.date}</p>
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <LucideLoader2 className="w-6 h-6 text-accent animate-spin" />
+                    </div>
+                ) : (
+                    <div className="divide-y divide-border-light/50">
+                        {creditHistory.map((entry) => (
+                            <div key={entry.id} className="flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
+                                <div>
+                                    <p className="text-sm text-heading">{entry.reference || "Credit transaction"}</p>
+                                    <p className="text-xs text-muted">{new Date(entry.createdAt).toLocaleDateString()}</p>
+                                </div>
+                                <div className="text-right">
+                                    <span className={`text-sm font-semibold block ${entry.amount > 0 ? "text-accent" : "text-body"}`}>
+                                        {entry.amount > 0 ? `+${entry.amount}` : entry.amount}
+                                    </span>
+                                    <span className="text-[10px] text-muted">Bal: {entry.balanceAfter}</span>
+                                </div>
                             </div>
-                            <span className={`text-sm font-semibold ${entry.amount.startsWith("+") ? "text-accent" : "text-body"}`}>
-                                {entry.amount}
-                            </span>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                        {creditHistory.length === 0 && (
+                            <div className="px-6 py-12 text-center">
+                                <p className="text-sm text-muted">No transaction history found.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

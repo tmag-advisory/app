@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { usePlanStore } from "../../stores/planStore";
+import { useTravelPlan } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import {
     LucideArrowLeft,
@@ -10,14 +10,41 @@ import {
     LucidePill,
     LucideDroplets,
     LucidePhone,
+    LucideLoader2,
 } from "lucide-react";
 
-const riskColors = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
-const riskBg = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
+const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
+const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
+
+const getRiskLabel = (score: number) => {
+    if (score <= 1) return "Low";
+    if (score === 2) return "Moderate";
+    return "High";
+};
+
+const safeParse = (str: string | undefined, fallback: any = []) => {
+    if (!str) return fallback;
+    try {
+        return JSON.parse(str);
+    } catch (e) {
+        console.error("Failed to parse JSON:", str);
+        return fallback;
+    }
+};
 
 const PlanDetails = () => {
     const { id } = useParams<{ id: string }>();
-    const plan = usePlanStore((s) => s.getPlan(id ?? ""));
+    const planId = parseInt(id || "0");
+    const { data: plan, isLoading } = useTravelPlan(planId);
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center py-32">
+                <LucideLoader2 className="w-10 h-10 text-accent animate-spin mb-4" />
+                <p className="text-sm text-muted">Loading your plan...</p>
+            </div>
+        );
+    }
 
     if (!plan) {
         return (
@@ -31,14 +58,23 @@ const PlanDetails = () => {
         );
     }
 
+    const vaccinations = safeParse(plan.vaccinations);
+    const healthAlerts = safeParse(plan.healthAlerts);
+    const safetyAdvisories = safeParse(plan.safetyAdvisories);
+    const medications = safeParse(plan.medications);
+    const waterFood = safeParse(plan.waterFood);
+    const emergencyContacts = safeParse(plan.emergencyContacts);
+
+    const riskLabel = getRiskLabel(plan.riskScore);
+
     const sections = [
         {
             icon: <LucideSyringe className="w-4 h-4" />,
             title: "Vaccinations",
             content: (
                 <div className="space-y-2">
-                    {plan.vaccinations.map((v) => (
-                        <div key={v.name} className="flex items-center justify-between">
+                    {Array.isArray(vaccinations) ? vaccinations.map((v: any, i: number) => (
+                        <div key={i} className="flex items-center justify-between">
                             <span className="text-sm text-heading">{v.name}</span>
                             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                                 v.status === "Required" ? "text-red-600 bg-red-50" :
@@ -46,7 +82,7 @@ const PlanDetails = () => {
                                 "text-muted bg-button-secondary"
                             }`}>{v.status}</span>
                         </div>
-                    ))}
+                    )) : <p className="text-sm text-body">{plan.vaccinations}</p>}
                 </div>
             ),
         },
@@ -55,12 +91,12 @@ const PlanDetails = () => {
             title: "Health alerts",
             content: (
                 <ul className="space-y-2">
-                    {plan.healthAlerts.map((a) => (
-                        <li key={a} className="text-sm text-body flex items-start gap-2">
+                    {Array.isArray(healthAlerts) ? healthAlerts.map((a: string, i: number) => (
+                        <li key={i} className="text-sm text-body flex items-start gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-gold mt-1.5 shrink-0" />
                             {a}
                         </li>
-                    ))}
+                    )) : <p className="text-sm text-body">{plan.healthAlerts}</p>}
                 </ul>
             ),
         },
@@ -69,12 +105,12 @@ const PlanDetails = () => {
             title: "Safety advisories",
             content: (
                 <ul className="space-y-2">
-                    {plan.safetyAdvisories.map((a) => (
-                        <li key={a} className="text-sm text-body flex items-start gap-2">
+                    {Array.isArray(safetyAdvisories) ? safetyAdvisories.map((a: string, i: number) => (
+                        <li key={i} className="text-sm text-body flex items-start gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
                             {a}
                         </li>
-                    ))}
+                    )) : <p className="text-sm text-body">{plan.safetyAdvisories}</p>}
                 </ul>
             ),
         },
@@ -83,9 +119,9 @@ const PlanDetails = () => {
             title: "Medications",
             content: (
                 <ul className="space-y-2">
-                    {plan.medications.map((m) => (
-                        <li key={m} className="text-sm text-body">• {m}</li>
-                    ))}
+                    {Array.isArray(medications) ? medications.map((m: string, i: number) => (
+                        <li key={i} className="text-sm text-body">• {m}</li>
+                    )) : <p className="text-sm text-body">{plan.medications}</p>}
                 </ul>
             ),
         },
@@ -94,9 +130,9 @@ const PlanDetails = () => {
             title: "Water & food safety",
             content: (
                 <ul className="space-y-2">
-                    {plan.waterFood.map((w) => (
-                        <li key={w} className="text-sm text-body">• {w}</li>
-                    ))}
+                    {Array.isArray(waterFood) ? waterFood.map((w: string, i: number) => (
+                        <li key={i} className="text-sm text-body">• {w}</li>
+                    )) : <p className="text-sm text-body">{plan.waterFood}</p>}
                 </ul>
             ),
         },
@@ -105,12 +141,12 @@ const PlanDetails = () => {
             title: "Emergency contacts",
             content: (
                 <div className="space-y-2">
-                    {plan.emergencyContacts.map((c) => (
-                        <div key={c.label} className="flex items-center justify-between">
+                    {Array.isArray(emergencyContacts) ? emergencyContacts.map((c: any, i: number) => (
+                        <div key={i} className="flex items-center justify-between">
                             <span className="text-xs text-muted">{c.label}</span>
                             <span className="text-sm font-medium text-heading">{c.value}</span>
                         </div>
-                    ))}
+                    )) : <p className="text-sm text-body">{plan.emergencyContacts}</p>}
                 </div>
             ),
         },
@@ -130,11 +166,11 @@ const PlanDetails = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                     <div>
                         <h2 className="text-xl font-serif text-heading">{plan.destination}</h2>
-                        <p className="text-sm text-muted">{plan.country} · {plan.duration} · {plan.purpose}</p>
+                        <p className="text-sm text-muted">{plan.country} · {plan.duration} days · {plan.purpose}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${riskColors[plan.riskScore]} ${riskBg[plan.riskScore]}`}>
-                            {plan.riskScore} risk
+                        <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${riskColors[riskLabel]} ${riskBg[riskLabel]}`}>
+                            {riskLabel} risk
                         </span>
                         <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-button-secondary text-heading text-xs font-semibold hover:bg-border-light transition-colors duration-200 cursor-pointer">
                             <LucideDownload className="w-3.5 h-3.5" /> Download PDF
@@ -142,12 +178,18 @@ const PlanDetails = () => {
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-4 text-xs text-muted">
-                    <span>Generated: {plan.createdAt}</span>
+                    <span>Generated: {new Date(plan.createdAt).toLocaleDateString()}</span>
                     <span>·</span>
                     <span>1 credit consumed</span>
                     <span>·</span>
                     <span>Status: {plan.status}</span>
                 </div>
+                {plan.medicalConsiderations && (
+                    <div className="mt-4 p-4 rounded-xl bg-gold/5 border border-gold/10">
+                        <p className="text-xs font-semibold text-gold uppercase tracking-wider mb-1">Medical considerations</p>
+                        <p className="text-sm text-heading">{plan.medicalConsiderations}</p>
+                    </div>
+                )}
             </div>
 
             {/* Plan sections */}

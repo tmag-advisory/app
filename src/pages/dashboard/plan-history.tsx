@@ -1,21 +1,23 @@
 import { Link } from "react-router-dom";
-import { usePlanStore } from "../../stores/planStore";
+import { useTravelPlans } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
-import { LucideArrowRight, LucideSearch } from "lucide-react";
+import { LucideArrowRight, LucideSearch, LucideLoader2 } from "lucide-react";
 import { useState } from "react";
 
-const riskColors = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
-const riskBg = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
+const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
+const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
+
+const getRiskLabel = (score: number) => {
+    if (score <= 1) return "Low";
+    if (score === 2) return "Moderate";
+    return "High";
+};
 
 const PlanHistory = () => {
-    const plans = usePlanStore((s) => s.plans);
     const [search, setSearch] = useState("");
-
-    const filtered = plans.filter(
-        (p) =>
-            p.destination.toLowerCase().includes(search.toLowerCase()) ||
-            p.country.toLowerCase().includes(search.toLowerCase()),
-    );
+    const { data: plansData, isLoading } = useTravelPlans({ search: search || undefined });
+    
+    const plans = plansData?.data || [];
 
     return (
         <div>
@@ -48,31 +50,44 @@ const PlanHistory = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border-light/50">
-                        {filtered.map((plan) => (
-                            <tr key={plan.id} className="hover:bg-background-secondary/50 transition-colors duration-150">
-                                <td className="px-6 py-4">
-                                    <p className="text-sm font-medium text-heading">{plan.destination}</p>
-                                    <p className="text-xs text-muted">{plan.country}</p>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-body hidden sm:table-cell">{plan.duration}</td>
-                                <td className="px-6 py-4 text-sm text-body hidden md:table-cell">{plan.purpose}</td>
-                                <td className="px-6 py-4">
-                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${riskColors[plan.riskScore]} ${riskBg[plan.riskScore]}`}>
-                                        {plan.riskScore}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-muted hidden sm:table-cell">{plan.createdAt}</td>
-                                <td className="px-6 py-4">
-                                    <Link to={`/dashboard/plans/${plan.id}`} className="text-xs text-accent font-medium hover:underline flex items-center gap-1">
-                                        View <LucideArrowRight className="w-3 h-3" />
-                                    </Link>
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan={6} className="px-6 py-12 text-center">
+                                    <LucideLoader2 className="w-6 h-6 text-accent animate-spin mx-auto" />
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            plans.map((plan) => {
+                                const riskLabel = getRiskLabel(plan.riskScore);
+                                return (
+                                    <tr key={plan.id} className="hover:bg-background-secondary/50 transition-colors duration-150">
+                                        <td className="px-6 py-4">
+                                            <p className="text-sm font-medium text-heading">{plan.destination}</p>
+                                            <p className="text-xs text-muted">{plan.country}</p>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-body hidden sm:table-cell">{plan.duration} days</td>
+                                        <td className="px-6 py-4 text-sm text-body hidden md:table-cell">{plan.purpose}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${riskColors[riskLabel]} ${riskBg[riskLabel]}`}>
+                                                {riskLabel}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-muted hidden sm:table-cell">
+                                            {new Date(plan.createdAt).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <Link to={`/dashboard/plans/${plan.id}`} className="text-xs text-accent font-medium hover:underline flex items-center gap-1">
+                                                View <LucideArrowRight className="w-3 h-3" />
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
                     </tbody>
                 </table>
                 </div>
-                {filtered.length === 0 && (
+                {!isLoading && plans.length === 0 && (
                     <div className="px-6 py-12 text-center">
                         <p className="text-sm text-muted">No plans found.</p>
                     </div>

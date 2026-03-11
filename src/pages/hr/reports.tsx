@@ -1,12 +1,21 @@
 import { usePlanStore } from "../../stores/planStore";
+import { useTravelPlans, useEmployees, useTravelRequests } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
-import { LucideDownload, LucideFileText, LucideBarChart3, LucideShieldCheck } from "lucide-react";
+import { LucideDownload, LucideFileText, LucideBarChart3, LucideShieldCheck, LucideLoader2 } from "lucide-react";
 
 const Reports = () => {
-    const { companyPlans, companyEmployees, companyRequests } = usePlanStore();
-    const plans = companyPlans();
-    const employees = companyEmployees();
-    const travelRequests = companyRequests();
+    const { selectedCompanyId } = usePlanStore();
+    const companyIdNum = selectedCompanyId ? parseInt(selectedCompanyId) : undefined;
+
+    const { data: plansData, isLoading: plansLoading } = useTravelPlans({ companyId: companyIdNum });
+    const { data: employeesData, isLoading: employeesLoading } = useEmployees({ companyId: companyIdNum });
+    const { data: requestsData, isLoading: requestsLoading } = useTravelRequests({ companyId: companyIdNum });
+
+    const plans = plansData?.data || [];
+    const employees = employeesData?.data || [];
+    const travelRequests = requestsData?.data || [];
+
+    const isLoading = plansLoading || employeesLoading || requestsLoading;
 
     const reportTypes = [
         {
@@ -36,19 +45,35 @@ const Reports = () => {
             {/* Summary stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <div className="bg-white rounded-2xl border border-border-light/50 p-5 text-center">
-                    <span className="text-2xl font-serif text-heading block">{plans.length}</span>
+                    {isLoading ? (
+                        <LucideLoader2 className="w-4 h-4 animate-spin mx-auto" />
+                    ) : (
+                        <span className="text-2xl font-serif text-heading block">{plansData?.pagination.total ?? 0}</span>
+                    )}
                     <span className="text-xs text-muted">Total plans</span>
                 </div>
                 <div className="bg-white rounded-2xl border border-border-light/50 p-5 text-center">
-                    <span className="text-2xl font-serif text-heading block">{employees.length}</span>
+                    {isLoading ? (
+                        <LucideLoader2 className="w-4 h-4 animate-spin mx-auto" />
+                    ) : (
+                        <span className="text-2xl font-serif text-heading block">{employeesData?.pagination.total ?? 0}</span>
+                    )}
                     <span className="text-xs text-muted">Employees</span>
                 </div>
                 <div className="bg-white rounded-2xl border border-border-light/50 p-5 text-center">
-                    <span className="text-2xl font-serif text-heading block">{travelRequests.filter((r) => r.status === "completed").length}</span>
+                    {isLoading ? (
+                        <LucideLoader2 className="w-4 h-4 animate-spin mx-auto" />
+                    ) : (
+                        <span className="text-2xl font-serif text-heading block">{travelRequests.filter((r) => r.status === "completed").length}</span>
+                    )}
                     <span className="text-xs text-muted">Completed trips</span>
                 </div>
                 <div className="bg-white rounded-2xl border border-border-light/50 p-5 text-center">
-                    <span className="text-2xl font-serif text-heading block">{employees.reduce((s, e) => s + e.creditsUsed, 0)}</span>
+                    {isLoading ? (
+                        <LucideLoader2 className="w-4 h-4 animate-spin mx-auto" />
+                    ) : (
+                        <span className="text-2xl font-serif text-heading block">{employees.reduce((s, e) => s + (e.creditsUsed || 0), 0)}</span>
+                    )}
                     <span className="text-xs text-muted">Credits used</span>
                 </div>
             </div>

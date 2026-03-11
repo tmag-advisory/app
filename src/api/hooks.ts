@@ -881,5 +881,7 @@ export function useGetQuestionnaireProgress() {
     queryKey: [...queryKeys.onboarding.all, "progress"],
     queryFn: () => onboardingApi.getProgress(),
     retry: false,
+    staleTime: 0,
+    gcTime: 0,
   });
 }

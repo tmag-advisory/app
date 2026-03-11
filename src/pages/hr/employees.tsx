@@ -1,20 +1,22 @@
 import { useState } from "react";
 import { usePlanStore } from "../../stores/planStore";
+import { useEmployees } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
-import { LucideSearch, LucideUserPlus, LucideMoreHorizontal } from "lucide-react";
+import { LucideSearch, LucideUserPlus, LucideMoreHorizontal, LucideLoader2 } from "lucide-react";
 
 const Employees = () => {
-    const { companyEmployees } = usePlanStore();
-    const employees = companyEmployees();
+    const { selectedCompanyId } = usePlanStore();
+    const companyIdNum = selectedCompanyId ? parseInt(selectedCompanyId) : undefined;
+    
     const [search, setSearch] = useState("");
     const [showInvite, setShowInvite] = useState(false);
 
-    const filtered = employees.filter(
-        (e) =>
-            e.name.toLowerCase().includes(search.toLowerCase()) ||
-            e.email.toLowerCase().includes(search.toLowerCase()) ||
-            e.department.toLowerCase().includes(search.toLowerCase()),
-    );
+    const { data: employeesData, isLoading } = useEmployees({ 
+        companyId: companyIdNum,
+        search: search || undefined
+    });
+
+    const employees = employeesData?.data || [];
 
     return (
         <div>
@@ -80,39 +82,54 @@ const Employees = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border-light/50">
-                        {filtered.map((emp) => (
-                            <tr key={emp.id} className="hover:bg-background-secondary/50 transition-colors duration-150">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-button-secondary flex items-center justify-center text-xs font-semibold text-heading">
-                                            {emp.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-heading">{emp.name}</p>
-                                            <p className="text-xs text-muted">{emp.email}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-body hidden md:table-cell">{emp.department}</td>
-                                <td className="px-6 py-4">
-                                    <span className="text-sm text-heading font-medium">{emp.creditsUsed}</span>
-                                    <span className="text-xs text-muted"> / {emp.creditsAllocated}</span>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-body hidden sm:table-cell">{emp.plansGenerated}</td>
-                                <td className="px-6 py-4">
-                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                                        emp.status === "active" ? "text-accent bg-accent/10" : "text-muted bg-button-secondary"
-                                    }`}>
-                                        {emp.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <button className="p-1.5 rounded-lg hover:bg-button-secondary transition-colors duration-150 cursor-pointer">
-                                        <LucideMoreHorizontal className="w-4 h-4 text-muted" />
-                                    </button>
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan={6} className="px-6 py-12 text-center">
+                                    <LucideLoader2 className="w-6 h-6 text-accent animate-spin mx-auto" />
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            employees.map((emp) => (
+                                <tr key={emp.id} className="hover:bg-background-secondary/50 transition-colors duration-150">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-button-secondary flex items-center justify-center text-xs font-semibold text-heading">
+                                                {emp.name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-heading">{emp.name}</p>
+                                                <p className="text-xs text-muted">{emp.email}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-body hidden md:table-cell">{emp.department}</td>
+                                    <td className="px-6 py-4">
+                                        <span className="text-sm text-heading font-medium">{emp.creditsUsed}</span>
+                                        <span className="text-xs text-muted"> / {emp.creditsAllocated}</span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-body hidden sm:table-cell">{emp.plansGenerated}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                            emp.status === "active" ? "text-accent bg-accent/10" : "text-muted bg-button-secondary"
+                                        }`}>
+                                            {emp.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <button className="p-1.5 rounded-lg hover:bg-button-secondary transition-colors duration-150 cursor-pointer">
+                                            <LucideMoreHorizontal className="w-4 h-4 text-muted" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                        {!isLoading && employees.length === 0 && (
+                            <tr>
+                                <td colSpan={6} className="px-6 py-12 text-center">
+                                    <p className="text-sm text-muted">No employees found.</p>
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
                 </div>

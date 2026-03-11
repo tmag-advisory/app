@@ -19,9 +19,6 @@ const Login = () => {
         try {
             const user = await login({ email, password });
             const stage = user.onboarding_stage;
-            
-            console.log(user)
-
             if (stage > 4) {
                 // Onboarding complete — go to dashboard
                 navigate(canAccessHR(user) ? "/hr" : "/dashboard");
