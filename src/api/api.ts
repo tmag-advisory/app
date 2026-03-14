@@ -113,6 +113,9 @@ export const authApi = {
 
   verifyEmail: (token: string) =>
     api.get<ApiResponse<{ message: string }>>("/auth/verify-email", { params: { token } }).then((r) => r.data.data),
+
+  acceptInvitation: (data: { token: string; new_password: string }) =>
+    api.post<ApiResponse<AuthResponse>>("/auth/accept-invitation", data).then((r) => r.data.data),
 };
 
 // ─── Companies ───────────────────────────────────────────────
@@ -180,6 +183,9 @@ export const employeesApi = {
 
   updateStatus: (id: number, data: UpdateEmployeeStatusRequest) =>
     api.put<ApiResponse<EmployeeResponse>>(`/employees/${id}/status`, data).then((r) => r.data.data),
+
+  invite: (data: { name: string; email: string; department: string; creditsAllocated: number; companyId: number }) =>
+    api.post<ApiResponse<EmployeeResponse>>("/employees/invite", data).then((r) => r.data.data),
 };
 
 // ─── Travel Plans ────────────────────────────────────────────

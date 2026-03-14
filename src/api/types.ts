@@ -176,6 +176,19 @@ export interface UpdateEmployeeStatusRequest {
   status: "active" | "inactive";
 }
 
+export interface InviteEmployeeRequest {
+  name: string;
+  email: string;
+  department: string;
+  creditsAllocated: number;
+  companyId: number;
+}
+
+export interface AcceptInvitationRequest {
+  token: string;
+  new_password: string;
+}
+
 export interface PurchaseCreditsRequest {
   amount: number;
   reference?: string;

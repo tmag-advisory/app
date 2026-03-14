@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { usePlanStore } from "../../stores/planStore";
-import { useTravelRequests, useUpdateTravelRequest } from "../../api/hooks";
+import { useTravelRequests, useApproveTravelRequest, useRejectTravelRequest } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { LucideLoader2 } from "lucide-react";
-
-type RequestStatus = "pending" | "approved" | "completed" | "rejected";
 
 const statusStyles: Record<string, string> = {
     pending: "text-gold bg-gold/10",
@@ -23,7 +21,8 @@ const TravelRequests = () => {
         companyId: companyIdNum 
     });
     
-    const updateRequest = useUpdateTravelRequest();
+    const approveRequest = useApproveTravelRequest();
+    const rejectRequest = useRejectTravelRequest();
 
     const travelRequests = requestsData?.data || [];
 
@@ -35,10 +34,6 @@ const TravelRequests = () => {
     ];
 
     const filtered = filter === "all" ? travelRequests : travelRequests.filter((r) => r.status === filter);
-
-    const handleUpdateStatus = (id: number, status: RequestStatus) => {
-        updateRequest.mutate({ id, data: { status } as any });
-    };
 
     return (
         <div>
@@ -102,14 +97,16 @@ const TravelRequests = () => {
                                         {req.status === "pending" && (
                                             <div className="flex gap-2">
                                                 <button
-                                                    onClick={() => handleUpdateStatus(req.id, "approved")}
-                                                    className="text-xs font-semibold text-accent hover:underline cursor-pointer"
+                                                    onClick={() => approveRequest.mutate(req.id)}
+                                                    disabled={approveRequest.isPending}
+                                                    className="text-xs font-semibold text-accent hover:underline cursor-pointer disabled:opacity-50"
                                                 >
                                                     Approve
                                                 </button>
                                                 <button
-                                                    onClick={() => handleUpdateStatus(req.id, "rejected")}
-                                                    className="text-xs font-semibold text-red-500 hover:underline cursor-pointer"
+                                                    onClick={() => rejectRequest.mutate(req.id)}
+                                                    disabled={rejectRequest.isPending}
+                                                    className="text-xs font-semibold text-red-500 hover:underline cursor-pointer disabled:opacity-50"
                                                 >
                                                     Reject
                                                 </button>

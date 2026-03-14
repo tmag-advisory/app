@@ -31,6 +31,7 @@ const Login = lazy(() => import("../pages/auth/login"));
 const Register = lazy(() => import("../pages/auth/register"));
 const ForgotPassword = lazy(() => import("../pages/auth/forgot-password"));
 const ResetPassword = lazy(() => import("../pages/auth/reset-password"));
+const AcceptInvitation = lazy(() => import("../pages/auth/accept-invitation"));
 const EmailVerification = lazy(() => import("../pages/auth/email-verification"));
 const VerifyEmailCallback = lazy(() => import("../pages/auth/verify-email-callback"));
 const Onboarding = lazy(() => import("../pages/auth/onboarding"));
@@ -46,6 +47,7 @@ const Settings = lazy(() => import("../pages/dashboard/settings"));
 // HR dashboard (lazy-loaded)
 const HROverview = lazy(() => import("../pages/hr/overview"));
 const Employees = lazy(() => import("../pages/hr/employees"));
+const EmployeeDetail = lazy(() => import("../pages/hr/employee-detail"));
 const HRCreatePlan = lazy(() => import("../pages/hr/create-plan"));
 const TravelRequests = lazy(() => import("../pages/hr/travel-requests"));
 const Reports = lazy(() => import("../pages/hr/reports"));
@@ -91,6 +93,7 @@ const router = createBrowserRouter([
             { path: "register", element: <Register /> },
             { path: "forgot-password", element: <ForgotPassword /> },
             { path: "reset-password", element: <ResetPassword /> },
+            { path: "accept-invitation", element: <AcceptInvitation /> },
             { path: "verify-email", element: <EmailVerification /> },
         ],
     },
@@ -144,6 +147,7 @@ const router = createBrowserRouter([
         children: [
             { index: true, element: <HROverview /> },
             { path: "employees", element: <Employees /> },
+            { path: "employees/:id", element: <EmployeeDetail /> },
             { path: "create-plan", element: <HRCreatePlan /> },
             { path: "travel-requests", element: <TravelRequests /> },
             { path: "reports", element: <Reports /> },

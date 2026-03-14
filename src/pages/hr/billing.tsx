@@ -1,5 +1,5 @@
 import { usePlanStore } from "../../stores/planStore";
-import { useCredits } from "../../api/hooks";
+import { useCredits, usePurchaseCredits } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import { LucideCoins, LucideTrendingUp, LucideCalendar, LucideLoader2 } from "lucide-react";
@@ -11,6 +11,7 @@ const Billing = () => {
     const companyIdNum = selectedCompanyId ? parseInt(selectedCompanyId) : undefined;
 
     const { data: creditsData, isLoading } = useCredits({ companyId: companyIdNum });
+    const purchaseCredits = usePurchaseCredits();
     const creditHistory = creditsData?.data || [];
 
     const totalAllocated = company?.totalCredits ?? 0;
@@ -38,7 +39,12 @@ const Billing = () => {
                     ].map((pack) => (
                         <button
                             key={pack.credits}
-                            className="p-5 rounded-xl border-2 border-border-light hover:border-accent text-left transition-all duration-200 cursor-pointer"
+                            onClick={() => {
+                                if (!companyIdNum) return;
+                                purchaseCredits.mutate({ id: companyIdNum, data: { amount: pack.credits, reference: `Purchase ${pack.credits} credits` } });
+                            }}
+                            disabled={purchaseCredits.isPending || !companyIdNum}
+                            className="p-5 rounded-xl border-2 border-border-light hover:border-accent text-left transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <span className="text-2xl font-serif text-heading block mb-1">{pack.credits}</span>
                             <span className="text-xs text-muted block mb-3">credits</span>

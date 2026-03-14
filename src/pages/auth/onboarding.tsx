@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LucideUser, LucideBuilding2, LucideArrowRight, LucideArrowLeft, LucideClipboardList, LucideSparkles, LucideCheck, LucideGift, LucideZap, LucideShield, LucideActivity } from "lucide-react";
-import { useUpsertOnboarding, useAdvanceOnboardingStage, useUpdateProfile, useOnboarding, useValidateCompanyCode } from "../../api/hooks";
+import { useUpsertOnboarding, useAdvanceOnboardingStage, useUpdateProfile, useOnboarding, useValidateCompanyCode, useMyCompanies } from "../../api/hooks";
 import { useOnboardingStore } from "../../context/OnboardingContext";
 import { useAuth } from "../../context/AuthContext";
 import { canAccessHR } from "../../lib/canAccessHr";
@@ -47,6 +47,11 @@ const Onboarding = () => {
     const { setUserType: storeSetUserType, reset: resetOnboarding } = useOnboardingStore();
 
     const { data: onboardingData } = useOnboarding();
+    const { data: myCompanies } = useMyCompanies();
+
+    // If user was invited (has a company membership already), prefill and lock fields
+    const invitedCompany = myCompanies && myCompanies.length > 0 ? myCompanies[0] : null;
+    const isInvitedUser = !!invitedCompany;
 
     const stage = user?.onboarding_stage ?? 2;
     const initialStep = stage >= 5 ? 3 : Math.min(Math.max(stage - 2, 0), 3);
@@ -102,6 +107,18 @@ const Onboarding = () => {
         }
     }, [onboardingData]);
 
+    // Prefill for invited users who already have a company membership
+    useEffect(() => {
+        if (invitedCompany) {
+            setUserType("company");
+            setProfile(prev => ({
+                ...prev,
+                companyCode: invitedCompany.company_code || "",
+            }));
+            setDebouncedCode(invitedCompany.company_code || "");
+        }
+    }, [invitedCompany]);
+
     const upsertOnboarding = useUpsertOnboarding();
     const advanceStage = useAdvanceOnboardingStage();
     const updateProfile = useUpdateProfile();
@@ -128,11 +145,11 @@ const Onboarding = () => {
 
     const handleProfileNext = async () => {
         setError("");
-        if (userType === "company" && !profile.companyCode.trim()) {
+        if (userType === "company" && !isInvitedUser && !profile.companyCode.trim()) {
             setError("A company invite code is required. Please enter your company code.");
             return;
         }
-        if (userType === "company" && !codeIsValid) {
+        if (userType === "company" && !isInvitedUser && !codeIsValid) {
             setError("Please enter a valid company code before continuing.");
             return;
         }
@@ -281,11 +298,12 @@ const Onboarding = () => {
                                             initial="hidden"
                                             animate="visible"
                                             type="button"
-                                            onClick={() => setUserType(opt.type)}
-                                            className={`p-7 rounded-2xl border-2 text-left cursor-pointer transition-all duration-200 ${userType === opt.type
+                                            onClick={() => !isInvitedUser && setUserType(opt.type)}
+                                            disabled={isInvitedUser && opt.type !== "company"}
+                                            className={`p-7 rounded-2xl border-2 text-left transition-all duration-200 ${userType === opt.type
                                                 ? "border-accent bg-accent/5 shadow-sm"
                                                 : "border-border-light hover:border-border"
-                                                }`}
+                                                } ${isInvitedUser && opt.type !== "company" ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
                                         >
                                             <opt.icon className={`w-7 h-7 mb-4 transition-colors ${userType === opt.type ? "text-accent" : "text-muted"
                                                 }`} />
@@ -397,14 +415,17 @@ const Onboarding = () => {
                                                 <input
                                                     type="text"
                                                     value={profile.companyCode}
-                                                    onChange={(e) => handleCompanyCodeChange(e.target.value)}
+                                                    onChange={(e) => !isInvitedUser && handleCompanyCodeChange(e.target.value)}
+                                                    readOnly={isInvitedUser}
                                                     placeholder="TMA-XXXX"
-                                                    className={`w-full bg-white border-2 rounded-2xl px-5 py-3.5 pr-12 text-base text-heading placeholder:text-muted/40 outline-none transition-colors duration-200 ${
-                                                        codeIsValid
-                                                            ? "border-green-400 focus:border-green-500"
+                                                    className={`w-full border-2 rounded-2xl px-5 py-3.5 pr-12 text-base text-heading placeholder:text-muted/40 outline-none transition-colors duration-200 ${
+                                                        isInvitedUser
+                                                            ? "bg-button-secondary border-border-light/60 cursor-not-allowed"
+                                                            : codeIsValid
+                                                            ? "bg-white border-green-400 focus:border-green-500"
                                                             : codeIsInvalid
-                                                            ? "border-red-400 focus:border-red-500"
-                                                            : "border-border-light/60 focus:border-accent"
+                                                            ? "bg-white border-red-400 focus:border-red-500"
+                                                            : "bg-white border-border-light/60 focus:border-accent"
                                                     }`}
                                                 />
                                                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -419,10 +440,13 @@ const Onboarding = () => {
                                                     )}
                                                 </div>
                                             </div>
-                                            {codeIsInvalid && (
+                                            {isInvitedUser && (
+                                                <p className="mt-1.5 text-xs text-green-600">Pre-verified — you were invited to this company.</p>
+                                            )}
+                                            {!isInvitedUser && codeIsInvalid && (
                                                 <p className="mt-1.5 text-xs text-red-500">No company found with this code.</p>
                                             )}
-                                            {codeIsValid && (
+                                            {!isInvitedUser && codeIsValid && (
                                                 <p className="mt-1.5 text-xs text-green-600">Company code verified.</p>
                                             )}
                                         </motion.div>
@@ -445,7 +469,7 @@ const Onboarding = () => {
                                     </button>
                                     <button
                                         onClick={handleProfileNext}
-                                        disabled={isLoading || codeValidating || (userType === "company" && profile.companyCode.trim().length > 0 && !codeIsValid)}
+                                        disabled={isLoading || (!isInvitedUser && codeValidating) || (!isInvitedUser && userType === "company" && profile.companyCode.trim().length > 0 && !codeIsValid)}
                                         className="flex-1 py-3.5 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-40"
                                     >
                                         {isLoading ? "Saving…" : codeValidating ? "Checking…" : <>Continue <LucideArrowRight className="w-4 h-4" /></>}

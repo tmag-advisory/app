@@ -32,6 +32,8 @@ import type {
   UpdateEmployeeRequest,
   AllocateEmployeeCreditsRequest,
   UpdateEmployeeStatusRequest,
+  InviteEmployeeRequest,
+  AcceptInvitationRequest,
   CreateTravelPlanRequest,
   UpdateTravelPlanRequest,
   CreateTravelRequestRequest,
@@ -370,6 +372,20 @@ export function useUpdateEmployeeStatus() {
     mutationFn: ({ id, data }: { id: number; data: UpdateEmployeeStatusRequest }) =>
       employeesApi.updateStatus(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.employees.all }),
+  });
+}
+
+export function useInviteEmployee() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: InviteEmployeeRequest) => employeesApi.invite(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.employees.all }),
+  });
+}
+
+export function useAcceptInvitation() {
+  return useMutation({
+    mutationFn: (data: AcceptInvitationRequest) => authApi.acceptInvitation(data),
   });
 }
 
