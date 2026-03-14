@@ -13,12 +13,16 @@ import type {
   AuthResponse,
   // Company
   CompanyResponse,
+  CompanyCodeValidationResponse,
   CreateCompanyRequest,
   UpdateCompanyRequest,
   // Employee
   EmployeeResponse,
   CreateEmployeeRequest,
   UpdateEmployeeRequest,
+  AllocateEmployeeCreditsRequest,
+  UpdateEmployeeStatusRequest,
+  PurchaseCreditsRequest,
   // Travel Plan
   TravelPlanResponse,
   CreateTravelPlanRequest,
@@ -142,6 +146,12 @@ export const companiesApi = {
 
   removeLogo: (id: number) =>
     api.delete<ApiResponse<null>>(`/companies/${id}/logo`).then((r) => r.data.data),
+
+  validateCode: (code: string) =>
+    api.get<ApiResponse<CompanyCodeValidationResponse>>("/companies/validate-code", { params: { code } }).then((r) => r.data.data),
+
+  purchaseCredits: (id: number, data: PurchaseCreditsRequest) =>
+    api.post<ApiResponse<CompanyResponse>>(`/companies/${id}/purchase-credits`, data).then((r) => r.data.data),
 };
 
 // ─── Employees ───────────────────────────────────────────────
@@ -164,6 +174,12 @@ export const employeesApi = {
 
   delete: (id: number) =>
     api.delete<ApiResponse<null>>(`/employees/${id}`).then((r) => r.data.data),
+
+  allocateCredits: (id: number, data: AllocateEmployeeCreditsRequest) =>
+    api.put<ApiResponse<EmployeeResponse>>(`/employees/${id}/credits`, data).then((r) => r.data.data),
+
+  updateStatus: (id: number, data: UpdateEmployeeStatusRequest) =>
+    api.put<ApiResponse<EmployeeResponse>>(`/employees/${id}/status`, data).then((r) => r.data.data),
 };
 
 // ─── Travel Plans ────────────────────────────────────────────
@@ -208,6 +224,12 @@ export const travelRequestsApi = {
 
   delete: (id: number) =>
     api.delete<ApiResponse<null>>(`/travel-requests/${id}`).then((r) => r.data.data),
+
+  approve: (id: number) =>
+    api.post<ApiResponse<TravelRequestResponse>>(`/travel-requests/${id}/approve`).then((r) => r.data.data),
+
+  reject: (id: number) =>
+    api.post<ApiResponse<TravelRequestResponse>>(`/travel-requests/${id}/reject`).then((r) => r.data.data),
 };
 
 // ─── Health Profiles ─────────────────────────────────────────

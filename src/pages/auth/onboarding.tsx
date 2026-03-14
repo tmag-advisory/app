@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LucideUser, LucideBuilding2, LucideArrowRight, LucideArrowLeft, LucideClipboardList, LucideSparkles, LucideCheck } from "lucide-react";
-import { useUpsertOnboarding, useAdvanceOnboardingStage, useUpdateProfile, useCreateHealthProfile, useOnboarding, useMyHealthProfile, useUpdateHealthProfile } from "../../api/hooks";
+import { LucideUser, LucideBuilding2, LucideArrowRight, LucideArrowLeft, LucideClipboardList, LucideSparkles, LucideCheck, LucideGift, LucideZap, LucideShield, LucideActivity } from "lucide-react";
+import { useUpsertOnboarding, useAdvanceOnboardingStage, useUpdateProfile, useOnboarding, useValidateCompanyCode } from "../../api/hooks";
 import { useOnboardingStore } from "../../context/OnboardingContext";
 import { useAuth } from "../../context/AuthContext";
 import { canAccessHR } from "../../lib/canAccessHr";
 import CountryPicker from "../../components/CountryPicker";
 
-const steps = ["User Type", "Profile", "Health", "Questionnaire"];
+const steps = ["User Type", "Profile", "Welcome", "Questionnaire"];
 
 // ─── Motion Variants ─────────────────────────────────────────
 
@@ -47,7 +47,6 @@ const Onboarding = () => {
     const { setUserType: storeSetUserType, reset: resetOnboarding } = useOnboardingStore();
 
     const { data: onboardingData } = useOnboarding();
-    const { data: healthProfileData } = useMyHealthProfile();
 
     const stage = user?.onboarding_stage ?? 2;
     const initialStep = stage >= 5 ? 3 : Math.min(Math.max(stage - 2, 0), 3);
@@ -61,12 +60,19 @@ const Onboarding = () => {
         nationality: "",
         companyCode: "",
     });
-    const [health, setHealth] = useState({
-        conditions: "",
-        medications: "",
-        allergies: "",
-    });
     const [error, setError] = useState("");
+    const [debouncedCode, setDebouncedCode] = useState("");
+    const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const { data: codeValidation, isFetching: codeValidating } = useValidateCompanyCode(debouncedCode);
+    const codeIsValid = codeValidation?.valid === true;
+    const codeIsInvalid = debouncedCode.length > 0 && !codeValidating && codeValidation?.valid === false;
+
+    const handleCompanyCodeChange = (value: string) => {
+        setProfile(prev => ({ ...prev, companyCode: value }));
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        debounceTimer.current = setTimeout(() => setDebouncedCode(value.trim()), 500);
+    };
 
     const SetProfileCall = useCallback(() => {
         if (user) {
@@ -96,22 +102,9 @@ const Onboarding = () => {
         }
     }, [onboardingData]);
 
-    useEffect(() => {
-        if (healthProfileData) {
-            setHealth(prev => ({
-                ...prev,
-                conditions: healthProfileData.conditions || "",
-                medications: healthProfileData.medications || "",
-                allergies: healthProfileData.allergies || "",
-            }));
-        }
-    }, [healthProfileData]);
-
     const upsertOnboarding = useUpsertOnboarding();
     const advanceStage = useAdvanceOnboardingStage();
     const updateProfile = useUpdateProfile();
-    const createHealthProfile = useCreateHealthProfile();
-    const updateHealthProfile = useUpdateHealthProfile();
 
     const goTo = (next: number) => {
         setDirection(next > step ? 1 : -1);
@@ -139,6 +132,10 @@ const Onboarding = () => {
             setError("A company invite code is required. Please enter your company code.");
             return;
         }
+        if (userType === "company" && !codeIsValid) {
+            setError("Please enter a valid company code before continuing.");
+            return;
+        }
         try {
             const firstName = profile.firstName.trim();
             const lastName = profile.lastName.trim();
@@ -161,37 +158,13 @@ const Onboarding = () => {
         }
     };
 
-    const handleHealthNext = async () => {
+    const handleWelcomeNext = async () => {
         setError("");
         try {
-            if (!user) {
-                setError("User not found");
-                return;
-            }
-            if (health.conditions || health.medications || health.allergies) {
-                if (healthProfileData?.id) {
-                    await updateHealthProfile.mutateAsync({
-                        id: healthProfileData.id,
-                        data: {
-                            conditions: health.conditions,
-                            medications: health.medications,
-                            allergies: health.allergies,
-                        }
-                    });
-                } else {
-                    await createHealthProfile.mutateAsync({
-                        conditions: health.conditions,
-                        medications: health.medications,
-                        allergies: health.allergies,
-                        user_id: user?.id as number,
-                    });
-                }
-            }
             await upsertOnboarding.mutateAsync({ complete: true });
             await advanceStage.mutateAsync({ stage: 5 });
             await refreshProfile();
 
-            // HR users skip the questionnaire and go directly to the HR dashboard
             if (canAccessHR(user)) {
                 resetOnboarding();
                 navigate("/hr");
@@ -199,7 +172,7 @@ const Onboarding = () => {
                 goTo(3);
             }
         } catch {
-            setError("Failed to save health profile. Please try again.");
+            setError("Failed. Please try again.");
         }
     };
 
@@ -217,9 +190,7 @@ const Onboarding = () => {
     const isLoading =
         upsertOnboarding.isPending ||
         advanceStage.isPending ||
-        updateProfile.isPending ||
-        createHealthProfile.isPending ||
-        updateHealthProfile.isPending;
+        updateProfile.isPending;
 
     return (
         <div className="min-h-screen bg-background-primary flex flex-col">
@@ -422,13 +393,38 @@ const Onboarding = () => {
                                             exit={{ opacity: 0, height: 0 }}
                                         >
                                             <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Company invite code</label>
-                                            <input
-                                                type="text"
-                                                value={profile.companyCode}
-                                                onChange={(e) => setProfile({ ...profile, companyCode: e.target.value })}
-                                                placeholder="TMAG-XXXX"
-                                                className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    value={profile.companyCode}
+                                                    onChange={(e) => handleCompanyCodeChange(e.target.value)}
+                                                    placeholder="TMA-XXXX"
+                                                    className={`w-full bg-white border-2 rounded-2xl px-5 py-3.5 pr-12 text-base text-heading placeholder:text-muted/40 outline-none transition-colors duration-200 ${
+                                                        codeIsValid
+                                                            ? "border-green-400 focus:border-green-500"
+                                                            : codeIsInvalid
+                                                            ? "border-red-400 focus:border-red-500"
+                                                            : "border-border-light/60 focus:border-accent"
+                                                    }`}
+                                                />
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                                    {codeValidating && (
+                                                        <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                                                    )}
+                                                    {!codeValidating && codeIsValid && (
+                                                        <LucideCheck className="w-4 h-4 text-green-500" />
+                                                    )}
+                                                    {!codeValidating && codeIsInvalid && (
+                                                        <span className="text-red-500 text-lg leading-none">✕</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {codeIsInvalid && (
+                                                <p className="mt-1.5 text-xs text-red-500">No company found with this code.</p>
+                                            )}
+                                            {codeIsValid && (
+                                                <p className="mt-1.5 text-xs text-green-600">Company code verified.</p>
+                                            )}
                                         </motion.div>
                                     )}
                                 </motion.div>
@@ -449,16 +445,16 @@ const Onboarding = () => {
                                     </button>
                                     <button
                                         onClick={handleProfileNext}
-                                        disabled={isLoading}
+                                        disabled={isLoading || codeValidating || (userType === "company" && profile.companyCode.trim().length > 0 && !codeIsValid)}
                                         className="flex-1 py-3.5 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-40"
                                     >
-                                        {isLoading ? "Saving…" : <>Continue <LucideArrowRight className="w-4 h-4" /></>}
+                                        {isLoading ? "Saving…" : codeValidating ? "Checking…" : <>Continue <LucideArrowRight className="w-4 h-4" /></>}
                                     </button>
                                 </motion.div>
                             </motion.div>
                         )}
 
-                        {/* ── Step 2: Health ──────────────── */}
+                        {/* ── Step 2: Welcome ─────────────── */}
                         {step === 2 && (
                             <motion.div
                                 key="step-2"
@@ -467,96 +463,76 @@ const Onboarding = () => {
                                 initial="enter"
                                 animate="center"
                                 exit="exit"
+                                className="text-center"
                             >
+                                <motion.div
+                                    initial={{ scale: 0, rotate: -20 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ delay: 0.1, type: "spring", stiffness: 260, damping: 18 }}
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-8"
+                                >
+                                    <LucideGift className="w-4 h-4 text-accent" />
+                                    <span className="text-sm font-semibold text-accent">1 free advisory credit included</span>
+                                </motion.div>
+
                                 <motion.h1
-                                    custom={0}
-                                    variants={fadeUp}
-                                    initial="hidden"
-                                    animate="visible"
-                                    className="text-4xl sm:text-5xl font-serif text-heading mb-1 leading-tight"
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                    className="text-4xl sm:text-5xl font-serif text-heading mb-4 leading-tight"
                                 >
-                                    Health profile
+                                    You're ready to<br />travel smarter.
                                 </motion.h1>
-                                <motion.span
-                                    custom={0}
-                                    variants={fadeUp}
-                                    initial="hidden"
-                                    animate="visible"
-                                    className="text-lg text-muted/70 font-serif"
-                                >
-                                    (optional)
-                                </motion.span>
+
                                 <motion.p
-                                    custom={1}
-                                    variants={fadeUp}
-                                    initial="hidden"
-                                    animate="visible"
-                                    className="text-base text-body mt-3 mb-10 leading-relaxed"
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                    className="text-base text-body mb-10 leading-relaxed max-w-sm mx-auto"
                                 >
-                                    This helps our AI tailor recommendations. You can skip and fill this in later.
+                                    TMAG gives you AI-powered travel health advisories tailored to your destination, history, and health needs.
                                 </motion.p>
 
                                 <motion.div
-                                    custom={2}
-                                    variants={fadeUp}
-                                    initial="hidden"
-                                    animate="visible"
-                                    className="space-y-5"
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.4 }}
+                                    className="space-y-3 mb-10 text-left max-w-sm mx-auto"
                                 >
-                                    <div>
-                                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Pre-existing conditions</label>
-                                        <textarea
-                                            value={health.conditions}
-                                            onChange={(e) => setHealth({ ...health, conditions: e.target.value })}
-                                            placeholder="e.g. Asthma, Diabetes Type 2"
-                                            rows={2}
-                                            className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200 resize-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Current medications</label>
-                                        <textarea
-                                            value={health.medications}
-                                            onChange={(e) => setHealth({ ...health, medications: e.target.value })}
-                                            placeholder="e.g. Metformin 500mg, Ventolin inhaler"
-                                            rows={2}
-                                            className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200 resize-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Allergies</label>
-                                        <textarea
-                                            value={health.allergies}
-                                            onChange={(e) => setHealth({ ...health, allergies: e.target.value })}
-                                            placeholder="e.g. Penicillin, Sulfa drugs"
-                                            rows={2}
-                                            className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200 resize-none"
-                                        />
-                                    </div>
+                                    {[
+                                        { icon: LucideZap, label: "AI Health Advisories", desc: "Personalised recommendations for every trip" },
+                                        { icon: LucideShield, label: "Safety & Risk Alerts", desc: "Country-level health risks and precautions" },
+                                        { icon: LucideActivity, label: "Vaccination Guidance", desc: "Required and recommended vaccines per destination" },
+                                    ].map((feature, i) => (
+                                        <motion.div
+                                            key={feature.label}
+                                            custom={i + 5}
+                                            variants={fadeUp}
+                                            initial="hidden"
+                                            animate="visible"
+                                            className="flex items-start gap-4 p-4 rounded-2xl bg-button-secondary"
+                                        >
+                                            <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                                                <feature.icon className="w-4 h-4 text-accent" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-heading">{feature.label}</p>
+                                                <p className="text-xs text-muted mt-0.5">{feature.desc}</p>
+                                            </div>
+                                        </motion.div>
+                                    ))}
                                 </motion.div>
 
-                                <motion.div
-                                    custom={3}
-                                    variants={fadeUp}
-                                    initial="hidden"
-                                    animate="visible"
-                                    className="flex gap-3 mt-8"
+                                <motion.button
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.7 }}
+                                    onClick={handleWelcomeNext}
+                                    disabled={isLoading}
+                                    className="w-full py-4 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-40"
                                 >
-                                    <button
-                                        onClick={() => goTo(1)}
-                                        disabled={isLoading}
-                                        className="py-3.5 px-6 rounded-2xl bg-button-secondary text-heading font-semibold text-sm cursor-pointer hover:bg-border-light transition-colors duration-200 flex items-center gap-2 disabled:opacity-40"
-                                    >
-                                        <LucideArrowLeft className="w-4 h-4" /> Back
-                                    </button>
-                                    <button
-                                        onClick={handleHealthNext}
-                                        disabled={isLoading}
-                                        className="flex-1 py-3.5 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-40"
-                                    >
-                                        {isLoading ? "Saving…" : <>Continue <LucideArrowRight className="w-4 h-4" /></>}
-                                    </button>
-                                </motion.div>
+                                    {isLoading ? "Setting up…" : <>Get started <LucideArrowRight className="w-4 h-4" /></>}
+                                </motion.button>
                             </motion.div>
                         )}
 

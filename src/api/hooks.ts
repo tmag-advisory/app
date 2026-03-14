@@ -27,8 +27,11 @@ import type {
   ResetPasswordRequest,
   CreateCompanyRequest,
   UpdateCompanyRequest,
+  PurchaseCreditsRequest,
   CreateEmployeeRequest,
   UpdateEmployeeRequest,
+  AllocateEmployeeCreditsRequest,
+  UpdateEmployeeStatusRequest,
   CreateTravelPlanRequest,
   UpdateTravelPlanRequest,
   CreateTravelRequestRequest,
@@ -272,6 +275,28 @@ export function useDeleteCompany() {
   });
 }
 
+export function usePurchaseCredits() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: PurchaseCreditsRequest }) =>
+      companiesApi.purchaseCredits(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.companies.all });
+      qc.invalidateQueries({ queryKey: queryKeys.credits.all });
+    },
+  });
+}
+
+export function useValidateCompanyCode(code: string) {
+  return useQuery({
+    queryKey: [...queryKeys.companies.all, "validate-code", code],
+    queryFn: () => companiesApi.validateCode(code),
+    enabled: code.trim().length > 0,
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
 export function useUploadCompanyLogo() {
   const qc = useQueryClient();
   return useMutation({
@@ -326,6 +351,24 @@ export function useDeleteEmployee() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => employeesApi.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.employees.all }),
+  });
+}
+
+export function useAllocateEmployeeCredits() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: AllocateEmployeeCreditsRequest }) =>
+      employeesApi.allocateCredits(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.employees.all }),
+  });
+}
+
+export function useUpdateEmployeeStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateEmployeeStatusRequest }) =>
+      employeesApi.updateStatus(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.employees.all }),
   });
 }
@@ -424,6 +467,22 @@ export function useDeleteTravelRequest() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => travelRequestsApi.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.travelRequests.all }),
+  });
+}
+
+export function useApproveTravelRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => travelRequestsApi.approve(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.travelRequests.all }),
+  });
+}
+
+export function useRejectTravelRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => travelRequestsApi.reject(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.travelRequests.all }),
   });
 }

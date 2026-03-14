@@ -419,58 +419,99 @@ const TravelHealthQuestionnaire = () => {
     // ─── Complete Screen ──────────────────────────────────────
 
     if (showComplete) {
+        const createPlanPath =
+            user && canAccessHR(user) ? "/hr/create-plan" : (
+                "/dashboard/create-plan"
+            );
+        const dashboardPath = user && canAccessHR(user) ? "/hr" : "/dashboard";
+
         return (
             <div className="min-h-screen bg-background-primary flex items-center justify-center px-6">
-                <motion.div
-                    initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 28 }}
-                    className="text-center max-w-sm"
-                >
+                <div className="w-full max-w-sm">
                     <motion.div
                         initial={{ scale: 0, rotate: -15 }}
                         animate={{ scale: 1, rotate: 0 }}
                         transition={{
-                            delay: 0.15,
+                            delay: 0.1,
                             type: "spring",
                             stiffness: 260,
                             damping: 20,
                         }}
-                        className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-8"
+                        className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6"
                     >
-                        <LucideCheck className="w-12 h-12 text-accent" />
+                        <LucideCheck className="w-7 h-7 text-accent" />
                     </motion.div>
+
                     <motion.h1
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="text-5xl sm:text-6xl font-serif text-heading mb-4"
+                        transition={{ delay: 0.2 }}
+                        className="text-5xl font-serif text-heading mb-3 text-center"
                     >
                         All done.
                     </motion.h1>
+
                     <motion.p
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                        className="text-base text-muted leading-relaxed mb-12"
+                        transition={{ delay: 0.3 }}
+                        className="text-sm text-muted leading-relaxed mb-8 text-center"
                     >
-                        Thank you for completing the health questionnaire. Our AI will
-                        use this to provide you with personalised travel health advice.
+                        Your health profile is complete. Your AI advisor is
+                        ready — where are you headed?
                     </motion.p>
+
+                    {/* Primary CTA — create a plan right now */}
                     <motion.button
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 }}
-                        onClick={() =>
-                            navigate(
-                                user && canAccessHR(user) ? "/hr" : "/dashboard"
-                            )
-                        }
-                        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-dark text-white font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200"
+                        transition={{
+                            delay: 0.4,
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 24,
+                        }}
+                        onClick={() => navigate(createPlanPath)}
+                        className="w-full mb-3 p-7 rounded-3xl outline-dark/20 outline-2 relative overflow-hidden group cursor-pointer text-left"
                     >
-                        Go to Dashboard <LucideArrowRight className="w-4 h-4" />
+                        <div className="absolute inset-0 bg-linear-to-br from-accent/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                        <motion.div
+                            animate={{ x: [0, 6, 0], y: [0, -3, 0] }}
+                            transition={{
+                                duration: 2.8,
+                                repeat: Infinity,
+                                ease: "easeInOut",
+                            }}
+                            className="mb-5"
+                        >
+                            <LucidePlane className="w-9 h-9 text-accent" />
+                        </motion.div>
+
+                        <p className="text-xl font-serif mb-1">
+                            Plan your first trip
+                        </p>
+                        <p className="text-xs  mb-5 leading-relaxed">
+                            Get personalised AI health advice, vaccines &amp;
+                            safety alerts for your destination.
+                        </p>
+                        <span className="inline-flex items-center gap-1.5 text-accent text-xs font-semibold">
+                            Start now{" "}
+                            <LucideArrowRight className="w-3.5 h-3.5" />
+                        </span>
                     </motion.button>
-                </motion.div>
+
+                    {/* Secondary CTA */}
+                    <motion.button
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.6 }}
+                        onClick={() => navigate(dashboardPath)}
+                        className="w-full py-3 text-sm text-muted font-medium hover:text-heading transition-colors cursor-pointer"
+                    >
+                        Take me to the dashboard
+                    </motion.button>
+                </div>
             </div>
         );
     }
@@ -744,7 +785,7 @@ const TripItineraryInput = ({
     value: TripItineraryData;
     onChange: (val: unknown) => void;
 }) => {
-    const data: TripItineraryData = { tripType: "one", legs: [], ...value };
+    const data: TripItineraryData = { ...value, tripType: "one", legs: [] };
 
     const update = (patch: Partial<TripItineraryData>) => {
         onChange({ ...data, ...patch });

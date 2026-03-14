@@ -133,6 +133,10 @@ export interface CreateCompanyRequest {
 
 export interface UpdateCompanyRequest extends Partial<CreateCompanyRequest> { }
 
+export interface CompanyCodeValidationResponse {
+  valid: boolean;
+}
+
 // ─── Employee ────────────────────────────────────────────────
 
 export interface EmployeeResponse {
@@ -163,6 +167,19 @@ export interface CreateEmployeeRequest {
 }
 
 export interface UpdateEmployeeRequest extends Partial<CreateEmployeeRequest> { }
+
+export interface AllocateEmployeeCreditsRequest {
+  creditsAllocated: number;
+}
+
+export interface UpdateEmployeeStatusRequest {
+  status: "active" | "inactive";
+}
+
+export interface PurchaseCreditsRequest {
+  amount: number;
+  reference?: string;
+}
 
 // ─── Travel Plan ─────────────────────────────────────────────
 
