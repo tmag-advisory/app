@@ -15,6 +15,7 @@ import {
     LucideSkipForward,
     LucidePlus,
     LucideX,
+    LucideLoader2,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { canAccessHR } from "../../lib/canAccessHr";
@@ -23,7 +24,9 @@ import {
     useSubmitQuestionnaire,
     useSaveQuestionnaireProgress,
     useGetQuestionnaireProgress,
+    useCreateTravelPlan,
 } from "../../api/hooks";
+import toast from "react-hot-toast";
 import { getAuthCookie } from "../../api/axios";
 
 // ─── Types ───────────────────────────────────────────────────
@@ -170,12 +173,13 @@ function shouldShowQuestion(
 
 const TravelHealthQuestionnaire = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const { data: categoriesRaw, isLoading: questionsLoading } =
         useOnboardingQuestions();
     const submitQuestionnaire = useSubmitQuestionnaire();
     const saveProgress = useSaveQuestionnaireProgress();
     const { data: savedProgress } = useGetQuestionnaireProgress();
+    const createPlan = useCreateTravelPlan();
 
     const [answers, setAnswers] = useState<Record<string, unknown>>({});
     const [categoryIndex, setCategoryIndex] = useState(0);
@@ -184,6 +188,14 @@ const TravelHealthQuestionnaire = () => {
     const [showIntro, setShowIntro] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showComplete, setShowComplete] = useState(false);
+    const [showCreatePlan, setShowCreatePlan] = useState(false);
+    const [planForm, setPlanForm] = useState({
+        destination: "",
+        country: "",
+        duration: "",
+        purpose: "Leisure",
+        medicalConsiderations: "",
+    });
 
     const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const pendingSaveRef = useRef(false);
@@ -416,101 +428,321 @@ const TravelHealthQuestionnaire = () => {
         );
     }
 
+    // ─── Plan form handlers ──────────────────────────────────
+
+    const updatePlanForm = (field: string, value: string) =>
+        setPlanForm((f) => ({ ...f, [field]: value }));
+
+    const handleCreatePlan = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const credits = user?.credits ?? 0;
+        if (credits <= 0) {
+            toast.error("You don't have enough credits.");
+            return;
+        }
+        try {
+            const result = await createPlan.mutateAsync({
+                destination: planForm.destination,
+                country: planForm.country,
+                duration: parseInt(planForm.duration) || 0,
+                purpose: planForm.purpose,
+                medicalConsiderations: planForm.medicalConsiderations,
+                userId: user?.id,
+                status: "completed",
+                riskScore: 1,
+                vaccinations: "[]",
+                healthAlerts: "[]",
+                safetyAdvisories: "[]",
+                medications: "[]",
+                waterFood: "[]",
+                emergencyContacts: "[]",
+            });
+            await refreshProfile();
+            toast.success("Plan generated successfully!");
+            navigate(`/dashboard/plans/${result.id}`);
+        } catch {
+            toast.error("Failed to generate plan. Please try again.");
+        }
+    };
+
     // ─── Complete Screen ──────────────────────────────────────
 
     if (showComplete) {
-        const createPlanPath =
-            user && canAccessHR(user) ? "/hr/create-plan" : (
-                "/dashboard/create-plan"
-            );
         const dashboardPath = user && canAccessHR(user) ? "/hr" : "/dashboard";
+        const credits = user?.credits ?? 0;
+
+        // Generating state
+        if (createPlan.isPending) {
+            return (
+                <div className="min-h-screen bg-background-primary flex items-center justify-center px-6">
+                    <div className="w-full max-w-sm text-center">
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                            className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-8"
+                        >
+                            <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+                        </motion.div>
+                        <motion.h1
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.15 }}
+                            className="text-4xl font-serif text-heading mb-3"
+                        >
+                            Generating your plan...
+                        </motion.h1>
+                        <motion.p
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.25 }}
+                            className="text-sm text-body max-w-sm mx-auto leading-relaxed"
+                        >
+                            Cross-referencing WHO, CDC, and local health data for{" "}
+                            <strong className="text-heading">{planForm.destination || planForm.country}</strong>.
+                        </motion.p>
+                    </div>
+                </div>
+            );
+        }
 
         return (
             <div className="min-h-screen bg-background-primary flex items-center justify-center px-6">
-                <div className="w-full max-w-sm">
-                    <motion.div
-                        initial={{ scale: 0, rotate: -15 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{
-                            delay: 0.1,
-                            type: "spring",
-                            stiffness: 260,
-                            damping: 20,
-                        }}
-                        className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6"
-                    >
-                        <LucideCheck className="w-7 h-7 text-accent" />
-                    </motion.div>
+                <div className="w-full max-w-lg">
+                    <AnimatePresence mode="wait">
+                        {!showCreatePlan ? (
+                            <motion.div
+                                key="complete"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20, transition: { duration: 0.2 } }}
+                                className="max-w-sm mx-auto"
+                            >
+                                <motion.div
+                                    initial={{ scale: 0, rotate: -15 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{
+                                        delay: 0.1,
+                                        type: "spring",
+                                        stiffness: 260,
+                                        damping: 20,
+                                    }}
+                                    className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6"
+                                >
+                                    <LucideCheck className="w-7 h-7 text-accent" />
+                                </motion.div>
 
-                    <motion.h1
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-5xl font-serif text-heading mb-3 text-center"
-                    >
-                        All done.
-                    </motion.h1>
+                                <motion.h1
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                    className="text-5xl font-serif text-heading mb-3 text-center"
+                                >
+                                    All done.
+                                </motion.h1>
 
-                    <motion.p
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="text-sm text-muted leading-relaxed mb-8 text-center"
-                    >
-                        Your health profile is complete. Your AI advisor is
-                        ready — where are you headed?
-                    </motion.p>
+                                <motion.p
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                    className="text-sm text-muted leading-relaxed mb-8 text-center"
+                                >
+                                    Your health profile is complete. Your AI advisor is
+                                    ready — where are you headed?
+                                </motion.p>
 
-                    {/* Primary CTA — create a plan right now */}
-                    <motion.button
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                            delay: 0.4,
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 24,
-                        }}
-                        onClick={() => navigate(createPlanPath)}
-                        className="w-full mb-3 p-7 rounded-3xl outline-dark/20 outline-2 relative overflow-hidden group cursor-pointer text-left"
-                    >
-                        <div className="absolute inset-0 bg-linear-to-br from-accent/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                                <motion.button
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{
+                                        delay: 0.4,
+                                        type: "spring",
+                                        stiffness: 300,
+                                        damping: 24,
+                                    }}
+                                    onClick={() => setShowCreatePlan(true)}
+                                    className="w-full mb-3 p-7 rounded-3xl outline-dark/20 outline-2 relative overflow-hidden group cursor-pointer text-left"
+                                >
+                                    <div className="absolute inset-0 bg-linear-to-br from-accent/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-                        <motion.div
-                            animate={{ x: [0, 6, 0], y: [0, -3, 0] }}
-                            transition={{
-                                duration: 2.8,
-                                repeat: Infinity,
-                                ease: "easeInOut",
-                            }}
-                            className="mb-5"
-                        >
-                            <LucidePlane className="w-9 h-9 text-accent" />
-                        </motion.div>
+                                    <motion.div
+                                        animate={{ x: [0, 6, 0], y: [0, -3, 0] }}
+                                        transition={{
+                                            duration: 2.8,
+                                            repeat: Infinity,
+                                            ease: "easeInOut",
+                                        }}
+                                        className="mb-5"
+                                    >
+                                        <LucidePlane className="w-9 h-9 text-accent" />
+                                    </motion.div>
 
-                        <p className="text-xl font-serif mb-1">
-                            Plan your first trip
-                        </p>
-                        <p className="text-xs  mb-5 leading-relaxed">
-                            Get personalised AI health advice, vaccines &amp;
-                            safety alerts for your destination.
-                        </p>
-                        <span className="inline-flex items-center gap-1.5 text-accent text-xs font-semibold">
-                            Start now{" "}
-                            <LucideArrowRight className="w-3.5 h-3.5" />
-                        </span>
-                    </motion.button>
+                                    <p className="text-xl font-serif mb-1">
+                                        Plan your first trip
+                                    </p>
+                                    <p className="text-xs mb-5 leading-relaxed">
+                                        Get personalised AI health advice, vaccines &amp;
+                                        safety alerts for your destination.
+                                    </p>
+                                    <span className="inline-flex items-center gap-1.5 text-accent text-xs font-semibold">
+                                        Start now{" "}
+                                        <LucideArrowRight className="w-3.5 h-3.5" />
+                                    </span>
+                                </motion.button>
 
-                    {/* Secondary CTA */}
-                    <motion.button
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.6 }}
-                        onClick={() => navigate(dashboardPath)}
-                        className="w-full py-3 text-sm text-muted font-medium hover:text-heading transition-colors cursor-pointer"
-                    >
-                        Take me to the dashboard
-                    </motion.button>
+                                <motion.button
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.6 }}
+                                    onClick={() => navigate(dashboardPath)}
+                                    className="w-full py-3 text-sm text-muted font-medium hover:text-heading transition-colors cursor-pointer"
+                                >
+                                    Take me to the dashboard
+                                </motion.button>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="create-plan"
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                            >
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCreatePlan(false)}
+                                    className="flex items-center gap-1.5 text-sm text-muted hover:text-heading mb-6 cursor-pointer transition-colors"
+                                >
+                                    <LucideArrowLeft className="w-4 h-4" /> Back
+                                </button>
+
+                                <div className="flex items-center gap-3 mb-2">
+                                    <motion.div
+                                        animate={{ x: [0, 4, 0], y: [0, -2, 0] }}
+                                        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                                    >
+                                        <LucidePlane className="w-6 h-6 text-accent" />
+                                    </motion.div>
+                                    <h1 className="text-3xl sm:text-4xl font-serif text-heading">
+                                        Where are you headed?
+                                    </h1>
+                                </div>
+                                <p className="text-sm text-muted mb-8 leading-relaxed">
+                                    Tell us about your trip and we'll generate a personalised health advisory.
+                                </p>
+
+                                {credits === 0 && (
+                                    <div className="bg-gold/10 border border-gold/20 rounded-2xl p-4 mb-6">
+                                        <p className="text-sm text-heading font-medium">
+                                            You have no credits remaining.{" "}
+                                            <button
+                                                type="button"
+                                                onClick={() => navigate(dashboardPath)}
+                                                className="text-accent cursor-pointer hover:underline"
+                                            >
+                                                Go to dashboard
+                                            </button>{" "}
+                                            to purchase more.
+                                        </p>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleCreatePlan} className="space-y-5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                                Destination
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={planForm.destination}
+                                                onChange={(e) => updatePlanForm("destination", e.target.value)}
+                                                placeholder="e.g. Bogota & Cartagena"
+                                                className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                                Country
+                                            </label>
+                                            <CountryPicker
+                                                value={planForm.country}
+                                                onChange={(name) => updatePlanForm("country", name)}
+                                                inputClassName="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 pr-10 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
+                                                placeholder="e.g. Colombia"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                                Duration (days)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={planForm.duration}
+                                                onChange={(e) => updatePlanForm("duration", e.target.value)}
+                                                placeholder="e.g. 10"
+                                                className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                                Purpose
+                                            </label>
+                                            <select
+                                                value={planForm.purpose}
+                                                onChange={(e) => updatePlanForm("purpose", e.target.value)}
+                                                className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
+                                            >
+                                                <option>Leisure</option>
+                                                <option>Business</option>
+                                                <option>Volunteer</option>
+                                                <option>Study</option>
+                                                <option>Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                            Medical considerations <span className="text-muted font-normal normal-case">(optional)</span>
+                                        </label>
+                                        <textarea
+                                            value={planForm.medicalConsiderations}
+                                            onChange={(e) => updatePlanForm("medicalConsiderations", e.target.value)}
+                                            placeholder="e.g. I take blood thinners, have asthma, or am pregnant"
+                                            rows={3}
+                                            className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200 resize-none"
+                                        />
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-border-light/40">
+                                        <p className="text-xs text-muted">
+                                            This will use <strong className="text-heading">1 credit</strong>. You have {credits} remaining.
+                                        </p>
+                                        <button
+                                            type="submit"
+                                            disabled={credits === 0 || createPlan.isPending}
+                                            className="py-3.5 px-8 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
+                                        >
+                                            Generate plan <LucideArrowRight className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <button
+                                    type="button"
+                                    onClick={() => navigate(dashboardPath)}
+                                    className="w-full mt-4 py-3 text-sm text-muted font-medium hover:text-heading transition-colors cursor-pointer text-center"
+                                >
+                                    Skip — take me to the dashboard
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         );

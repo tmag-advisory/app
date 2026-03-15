@@ -1,22 +1,33 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AnimateIn from "../../components/animations/AnimateIn";
 import { useAuth } from "../../context/AuthContext";
 import { useOnboardingStore } from "../../context/OnboardingContext";
+import { useVerifyEmail, useResendVerificationEmail } from "../../api/hooks";
 import { toast } from "react-hot-toast";
 import { AxiosError } from "axios";
-import { LucideLoader } from "lucide-react";
+import { LucideLoader, LucideArrowLeft } from "lucide-react";
 
 const Register = () => {
     const navigate = useNavigate();
-    const { register } = useAuth()
-    const [loading, setLoading] = useState(false)
-    const { setStage } = useOnboardingStore()
-    const toastkey = 'register'
+    const { register } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const { setStage } = useOnboardingStore();
+    const toastkey = "register";
+
+    const [step, setStep] = useState<"form" | "verify">("form");
+    const [registeredEmail, setRegisteredEmail] = useState("");
+
+    // 6-digit code state
+    const [digits, setDigits] = useState(["", "", "", "", "", ""]);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+    const verifyEmail = useVerifyEmail();
+    const resendVerification = useResendVerificationEmail();
 
     useEffect(() => {
-        setStage(0)
-    }, [setStage])
+        setStage(0);
+    }, [setStage]);
 
     const [form, setForm] = useState({
         name: "",
@@ -29,23 +40,25 @@ const Register = () => {
         try {
             e.preventDefault();
 
-            toast.loading('Creating account...', { id: toastkey })
-            setLoading(true)
+            toast.loading("Creating account...", { id: toastkey });
+            setLoading(true);
             await register({
                 email: form.email,
                 password: form.password,
                 first_name: form.name.split(" ")[0],
                 last_name: form.name.split(" ")[1] ?? form.name,
-                username: String(form.email.split("@")[0] + form.name.split(" ")[0]).toLowerCase(),
-            })
-            setStage(1)
-            toast.success("Registration successful!", { id: toastkey })
-            navigate('/verify-email?email=' + encodeURIComponent(form.email));
-            setLoading(false)
+                username: String(
+                    form.email.split("@")[0] + form.name.split(" ")[0]
+                ).toLowerCase(),
+            });
+            setRegisteredEmail(form.email);
+            toast.success("Check your email for a verification code!", { id: toastkey });
+            setStep("verify");
+            setLoading(false);
         } catch (err) {
-            setLoading(false)
+            setLoading(false);
             if (err instanceof AxiosError) {
-                toast.error(err.response?.data.error, { id: toastkey })
+                toast.error(err.response?.data.error, { id: toastkey });
             }
         }
     };
@@ -53,6 +66,149 @@ const Register = () => {
     const update = useCallback((field: string, value: string) => {
         setForm((f) => ({ ...f, [field]: value }));
     }, []);
+
+    // Code input handlers
+    const handleDigitChange = (index: number, value: string) => {
+        if (!/^\d*$/.test(value)) return;
+        const newDigits = [...digits];
+        newDigits[index] = value.slice(-1);
+        setDigits(newDigits);
+
+        if (value && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleDigitKeyDown = (index: number, e: React.KeyboardEvent) => {
+        if (e.key === "Backspace" && !digits[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+        if (!pasted) return;
+        const newDigits = [...digits];
+        for (let i = 0; i < 6; i++) {
+            newDigits[i] = pasted[i] || "";
+        }
+        setDigits(newDigits);
+        const focusIndex = Math.min(pasted.length, 5);
+        inputRefs.current[focusIndex]?.focus();
+    };
+
+    const handleVerify = async () => {
+        const code = digits.join("");
+        if (code.length !== 6) {
+            toast.error("Please enter the full 6-digit code");
+            return;
+        }
+
+        try {
+            await verifyEmail.mutateAsync({ email: registeredEmail, code });
+            setStage(2);
+            toast.success("Email verified!");
+            navigate("/onboarding");
+        } catch (err) {
+            if (err instanceof AxiosError) {
+                toast.error(err.response?.data?.error || "Invalid code. Please try again.");
+            }
+        }
+    };
+
+    const handleResend = () => {
+        resendVerification.mutate(
+            { email: registeredEmail },
+            {
+                onSuccess: () => {
+                    toast.success("New code sent! Check your email.");
+                    setDigits(["", "", "", "", "", ""]);
+                    inputRefs.current[0]?.focus();
+                },
+                onError: (err) => {
+                    if (err instanceof AxiosError) {
+                        toast.error(err.response?.data?.error || "Failed to resend code");
+                    }
+                },
+            }
+        );
+    };
+
+    // Auto-submit when all 6 digits are filled
+    useEffect(() => {
+        if (step === "verify" && digits.every((d) => d !== "")) {
+            handleVerify();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [digits, step]);
+
+    if (step === "verify") {
+        return (
+            <AnimateIn type="fade">
+                <button
+                    type="button"
+                    onClick={() => setStep("form")}
+                    className="flex items-center gap-1 text-sm text-muted hover:text-heading mb-6 cursor-pointer transition-colors"
+                >
+                    <LucideArrowLeft className="w-4 h-4" />
+                    Back
+                </button>
+
+                <h1 className="text-3xl md:text-4xl font-serif text-heading mb-2">
+                    Verify your email.
+                </h1>
+                <p className="text-sm text-body mb-8">
+                    We sent a 6-digit code to{" "}
+                    <strong className="text-heading">{registeredEmail}</strong>
+                </p>
+
+                <div className="flex justify-center gap-3 mb-8" onPaste={handlePaste}>
+                    {digits.map((digit, i) => (
+                        <input
+                            key={i}
+                            ref={(el) => { inputRefs.current[i] = el; }}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleDigitChange(i, e.target.value)}
+                            onKeyDown={(e) => handleDigitKeyDown(i, e)}
+                            className="w-12 h-14 text-center text-xl font-semibold text-heading bg-white border-2 border-border-light rounded-xl outline-none focus:border-accent transition-colors duration-200"
+                            autoFocus={i === 0}
+                        />
+                    ))}
+                </div>
+
+                <button
+                    type="button"
+                    onClick={handleVerify}
+                    disabled={verifyEmail.isPending || digits.some((d) => !d)}
+                    className="w-full py-3 rounded-xl disabled:bg-gray-500 bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200"
+                >
+                    {verifyEmail.isPending ? (
+                        <LucideLoader className="animate-spin block m-auto" scale={0.9} />
+                    ) : (
+                        "Verify & Continue"
+                    )}
+                </button>
+
+                <div className="text-center mt-6">
+                    <p className="text-sm text-body">
+                        Didn't receive the code?{" "}
+                        <button
+                            type="button"
+                            onClick={handleResend}
+                            disabled={resendVerification.isPending}
+                            className="text-accent font-medium hover:underline cursor-pointer disabled:opacity-50"
+                        >
+                            {resendVerification.isPending ? "Sending..." : "Resend code"}
+                        </button>
+                    </p>
+                </div>
+            </AnimateIn>
+        );
+    }
 
     return (
         <AnimateIn type="fade">
@@ -122,7 +278,11 @@ const Register = () => {
                     disabled={loading}
                     className="w-full py-3 rounded-xl disabled:bg-gray-500 bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200"
                 >
-                    {loading ? <LucideLoader className="animate-spin block m-auto" scale={0.9} /> : "Create Account"}
+                    {loading ? (
+                        <LucideLoader className="animate-spin block m-auto" scale={0.9} />
+                    ) : (
+                        "Create Account"
+                    )}
                 </button>
             </form>
 
@@ -201,6 +361,5 @@ const Register = () => {
         </AnimateIn>
     );
 };
-
 
 export default Register;

@@ -219,12 +219,9 @@ export function useResetPassword() {
   });
 }
 
-export function useVerifyEmail(token: string) {
-  return useQuery({
-    queryKey: ["verify-email", token],
-    queryFn: () => authApi.verifyEmail(token),
-    enabled: !!token,
-    retry: false,
+export function useVerifyEmail() {
+  return useMutation({
+    mutationFn: (data: { email: string; code: string }) => authApi.verifyEmail(data),
   });
 }
 
@@ -410,6 +407,11 @@ export function useTravelPlan(id: number) {
     queryKey: queryKeys.travelPlans.detail(id),
     queryFn: () => travelPlansApi.get(id),
     enabled: id > 0,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === "PENDING" || status === "PROCESSING") return 3000;
+      return false;
+    },
   });
 }
 

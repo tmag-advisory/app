@@ -1,63 +1,158 @@
-
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AnimateIn from "../../components/animations/AnimateIn";
-import { useResendVerificationEmail } from "../../api";
-import { useSearchParams } from "react-router-dom";
+import { useVerifyEmail, useResendVerificationEmail } from "../../api/hooks";
+import { toast } from "react-hot-toast";
 import { AxiosError } from "axios";
+import { LucideLoader } from "lucide-react";
 
 const EmailVerification = () => {
-    const resend = useResendVerificationEmail();
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const email = searchParams.get("email");
+    const email = searchParams.get("email") ?? "";
 
-    const handleResend = () => {
-        if (email) {
-            resend.mutate({ email });
+    const [digits, setDigits] = useState(["", "", "", "", "", ""]);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+    const verifyEmail = useVerifyEmail();
+    const resend = useResendVerificationEmail();
+
+    const handleDigitChange = (index: number, value: string) => {
+        if (!/^\d*$/.test(value)) return;
+        const newDigits = [...digits];
+        newDigits[index] = value.slice(-1);
+        setDigits(newDigits);
+
+        if (value && index < 5) {
+            inputRefs.current[index + 1]?.focus();
         }
     };
 
+    const handleDigitKeyDown = (index: number, e: React.KeyboardEvent) => {
+        if (e.key === "Backspace" && !digits[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+        if (!pasted) return;
+        const newDigits = [...digits];
+        for (let i = 0; i < 6; i++) {
+            newDigits[i] = pasted[i] || "";
+        }
+        setDigits(newDigits);
+        const focusIndex = Math.min(pasted.length, 5);
+        inputRefs.current[focusIndex]?.focus();
+    };
+
+    const handleVerify = async () => {
+        const code = digits.join("");
+        if (code.length !== 6 || !email) return;
+
+        try {
+            await verifyEmail.mutateAsync({ email, code });
+            toast.success("Email verified!");
+            navigate("/onboarding");
+        } catch (err) {
+            if (err instanceof AxiosError) {
+                toast.error(err.response?.data?.error || "Invalid code. Please try again.");
+            }
+        }
+    };
+
+    const handleResend = () => {
+        if (!email) return;
+        resend.mutate(
+            { email },
+            {
+                onSuccess: () => {
+                    toast.success("New code sent! Check your email.");
+                    setDigits(["", "", "", "", "", ""]);
+                    inputRefs.current[0]?.focus();
+                },
+                onError: (err) => {
+                    if (err instanceof AxiosError) {
+                        toast.error(err.response?.data?.error || "Failed to resend code");
+                    }
+                },
+            }
+        );
+    };
+
+    // Auto-submit when all 6 digits are filled
+    useEffect(() => {
+        if (digits.every((d) => d !== "")) {
+            handleVerify();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [digits]);
+
+    if (!email) {
+        return (
+            <AnimateIn type="fade" className="text-center">
+                <h1 className="text-3xl font-serif text-heading mb-2">Missing email.</h1>
+                <p className="text-sm text-body mb-8">
+                    Please register or log in to verify your email address.
+                </p>
+            </AnimateIn>
+        );
+    }
+
     return (
-        <AnimateIn type="fade" className="text-center">
-            <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl">📬</span>
-            </div>
+        <AnimateIn type="fade">
             <h1 className="text-3xl md:text-4xl font-serif text-heading mb-2">
                 Verify your email.
             </h1>
-            <p className="text-sm text-body mb-8 max-w-sm mx-auto">
-                We've sent a verification link to your email address. Click
-                it to activate your account and start your onboarding.
+            <p className="text-sm text-body mb-8">
+                We sent a 6-digit code to{" "}
+                <strong className="text-heading">{email}</strong>
             </p>
 
-            <div className="bg-button-secondary rounded-2xl p-6 mb-6">
-                <p className="text-xs text-muted mb-3">Didn't receive the email?</p>
-                {resend.isSuccess ? (
-                    <p className="text-sm text-green-600 font-semibold">Verification email sent!</p>
-                ) : (
-                    <button
-                        onClick={handleResend}
-                        disabled={resend.isPending || !email}
-                        className="text-sm text-accent font-semibold hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {resend.isPending ? "Sending…" : "Resend verification email"}
-                    </button>
-                )}
-                {resend.isError && (
-                    <p className="text-xs text-red-500 mt-2">
-                        {resend.error instanceof AxiosError && resend.error.response ? resend.error.response?.data.error : "An unknown error occurred"}
-                    </p>
-                )}
-                {!email && (
-                    <p className="text-xs text-amber-600 mt-2">Email address missing from request.</p>
-                )}
+            <div className="flex justify-center gap-3 mb-8" onPaste={handlePaste}>
+                {digits.map((digit, i) => (
+                    <input
+                        key={i}
+                        ref={(el) => { inputRefs.current[i] = el; }}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleDigitChange(i, e.target.value)}
+                        onKeyDown={(e) => handleDigitKeyDown(i, e)}
+                        className="w-12 h-14 text-center text-xl font-semibold text-heading bg-white border-2 border-border-light rounded-xl outline-none focus:border-accent transition-colors duration-200"
+                        autoFocus={i === 0}
+                    />
+                ))}
             </div>
 
-            {/* Preview shortcut */}
-            {/*<Link
-                to="/onboarding"
-                className="inline-block py-3 px-6 rounded-xl bg-dark text-background-primary font-semibold text-sm hover:bg-darkest transition-colors duration-200"
+            <button
+                type="button"
+                onClick={handleVerify}
+                disabled={verifyEmail.isPending || digits.some((d) => !d)}
+                className="w-full py-3 rounded-xl disabled:bg-gray-500 bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200"
             >
-                Skip to onboarding (preview)
-            </Link>*/}
+                {verifyEmail.isPending ? (
+                    <LucideLoader className="animate-spin block m-auto" scale={0.9} />
+                ) : (
+                    "Verify & Continue"
+                )}
+            </button>
+
+            <div className="text-center mt-6">
+                <p className="text-sm text-body">
+                    Didn't receive the code?{" "}
+                    <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={resend.isPending}
+                        className="text-accent font-medium hover:underline cursor-pointer disabled:opacity-50"
+                    >
+                        {resend.isPending ? "Sending..." : "Resend code"}
+                    </button>
+                </p>
+            </div>
         </AnimateIn>
     );
 };

@@ -111,8 +111,8 @@ export const authApi = {
   resendVerificationEmail: (data: ResendVerificationRequest) =>
     api.post<ApiResponse<{ message: string }>>("/auth/resend-verification", data).then((r) => r.data.data),
 
-  verifyEmail: (token: string) =>
-    api.get<ApiResponse<{ message: string }>>("/auth/verify-email", { params: { token } }).then((r) => r.data.data),
+  verifyEmail: (data: { email: string; code: string }) =>
+    api.post<ApiResponse<{ message: string }>>("/auth/verify-email", data).then((r) => r.data.data),
 
   acceptInvitation: (data: { token: string; new_password: string }) =>
     api.post<ApiResponse<AuthResponse>>("/auth/accept-invitation", data).then((r) => r.data.data),
