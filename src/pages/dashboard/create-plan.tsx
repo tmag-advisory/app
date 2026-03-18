@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useCreateTravelPlan } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
@@ -85,15 +85,21 @@ const CreatePlan = () => {
                 <div className="bg-gold/10 border border-gold/20 rounded-2xl p-4 mb-6">
                     <p className="text-sm text-heading font-medium">
                         You have no credits remaining.{" "}
-                        <span className="text-accent cursor-pointer hover:underline">
+                        <Link
+                            to="/dashboard/settings"
+                            className="text-accent cursor-pointer hover:underline"
+                        >
                             Purchase more credits
-                        </span>{" "}
+                        </Link>{" "}
                         to generate a new plan.
                     </p>
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-border-light/50 p-6 md:p-8 max-w-2xl">
+            <form
+                onSubmit={handleSubmit}
+                className="bg-white rounded-2xl border border-border-light/50 p-6 md:p-8 max-w-2xl"
+            >
                 <div className="space-y-5">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
@@ -103,7 +109,9 @@ const CreatePlan = () => {
                             <input
                                 type="text"
                                 value={form.destination}
-                                onChange={(e) => update("destination", e.target.value)}
+                                onChange={(e) =>
+                                    update("destination", e.target.value)
+                                }
                                 placeholder="e.g. Bogotá & Cartagena"
                                 className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
                                 required
@@ -129,7 +137,9 @@ const CreatePlan = () => {
                             <input
                                 type="number"
                                 value={form.duration}
-                                onChange={(e) => update("duration", e.target.value)}
+                                onChange={(e) =>
+                                    update("duration", e.target.value)
+                                }
                                 placeholder="e.g. 10"
                                 className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
                                 required
@@ -141,7 +151,9 @@ const CreatePlan = () => {
                             </label>
                             <select
                                 value={form.purpose}
-                                onChange={(e) => update("purpose", e.target.value)}
+                                onChange={(e) =>
+                                    update("purpose", e.target.value)
+                                }
                                 className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
                             >
                                 <option>Leisure</option>
@@ -154,11 +166,16 @@ const CreatePlan = () => {
                     </div>
                     <div>
                         <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                            Medical considerations <span className="text-muted font-normal normal-case">(optional)</span>
+                            Medical considerations{" "}
+                            <span className="text-muted font-normal normal-case">
+                                (optional)
+                            </span>
                         </label>
                         <textarea
                             value={form.medicalConsiderations}
-                            onChange={(e) => update("medicalConsiderations", e.target.value)}
+                            onChange={(e) =>
+                                update("medicalConsiderations", e.target.value)
+                            }
                             placeholder="e.g. I take blood thinners, have asthma, or am pregnant"
                             rows={3}
                             className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200 resize-none"
@@ -168,7 +185,9 @@ const CreatePlan = () => {
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-8 pt-6 border-t border-border-light/50">
                     <p className="text-xs text-muted">
-                        This will use <strong className="text-heading">1 credit</strong>. You have {credits} remaining.
+                        This will use{" "}
+                        <strong className="text-heading">1 credit</strong>. You
+                        have {credits} remaining.
                     </p>
                     <button
                         type="submit"
