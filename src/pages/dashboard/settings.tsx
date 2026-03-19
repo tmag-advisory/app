@@ -409,29 +409,63 @@ const Settings = () => {
                             /* ── Individual user view ── */
                             <>
                                 <h2 className="text-base font-semibold text-heading mb-1">Purchase credits</h2>
-                                <p className="text-xs text-muted mb-6">Select how many credits you'd like to buy.</p>
+                                <p className="text-xs text-muted mb-6">Select a credit pack that works for you.</p>
 
-                                {/* Credit count display */}
-                                <div className="flex items-baseline gap-2 mb-6">
-                                    <span className="text-5xl font-serif text-heading">{creditCount}</span>
-                                    <span
-                                        className="text-sm text-muted">{creditCount === 1 ? "credit" : "credits"}</span>
+                                {/* Tiered pricing cards */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                                    {[
+                                        { credits: 1, label: "1 credit", popular: false },
+                                        { credits: 5, label: "5 credits", popular: true },
+                                        { credits: 10, label: "10 credits", popular: false },
+                                    ].map((tier) => {
+                                        const total = tier.credits * currencyConf.perCredit;
+                                        const isSelected = creditCount === tier.credits;
+                                        return (
+                                            <button
+                                                key={tier.credits}
+                                                onClick={() => setCreditCount(tier.credits)}
+                                                className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                                                    isSelected
+                                                        ? "border-accent bg-accent/5"
+                                                        : "border-border-light hover:border-accent/50"
+                                                }`}
+                                            >
+                                                {tier.popular && (
+                                                    <span className="absolute -top-2 right-3 px-2 py-0.5 bg-accent text-white text-xs font-semibold rounded-full">
+                                                        Popular
+                                                    </span>
+                                                )}
+                                                <div className="text-2xl font-serif text-heading mb-1">
+                                                    {tier.credits}
+                                                </div>
+                                                <div className="text-xs text-muted mb-3">
+                                                    {tier.label}
+                                                </div>
+                                                <div className="text-lg font-semibold text-heading">
+                                                    {currencyConf.symbol}{total.toLocaleString()}
+                                                </div>
+                                                <div className="text-xs text-muted">
+                                                    {currencyConf.symbol}{currencyConf.perCredit.toLocaleString()} per credit
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
-                                {/* Slider */}
+                                {/* Custom amount option */}
                                 <div className="mb-6">
+                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                        Or enter custom amount
+                                    </label>
                                     <input
-                                        type="range"
+                                        type="number"
                                         min={1}
-                                        max={20}
+                                        max={100}
                                         value={creditCount}
-                                        onChange={(e) => setCreditCount(Number(e.target.value))}
-                                        className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-accent bg-border-light"
+                                        onChange={(e) => setCreditCount(Math.max(1, Math.min(100, Number(e.target.value))))}
+                                        className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
+                                        placeholder="Enter number of credits"
                                     />
-                                    <div className="flex justify-between text-xs text-muted mt-2">
-                                        <span>1 credit</span>
-                                        <span>20 credits</span>
-                                    </div>
                                 </div>
 
                                 {/* Pricing summary */}

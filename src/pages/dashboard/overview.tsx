@@ -110,8 +110,23 @@ const DashboardOverview = () => {
                             );
                         })}
                         {plans.length === 0 && (
-                            <div className="px-6 py-12 text-center">
-                                <p className="text-sm text-muted">No plans generated yet.</p>
+                            <div className="px-6 py-12">
+                                <div className="max-w-md mx-auto text-center">
+                                    <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                                        <LucideFileText className="w-8 h-8 text-accent" />
+                                    </div>
+                                    <p className="text-sm font-semibold text-heading mb-2">No plans yet</p>
+                                    <p className="text-xs text-muted mb-6">
+                                        Create your first travel health plan to get personalized recommendations for vaccines, medications, and safety guidance.
+                                    </p>
+                                    <Link
+                                        to="/dashboard/create-plan"
+                                        className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-accent text-white font-semibold text-sm hover:bg-accent/90 transition-colors duration-200"
+                                    >
+                                        <LucidePlusCircle className="w-4 h-4" />
+                                        Create your first plan
+                                    </Link>
+                                </div>
                             </div>
                         )}
                     </div>

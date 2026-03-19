@@ -289,7 +289,7 @@ const Onboarding = () => {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {([
                                         { type: "individual" as const, icon: LucideUser, title: "Individual", desc: "I'm planning personal or family travel." },
-                                        { type: "company" as const, icon: LucideBuilding2, title: "Company", desc: "I am a memeber of an organization." },
+                                        { type: "company" as const, icon: LucideBuilding2, title: "Company", desc: "I am a member of an organization." },
                                     ]).map((opt, i) => (
                                         <motion.button
                                             key={opt.type}
@@ -516,6 +516,17 @@ const Onboarding = () => {
                                 >
                                     TMAG gives you AI-powered travel health advisories tailored to your destination, history, and health needs.
                                 </motion.p>
+
+                                {/* Credit explanation */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.35 }}
+                                    className="mb-8 p-4 rounded-xl bg-accent/5 border border-accent/20 max-w-sm mx-auto"
+                                >
+                                    <p className="text-sm text-heading font-semibold mb-1">Your free plan includes 1 health report</p>
+                                    <p className="text-xs text-muted">Additional reports are ₦5,000 each. No subscriptions, no hidden fees.</p>
+                                </motion.div>
 
                                 <motion.div
                                     initial={{ opacity: 0, y: 12 }}

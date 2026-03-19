@@ -402,13 +402,19 @@ const TravelHealthQuestionnaire = () => {
 
     // ─── Progress ────────────────────────────────────────────
 
-    const totalQuestions = categories.reduce(
-        (sum, cat) => sum + cat.parsedQuestions.length,
-        0
-    );
-    const answeredCount = Object.keys(answers).length;
-    const progressPercent = totalQuestions
-        ? Math.min(Math.round((answeredCount / totalQuestions) * 100), 100)
+    // Calculate progress based on sections completed + current section progress
+    // This makes early progress more rewarding and feels less overwhelming
+    const totalSections = categories.length;
+    const completedSections = categoryIndex;
+    const currentSectionProgress = visibleQuestions.length > 0 
+        ? (questionIndex + 1) / visibleQuestions.length 
+        : 0;
+    
+    const progressPercent = totalSections > 0
+        ? Math.min(
+            Math.round(((completedSections + currentSectionProgress) / totalSections) * 100),
+            100
+          )
         : 0;
 
     const isLastQuestion =
@@ -845,7 +851,7 @@ const TravelHealthQuestionnaire = () => {
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: 0.2 }}
-                                    className="text-xs font-bold tracking-[0.14em] text-accent uppercase mb-4"
+                                    className="text-sm font-bold tracking-[0.14em] text-accent uppercase mb-4"
                                 >
                                     Section {categoryIndex + 1} of {categories.length}
                                 </motion.p>
@@ -905,10 +911,10 @@ const TravelHealthQuestionnaire = () => {
                             >
                                 {/* Question counter */}
                                 <div className="flex items-center gap-2 mb-5">
-                                    <span className="text-xs font-bold tracking-wider text-accent uppercase">
+                                    <span className="text-sm font-bold tracking-wider text-accent uppercase">
                                         {currentCategory.category_name}
                                     </span>
-                                    <span className="text-xs text-muted/60">
+                                    <span className="text-sm text-muted/60">
                                         {questionIndex + 1} / {visibleQuestions.length}
                                     </span>
                                 </div>

@@ -27,7 +27,7 @@ const HeroSection = () => {
             </div>
 
             <p data-hero-anim className="text-sm text-muted mt-3 font-medium">
-                Trusted by 100+ travelers worldwide
+                Physician-designed. Evidence-based.
             </p>
 
             <h1 data-hero-anim className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading mt-6  max-w-3xl font-serif">

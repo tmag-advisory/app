@@ -13,7 +13,7 @@ const DotOverlay = () => {
                     {Array.from({ length: cols }).map((_, colIdx) => (
                         <div
                             key={colIdx}
-                            className="w-1.5 md:w-3.5 h-1.5 md:h-3.5 rounded-full bg-white"
+                            className="w-1.5 md:w-3.5 h-1.5 md:h-3.5 rounded-full bg-white opacity-30"
                         />
                     ))}
                 </div>
