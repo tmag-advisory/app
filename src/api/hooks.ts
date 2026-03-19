@@ -12,13 +12,14 @@ import {
   countryAccommodationsApi,
   creditsApi,
   notificationsApi,
-  pricingPlansApi,
   invoicesApi,
   blogPostsApi,
   faqItemsApi,
   companyUsersApi,
   profileApi,
   onboardingApi,
+  creditPricingApi,
+  creditPurchaseApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -53,6 +54,8 @@ import type {
   AdvanceStageRequest,
   SubmitQuestionnaireRequest,
   QuestionnaireProgressRequest,
+  CreditPricingResponse,
+  CreditPurchaseRequest,
 } from "./types";
 
 // ─── Query Keys ──────────────────────────────────────────────
@@ -138,14 +141,6 @@ export const queryKeys = {
     details: () => [...queryKeys.notifications.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.notifications.details(), id] as const,
   },
-  pricingPlans: {
-    all: ["pricing-plans"] as const,
-    lists: () => [...queryKeys.pricingPlans.all, "list"] as const,
-    list: (params?: PaginationParams) => [...queryKeys.pricingPlans.lists(), params] as const,
-    selectAll: () => [...queryKeys.pricingPlans.all, "select"] as const,
-    details: () => [...queryKeys.pricingPlans.all, "detail"] as const,
-    detail: (id: number) => [...queryKeys.pricingPlans.details(), id] as const,
-  },
   invoices: {
     all: ["invoices"] as const,
     lists: () => [...queryKeys.invoices.all, "list"] as const,
@@ -186,6 +181,16 @@ export const queryKeys = {
   onboarding: {
     all: ["onboarding"] as const,
     detail: () => [...["onboarding"], "detail"] as const,
+  },
+  creditPricing: {
+    all: ["credit-pricing"] as const,
+    list: () => [...["credit-pricing"], "list"] as const,
+    byCurrency: (currency: string) => [...["credit-pricing"], "currency", currency] as const,
+  },
+  creditPurchases: {
+    all: ["credit-purchases"] as const,
+    history: () => [...["credit-purchases"], "history"] as const,
+    byTxRef: (txRef: string) => [...["credit-purchases"], "txRef", txRef] as const,
   },
 };
 
@@ -720,30 +725,6 @@ export function useDeleteNotification() {
   });
 }
 
-// ─── Pricing Plan Hooks ──────────────────────────────────────
-
-export function usePricingPlans(params?: PaginationParams) {
-  return useQuery({
-    queryKey: queryKeys.pricingPlans.list(params),
-    queryFn: () => pricingPlansApi.list(params),
-  });
-}
-
-export function usePricingPlansSelect() {
-  return useQuery({
-    queryKey: queryKeys.pricingPlans.selectAll(),
-    queryFn: () => pricingPlansApi.listAll(),
-  });
-}
-
-export function usePricingPlan(id: number) {
-  return useQuery({
-    queryKey: queryKeys.pricingPlans.detail(id),
-    queryFn: () => pricingPlansApi.get(id),
-    enabled: id > 0,
-  });
-}
-
 // ─── Invoice Hooks ───────────────────────────────────────────
 
 export function useInvoices(params?: PaginationParams) {
@@ -960,5 +941,53 @@ export function useGetQuestionnaireProgress() {
     retry: false,
     staleTime: 0,
     gcTime: 0,
+  });
+}
+
+// ─── Credit Pricing Hooks ───────────────────────────────────────
+
+export function useCreditPricing() {
+  return useQuery<CreditPricingResponse[]>({
+    queryKey: queryKeys.creditPricing.list(),
+    queryFn: () => creditPricingApi.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCreditPricingByCurrency(currency: string) {
+  return useQuery<CreditPricingResponse>({
+    queryKey: queryKeys.creditPricing.byCurrency(currency),
+    queryFn: () => creditPricingApi.getByCurrency(currency),
+    enabled: !!currency,
+  });
+}
+
+// ─── Credit Purchase Hooks ───────────────────────────────────────
+
+export function useInitiateCreditPurchase() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreditPurchaseRequest) => creditPurchaseApi.initiate(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.profile.all });
+    },
+  });
+}
+
+export function useVerifyCreditPurchase() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (txRef: string) => creditPurchaseApi.verify(txRef),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.profile.all });
+      qc.invalidateQueries({ queryKey: queryKeys.creditPurchases.all });
+    },
+  });
+}
+
+export function useCreditPurchaseHistory() {
+  return useQuery({
+    queryKey: queryKeys.creditPurchases.history(),
+    queryFn: () => creditPurchaseApi.history(),
   });
 }

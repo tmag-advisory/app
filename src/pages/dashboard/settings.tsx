@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {Link} from "react-router-dom";
 import {useAuth} from "../../context/AuthContext";
-import {useOnboarding, useUpdateProfile, useUpdateProfilePassword, useMyCompanies} from "../../api/hooks";
+import {useOnboarding, useUpdateProfile, useUpdateProfilePassword, useMyCompanies, useCreditPricing, useInitiateCreditPurchase} from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import {
     LucideUser,
@@ -12,17 +12,56 @@ import {
     LucideLoader2,
     LucideX,
     LucideBuilding2,
-    LucideMail
+    LucideMail,
+    LucideCheck,
+    LucideTag
 } from "lucide-react";
 import toast from "react-hot-toast";
-import type {BillingCurrency} from "../../api/types";
+import type {BillingCurrency, CreditPricingResponse} from "../../api/types";
 import * as React from "react";
 
-const CURRENCY_CONFIG: Record<BillingCurrency, { symbol: string; label: string; perCredit: number }> = {
-    USD: {symbol: "$", label: "US Dollar", perCredit: 9},
-    NGN: {symbol: "₦", label: "Nigerian Naira", perCredit: 5000},
-    EUR: {symbol: "€", label: "Euro", perCredit: 8},
-    GBP: {symbol: "£", label: "British Pound", perCredit: 7},
+const CURRENCY_SYMBOLS: Record<BillingCurrency, string> = {
+    USD: "$",
+    NGN: "₦",
+    EUR: "€",
+    GBP: "£",
+};
+
+const getDiscountLabel = (credits: number, pricePerCredit: number, pricing: CreditPricingResponse | undefined): string | null => {
+    if (!pricing) return null;
+    const total = credits * pricePerCredit;
+    
+    if (pricing.discountTier3Threshold && pricing.discountTier3Amount && 
+        total >= pricing.discountTier3Threshold) {
+        return "Best Value!";
+    } else if (pricing.discountTier2Threshold && pricing.discountTier2Amount && 
+               total >= pricing.discountTier2Threshold) {
+        return "Great Discount!";
+    } else if (pricing.discountTier1Threshold && pricing.discountTier1Amount && 
+               total >= pricing.discountTier1Threshold) {
+        return "Bulk Discount!";
+    }
+    return null;
+};
+
+const calculatePriceWithDiscount = (credits: number, pricing: CreditPricingResponse | undefined, defaultPrice: number) => {
+    const pp = pricing?.pricePerCredit ?? defaultPrice;
+    const basePrice = pp * credits;
+    const total = basePrice;
+    let discount = 0;
+    
+    if (pricing?.discountTier3Threshold && pricing?.discountTier3Amount && 
+        total >= pricing.discountTier3Threshold) {
+        discount = pricing.discountTier3Amount;
+    } else if (pricing?.discountTier2Threshold && pricing?.discountTier2Amount && 
+               total >= pricing.discountTier2Threshold) {
+        discount = pricing.discountTier2Amount;
+    } else if (pricing?.discountTier1Threshold && pricing?.discountTier1Amount && 
+               total >= pricing.discountTier1Threshold) {
+        discount = pricing.discountTier1Amount;
+    }
+    
+    return { basePrice, discount, total: basePrice - discount };
 };
 
 type Tab = "profile" | "password" | "billing";
@@ -30,6 +69,8 @@ type Tab = "profile" | "password" | "billing";
 const Settings = () => {
     const {user, refreshProfile} = useAuth();
     const {data: onboardingData} = useOnboarding();
+    const {data: creditPricing, isLoading: creditPricingLoading, error: creditPricingError} = useCreditPricing();
+    const initiatePurchase = useInitiateCreditPurchase();
     const [tab, setTab] = useState<Tab>("profile");
 
     const [profileForm, setProfileForm] = useState({
@@ -56,15 +97,35 @@ const Settings = () => {
     const company = isCompanyUser ? myCompanies[0] : null;
 
     // Billing currency — company users use company currency, individuals use their preference
+    // Default to NGN if not set
+    const userBillingCurrency = user?.billing_currency ?? "NGN";
     const activeCurrency: BillingCurrency = isCompanyUser
         ? (company?.billing_currency ?? "NGN")
-        : (user?.billing_currency ?? "NGN");
-    const currencyConf = CURRENCY_CONFIG[activeCurrency];
+        : userBillingCurrency;
+    const currencySymbol = CURRENCY_SYMBOLS[activeCurrency] || activeCurrency;
 
-    const [currencyForm, setCurrencyForm] = useState<BillingCurrency>(user?.billing_currency ?? "NGN");
+    // Get pricing for active currency from API
+    const activePricing = creditPricing?.find(p => p.currency === activeCurrency);
+    
+    // Default pricing based on currency if not found in API
+    const getDefaultPricing = (currency: BillingCurrency) => {
+        switch (currency) {
+            case "USD": return { pricePerCredit: 3.23, discountTier1Threshold: 32.26, discountTier1Amount: 3.23, discountTier2Threshold: 64.52, discountTier2Amount: 5.48, discountTier3Threshold: 322.58, discountTier3Amount: 12.9 };
+            case "EUR": return { pricePerCredit: 2.94, discountTier1Threshold: 29.41, discountTier1Amount: 2.94, discountTier2Threshold: 58.82, discountTier2Amount: 5, discountTier3Threshold: 294.12, discountTier3Amount: 11.76 };
+            case "GBP": return { pricePerCredit: 2.56, discountTier1Threshold: 25.64, discountTier1Amount: 2.56, discountTier2Threshold: 51.28, discountTier2Amount: 4.36, discountTier3Threshold: 256.41, discountTier3Amount: 10.26 };
+            default: return { pricePerCredit: 5000, discountTier1Threshold: 50000, discountTier1Amount: 5000, discountTier2Threshold: 100000, discountTier2Amount: 8500, discountTier3Threshold: 500000, discountTier3Amount: 20000 };
+        }
+    };
+    
+    const effectivePricing = activePricing || getDefaultPricing(activeCurrency);
+    const pricePerCredit = effectivePricing.pricePerCredit;
+
+    const [currencyForm, setCurrencyForm] = useState<BillingCurrency>(userBillingCurrency);
     const [savingCurrency, setSavingCurrency] = useState(false);
+    const [processingPayment, setProcessingPayment] = useState(false);
 
     const handleSaveCurrency = async () => {
+        if (currencyForm === userBillingCurrency) return;
         setSavingCurrency(true);
         try {
             await updateProfile.mutateAsync({billing_currency: currencyForm});
@@ -75,6 +136,52 @@ const Settings = () => {
         } finally {
             setSavingCurrency(false);
         }
+    };
+
+    const handlePurchaseCredits = async () => {
+        setProcessingPayment(true);
+        try {
+            const result = await initiatePurchase.mutateAsync({
+                credits: creditCount,
+                currency: activeCurrency,
+            });
+            
+            // Handle both SuccessResponse format and direct response
+            const responseData = (result as any).data || result;
+            const paymentLink = responseData.paymentLink || (responseData.data?.paymentLink);
+            
+            if (responseData.success && paymentLink) {
+                window.location.href = paymentLink;
+            } else {
+                const errorMsg = responseData.error || responseData.data?.error || "Failed to initiate payment. Please try again.";
+                toast.error(errorMsg);
+            }
+        } catch (error: any) {
+            const errorMessage = error?.response?.data?.message || error?.response?.data?.data?.error || "Failed to initiate payment. Please try again.";
+            toast.error(errorMessage);
+        } finally {
+            setProcessingPayment(false);
+        }
+    };
+
+    const calculatePriceWithDiscount = (credits: number, pricing: CreditPricingResponse | undefined, defaultPrice: number) => {
+        const pp = pricing?.pricePerCredit ?? defaultPrice;
+        const basePrice = pp * credits;
+        const total = basePrice;
+        let discount = 0;
+        
+        if (pricing?.discountTier3Threshold && pricing?.discountTier3Amount && 
+            total >= pricing.discountTier3Threshold) {
+            discount = pricing.discountTier3Amount;
+        } else if (pricing?.discountTier2Threshold && pricing?.discountTier2Amount && 
+                   total >= pricing.discountTier2Threshold) {
+            discount = pricing.discountTier2Amount;
+        } else if (pricing?.discountTier1Threshold && pricing?.discountTier1Amount && 
+                   total >= pricing.discountTier1Threshold) {
+            discount = pricing.discountTier1Amount;
+        }
+        
+        return { basePrice, discount, total: basePrice - discount };
     };
 
     const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
@@ -309,8 +416,18 @@ const Settings = () => {
                             <p className="text-xs text-muted mb-4">Choose the currency for credit purchases.</p>
                         )}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-                            {(Object.keys(CURRENCY_CONFIG) as BillingCurrency[]).map((c) => {
-                                const conf = CURRENCY_CONFIG[c];
+                            {(Object.keys(CURRENCY_SYMBOLS) as BillingCurrency[]).map((c) => {
+                                const symbol = CURRENCY_SYMBOLS[c];
+                                const pricing = creditPricing?.find(p => p.currency === c);
+                                const getDefaultPrice = (currency: BillingCurrency) => {
+                                    switch (currency) {
+                                        case "USD": return 3.23;
+                                        case "EUR": return 2.94;
+                                        case "GBP": return 2.56;
+                                        default: return 5000;
+                                    }
+                                };
+                                const perCredit = pricing?.pricePerCredit ?? getDefaultPrice(c);
                                 const selected = isCompanyUser ? activeCurrency === c : currencyForm === c;
                                 return (
                                     <button
@@ -323,8 +440,9 @@ const Settings = () => {
                                                 : "border-border-light text-muted hover:border-accent/40"
                                         } ${isCompanyUser ? "cursor-default opacity-60" : "cursor-pointer"}`}
                                     >
-                                        <span className="text-lg">{conf.symbol}</span>
+                                        <span className="text-lg">{symbol}</span>
                                         <span className="text-xs font-medium">{c}</span>
+                                        <span className="text-xs text-muted">{symbol}{perCredit}/credit</span>
                                     </button>
                                 );
                             })}
@@ -333,7 +451,7 @@ const Settings = () => {
                             <div className="flex items-center justify-between pt-4 border-t border-border-light/50">
                                 <p className="text-xs text-muted">
                                     1 credit
-                                    = {currencyConf.symbol}{CURRENCY_CONFIG[currencyForm].perCredit.toLocaleString()} {currencyForm}
+                                    = {currencySymbol}{effectivePricing.pricePerCredit.toLocaleString()} {currencyForm}
                                 </p>
                                 <button
                                     onClick={handleSaveCurrency}
@@ -415,10 +533,11 @@ const Settings = () => {
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                                     {[
                                         { credits: 1, label: "1 credit", popular: false },
-                                        { credits: 5, label: "5 credits", popular: true },
-                                        { credits: 10, label: "10 credits", popular: false },
+                                        { credits: 5, label: "5 credits", popular: false },
+                                        { credits: 10, label: "10 credits", popular: true },
                                     ].map((tier) => {
-                                        const total = tier.credits * currencyConf.perCredit;
+                                        const { basePrice, discount, total } = calculatePriceWithDiscount(tier.credits, activePricing, effectivePricing.pricePerCredit);
+                                        const discountLabel = getDiscountLabel(tier.credits, effectivePricing.pricePerCredit, activePricing);
                                         const isSelected = creditCount === tier.credits;
                                         return (
                                             <button
@@ -435,18 +554,35 @@ const Settings = () => {
                                                         Popular
                                                     </span>
                                                 )}
-                                                <div className="text-2xl font-serif text-heading mb-1">
+                                                {discountLabel && (
+                                                    <span className="absolute -top-2 left-3 px-2 py-0.5 bg-green-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                                                        <LucideTag className="w-3 h-3" />
+                                                        {discountLabel}
+                                                    </span>
+                                                )}
+                                                <div className="text-2xl font-serif text-heading mb-1 mt-2">
                                                     {tier.credits}
                                                 </div>
-                                                <div className="text-xs text-muted mb-3">
+                                                <div className="text-xs text-muted mb-2">
                                                     {tier.label}
                                                 </div>
-                                                <div className="text-lg font-semibold text-heading">
-                                                    {currencyConf.symbol}{total.toLocaleString()}
-                                                </div>
-                                                <div className="text-xs text-muted">
-                                                    {currencyConf.symbol}{currencyConf.perCredit.toLocaleString()} per credit
-                                                </div>
+                                                {discount > 0 ? (
+                                                    <>
+                                                        <div className="text-lg font-semibold text-heading line-through opacity-50">
+                                                            {currencySymbol}{basePrice.toLocaleString()}
+                                                        </div>
+                                                        <div className="text-lg font-bold text-green-600">
+                                                            {currencySymbol}{total.toLocaleString()}
+                                                        </div>
+                                                        <div className="text-xs text-green-600 font-medium">
+                                                            Save {currencySymbol}{discount.toLocaleString()}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="text-lg font-semibold text-heading">
+                                                        {currencySymbol}{basePrice.toLocaleString()}
+                                                    </div>
+                                                )}
                                             </button>
                                         );
                                     })}
@@ -471,23 +607,86 @@ const Settings = () => {
                                 {/* Pricing summary */}
                                 <div className="bg-background-primary rounded-xl p-4 mb-6 space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs text-muted">Total ({activeCurrency})</span>
+                                        <span className="text-xs text-muted">Credits</span>
+                                        <span className="text-sm font-semibold text-heading">{creditCount}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-muted">Price per credit ({activeCurrency})</span>
                                         <span className="text-sm font-semibold text-heading">
-                                            {currencyConf.symbol}{(creditCount * currencyConf.perCredit).toLocaleString()}
+                                            {currencySymbol}{effectivePricing.pricePerCredit.toLocaleString()}
                                         </span>
                                     </div>
-                                    <div
-                                        className="pt-2 border-t border-border-light/50 flex items-center justify-between">
-                                        <span className="text-xs text-muted">Per credit</span>
-                                        <span className="text-xs text-muted">
-                                            {currencyConf.symbol}{currencyConf.perCredit.toLocaleString()} {activeCurrency}
+                                    {(() => {
+                                        const calc = calculatePriceWithDiscount(creditCount, activePricing, effectivePricing.pricePerCredit);
+                                        return calc.discount > 0 && (
+                                            <div className="flex items-center justify-between text-green-600">
+                                                <span className="text-xs">Discount</span>
+                                                <span className="text-sm font-semibold">
+                                                    -{currencySymbol}{calc.discount.toLocaleString()}
+                                                </span>
+                                            </div>
+                                        );
+                                    })()}
+                                    <div className="pt-2 border-t border-border-light/50 flex items-center justify-between">
+                                        <span className="text-xs font-semibold text-muted">Total ({activeCurrency})</span>
+                                        <span className="text-lg font-bold text-heading">
+                                            {currencySymbol}{(() => {
+                                                const calc = calculatePriceWithDiscount(creditCount, activePricing, effectivePricing.pricePerCredit);
+                                                return calc.total.toLocaleString();
+                                            })()}
                                         </span>
                                     </div>
                                 </div>
 
+                                {/* Discount tiers info */}
+                                {effectivePricing && (
+                                    <div className="bg-accent/5 rounded-xl p-4 mb-6">
+                                        <h4 className="text-xs font-semibold text-heading mb-2">Bulk Discounts Available:</h4>
+                                        <div className="space-y-1 text-xs text-muted">
+                                            {effectivePricing.discountTier1Threshold && effectivePricing.discountTier1Amount && (
+                                                <div className="flex items-center gap-2">
+                                                    <LucideCheck className="w-3 h-3 text-green-600" />
+                                                    <span>
+                                                        Order {currencySymbol}{effectivePricing.discountTier1Threshold.toLocaleString()}+ 
+                                                        to save {currencySymbol}{effectivePricing.discountTier1Amount.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {effectivePricing.discountTier2Threshold && effectivePricing.discountTier2Amount && (
+                                                <div className="flex items-center gap-2">
+                                                    <LucideCheck className="w-3 h-3 text-green-600" />
+                                                    <span>
+                                                        Order {currencySymbol}{effectivePricing.discountTier2Threshold.toLocaleString()}+ 
+                                                        to save {currencySymbol}{effectivePricing.discountTier2Amount.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {effectivePricing.discountTier3Threshold && effectivePricing.discountTier3Amount && (
+                                                <div className="flex items-center gap-2">
+                                                    <LucideCheck className="w-3 h-3 text-green-600" />
+                                                    <span>
+                                                        Order {currencySymbol}{effectivePricing.discountTier3Threshold.toLocaleString()}+ 
+                                                        to save {currencySymbol}{effectivePricing.discountTier3Amount.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <button
-                                    className="w-full py-3 rounded-xl bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent/90 transition-colors duration-200">
-                                    Proceed to payment
+                                    onClick={handlePurchaseCredits}
+                                    disabled={processingPayment}
+                                    className="w-full py-3 rounded-xl bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent/90 transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {processingPayment ? (
+                                        <>
+                                            <LucideLoader2 className="w-4 h-4 animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>Proceed to payment</>
+                                    )}
                                 </button>
                             </>
                         )}

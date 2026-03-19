@@ -413,22 +413,6 @@ export interface CreateNotificationRequest {
 
 export interface UpdateNotificationRequest extends Partial<CreateNotificationRequest> { }
 
-// ─── Pricing Plan ────────────────────────────────────────────
-
-export interface PricingPlanResponse {
-  id: number;
-  name: string;
-  period: string;
-  description: string;
-  features: string;
-  price: number;
-  creditsIncluded: number;
-  position: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
 // ─── Invoice ─────────────────────────────────────────────────
 
 export interface InvoiceResponse {
@@ -605,4 +589,83 @@ export interface QuestionnaireProgressRequest {
   answers: Record<string, unknown>;
   categoryIndex: number;
   questionIndex: number;
+}
+
+// ─── Credit Pricing ────────────────────────────────────────────
+
+export interface CreditPricingResponse {
+  id: number;
+  currency: BillingCurrency;
+  currencySymbol: string;
+  pricePerCredit: number;
+  minCredits: number;
+  maxCredits: number;
+  discountTier1Threshold: number | null;
+  discountTier1Amount: number | null;
+  discountTier2Threshold: number | null;
+  discountTier2Amount: number | null;
+  discountTier3Threshold: number | null;
+  discountTier3Amount: number | null;
+  isActive: boolean;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreditPurchaseRequest {
+  credits: number;
+  currency: BillingCurrency;
+}
+
+export interface CreditPurchaseInitiateResponse {
+  success: boolean;
+  txRef: string;
+  paymentLink: string;
+  credits: number;
+  basePrice: number;
+  discountAmount: number;
+  amount: number;
+  currency: BillingCurrency;
+  currencySymbol: string;
+  pricePerCredit: number;
+  purchaseId: number;
+  error?: string;
+  errorType?: string;
+}
+
+export interface CreditPurchaseResponse {
+  id: number;
+  txRef: string;
+  flwRef: string | null;
+  userId: number;
+  creditsPurchased: number;
+  currency: BillingCurrency;
+  currencySymbol: string;
+  pricePerCredit: number;
+  amount: number;
+  amountPaid: number | null;
+  status: string;
+  flutterwaveStatus: string | null;
+  paidAt: string | null;
+  failedAt: string | null;
+  failedReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PriceCalculationResponse {
+  currency: BillingCurrency;
+  currencySymbol: string;
+  credits: number;
+  pricePerCredit: number;
+  basePrice: number;
+  discountAmount: number;
+  totalPrice: number;
+  appliedDiscountTier: string;
+  discountTier1Threshold: number | null;
+  discountTier1Amount: number | null;
+  discountTier2Threshold: number | null;
+  discountTier2Amount: number | null;
+  discountTier3Threshold: number | null;
+  discountTier3Amount: number | null;
 }

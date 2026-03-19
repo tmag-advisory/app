@@ -53,6 +53,9 @@ const TravelRequests = lazy(() => import("../pages/hr/travel-requests"));
 const Reports = lazy(() => import("../pages/hr/reports"));
 const Billing = lazy(() => import("../pages/hr/billing"));
 
+// Payment pages
+const PaymentCallback = lazy(() => import("../pages/payment/callback"));
+
 // Error pages (lazy-loaded)
 const NotFound = lazy(() => import("../pages/not-found/not-found"));
 const ServerError = lazy(() => import("../pages/not-found/server-error"));
@@ -113,6 +116,12 @@ const router = createBrowserRouter([
         children: [
             { path: "verify-email", element: <VerifyEmailCallback /> },
         ],
+    },
+
+    // Payment callback (needs to be accessible after payment)
+    {
+        path: "payment/callback",
+        element: <PaymentCallback />,
     },
 
     // Individual dashboard

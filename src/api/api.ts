@@ -50,8 +50,6 @@ import type {
   NotificationResponse,
   CreateNotificationRequest,
   UpdateNotificationRequest,
-  // Pricing Plan
-  PricingPlanResponse,
   // Invoice
   InvoiceResponse,
   CreateInvoiceRequest,
@@ -74,6 +72,12 @@ import type {
   OnboardingQuestionCategoryResponse,
   SubmitQuestionnaireRequest,
   QuestionnaireProgressRequest,
+  // Credit Pricing
+  CreditPricingResponse,
+  CreditPurchaseRequest,
+  CreditPurchaseInitiateResponse,
+  CreditPurchaseResponse,
+  PriceCalculationResponse,
 } from "./types";
 
 // ─── Generic CRUD helpers ────────────────────────────────────
@@ -350,19 +354,6 @@ export const notificationsApi = {
     api.delete<ApiResponse<null>>(`/notifications/${id}`).then((r) => r.data.data),
 };
 
-// ─── Pricing Plans ───────────────────────────────────────────
-
-export const pricingPlansApi = {
-  list: (params?: PaginationParams) =>
-    api.get<ApiResponse<PaginatedResponse<PricingPlanResponse>>>("/pricing-plans", { params: buildParams(params) }).then((r) => r.data.data),
-
-  listAll: () =>
-    api.get<ApiResponse<SelectOption[]>>("/pricing-plans/all").then((r) => r.data.data),
-
-  get: (id: number) =>
-    api.get<ApiResponse<PricingPlanResponse>>(`/pricing-plans/${id}`).then((r) => r.data.data),
-};
-
 // ─── Invoices ────────────────────────────────────────────────
 
 export const invoicesApi = {
@@ -485,4 +476,36 @@ export const onboardingApi = {
 
   getProgress: () =>
     api.get<ApiResponse<any>>("/onboarding/progress").then((r) => r.data.data),
+};
+
+// ─── Credit Pricing ────────────────────────────────────────────
+export const creditPricingApi = {
+  list: () =>
+    api.get<ApiResponse<CreditPricingResponse[]>>("/credit-pricing").then((r) => r.data.data),
+
+  getByCurrency: (currency: string) =>
+    api.get<ApiResponse<CreditPricingResponse>>(`/credit-pricing/currency/${currency}`).then((r) => r.data.data),
+
+  calculatePrice: (currency: string, credits: number) =>
+    api.get<ApiResponse<PriceCalculationResponse>>("/credit-pricing/calculate", {
+      params: { currency, credits },
+    }).then((r) => r.data.data),
+};
+
+// ─── Credit Purchase ────────────────────────────────────────────
+export const creditPurchaseApi = {
+  initiate: (data: CreditPurchaseRequest) =>
+    api.post<ApiResponse<CreditPurchaseInitiateResponse>>("/credit-purchases/initiate", data).then((r) => r.data.data),
+
+  verify: (txRef: string, transactionId?: string) =>
+    api.get<ApiResponse<{ success: boolean; purchase: CreditPurchaseResponse }>>(`/credit-purchases/verify/${txRef}`, { params: transactionId ? { transaction_id: transactionId } : undefined }).then((r) => r.data.data),
+
+  callback: (params: { tx_ref?: string; status?: string; transaction_id?: string }) =>
+    api.get<ApiResponse<{ success: boolean; purchase: CreditPurchaseResponse }>>("/credit-purchases/callback", { params }).then((r) => r.data.data),
+
+  history: () =>
+    api.get<ApiResponse<CreditPurchaseResponse[]>>("/credit-purchases/history").then((r) => r.data.data),
+
+  get: (txRef: string) =>
+    api.get<ApiResponse<CreditPurchaseResponse>>(`/credit-purchases/${txRef}`).then((r) => r.data.data),
 };
