@@ -1,8 +1,8 @@
+import { useMemo } from "react";
 import AudienceSection from "../../components/sections/AudienceSection";
 import BrandsSection from "../../components/sections/BrandsSection";
 import FAQSection from "../../components/sections/FAQSection";
 import FinalCTASection from "../../components/sections/FinalCTASection";
-import HeroImage from "../../components/sections/HeroImage";
 import HeroSection from "../../components/sections/HeroSection";
 import HowItWorksSection from "../../components/sections/HowItWorksSection";
 import PricingSection from "../../components/sections/PricingSection";
@@ -12,10 +12,11 @@ import WhatAICoversSection from "../../components/sections/WhatAICoversSection";
 import WhoWeAreSection from "../../components/sections/WhoWeAreSection";
 
 const Home = () => {
+    const heroLayout = useMemo(() => Math.floor(Math.random() * 7), []);
+
     return (
         <main>
-            <HeroSection />
-            <HeroImage />
+            <HeroSection layout={heroLayout} />
             <BrandsSection />
             <WhoWeAreSection />
             <HowItWorksSection />
