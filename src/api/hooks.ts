@@ -56,6 +56,7 @@ import type {
   QuestionnaireProgressRequest,
   CreditPricingResponse,
   CreditPurchaseRequest,
+  GoogleCallbackRequest,
 } from "./types";
 
 // ─── Query Keys ──────────────────────────────────────────────
@@ -227,6 +228,12 @@ export function useResetPassword() {
 export function useVerifyEmail() {
   return useMutation({
     mutationFn: (data: { email: string; code: string }) => authApi.verifyEmail(data),
+  });
+}
+
+export function useGoogleCallback() {
+  return useMutation({
+    mutationFn: (data: GoogleCallbackRequest) => authApi.googleCallback(data),
   });
 }
 

@@ -84,6 +84,14 @@ export interface AuthResponse {
   extend?: any;
 }
 
+export interface GoogleAuthRequest {
+  credential: string;
+}
+
+export interface GoogleCallbackRequest {
+  code: string;
+}
+
 // ─── User ────────────────────────────────────────────────────
 
 export interface UserResponse {

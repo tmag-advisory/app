@@ -34,6 +34,7 @@ const ResetPassword = lazy(() => import("../pages/auth/reset-password"));
 const AcceptInvitation = lazy(() => import("../pages/auth/accept-invitation"));
 const EmailVerification = lazy(() => import("../pages/auth/email-verification"));
 const VerifyEmailCallback = lazy(() => import("../pages/auth/verify-email-callback"));
+const GoogleCallback = lazy(() => import("../pages/auth/google-callback"));
 const Onboarding = lazy(() => import("../pages/auth/onboarding"));
 const TravelHealthQuestionnaire = lazy(() => import("../pages/auth/travel-health-questionnaire"));
 
@@ -110,11 +111,13 @@ const router = createBrowserRouter([
     },
 
     // Email verification callback (from email link: /auth/verify-email?token=...)
+    // Google OAuth callback (from Google redirect: /auth/google/callback?code=...)
     {
         path: "auth",
         element: <AuthLayout />,
         children: [
             { path: "verify-email", element: <VerifyEmailCallback /> },
+            { path: "google/callback", element: <GoogleCallback /> },
         ],
     },
 

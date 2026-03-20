@@ -44,6 +44,7 @@ interface AuthContextValue {
     isLoading: boolean;
     login: (data: LoginRequest) => Promise<AuthUser>;
     register: (data: Partial<RegisterRequest>) => Promise<AuthUser>;
+    setAuthFromResponse: (data: Record<string, unknown>) => AuthUser;
     logout: () => Promise<void>;
     canAccessHR: boolean;
     refreshProfile: () => Promise<void>;
@@ -99,6 +100,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return authUser;
     }, []);
 
+    const setAuthFromResponse = useCallback((d: Record<string, unknown>): AuthUser => {
+        setAuthCookie(d.accessToken as string, d.exp as number);
+        const authUser = buildAuthUserFromLogin(d);
+        setUser(authUser);
+        return authUser;
+    }, []);
+
     const logout = useCallback(async () => {
         try {
             await api.post("/auth/logout");
@@ -128,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isLoading,
                 login,
                 register,
+                setAuthFromResponse,
                 logout,
                 canAccessHR: canAccessHR(user),
                 refreshProfile,

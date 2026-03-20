@@ -11,6 +11,7 @@ import type {
   ResendVerificationRequest,
   ResetPasswordRequest,
   AuthResponse,
+  GoogleCallbackRequest,
   // Company
   CompanyResponse,
   CompanyCodeValidationResponse,
@@ -120,6 +121,12 @@ export const authApi = {
 
   acceptInvitation: (data: { token: string; new_password: string }) =>
     api.post<ApiResponse<AuthResponse>>("/auth/accept-invitation", data).then((r) => r.data.data),
+
+  googleAuthUrl: () =>
+    api.get<ApiResponse<{ url: string }>>("/auth/google/url").then((r) => r.data.data),
+
+  googleCallback: (data: GoogleCallbackRequest) =>
+    api.post<ApiResponse<AuthResponse>>("/auth/google/callback", data).then((r) => r.data.data),
 };
 
 // ─── Companies ───────────────────────────────────────────────
