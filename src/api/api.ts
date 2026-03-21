@@ -79,6 +79,8 @@ import type {
   CreditPurchaseInitiateResponse,
   CreditPurchaseResponse,
   PriceCalculationResponse,
+  // Plan Usage Ledger
+  PlanUsageLedgerResponse,
 } from "./types";
 
 // ─── Generic CRUD helpers ────────────────────────────────────
@@ -515,4 +517,13 @@ export const creditPurchaseApi = {
 
   get: (txRef: string) =>
     api.get<ApiResponse<CreditPurchaseResponse>>(`/credit-purchases/${txRef}`).then((r) => r.data.data),
+};
+
+// ─── Plan Usage Ledger ───────────────────────────────────────────
+export const planUsageLedgerApi = {
+  mine: (params?: PaginationParams) =>
+    api.get<ApiResponse<PaginatedResponse<PlanUsageLedgerResponse>>>("/plan-usage-ledgers/my", { params: buildParams(params) }).then((r) => r.data.data),
+
+  byEmployee: (employeeId: number, params?: PaginationParams) =>
+    api.get<ApiResponse<PaginatedResponse<PlanUsageLedgerResponse>>>(`/plan-usage-ledgers/employee/${employeeId}`, { params: buildParams(params) }).then((r) => r.data.data),
 };

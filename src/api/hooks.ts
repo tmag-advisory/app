@@ -20,6 +20,7 @@ import {
   onboardingApi,
   creditPricingApi,
   creditPurchaseApi,
+  planUsageLedgerApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -57,6 +58,7 @@ import type {
   CreditPricingResponse,
   CreditPurchaseRequest,
   GoogleCallbackRequest,
+  PlanUsageLedgerResponse,
 } from "./types";
 
 // ─── Query Keys ──────────────────────────────────────────────
@@ -192,6 +194,11 @@ export const queryKeys = {
     all: ["credit-purchases"] as const,
     history: () => [...["credit-purchases"], "history"] as const,
     byTxRef: (txRef: string) => [...["credit-purchases"], "txRef", txRef] as const,
+  },
+  planUsageLedgers: {
+    all: ["plan-usage-ledgers"] as const,
+    mine: () => [...["plan-usage-ledgers"], "mine"] as const,
+    byEmployee: (employeeId: number) => [...["plan-usage-ledgers"], "employee", employeeId] as const,
   },
 };
 
@@ -996,5 +1003,22 @@ export function useCreditPurchaseHistory() {
   return useQuery({
     queryKey: queryKeys.creditPurchases.history(),
     queryFn: () => creditPurchaseApi.history(),
+  });
+}
+
+// ─── Plan Usage Ledger Hooks ─────────────────────────────────────
+
+export function usePlanUsageLedgerHistory(params?: PaginationParams) {
+  return useQuery<import("./types").PaginatedResponse<PlanUsageLedgerResponse>>({
+    queryKey: [...queryKeys.planUsageLedgers.mine(), params],
+    queryFn: () => planUsageLedgerApi.mine(params),
+  });
+}
+
+export function usePlanUsageLedgerByEmployee(employeeId: number, params?: PaginationParams) {
+  return useQuery<import("./types").PaginatedResponse<PlanUsageLedgerResponse>>({
+    queryKey: [...queryKeys.planUsageLedgers.byEmployee(employeeId), params],
+    queryFn: () => planUsageLedgerApi.byEmployee(employeeId, params),
+    enabled: employeeId > 0,
   });
 }

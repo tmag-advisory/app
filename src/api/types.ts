@@ -599,6 +599,21 @@ export interface QuestionnaireProgressRequest {
   questionIndex: number;
 }
 
+// ─── Plan Usage Ledger ─────────────────────────────────────────
+
+export interface PlanUsageLedgerResponse {
+  id: number;
+  action: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  travelPlanId: number | null;
+  travelPlanDestination: string | null;
+  travelPlanCountry: string | null;
+  userId: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Credit Pricing ────────────────────────────────────────────
 
 export interface CreditPricingResponse {

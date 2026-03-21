@@ -44,6 +44,7 @@ const CreatePlan = lazy(() => import("../pages/dashboard/create-plan"));
 const PlanHistory = lazy(() => import("../pages/dashboard/plan-history"));
 const PlanDetails = lazy(() => import("../pages/dashboard/plan-details"));
 const Settings = lazy(() => import("../pages/dashboard/settings"));
+const Transactions = lazy(() => import("../pages/dashboard/transactions"));
 
 // HR dashboard (lazy-loaded)
 const HROverview = lazy(() => import("../pages/hr/overview"));
@@ -143,6 +144,7 @@ const router = createBrowserRouter([
             { path: "plans", element: <PlanHistory /> },
             { path: "plans/:id", element: <PlanDetails /> },
             { path: "settings", element: <Settings /> },
+            { path: "transactions", element: <Transactions /> },
         ],
     },
 
