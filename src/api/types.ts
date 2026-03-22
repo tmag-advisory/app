@@ -542,6 +542,8 @@ export interface MyCompanyMembership {
   employee_count: number;
   billing_currency: BillingCurrency;
   role: string;
+  credits_allocated: number;
+  credits_used: number;
 }
 
 export interface CreateCompanyUserRequest {
