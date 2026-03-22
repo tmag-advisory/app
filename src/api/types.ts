@@ -178,6 +178,7 @@ export interface UpdateEmployeeRequest extends Partial<CreateEmployeeRequest> { 
 
 export interface AllocateEmployeeCreditsRequest {
   creditsAllocated: number;
+  companyId: number;
 }
 
 export interface UpdateEmployeeStatusRequest {

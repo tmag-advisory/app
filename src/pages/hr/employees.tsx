@@ -61,9 +61,10 @@ const Employees = () => {
 
     const handleAllocateCredits = (id: number) => {
         const amount = parseInt(newCredits);
+        if (!companyIdNum) return;
         if (isNaN(amount) || amount < 0) return;
         allocateCredits.mutate(
-            { id, data: { creditsAllocated: amount } },
+            { id, data: { creditsAllocated: amount, companyId: companyIdNum } },
             {
                 onSuccess: () => {
                     setAllocatingFor(null);
@@ -153,9 +154,9 @@ const Employees = () => {
             )}
 
             {/* Employees table */}
-            <div className="bg-white rounded-2xl border border-border-light/50">
-                <div className="overflow-x-auto">
-                    <table className="w-full min-w-[540px]">
+            <div className="bg-white rounded-2xl border border-border-light/50 overflow-x-auto">
+                <div className=" overflow-x-auto">
+                    <table className="w-full min-w-135">
                         <thead>
                             <tr className="border-b border-border-light/50">
                                 <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">Employee</th>
@@ -222,9 +223,8 @@ const Employees = () => {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-body hidden sm:table-cell">{emp.plansGenerated}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                                                emp.status === "active" ? "text-accent bg-accent/10" : "text-muted bg-button-secondary"
-                                            }`}>
+                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${emp.status === "active" ? "text-accent bg-accent/10" : "text-muted bg-button-secondary"
+                                                }`}>
                                                 {emp.status}
                                             </span>
                                         </td>
