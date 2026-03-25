@@ -1,21 +1,55 @@
+import { useState, useEffect } from "react";
 import { usePlanStore } from "../../stores/planStore";
-import { useCredits, usePurchaseCredits } from "../../api/hooks";
+import { useCredits, useMyCompanies, useHrCreditQuote, useHrPurchaseCredits } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
-import { LucideCoins, LucideTrendingUp, LucideCalendar, LucideLoader2 } from "lucide-react";
+import { LucideCoins, LucideTrendingUp, LucideCalendar, LucideLoader2, LucideExternalLink } from "lucide-react";
+import toast from "react-hot-toast";
+
+const creditPackages = [50, 100, 200];
 
 const Billing = () => {
-    const { selectedCompanyId, selectedCompany, companyEmployees } = usePlanStore();
-    const company = selectedCompany();
-    const employees = companyEmployees();
-    const companyIdNum = selectedCompanyId ? parseInt(selectedCompanyId) : undefined;
+    const { selectedCompanyId } = usePlanStore();
+    const { data: companiesData } = useMyCompanies();
+    const company = companiesData?.find((c) => c.id === Number(selectedCompanyId)) || companiesData?.[0];
+    const companyId = company?.id;
+    const billingCurrency = (company as any)?.billingCurrency || (company as any)?.billing_currency || "NGN";
 
-    const { data: creditsData, isLoading } = useCredits({ companyId: companyIdNum });
-    const purchaseCredits = usePurchaseCredits();
+    const { data: creditsData, isLoading } = useCredits(companyId ? { companyId } : undefined);
+    const purchaseCredits = useHrPurchaseCredits();
+    const getQuote = useHrCreditQuote();
+
     const creditHistory = creditsData?.data || [];
+    const totalAllocated = company?.total_credits ?? 0;
+    const totalUsed = company?.used_credits ?? 0;
 
-    const totalAllocated = company?.totalCredits ?? 0;
-    const totalUsed = company?.usedCredits ?? 0;
+    const [quotes, setQuotes] = useState<Record<number, any>>({});
+
+    useEffect(() => {
+        if (!companyId) return;
+        creditPackages.forEach(async (credits) => {
+            try {
+                const quote = await getQuote.mutateAsync({ companyId, credits });
+                setQuotes((prev) => ({ ...prev, [credits]: quote }));
+            } catch (err) {
+                console.error(`Failed to fetch quote for ${credits} credits`, err);
+            }
+        });
+    }, [companyId, billingCurrency]);
+
+    const handlePurchase = async (credits: number) => {
+        if (!companyId) return;
+        try {
+            const result = await purchaseCredits.mutateAsync({ credits, companyId });
+            if (result?.paymentLink) {
+                window.location.href = result.paymentLink;
+            } else {
+                toast.error("No payment link received");
+            }
+        } catch (err: any) {
+            toast.error(err?.response?.data?.error || err?.response?.data?.message || "Purchase failed");
+        }
+    };
 
     return (
         <div>
@@ -24,7 +58,7 @@ const Billing = () => {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <StatCard label="Credits remaining" value={totalAllocated - totalUsed} icon={<LucideCoins className="w-4 h-4" />} accent />
-                <StatCard label="Total allocated" value={totalAllocated} icon={<LucideTrendingUp className="w-4 h-4" />} detail={`${totalUsed} used across ${employees.length} employees`} />
+                <StatCard label="Total allocated" value={totalAllocated} icon={<LucideTrendingUp className="w-4 h-4" />} detail={`${totalUsed} used across company`} />
                 <StatCard label="Next renewal" value="Mar 15" icon={<LucideCalendar className="w-4 h-4" />} detail="Annual agreement" />
             </div>
 
@@ -32,26 +66,59 @@ const Billing = () => {
             <div className="bg-white rounded-2xl border border-border-light/50 p-6 mb-6">
                 <h2 className="text-base font-semibold text-heading mb-4">Purchase credits</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    {[
-                        { credits: 50, price: "$250", per: "$5.00/credit" },
-                        { credits: 200, price: "$800", per: "$4.00/credit" },
-                        { credits: 500, price: "$1,750", per: "$3.50/credit" },
-                    ].map((pack) => (
-                        <button
-                            key={pack.credits}
-                            onClick={() => {
-                                if (!companyIdNum) return;
-                                purchaseCredits.mutate({ id: companyIdNum, data: { amount: pack.credits, reference: `Purchase ${pack.credits} credits` } });
-                            }}
-                            disabled={purchaseCredits.isPending || !companyIdNum}
-                            className="p-5 rounded-xl border-2 border-border-light hover:border-accent text-left transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <span className="text-2xl font-serif text-heading block mb-1">{pack.credits}</span>
-                            <span className="text-xs text-muted block mb-3">credits</span>
-                            <span className="text-base font-semibold text-heading block">{pack.price}</span>
-                            <span className="text-xs text-accent">{pack.per}</span>
-                        </button>
-                    ))}
+                    {creditPackages.map((credits, idx) => {
+                        const quote = quotes[credits];
+                        const isPopular = idx === 1;
+                        return (
+                            <div
+                                key={credits}
+                                className={`relative p-5 rounded-xl border-2 transition-all duration-200 ${
+                                    isPopular
+                                        ? "border-accent bg-accent/5"
+                                        : "border-border-light hover:border-accent"
+                                }`}
+                            >
+                                {isPopular && (
+                                    <span className="absolute -top-2 right-4 px-2 py-0.5 bg-accent text-white text-[10px] font-semibold rounded-full">
+                                        Popular
+                                    </span>
+                                )}
+                                <span className="text-2xl font-serif text-heading block mb-1">{credits}</span>
+                                <span className="text-xs text-muted block mb-3">credits</span>
+                                {quote ? (
+                                    <>
+                                        <span className="text-base font-semibold text-heading block">
+                                            {quote.currencySymbol}{quote.totalAmount}
+                                        </span>
+                                        {quote.discountAmount > 0 && (
+                                            <span className="text-xs text-muted line-through block">
+                                                {quote.currencySymbol}{quote.basePrice}
+                                            </span>
+                                        )}
+                                        <span className="text-xs text-accent">
+                                            {quote.currencySymbol}{quote.pricePerCredit}/credit
+                                        </span>
+                                    </>
+                                ) : (
+                                    <div className="h-10 flex items-center">
+                                        <LucideLoader2 className="w-4 h-4 text-muted animate-spin" />
+                                    </div>
+                                )}
+                                <button
+                                    onClick={() => handlePurchase(credits)}
+                                    disabled={purchaseCredits.isPending || !quote || !companyId}
+                                    className="mt-3 w-full py-2.5 rounded-xl bg-accent text-white font-semibold text-sm hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {purchaseCredits.isPending ? (
+                                        <LucideLoader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <LucideExternalLink className="w-4 h-4" />
+                                    )}
+                                    Pay Now
+                                </button>
+                            </div>
+                        );
+                    })}
                 </div>
                 <p className="text-xs text-muted">Need a custom volume? <span className="text-accent cursor-pointer hover:underline">Contact sales</span></p>
             </div>

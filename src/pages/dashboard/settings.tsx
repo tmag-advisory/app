@@ -1,7 +1,14 @@
 import {useState} from "react";
 import {Link} from "react-router-dom";
 import {useAuth} from "../../context/AuthContext";
-import {useOnboarding, useUpdateProfile, useUpdateProfilePassword, useMyCompanies, useCreditPricing, useInitiateCreditPurchase} from "../../api/hooks";
+import {
+    useOnboarding,
+    useUpdateProfile,
+    useUpdateProfilePassword,
+    useMyCompanies,
+    useCreditPricing,
+    useInitiateCreditPurchase
+} from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import {
     LucideUser,
@@ -19,6 +26,7 @@ import {
 import toast from "react-hot-toast";
 import type {BillingCurrency, CreditPricingResponse} from "../../api/types";
 import * as React from "react";
+import {AxiosError} from "axios";
 
 const CURRENCY_SYMBOLS: Record<BillingCurrency, string> = {
     USD: "$",
@@ -30,46 +38,46 @@ const CURRENCY_SYMBOLS: Record<BillingCurrency, string> = {
 const getDiscountLabel = (credits: number, pricePerCredit: number, pricing: CreditPricingResponse | undefined): string | null => {
     if (!pricing) return null;
     const total = credits * pricePerCredit;
-    
-    if (pricing.discountTier3Threshold && pricing.discountTier3Amount && 
+
+    if (pricing.discountTier3Threshold && pricing.discountTier3Amount &&
         total >= pricing.discountTier3Threshold) {
         return "Best Value!";
-    } else if (pricing.discountTier2Threshold && pricing.discountTier2Amount && 
-               total >= pricing.discountTier2Threshold) {
+    } else if (pricing.discountTier2Threshold && pricing.discountTier2Amount &&
+        total >= pricing.discountTier2Threshold) {
         return "Great Discount!";
-    } else if (pricing.discountTier1Threshold && pricing.discountTier1Amount && 
-               total >= pricing.discountTier1Threshold) {
+    } else if (pricing.discountTier1Threshold && pricing.discountTier1Amount &&
+        total >= pricing.discountTier1Threshold) {
         return "Bulk Discount!";
     }
     return null;
 };
 
-const calculatePriceWithDiscount = (credits: number, pricing: CreditPricingResponse | undefined, defaultPrice: number) => {
-    const pp = pricing?.pricePerCredit ?? defaultPrice;
-    const basePrice = pp * credits;
-    const total = basePrice;
-    let discount = 0;
-    
-    if (pricing?.discountTier3Threshold && pricing?.discountTier3Amount && 
-        total >= pricing.discountTier3Threshold) {
-        discount = pricing.discountTier3Amount;
-    } else if (pricing?.discountTier2Threshold && pricing?.discountTier2Amount && 
-               total >= pricing.discountTier2Threshold) {
-        discount = pricing.discountTier2Amount;
-    } else if (pricing?.discountTier1Threshold && pricing?.discountTier1Amount && 
-               total >= pricing.discountTier1Threshold) {
-        discount = pricing.discountTier1Amount;
-    }
-    
-    return { basePrice, discount, total: basePrice - discount };
-};
+// const calculatePriceWithDiscount = (credits: number, pricing: CreditPricingResponse | undefined, defaultPrice: number) => {
+//     const pp = pricing?.pricePerCredit ?? defaultPrice;
+//     const basePrice = pp * credits;
+//     const total = basePrice;
+//     let discount = 0;
+//
+//     if (pricing?.discountTier3Threshold && pricing?.discountTier3Amount &&
+//         total >= pricing.discountTier3Threshold) {
+//         discount = pricing.discountTier3Amount;
+//     } else if (pricing?.discountTier2Threshold && pricing?.discountTier2Amount &&
+//                total >= pricing.discountTier2Threshold) {
+//         discount = pricing.discountTier2Amount;
+//     } else if (pricing?.discountTier1Threshold && pricing?.discountTier1Amount &&
+//                total >= pricing.discountTier1Threshold) {
+//         discount = pricing.discountTier1Amount;
+//     }
+//
+//     return { basePrice, discount, total: basePrice - discount };
+// };
 
 type Tab = "profile" | "password" | "billing";
 
 const Settings = () => {
     const {user, refreshProfile} = useAuth();
     const {data: onboardingData} = useOnboarding();
-    const {data: creditPricing, isLoading: creditPricingLoading, error: creditPricingError} = useCreditPricing();
+    const {data: creditPricing} = useCreditPricing();
     const initiatePurchase = useInitiateCreditPurchase();
     const [tab, setTab] = useState<Tab>("profile");
 
@@ -106,19 +114,55 @@ const Settings = () => {
 
     // Get pricing for active currency from API
     const activePricing = creditPricing?.find(p => p.currency === activeCurrency);
-    
+
     // Default pricing based on currency if not found in API
     const getDefaultPricing = (currency: BillingCurrency) => {
         switch (currency) {
-            case "USD": return { pricePerCredit: 3.23, discountTier1Threshold: 32.26, discountTier1Amount: 3.23, discountTier2Threshold: 64.52, discountTier2Amount: 5.48, discountTier3Threshold: 322.58, discountTier3Amount: 12.9 };
-            case "EUR": return { pricePerCredit: 2.94, discountTier1Threshold: 29.41, discountTier1Amount: 2.94, discountTier2Threshold: 58.82, discountTier2Amount: 5, discountTier3Threshold: 294.12, discountTier3Amount: 11.76 };
-            case "GBP": return { pricePerCredit: 2.56, discountTier1Threshold: 25.64, discountTier1Amount: 2.56, discountTier2Threshold: 51.28, discountTier2Amount: 4.36, discountTier3Threshold: 256.41, discountTier3Amount: 10.26 };
-            default: return { pricePerCredit: 5000, discountTier1Threshold: 50000, discountTier1Amount: 5000, discountTier2Threshold: 100000, discountTier2Amount: 8500, discountTier3Threshold: 500000, discountTier3Amount: 20000 };
+            case "USD":
+                return {
+                    pricePerCredit: 3.23,
+                    discountTier1Threshold: 32.26,
+                    discountTier1Amount: 3.23,
+                    discountTier2Threshold: 64.52,
+                    discountTier2Amount: 5.48,
+                    discountTier3Threshold: 322.58,
+                    discountTier3Amount: 12.9
+                };
+            case "EUR":
+                return {
+                    pricePerCredit: 2.94,
+                    discountTier1Threshold: 29.41,
+                    discountTier1Amount: 2.94,
+                    discountTier2Threshold: 58.82,
+                    discountTier2Amount: 5,
+                    discountTier3Threshold: 294.12,
+                    discountTier3Amount: 11.76
+                };
+            case "GBP":
+                return {
+                    pricePerCredit: 2.56,
+                    discountTier1Threshold: 25.64,
+                    discountTier1Amount: 2.56,
+                    discountTier2Threshold: 51.28,
+                    discountTier2Amount: 4.36,
+                    discountTier3Threshold: 256.41,
+                    discountTier3Amount: 10.26
+                };
+            default:
+                return {
+                    pricePerCredit: 5000,
+                    discountTier1Threshold: 50000,
+                    discountTier1Amount: 5000,
+                    discountTier2Threshold: 100000,
+                    discountTier2Amount: 8500,
+                    discountTier3Threshold: 500000,
+                    discountTier3Amount: 20000
+                };
         }
     };
-    
+
     const effectivePricing = activePricing || getDefaultPricing(activeCurrency);
-    const pricePerCredit = effectivePricing.pricePerCredit;
+    // const pricePerCredit = effectivePricing.pricePerCredit;
 
     const [currencyForm, setCurrencyForm] = useState<BillingCurrency>(userBillingCurrency);
     const [savingCurrency, setSavingCurrency] = useState(false);
@@ -145,20 +189,22 @@ const Settings = () => {
                 credits: creditCount,
                 currency: activeCurrency,
             });
-            
+
             // Handle both SuccessResponse format and direct response
             const responseData = (result as any).data || result;
             const paymentLink = responseData.paymentLink || (responseData.data?.paymentLink);
-            
+
             if (responseData.success && paymentLink) {
                 window.location.href = paymentLink;
             } else {
                 const errorMsg = responseData.error || responseData.data?.error || "Failed to initiate payment. Please try again.";
                 toast.error(errorMsg);
             }
-        } catch (error: any) {
-            const errorMessage = error?.response?.data?.message || error?.response?.data?.data?.error || "Failed to initiate payment. Please try again.";
-            toast.error(errorMessage);
+        } catch (error) {
+            if (error instanceof AxiosError && error.response?.data?.data?.error) {
+                const errorMessage = error?.response?.data?.message || error?.response?.data?.data?.error || "Failed to initiate payment. Please try again.";
+                toast.error(errorMessage);
+            }
         } finally {
             setProcessingPayment(false);
         }
@@ -169,19 +215,19 @@ const Settings = () => {
         const basePrice = pp * credits;
         const total = basePrice;
         let discount = 0;
-        
-        if (pricing?.discountTier3Threshold && pricing?.discountTier3Amount && 
+
+        if (pricing?.discountTier3Threshold && pricing?.discountTier3Amount &&
             total >= pricing.discountTier3Threshold) {
             discount = pricing.discountTier3Amount;
-        } else if (pricing?.discountTier2Threshold && pricing?.discountTier2Amount && 
-                   total >= pricing.discountTier2Threshold) {
+        } else if (pricing?.discountTier2Threshold && pricing?.discountTier2Amount &&
+            total >= pricing.discountTier2Threshold) {
             discount = pricing.discountTier2Amount;
-        } else if (pricing?.discountTier1Threshold && pricing?.discountTier1Amount && 
-                   total >= pricing.discountTier1Threshold) {
+        } else if (pricing?.discountTier1Threshold && pricing?.discountTier1Amount &&
+            total >= pricing.discountTier1Threshold) {
             discount = pricing.discountTier1Amount;
         }
-        
-        return { basePrice, discount, total: basePrice - discount };
+
+        return {basePrice, discount, total: basePrice - discount};
     };
 
     const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
@@ -421,10 +467,14 @@ const Settings = () => {
                                 const pricing = creditPricing?.find(p => p.currency === c);
                                 const getDefaultPrice = (currency: BillingCurrency) => {
                                     switch (currency) {
-                                        case "USD": return 3.23;
-                                        case "EUR": return 2.94;
-                                        case "GBP": return 2.56;
-                                        default: return 5000;
+                                        case "USD":
+                                            return 3.23;
+                                        case "EUR":
+                                            return 2.94;
+                                        case "GBP":
+                                            return 2.56;
+                                        default:
+                                            return 5000;
                                     }
                                 };
                                 const perCredit = pricing?.pricePerCredit ?? getDefaultPrice(c);
@@ -532,11 +582,15 @@ const Settings = () => {
                                 {/* Tiered pricing cards */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                                     {[
-                                        { credits: 1, label: "1 credit", popular: false },
-                                        { credits: 5, label: "5 credits", popular: false },
-                                        { credits: 10, label: "10 credits", popular: true },
+                                        {credits: 1, label: "1 credit", popular: false},
+                                        {credits: 5, label: "5 credits", popular: false},
+                                        {credits: 10, label: "10 credits", popular: true},
                                     ].map((tier) => {
-                                        const { basePrice, discount, total } = calculatePriceWithDiscount(tier.credits, activePricing, effectivePricing.pricePerCredit);
+                                        const {
+                                            basePrice,
+                                            discount,
+                                            total
+                                        } = calculatePriceWithDiscount(tier.credits, activePricing, effectivePricing.pricePerCredit);
                                         const discountLabel = getDiscountLabel(tier.credits, effectivePricing.pricePerCredit, activePricing);
                                         const isSelected = creditCount === tier.credits;
                                         return (
@@ -550,13 +604,15 @@ const Settings = () => {
                                                 }`}
                                             >
                                                 {tier.popular && (
-                                                    <span className="absolute -top-2 right-3 px-2 py-0.5 bg-accent text-white text-xs font-semibold rounded-full">
+                                                    <span
+                                                        className="absolute -top-2 right-3 px-2 py-0.5 bg-accent text-white text-xs font-semibold rounded-full">
                                                         Popular
                                                     </span>
                                                 )}
                                                 {discountLabel && (
-                                                    <span className="absolute -top-2 left-3 px-2 py-0.5 bg-green-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
-                                                        <LucideTag className="w-3 h-3" />
+                                                    <span
+                                                        className="absolute -top-2 left-3 px-2 py-0.5 bg-green-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                                                        <LucideTag className="w-3 h-3"/>
                                                         {discountLabel}
                                                     </span>
                                                 )}
@@ -568,7 +624,8 @@ const Settings = () => {
                                                 </div>
                                                 {discount > 0 ? (
                                                     <>
-                                                        <div className="text-lg font-semibold text-heading line-through opacity-50">
+                                                        <div
+                                                            className="text-lg font-semibold text-heading line-through opacity-50">
                                                             {currencySymbol}{basePrice.toLocaleString()}
                                                         </div>
                                                         <div className="text-lg font-bold text-green-600">
@@ -590,7 +647,8 @@ const Settings = () => {
 
                                 {/* Custom amount option */}
                                 <div className="mb-6">
-                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                    <label
+                                        className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                                         Or enter custom amount
                                     </label>
                                     <input
@@ -627,13 +685,15 @@ const Settings = () => {
                                             </div>
                                         );
                                     })()}
-                                    <div className="pt-2 border-t border-border-light/50 flex items-center justify-between">
-                                        <span className="text-xs font-semibold text-muted">Total ({activeCurrency})</span>
+                                    <div
+                                        className="pt-2 border-t border-border-light/50 flex items-center justify-between">
+                                        <span
+                                            className="text-xs font-semibold text-muted">Total ({activeCurrency})</span>
                                         <span className="text-lg font-bold text-heading">
                                             {currencySymbol}{(() => {
-                                                const calc = calculatePriceWithDiscount(creditCount, activePricing, effectivePricing.pricePerCredit);
-                                                return calc.total.toLocaleString();
-                                            })()}
+                                            const calc = calculatePriceWithDiscount(creditCount, activePricing, effectivePricing.pricePerCredit);
+                                            return calc.total.toLocaleString();
+                                        })()}
                                         </span>
                                     </div>
                                 </div>
@@ -641,11 +701,12 @@ const Settings = () => {
                                 {/* Discount tiers info */}
                                 {effectivePricing && (
                                     <div className="bg-accent/5 rounded-xl p-4 mb-6">
-                                        <h4 className="text-xs font-semibold text-heading mb-2">Bulk Discounts Available:</h4>
+                                        <h4 className="text-xs font-semibold text-heading mb-2">Bulk Discounts
+                                            Available:</h4>
                                         <div className="space-y-1 text-xs text-muted">
                                             {effectivePricing.discountTier1Threshold && effectivePricing.discountTier1Amount && (
                                                 <div className="flex items-center gap-2">
-                                                    <LucideCheck className="w-3 h-3 text-green-600" />
+                                                    <LucideCheck className="w-3 h-3 text-green-600"/>
                                                     <span>
                                                         Order {currencySymbol}{effectivePricing.discountTier1Threshold.toLocaleString()}+ 
                                                         to save {currencySymbol}{effectivePricing.discountTier1Amount.toLocaleString()}
@@ -654,7 +715,7 @@ const Settings = () => {
                                             )}
                                             {effectivePricing.discountTier2Threshold && effectivePricing.discountTier2Amount && (
                                                 <div className="flex items-center gap-2">
-                                                    <LucideCheck className="w-3 h-3 text-green-600" />
+                                                    <LucideCheck className="w-3 h-3 text-green-600"/>
                                                     <span>
                                                         Order {currencySymbol}{effectivePricing.discountTier2Threshold.toLocaleString()}+ 
                                                         to save {currencySymbol}{effectivePricing.discountTier2Amount.toLocaleString()}
@@ -663,7 +724,7 @@ const Settings = () => {
                                             )}
                                             {effectivePricing.discountTier3Threshold && effectivePricing.discountTier3Amount && (
                                                 <div className="flex items-center gap-2">
-                                                    <LucideCheck className="w-3 h-3 text-green-600" />
+                                                    <LucideCheck className="w-3 h-3 text-green-600"/>
                                                     <span>
                                                         Order {currencySymbol}{effectivePricing.discountTier3Threshold.toLocaleString()}+ 
                                                         to save {currencySymbol}{effectivePricing.discountTier3Amount.toLocaleString()}
@@ -681,7 +742,7 @@ const Settings = () => {
                                 >
                                     {processingPayment ? (
                                         <>
-                                            <LucideLoader2 className="w-4 h-4 animate-spin" />
+                                            <LucideLoader2 className="w-4 h-4 animate-spin"/>
                                             Processing...
                                         </>
                                     ) : (

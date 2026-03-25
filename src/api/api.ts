@@ -79,6 +79,9 @@ import type {
   CreditPurchaseInitiateResponse,
   CreditPurchaseResponse,
   PriceCalculationResponse,
+  CompanyAdminCreditQuoteResponse,
+  CompanyAdminPurchaseInitiateResponse,
+  CompanyAdminPricingResponse,
   // Plan Usage Ledger
   PlanUsageLedgerResponse,
 } from "./types";
@@ -517,6 +520,31 @@ export const creditPurchaseApi = {
 
   get: (txRef: string) =>
     api.get<ApiResponse<CreditPurchaseResponse>>(`/credit-purchases/${txRef}`).then((r) => r.data.data),
+};
+
+// ─── Company Admin Credits (HR Payment) ────────────────────────────────────
+export const companyAdminCreditsApi = {
+  getQuote: (companyId: number, credits: number) =>
+    api.post<ApiResponse<CompanyAdminCreditQuoteResponse>>("/company-admin/credits/quote", null, { params: { companyId, credits } }).then((r) => r.data.data),
+
+  purchase: (data: { credits: number; companyId: number }) =>
+    api.post<ApiResponse<CompanyAdminPurchaseInitiateResponse>>("/company-admin/credits/purchase/hr", data).then((r) => r.data.data),
+
+  verify: (txRef: string, transactionId?: string) =>
+    api.get<ApiResponse<{ success: boolean; purchase: CreditPurchaseResponse }>>(`/company-admin/credits/verify/${txRef}`, {
+      params: transactionId ? { transaction_id: transactionId } : {},
+    }).then((r) => r.data.data),
+
+  getPurchase: (txRef: string) =>
+    api.get<ApiResponse<CreditPurchaseResponse>>(`/company-admin/credits/${txRef}`).then((r) => r.data.data),
+
+  getHistory: (companyId?: number) =>
+    api.get<ApiResponse<CreditPurchaseResponse[]>>("/company-admin/credits/history", {
+      params: companyId ? { companyId } : {},
+    }).then((r) => r.data.data),
+
+  getPricing: (companyId: number) =>
+    api.get<ApiResponse<CompanyAdminPricingResponse>>("/company-admin/credits/pricing", { params: { companyId } }).then((r) => r.data.data),
 };
 
 // ─── Plan Usage Ledger ───────────────────────────────────────────

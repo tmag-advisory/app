@@ -1,4 +1,4 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import Sidebar from "../components/dashboard/Sidebar";
 import { useMyCompanies } from "../api/hooks";
 import { useAuth } from "../context/AuthContext";
@@ -7,6 +7,7 @@ import {
     LucideLoader2,
     LucideMailQuestion,
 } from "lucide-react";
+import { Toaster } from "react-hot-toast";
 
 const HRDashboardLayout = () => {
     const { canAccessHR } = useAuth();
@@ -80,6 +81,7 @@ const HRDashboardLayout = () => {
     return (
         <div className="min-h-screen bg-background-primary">
             <Sidebar />
+            <Toaster position="top-right" containerStyle={{ fontSize: "14px" }} />
             <main className="lg:ml-64 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 max-w-7xl">
                 <Outlet />
             </main>

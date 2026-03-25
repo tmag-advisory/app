@@ -10,6 +10,8 @@ import {
 } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { LucideSearch, LucideUserPlus, LucideMoreHorizontal, LucideLoader2, LucideCheck, LucideX } from "lucide-react";
+import { AxiosError } from "axios";
+import toast from "react-hot-toast";
 
 const Employees = () => {
     const navigate = useNavigate();
@@ -70,6 +72,12 @@ const Employees = () => {
                     setAllocatingFor(null);
                     setNewCredits("");
                 },
+                onError: (error) => {
+                    if (error instanceof AxiosError) {
+                        toast.error(error?.response?.data.error, { id: "allocate-credits" })
+                        return
+                    }
+                }
             }
         );
     };
@@ -154,8 +162,8 @@ const Employees = () => {
             )}
 
             {/* Employees table */}
-            <div className="bg-white rounded-2xl border border-border-light/50 overflow-x-auto">
-                <div className=" overflow-x-auto">
+            <div className="bg-white rounded-2xl border border-border-light/50" style={{ overflowX: "auto", overflowY: "visible" }}>
+                <div style={{ overflowX: "auto", overflowY: "visible" }}>
                     <table className="w-full min-w-135">
                         <thead>
                             <tr className="border-b border-border-light/50">
@@ -238,7 +246,7 @@ const Employees = () => {
                                             {menuOpenId === emp.id && (
                                                 <>
                                                     <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
-                                                    <div className="absolute right-6 top-full mt-1 bg-white border border-border-light rounded-xl shadow-lg z-20 min-w-[160px] py-1">
+                                                    <div className="absolute right-6 top-full mt-1 bg-white border border-border-light rounded-xl shadow-lg z-20 min-w-40 py-1">
                                                         <button
                                                             onClick={() => { setAllocatingFor(emp.id); setMenuOpenId(null); }}
                                                             className="w-full text-left px-4 py-2 text-sm text-heading hover:bg-background-secondary transition-colors"

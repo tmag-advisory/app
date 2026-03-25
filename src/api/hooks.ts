@@ -20,6 +20,7 @@ import {
   onboardingApi,
   creditPricingApi,
   creditPurchaseApi,
+  companyAdminCreditsApi,
   planUsageLedgerApi,
 } from "./api";
 import type {
@@ -194,6 +195,11 @@ export const queryKeys = {
     all: ["credit-purchases"] as const,
     history: () => [...["credit-purchases"], "history"] as const,
     byTxRef: (txRef: string) => [...["credit-purchases"], "txRef", txRef] as const,
+  },
+  companyAdminCredits: {
+    all: ["company-admin-credits"] as const,
+    history: (companyId?: number) => [...["company-admin-credits"], "history", companyId] as const,
+    pricing: (companyId: number) => [...["company-admin-credits"], "pricing", companyId] as const,
   },
   planUsageLedgers: {
     all: ["plan-usage-ledgers"] as const,
@@ -1003,6 +1009,58 @@ export function useCreditPurchaseHistory() {
   return useQuery({
     queryKey: queryKeys.creditPurchases.history(),
     queryFn: () => creditPurchaseApi.history(),
+  });
+}
+
+// ─── Company Admin Credit Hooks (HR) ─────────────────────────────────
+
+export function useHrCreditQuote() {
+  return useMutation({
+    mutationFn: ({ companyId, credits }: { companyId: number; credits: number }) =>
+      companyAdminCreditsApi.getQuote(companyId, credits),
+  });
+}
+
+export function useHrPurchaseCredits() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { credits: number; companyId: number }) =>
+      companyAdminCreditsApi.purchase(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.companies.all });
+      qc.invalidateQueries({ queryKey: queryKeys.credits.all });
+      qc.invalidateQueries({ queryKey: queryKeys.companyAdminCredits.all });
+    },
+  });
+}
+
+export function useHrVerifyCreditPurchase() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ txRef, transactionId }: { txRef: string; transactionId?: string }) =>
+      companyAdminCreditsApi.verify(txRef, transactionId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.companies.all });
+      qc.invalidateQueries({ queryKey: queryKeys.credits.all });
+      qc.invalidateQueries({ queryKey: queryKeys.companyAdminCredits.all });
+    },
+  });
+}
+
+export function useHrCreditHistory(companyId?: number) {
+  return useQuery({
+    queryKey: queryKeys.companyAdminCredits.history(companyId),
+    queryFn: () => companyAdminCreditsApi.getHistory(companyId),
+    enabled: !!companyId,
+  });
+}
+
+export function useHrCompanyPricing(companyId: number) {
+  return useQuery({
+    queryKey: queryKeys.companyAdminCredits.pricing(companyId),
+    queryFn: () => companyAdminCreditsApi.getPricing(companyId),
+    enabled: companyId > 0,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

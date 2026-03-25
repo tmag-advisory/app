@@ -54,6 +54,7 @@ const HRCreatePlan = lazy(() => import("../pages/hr/create-plan"));
 const TravelRequests = lazy(() => import("../pages/hr/travel-requests"));
 const Reports = lazy(() => import("../pages/hr/reports"));
 const Billing = lazy(() => import("../pages/hr/billing"));
+const HRBillingCallback = lazy(() => import("../pages/hr/billing-callback"));
 
 // Payment pages
 const PaymentCallback = lazy(() => import("../pages/payment/callback"));
@@ -126,6 +127,12 @@ const router = createBrowserRouter([
     {
         path: "payment/callback",
         element: <PaymentCallback />,
+    },
+
+    // HR billing payment callback
+    {
+        path: "hr/billing/callback",
+        element: <HRBillingCallback />,
     },
 
     // Individual dashboard

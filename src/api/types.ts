@@ -695,3 +695,46 @@ export interface PriceCalculationResponse {
   discountTier3Threshold: number | null;
   discountTier3Amount: number | null;
 }
+
+// ─── Company Admin Credits (HR) ───────────────────────────────────────────
+
+export interface CompanyAdminCreditQuoteResponse {
+  companyId: number;
+  companyName: string;
+  credits: number;
+  basePrice: number;
+  discountAmount: number;
+  totalAmount: number;
+  currency: BillingCurrency;
+  currencySymbol: string;
+  pricePerCredit: number;
+  appliedDiscountTier: string | null;
+}
+
+export interface CompanyAdminPurchaseInitiateResponse {
+  txRef: string;
+  paymentLink: string;
+  credits: number;
+  amount: number;
+  currency: BillingCurrency;
+  currencySymbol: string;
+  purchaseId: number;
+}
+
+export interface CompanyAdminPricingResponse {
+  companyId: number;
+  companyName: string;
+  currency: BillingCurrency;
+  currencySymbol: string;
+  pricePerCredit: number;
+  minCredits: number;
+  maxCredits: number;
+  discountTier1Threshold: number | null;
+  discountTier1Amount: number | null;
+  discountTier2Threshold: number | null;
+  discountTier2Amount: number | null;
+  discountTier3Threshold: number | null;
+  discountTier3Amount: number | null;
+  totalCredits: number;
+  usedCredits: number;
+}
