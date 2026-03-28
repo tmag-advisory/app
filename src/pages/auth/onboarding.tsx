@@ -514,7 +514,7 @@ const Onboarding = () => {
                                     transition={{ delay: 0.3 }}
                                     className="text-base text-body mb-10 leading-relaxed max-w-sm mx-auto"
                                 >
-                                    TMAG gives you AI-powered travel health advisories tailored to your destination, history, and health needs.
+                                    TMAG gives you intelligent travel health advisories tailored to your destination, history, and health needs.
                                 </motion.p>
 
                                 {/* Credit explanation */}
@@ -535,7 +535,7 @@ const Onboarding = () => {
                                     className="space-y-3 mb-10 text-left max-w-sm mx-auto"
                                 >
                                     {[
-                                        { icon: LucideZap, label: "AI Health Advisories", desc: "Personalised recommendations for every trip" },
+                                        { icon: LucideZap, label: "Smart Health Advisories", desc: "Personalised recommendations for every trip" },
                                         { icon: LucideShield, label: "Safety & Risk Alerts", desc: "Country-level health risks and precautions" },
                                         { icon: LucideActivity, label: "Vaccination Guidance", desc: "Required and recommended vaccines per destination" },
                                     ].map((feature, i) => (

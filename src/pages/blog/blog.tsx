@@ -5,9 +5,9 @@ import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGr
 import Button from "../../components/ui/Button";
 
 const featuredPost = {
-    title: "How AI Is Changing Travel Health Preparation",
+    title: "How Technology Is Changing Travel Health Preparation",
     excerpt:
-        "From outbreak tracking to personalized vaccination schedules, artificial intelligence is transforming how travelers prepare for trips abroad.",
+        "From outbreak tracking to personalized vaccination schedules, modern technology is transforming how travelers prepare for trips abroad.",
     category: "Product",
     date: "Feb 20, 2026",
     readTime: "6 min read",
@@ -33,7 +33,7 @@ const posts = [
         readTime: "7 min read",
     },
     {
-        title: "TMAG's Approach to Responsible AI in Healthcare",
+        title: "TMAG's Approach to Responsible Technology in Healthcare",
         category: "Engineering",
         date: "Jan 22, 2026",
         readTime: "8 min read",

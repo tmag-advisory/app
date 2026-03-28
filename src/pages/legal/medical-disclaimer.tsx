@@ -67,13 +67,13 @@ const MedicalDisclaimer = () => {
 
                     <section>
                         <h2 className="text-lg font-serif text-heading mb-3">
-                            3. AI-Generated Content
+                            3. System-Generated Content
                         </h2>
                         <p>
-                            TMAG uses artificial intelligence to analyze health
+                            TMAG uses advanced technology to analyze health
                             data and generate personalized travel health plans.
-                            While we strive for accuracy, AI systems can make
-                            errors. AI-generated content may not account for
+                            While we strive for accuracy, automated systems can make
+                            errors. System-generated content may not account for
                             every individual health circumstance, may
                             occasionally contain inaccuracies, and should always
                             be verified with a healthcare professional.
@@ -144,7 +144,7 @@ const MedicalDisclaimer = () => {
                             medications, or have known allergies, it is
                             especially important to consult your doctor before
                             acting on any information provided by TMAG. While
-                            our AI attempts to account for these factors, it
+                            our platform attempts to account for these factors, it
                             cannot replace a physician's knowledge of your
                             complete medical history.
                         </p>

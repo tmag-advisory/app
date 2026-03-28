@@ -27,9 +27,9 @@ const processSteps = [
     },
     {
         icon: <LucideBrain className="w-6 h-6" />,
-        title: "3. AI builds your personalized plan",
+        title: "3. Our system builds your personalized plan",
         description:
-            "The AI analyzes your profile against the destination data—factoring in your conditions, medications, and itinerary—to produce a plan that's medically relevant to you, not generic.",
+            "The platform analyzes your profile against the destination data—factoring in your conditions, medications, and itinerary—to produce a plan that's medically relevant to you, not generic.",
     },
     {
         icon: <LucideFileText className="w-6 h-6" />,

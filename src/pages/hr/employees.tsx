@@ -82,6 +82,21 @@ const Employees = () => {
         );
     };
 
+    const handleRemoveEmployee = (id: number) => {
+        deleteEmployee.mutate(id, {
+            onSuccess: () => {
+                toast.success("Employee removed successfully")
+            },
+            onError: (error) => {
+                if (error instanceof AxiosError) {
+                    toast.error(error?.response?.data.error, { id: "remove-employee" })
+                    return
+                }
+            }
+        });
+        setMenuOpenId(null);
+    };
+
     return (
         <div>
             <DashboardHeader title="Employees" />
@@ -263,7 +278,7 @@ const Employees = () => {
                                                             {emp.status === "active" ? "Deactivate" : "Activate"}
                                                         </button>
                                                         <button
-                                                            onClick={() => { deleteEmployee.mutate(emp.id); setMenuOpenId(null); }}
+                                                            onClick={() => handleRemoveEmployee(emp.id)}
                                                             className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
                                                         >
                                                             Remove

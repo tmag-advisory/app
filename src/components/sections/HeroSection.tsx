@@ -35,7 +35,7 @@ const VARIANTS: HeroVariant[] = [
         ],
     },
     {
-        eyebrow: "50,000+ travelers protected worldwide.",
+        eyebrow: "100+ Countries indexed worldwide.",
         headlineLines: ["Your Health.", "Every", "Destination."],
         subtext: "Expert travel medicine guidance built for your itinerary, health history, and risk tolerance.",
         cta: "Start For Free",
@@ -59,9 +59,9 @@ const VARIANTS: HeroVariant[] = [
         ],
     },
     {
-        eyebrow: "Trusted by 500+ global companies.",
+        eyebrow: "Trusted by companies worldwide.",
         headlineLines: ["The Health", "Guide Your", "Trip Needs."],
-        subtext: "AI-powered travel health assessments backed by physician review. Personalized for your trip, not just your passport.",
+        subtext: "Intelligent travel health assessments backed by physician review. Personalized for your trip, not just your passport.",
         cta: "Create My Plan",
         destinations: [
             { country: "Indonesia", flag: "🇮🇩", risk: "Moderate", alert: "Rabies risk" },

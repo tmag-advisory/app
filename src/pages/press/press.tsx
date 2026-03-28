@@ -6,10 +6,10 @@ import Button from "../../components/ui/Button";
 
 const pressReleases = [
     {
-        title: "TMAG Launches AI-Powered Travel Health Platform",
+        title: "TMAG Launches Intelligent Travel Health Platform",
         date: "Feb 2026",
         excerpt:
-            "TMAG announces the public launch of its AI-powered travel health advisory platform, making personalized travel health plans accessible to individuals and companies worldwide.",
+            "TMAG announces the public launch of its intelligent travel health advisory platform, making personalized travel health plans accessible to individuals and companies worldwide.",
     },
     {
         title: "TMAG Raises Seed Round to Expand Global Health Coverage",

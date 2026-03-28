@@ -18,9 +18,9 @@ const values = [
     },
     {
         icon: <LucideBrain className="w-6 h-6" />,
-        title: "Responsible AI",
+        title: "Responsible Technology",
         description:
-            "Our AI is a tool, not a doctor. We clearly label AI-generated content, disclose our data sources, and always recommend professional medical consultation.",
+            "Our platform is a tool, not a doctor. We clearly label system-generated content, disclose our data sources, and always recommend professional medical consultation.",
     },
     {
         icon: <LucideLock className="w-6 h-6" />,
@@ -32,7 +32,7 @@ const values = [
         icon: <LucideShieldCheck className="w-6 h-6" />,
         title: "Transparency",
         description:
-            "We tell you exactly where our data comes from, what our AI can and cannot do, and how we generate every recommendation in your plan.",
+            "We tell you exactly where our data comes from, what our platform can and cannot do, and how we generate every recommendation in your plan.",
     },
 ];
 
@@ -79,7 +79,7 @@ const About = () => {
                                 to act on.
                             </p>
                             <p className="text-sm text-body leading-relaxed">
-                                TMAG uses AI to consolidate that information into
+                                TMAG uses intelligent technology to consolidate that information into
                                 personalized, actionable health plans. We don't
                                 replace doctors—we help travelers arrive at their
                                 appointments informed, and help those without
@@ -147,7 +147,7 @@ const About = () => {
                             "Health profiles are encrypted at rest and in transit",
                             "You can delete all your data at any time",
                             "We don't train our models on your personal health data",
-                            "AI outputs are clearly labeled as AI-generated",
+                            "Advisory outputs are clearly labeled as system-generated",
                             "All data processing follows HIPAA-compliant practices",
                         ].map((item) => (
                             <motion.div
@@ -197,8 +197,8 @@ const About = () => {
                             pre-existing conditions.
                         </p>
                         <p className="text-sm text-body leading-relaxed">
-                            <strong className="text-heading">AI limitations.</strong>{" "}
-                            Our AI analyzes data from trusted sources but cannot
+                            <strong className="text-heading">System limitations.</strong>{" "}
+                            Our platform analyzes data from trusted sources but cannot
                             account for every individual health circumstance.
                             Recommendations should be verified with a medical
                             professional.

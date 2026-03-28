@@ -63,7 +63,7 @@ const SamplePlanSection = () => {
                         </h3>
                     </div>
                     <span className="text-xs font-semibold text-accent bg-accent/10 px-3 py-1.5 rounded-full self-start">
-                        AI-generated preview
+                        System-generated preview
                     </span>
                 </div>
 

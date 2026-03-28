@@ -37,7 +37,7 @@ const TermsOfService = () => {
                             2. Description of Service
                         </h2>
                         <p>
-                            TMAG is an AI-powered platform that generates
+                            TMAG is an intelligent platform that generates
                             personalized travel health advisory plans based on
                             user-provided information and data from public
                             health authorities. The service is informational

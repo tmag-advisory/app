@@ -63,7 +63,7 @@ const WhatAICoversSection = () => {
                 <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                     <div>
                         <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                            What the AI covers
+                            What the platform covers
                         </span>
                         <h2 className="text-4xl md:text-5xl lg:text-6xl text-heading leading-[1.1] font-serif max-w-lg">
                             Everything you need,{" "}
@@ -71,7 +71,7 @@ const WhatAICoversSection = () => {
                         </h2>
                     </div>
                     <p className="text-sm text-muted leading-relaxed max-w-sm md:mt-10 font-medium">
-                        Our AI analyzes real-time data from WHO, CDC, and local
+                        Our platform analyzes real-time data from WHO, CDC, and local
                         health authorities to give you comprehensive, up-to-date
                         medical guidance—all in one place.
                     </p>

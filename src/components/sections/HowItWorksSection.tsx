@@ -17,7 +17,7 @@ const steps: { number: string; icon: ReactNode; title: string; description: stri
         icon: <LucideBriefcaseMedical className="w-6 h-6" />,
         title: "Get your personalized plan",
         description:
-            "Our AI cross-references WHO, CDC, and local health data to generate a medical advisory tailored to you.",
+            "Our platform cross-references WHO, CDC, and local health data to generate a medical advisory tailored to you.",
     },
     {
         number: "03",

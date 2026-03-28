@@ -45,7 +45,7 @@ const openings = [
     },
     {
         title: "ML Engineer — Health Data",
-        team: "AI / Data",
+        team: "Data & Intelligence",
         location: "Remote",
     },
     {

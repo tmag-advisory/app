@@ -553,7 +553,7 @@ const TravelHealthQuestionnaire = () => {
                                     transition={{ delay: 0.3 }}
                                     className="text-sm text-muted leading-relaxed mb-8 text-center"
                                 >
-                                    Your health profile is complete. Your AI advisor is
+                                    Your health profile is complete. Your health advisor is
                                     ready — where are you headed?
                                 </motion.p>
 
@@ -587,7 +587,7 @@ const TravelHealthQuestionnaire = () => {
                                         Plan your first trip
                                     </p>
                                     <p className="text-xs mb-5 leading-relaxed">
-                                        Get personalised AI health advice, vaccines &amp;
+                                        Get personalised health advice, vaccines &amp;
                                         safety alerts for your destination.
                                     </p>
                                     <span className="inline-flex items-center gap-1.5 text-accent text-xs font-semibold">
