@@ -51,7 +51,7 @@ const HROverview = lazy(() => import("../pages/hr/overview"));
 const Employees = lazy(() => import("../pages/hr/employees"));
 const EmployeeDetail = lazy(() => import("../pages/hr/employee-detail"));
 const HRCreatePlan = lazy(() => import("../pages/hr/create-plan"));
-const TravelRequests = lazy(() => import("../pages/hr/travel-requests"));
+const CreditRequests = lazy(() => import("../pages/hr/credit-requests"));
 const Reports = lazy(() => import("../pages/hr/reports"));
 const Billing = lazy(() => import("../pages/hr/billing"));
 const HRBillingCallback = lazy(() => import("../pages/hr/billing-callback"));
@@ -170,7 +170,7 @@ const router = createBrowserRouter([
             { path: "employees", element: <Employees /> },
             { path: "employees/:id", element: <EmployeeDetail /> },
             { path: "create-plan", element: <HRCreatePlan /> },
-            { path: "travel-requests", element: <TravelRequests /> },
+            { path: "credit-requests", element: <CreditRequests /> },
             { path: "reports", element: <Reports /> },
             { path: "billing", element: <Billing /> },
         ],

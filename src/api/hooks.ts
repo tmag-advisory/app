@@ -5,7 +5,7 @@ import {
   companiesApi,
   employeesApi,
   travelPlansApi,
-  travelRequestsApi,
+  creditRequestsApi,
   healthProfilesApi,
   countriesApi,
   countryHealthAlertsApi,
@@ -22,6 +22,7 @@ import {
   creditPurchaseApi,
   companyAdminCreditsApi,
   planUsageLedgerApi,
+  reportsApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -39,8 +40,8 @@ import type {
   AcceptInvitationRequest,
   CreateTravelPlanRequest,
   UpdateTravelPlanRequest,
-  CreateTravelRequestRequest,
-  UpdateTravelRequestRequest,
+  CreateCreditRequestRequest,
+  UpdateCreditRequestRequest,
   CreateHealthProfileRequest,
   UpdateHealthProfileRequest,
   CreateCountryRequest,
@@ -89,13 +90,13 @@ export const queryKeys = {
     details: () => [...queryKeys.travelPlans.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.travelPlans.details(), id] as const,
   },
-  travelRequests: {
-    all: ["travel-requests"] as const,
-    lists: () => [...queryKeys.travelRequests.all, "list"] as const,
-    list: (params?: PaginationParams) => [...queryKeys.travelRequests.lists(), params] as const,
-    selectAll: () => [...queryKeys.travelRequests.all, "select"] as const,
-    details: () => [...queryKeys.travelRequests.all, "detail"] as const,
-    detail: (id: number) => [...queryKeys.travelRequests.details(), id] as const,
+  creditRequests: {
+    all: ["credit-requests"] as const,
+    lists: () => [...queryKeys.creditRequests.all, "list"] as const,
+    list: (params?: PaginationParams) => [...queryKeys.creditRequests.lists(), params] as const,
+    selectAll: () => [...queryKeys.creditRequests.all, "select"] as const,
+    details: () => [...queryKeys.creditRequests.all, "detail"] as const,
+    detail: (id: number) => [...queryKeys.creditRequests.details(), id] as const,
   },
   healthProfiles: {
     all: ["health-profiles"] as const,
@@ -465,68 +466,68 @@ export function useDeleteTravelPlan() {
   });
 }
 
-// ─── Travel Request Hooks ────────────────────────────────────
+// ─── Credit Request Hooks ─────────────────────────────────────
 
-export function useTravelRequests(params?: PaginationParams) {
+export function useCreditRequests(params?: PaginationParams) {
   return useQuery({
-    queryKey: queryKeys.travelRequests.list(params),
-    queryFn: () => travelRequestsApi.list(params),
+    queryKey: queryKeys.creditRequests.list(params),
+    queryFn: () => creditRequestsApi.list(params),
   });
 }
 
-export function useTravelRequestsSelect() {
+export function useCreditRequestsSelect() {
   return useQuery({
-    queryKey: queryKeys.travelRequests.selectAll(),
-    queryFn: () => travelRequestsApi.listAll(),
+    queryKey: queryKeys.creditRequests.selectAll(),
+    queryFn: () => creditRequestsApi.listAll(),
   });
 }
 
-export function useTravelRequest(id: number) {
+export function useCreditRequest(id: number) {
   return useQuery({
-    queryKey: queryKeys.travelRequests.detail(id),
-    queryFn: () => travelRequestsApi.get(id),
+    queryKey: queryKeys.creditRequests.detail(id),
+    queryFn: () => creditRequestsApi.get(id),
     enabled: id > 0,
   });
 }
 
-export function useCreateTravelRequest() {
+export function useCreateCreditRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateTravelRequestRequest) => travelRequestsApi.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.travelRequests.all }),
+    mutationFn: (data: CreateCreditRequestRequest) => creditRequestsApi.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.creditRequests.all }),
   });
 }
 
-export function useUpdateTravelRequest() {
+export function useUpdateCreditRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateTravelRequestRequest }) =>
-      travelRequestsApi.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.travelRequests.all }),
+    mutationFn: ({ id, data }: { id: number; data: UpdateCreditRequestRequest }) =>
+      creditRequestsApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.creditRequests.all }),
   });
 }
 
-export function useDeleteTravelRequest() {
+export function useDeleteCreditRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => travelRequestsApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.travelRequests.all }),
+    mutationFn: (id: number) => creditRequestsApi.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.creditRequests.all }),
   });
 }
 
-export function useApproveTravelRequest() {
+export function useApproveCreditRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => travelRequestsApi.approve(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.travelRequests.all }),
+    mutationFn: (id: number) => creditRequestsApi.approve(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.creditRequests.all }),
   });
 }
 
-export function useRejectTravelRequest() {
+export function useRejectCreditRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => travelRequestsApi.reject(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.travelRequests.all }),
+    mutationFn: (id: number) => creditRequestsApi.reject(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.creditRequests.all }),
   });
 }
 
@@ -1078,5 +1079,28 @@ export function usePlanUsageLedgerByEmployee(employeeId: number, params?: Pagina
     queryKey: [...queryKeys.planUsageLedgers.byEmployee(employeeId), params],
     queryFn: () => planUsageLedgerApi.byEmployee(employeeId, params),
     enabled: employeeId > 0,
+  });
+}
+
+// ─── Report Hooks ─────────────────────────────────────────────
+
+export function useUsageReport(companyId?: number) {
+  return useQuery({
+    queryKey: ["reports", "usage", companyId],
+    queryFn: () => reportsApi.getUsageReport(companyId),
+  });
+}
+
+export function usePlanHistory(companyId?: number) {
+  return useQuery({
+    queryKey: ["reports", "plans", companyId],
+    queryFn: () => reportsApi.getPlanHistory(companyId),
+  });
+}
+
+export function useComplianceReport(companyId?: number) {
+  return useQuery({
+    queryKey: ["reports", "compliance", companyId],
+    queryFn: () => reportsApi.getComplianceReport(companyId),
   });
 }

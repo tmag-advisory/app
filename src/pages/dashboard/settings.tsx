@@ -7,7 +7,8 @@ import {
     useUpdateProfilePassword,
     useMyCompanies,
     useCreditPricing,
-    useInitiateCreditPurchase
+    useInitiateCreditPurchase,
+    useCreateCreditRequest
 } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import {
@@ -18,10 +19,9 @@ import {
     LucideArrowRight,
     LucideLoader2,
     LucideX,
-    LucideBuilding2,
-    LucideMail,
     LucideCheck,
-    LucideTag
+    LucideTag,
+    LucideSend
 } from "lucide-react";
 import toast from "react-hot-toast";
 import type {BillingCurrency, CreditPricingResponse} from "../../api/types";
@@ -97,9 +97,12 @@ const Settings = () => {
     const updateProfile = useUpdateProfile();
     const updatePassword = useUpdateProfilePassword();
     const {data: myCompanies} = useMyCompanies();
+    const createCreditRequest = useCreateCreditRequest();
 
     const [purchaseCreditsOpen, setPurchaseCreditsOpen] = useState(false);
     const [creditCount, setCreditCount] = useState(1);
+    const [requestReason, setRequestReason] = useState("");
+    const [requestingCredits, setRequestingCredits] = useState(false);
 
     const isCompanyUser = myCompanies && myCompanies.length > 0;
     const company = isCompanyUser ? myCompanies[0] : null;
@@ -445,7 +448,7 @@ const Settings = () => {
                             onClick={() => setPurchaseCreditsOpen(true)}
                             className="py-2.5 px-5 rounded-xl bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent/90 transition-colors duration-200"
                         >
-                            Purchase credits
+                            {isCompanyUser ? "Request credits" : "Purchase credits"}
                         </button>
                     </div>
 
@@ -549,30 +552,82 @@ const Settings = () => {
                         </button>
 
                         {isCompanyUser ? (
-                            /* ── Company user view ── */
-                            <div className="text-center">
-                                <div
-                                    className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                                    <LucideBuilding2 className="w-6 h-6 text-accent"/>
+                            /* ── Company user view - Request credits from HR ── */
+                            <>
+                                <h2 className="text-base font-semibold text-heading mb-1">Request credits</h2>
+                                <p className="text-xs text-muted mb-6">Submit a credit request to your HR department.</p>
+
+                                <div className="mb-4">
+                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                        Credits requested
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        value={creditCount}
+                                        onChange={(e) => setCreditCount(Math.max(1, Number(e.target.value)))}
+                                        className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
+                                        placeholder="Enter number of credits"
+                                    />
                                 </div>
-                                <h2 className="text-base font-semibold text-heading mb-2">Credits managed by your
-                                    company</h2>
-                                <p className="text-sm text-muted mb-6">
-                                    Your travel credits are allocated by{" "}
-                                    <span className="font-semibold text-heading">{company?.name}</span>.
-                                    Please reach out to your HR department to request additional credits.
-                                </p>
-                                <a
-                                    href={`mailto:hr@${company?.name?.toLowerCase().replace(/\s+/g, "")}.com`}
-                                    className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-accent text-white font-semibold text-sm hover:bg-accent/90 transition-colors duration-200"
+
+                                <div className="mb-6">
+                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                        Reason
+                                    </label>
+                                    <textarea
+                                        value={requestReason}
+                                        onChange={(e) => setRequestReason(e.target.value)}
+                                        rows={3}
+                                        className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200 resize-none"
+                                        placeholder="Why do you need these credits?"
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={async () => {
+                                        if (!requestReason.trim()) {
+                                            toast.error("Please provide a reason for your request");
+                                            return;
+                                        }
+                                        if (!company?.id) {
+                                            toast.error("Company not found");
+                                            return;
+                                        }
+                                        setRequestingCredits(true);
+                                        try {
+                                            await createCreditRequest.mutateAsync({
+                                                companyId: company.id,
+                                                creditsRequested: creditCount,
+                                                reason: requestReason,
+                                                status: "pending",
+                                            });
+                                            toast.success("Credit request submitted to HR");
+                                            setPurchaseCreditsOpen(false);
+                                            setRequestReason("");
+                                            setCreditCount(1);
+                                        } catch {
+                                            toast.error("Failed to submit credit request");
+                                        } finally {
+                                            setRequestingCredits(false);
+                                        }
+                                    }}
+                                    disabled={requestingCredits}
+                                    className="w-full py-3 rounded-xl bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent/90 transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
-                                    <LucideMail className="w-4 h-4"/>
-                                    Email HR at {company?.name}
-                                </a>
-                                <p className="text-xs text-muted mt-3">
-                                    Or speak directly with your HR representative.
-                                </p>
-                            </div>
+                                    {requestingCredits ? (
+                                        <>
+                                            <LucideLoader2 className="w-4 h-4 animate-spin"/>
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <LucideSend className="w-4 h-4"/>
+                                            Submit to HR
+                                        </>
+                                    )}
+                                </button>
+                            </>
                         ) : (
                             /* ── Individual user view ── */
                             <>

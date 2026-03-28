@@ -177,8 +177,8 @@ const Employees = () => {
             )}
 
             {/* Employees table */}
-            <div className="bg-white rounded-2xl border border-border-light/50" style={{ overflowX: "auto", overflowY: "visible" }}>
-                <div style={{ overflowX: "auto", overflowY: "visible" }}>
+            <div className="bg-white rounded-2xl border border-border-light/50">
+                <div>
                     <table className="w-full min-w-135">
                         <thead>
                             <tr className="border-b border-border-light/50">

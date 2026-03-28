@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { usePlanStore } from "../../stores/planStore";
-import { useOnboarding, useTravelPlans, useEmployees, useTravelRequests } from "../../api/hooks";
+import { useOnboarding, useTravelPlans, useEmployees, useCreditRequests } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import {
@@ -36,18 +36,18 @@ const HROverview = () => {
     const { data: onboardingData } = useOnboarding();
     const { data: plansData, isLoading: plansLoading } = useTravelPlans({ companyId: companyIdNum, per_page: 4 });
     const { data: employeesData, isLoading: employeesLoading } = useEmployees({ companyId: companyIdNum });
-    const { data: requestsData, isLoading: requestsLoading } = useTravelRequests({ companyId: companyIdNum, per_page: 4 });
+    const { data: requestsData, isLoading: requestsLoading } = useCreditRequests({ companyId: companyIdNum, per_page: 4 });
 
     const plans = plansData?.data || [];
     const employees = employeesData?.data || [];
-    const travelRequests = requestsData?.data || [];
+    const creditRequests = requestsData?.data || [];
 
     const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
 
     const totalCredits = company?.totalCredits ?? 0;
     const usedCredits = company?.usedCredits ?? 0;
-    const pendingRequests = travelRequests.filter((r) => r.status === "pending").length;
-    const upcomingTrips = travelRequests.filter((r) => r.status === "approved").length;
+    const pendingRequests = creditRequests.filter((r: { status: string }) => r.status === "pending").length;
+    const upcomingTrips = creditRequests.filter((r: { status: string }) => r.status === "approved").length;
 
     const isLoading = plansLoading || employeesLoading || requestsLoading;
 
@@ -76,8 +76,8 @@ const HROverview = () => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <StatCard label="Total credits" value={totalCredits} icon={<LucideCoins className="w-4 h-4" />} />
                 <StatCard label="Credits used" value={usedCredits} icon={<LucideCoins className="w-4 h-4" />} detail={`${totalCredits - usedCredits} remaining`} />
-                <StatCard label="Active employees" value={employees.filter((e) => e.status === "active").length} icon={<LucideUsers className="w-4 h-4" />} />
-                <StatCard label="Pending requests" value={pendingRequests} icon={<LucidePlane className="w-4 h-4" />} detail={`${upcomingTrips} upcoming trips`} accent />
+                <StatCard label="Active employees" value={employees.filter((e: { status: string }) => e.status === "active").length} icon={<LucideUsers className="w-4 h-4" />} />
+                <StatCard label="Pending requests" value={pendingRequests} icon={<LucidePlane className="w-4 h-4" />} detail={`${upcomingTrips} approved`} accent />
             </div>
 
             {isLoading ? (
@@ -86,31 +86,35 @@ const HROverview = () => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Recent travel requests */}
+                    {/* Recent credit requests */}
                     <div className="bg-white rounded-2xl border border-border-light/50 overflow-hidden">
                         <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border-light/50">
-                            <h2 className="text-base font-semibold text-heading">Travel requests</h2>
-                            <Link to="/hr/travel-requests" className="text-xs text-accent font-medium hover:underline flex items-center gap-1">
+                            <h2 className="text-base font-semibold text-heading">Credit requests</h2>
+                            <Link to="/hr/credit-requests" className="text-xs text-accent font-medium hover:underline flex items-center gap-1">
                                 View all <LucideArrowRight className="w-3 h-3" />
                             </Link>
                         </div>
                         <div className="divide-y divide-border-light/50">
-                            {travelRequests.map((req) => (
-                                <div key={req.id} className="flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
-                                    <div>
-                                        <p className="text-sm font-medium text-heading">{req.employeeName}</p>
-                                        <p className="text-xs text-muted">{req.destination} · {req.dates}</p>
+                            <>
+                                {creditRequests.length === 0 && (
+                                    <div className="px-6 py-8 text-center">
+                                        <p className="text-xs text-muted">No recent requests.</p>
                                     </div>
-                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusStyles[req.status] || statusStyles.pending}`}>
-                                        {req.status}
-                                    </span>
-                                </div>
-                            ))}
-                            {travelRequests.length === 0 && (
-                                <div className="px-6 py-8 text-center">
-                                    <p className="text-xs text-muted">No recent requests.</p>
-                                </div>
-                            )}
+                                )}
+                            </>
+                            <>
+                                {creditRequests && creditRequests.map((req: Partial<{ id: number; employeeName: string | undefined; creditsRequested: number; reason: string; status: string }>) => (
+                                    <div key={req.id} className="flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
+                                        <div>
+                                            <p className="text-sm font-medium text-heading">{req?.employeeName}</p>
+                                            <p className="text-xs text-muted">{req?.creditsRequested} credits · {req?.reason || "No reason"}</p>
+                                        </div>
+                                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusStyles[req.status as string] || statusStyles?.pending}`}>
+                                            {req?.status}
+                                        </span>
+                                    </div>
+                                ))}
+                            </>
                         </div>
                     </div>
 
@@ -123,7 +127,7 @@ const HROverview = () => {
                             </Link>
                         </div>
                         <div className="divide-y divide-border-light/50">
-                            {plans.map((plan) => {
+                            {plans.map((plan: { id: number; destination: string; country: string; duration: number; riskScore: number }) => {
                                 const riskLabel = getRiskLabel(plan.riskScore);
                                 return (
                                     <div key={plan.id} className="flex items-center justify-between px-4 sm:px-6 py-4 gap-3">

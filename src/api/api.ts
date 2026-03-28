@@ -29,9 +29,9 @@ import type {
   CreateTravelPlanRequest,
   UpdateTravelPlanRequest,
   // Travel Request
-  TravelRequestResponse,
-  CreateTravelRequestRequest,
-  UpdateTravelRequestRequest,
+  CreditRequestResponse,
+  CreateCreditRequestRequest,
+  UpdateCreditRequestRequest,
   // Health Profile
   HealthProfileResponse,
   CreateHealthProfileRequest,
@@ -84,6 +84,10 @@ import type {
   CompanyAdminPricingResponse,
   // Plan Usage Ledger
   PlanUsageLedgerResponse,
+  // Reports
+  UsageReportSummary,
+  PlanHistoryDto,
+  ComplianceReportDto,
 } from "./types";
 
 // ─── Generic CRUD helpers ────────────────────────────────────
@@ -226,32 +230,32 @@ export const travelPlansApi = {
     api.delete<ApiResponse<null>>(`/travel-plans/${id}`).then((r) => r.data.data),
 };
 
-// ─── Travel Requests ─────────────────────────────────────────
+// ─── Credit Requests ─────────────────────────────────────────
 
-export const travelRequestsApi = {
+export const creditRequestsApi = {
   list: (params?: PaginationParams) =>
-    api.get<ApiResponse<PaginatedResponse<TravelRequestResponse>>>("/travel-requests", { params: buildParams(params) }).then((r) => r.data.data),
+    api.get<ApiResponse<PaginatedResponse<CreditRequestResponse>>>("/credit-requests", { params: buildParams(params) }).then((r) => r.data.data),
 
   listAll: () =>
-    api.get<ApiResponse<SelectOption[]>>("/travel-requests/all").then((r) => r.data.data),
+    api.get<ApiResponse<SelectOption[]>>("/credit-requests/all").then((r) => r.data.data),
 
   get: (id: number) =>
-    api.get<ApiResponse<TravelRequestResponse>>(`/travel-requests/${id}`).then((r) => r.data.data),
+    api.get<ApiResponse<CreditRequestResponse>>(`/credit-requests/${id}`).then((r) => r.data.data),
 
-  create: (data: Partial<CreateTravelRequestRequest>) =>
-    api.post<ApiResponse<TravelRequestResponse>>("/travel-requests", data).then((r) => r.data.data),
+  create: (data: Partial<CreateCreditRequestRequest>) =>
+    api.post<ApiResponse<CreditRequestResponse>>("/credit-requests", data).then((r) => r.data.data),
 
-  update: (id: number, data: UpdateTravelRequestRequest) =>
-    api.put<ApiResponse<TravelRequestResponse>>(`/travel-requests/${id}`, data).then((r) => r.data.data),
+  update: (id: number, data: UpdateCreditRequestRequest) =>
+    api.put<ApiResponse<CreditRequestResponse>>(`/credit-requests/${id}`, data).then((r) => r.data.data),
 
   delete: (id: number) =>
-    api.delete<ApiResponse<null>>(`/travel-requests/${id}`).then((r) => r.data.data),
+    api.delete<ApiResponse<null>>(`/credit-requests/${id}`).then((r) => r.data.data),
 
   approve: (id: number) =>
-    api.post<ApiResponse<TravelRequestResponse>>(`/travel-requests/${id}/approve`).then((r) => r.data.data),
+    api.post<ApiResponse<CreditRequestResponse>>(`/credit-requests/${id}/approve`).then((r) => r.data.data),
 
   reject: (id: number) =>
-    api.post<ApiResponse<TravelRequestResponse>>(`/travel-requests/${id}/reject`).then((r) => r.data.data),
+    api.post<ApiResponse<CreditRequestResponse>>(`/credit-requests/${id}/reject`).then((r) => r.data.data),
 };
 
 // ─── Health Profiles ─────────────────────────────────────────
@@ -554,4 +558,26 @@ export const planUsageLedgerApi = {
 
   byEmployee: (employeeId: number, params?: PaginationParams) =>
     api.get<ApiResponse<PaginatedResponse<PlanUsageLedgerResponse>>>(`/plan-usage-ledgers/employee/${employeeId}`, { params: buildParams(params) }).then((r) => r.data.data),
+};
+
+// ─── Reports ────────────────────────────────────────────────
+
+export const reportsApi = {
+  getUsageReport: (companyId?: number) =>
+    api.get<ApiResponse<UsageReportSummary>>("/reports/usage", { params: companyId ? { companyId } : {} }).then((r) => r.data.data),
+
+  getUsageReportCsv: (companyId?: number) =>
+    api.get<string>("/reports/usage/csv", { params: companyId ? { companyId } : {}, responseType: 'text' }),
+
+  getPlanHistory: (companyId?: number) =>
+    api.get<ApiResponse<PlanHistoryDto[]>>("/reports/plans", { params: companyId ? { companyId } : {} }).then((r) => r.data.data),
+
+  getPlanHistoryCsv: (companyId?: number) =>
+    api.get<string>("/reports/plans/csv", { params: companyId ? { companyId } : {}, responseType: 'text' }),
+
+  getComplianceReport: (companyId?: number) =>
+    api.get<ApiResponse<ComplianceReportDto>>("/reports/compliance", { params: companyId ? { companyId } : {} }).then((r) => r.data.data),
+
+  getComplianceReportCsv: (companyId?: number) =>
+    api.get<string>("/reports/compliance/csv", { params: companyId ? { companyId } : {}, responseType: 'text' }),
 };

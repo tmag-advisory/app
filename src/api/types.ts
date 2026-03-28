@@ -248,32 +248,31 @@ export interface CreateTravelPlanRequest {
 
 export interface UpdateTravelPlanRequest extends Partial<CreateTravelPlanRequest> { }
 
-// ─── Travel Request ──────────────────────────────────────────
+// ─── Credit Request ──────────────────────────────────────────
 
-export interface TravelRequestResponse {
+export interface CreditRequestResponse {
   id: number;
-  destination: string;
-  dates: string;
+  creditsRequested: number;
+  reason: string;
   status: string;
   submittedAt?: string;
   companyId?: number;
   employeeId?: number;
-  userId?: number;
+  employeeName?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface CreateTravelRequestRequest {
+export interface CreateCreditRequestRequest {
   companyId: number;
-  employeeId: number;
-  destination: string;
-  dates: string;
+  employeeId?: number;
+  creditsRequested: number;
+  reason: string;
   status: string;
-  userId: number;
   submittedAt?: string;
 }
 
-export interface UpdateTravelRequestRequest extends Partial<CreateTravelRequestRequest> { }
+export interface UpdateCreditRequestRequest extends Partial<CreateCreditRequestRequest> { }
 
 // ─── Health Profile ──────────────────────────────────────────
 
@@ -737,4 +736,54 @@ export interface CompanyAdminPricingResponse {
   discountTier3Amount: number | null;
   totalCredits: number;
   usedCredits: number;
+}
+
+// ─── Reports ────────────────────────────────────────────────
+
+export interface UsageReportDto {
+  employeeName: string;
+  employeeEmail: string;
+  department: string;
+  creditsAllocated: number;
+  creditsUsed: number;
+  plansGenerated: number;
+  status: string;
+  lastActivityAt: string;
+}
+
+export interface UsageReportSummary {
+  totalEmployees: number;
+  totalPlansGenerated: number;
+  totalCreditsUsed: number;
+  totalCreditsAllocated: number;
+  employees: UsageReportDto[];
+}
+
+export interface PlanHistoryDto {
+  planId: number;
+  destination: string;
+  country: string;
+  purpose: string;
+  duration: number;
+  riskScore: number;
+  status: string;
+  employeeName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ComplianceAuditDto {
+  ledgerId: number;
+  action: string;
+  employeeName: string;
+  planDestination: string;
+  ipAddress: string;
+  userAgent: string;
+  timestamp: string;
+}
+
+export interface ComplianceReportDto {
+  audits: ComplianceAuditDto[];
+  totalRecords: number;
+  generatedAt: string;
 }

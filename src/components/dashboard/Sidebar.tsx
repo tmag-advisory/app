@@ -38,7 +38,7 @@ const hrNav: NavItem[] = [
     { label: "Dashboard", href: "/hr", icon: <LucideLayoutDashboard className="w-4 h-4" /> },
     { label: "Employees", href: "/hr/employees", icon: <LucideUsers className="w-4 h-4" /> },
     { label: "Create Plan", href: "/hr/create-plan", icon: <LucidePlusCircle className="w-4 h-4" /> },
-    { label: "Travel Requests", href: "/hr/travel-requests", icon: <LucideInbox className="w-4 h-4" /> },
+    { label: "Credit Requests", href: "/hr/credit-requests", icon: <LucideInbox className="w-4 h-4" /> },
     { label: "Reports", href: "/hr/reports", icon: <LucideBarChart3 className="w-4 h-4" /> },
     { label: "Billing", href: "/hr/billing", icon: <LucideCreditCard className="w-4 h-4" /> },
 ];
