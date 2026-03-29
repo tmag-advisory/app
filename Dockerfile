@@ -1,4 +1,4 @@
-FROM oven:bun AS builder
+FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN bun install --frozen-lockfile
 COPY . .
 RUN bun run build
 
-FROM oven:bun AS runner
+FROM oven/bun:latest AS runner
 
 WORKDIR /app
 
