@@ -270,9 +270,38 @@ const Settings = () => {
         }
     };
 
+    const handleCreditRequest = async () => {
+        try {
+            if (!requestReason.trim()) {
+                toast.error("Please provide a reason for your request");
+                return;
+            }
+            if (!company?.id) {
+                toast.error("Company not found");
+                return;
+            }
+            setRequestingCredits(true);
+            await createCreditRequest.mutateAsync({
+                companyId: company.id,
+                creditsRequested: creditCount,
+                reason: requestReason,
+                status: "pending",
+            });
+            toast.success("Credit request submitted to HR");
+            setPurchaseCreditsOpen(false);
+            setRequestReason("");
+            setCreditCount(1);
+        } catch (error) {
+            toast.error("Failed to submit credit request");
+            console.error("Credit request error:", error);
+        } finally {
+            setRequestingCredits(false);
+        }
+    };
+
     return (
         <div>
-            <DashboardHeader title="Settings"/>
+            <DashboardHeader title="Settings" />
 
             {/* Tabs */}
             <div className="flex gap-1 bg-button-secondary rounded-xl p-1 max-w-md mb-8 overflow-x-auto">
@@ -281,9 +310,9 @@ const Settings = () => {
                         key={t.id}
                         onClick={() => setTab(t.id)}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
-                            tab === t.id
-                                ? "bg-white text-heading shadow-sm"
-                                : "text-muted hover:text-heading"
+                            tab === t.id ?
+                                "bg-white text-heading shadow-sm"
+                            :   "text-muted hover:text-heading"
                         }`}
                     >
                         {t.icon} {t.label}
@@ -294,52 +323,78 @@ const Settings = () => {
             {/* Profile tab */}
             {tab === "profile" && (
                 <>
-                    <form onSubmit={handleProfileSubmit}
-                          className="bg-white rounded-2xl border border-border-light/50 p-6 md:p-8 max-w-2xl">
-                        <h2 className="text-base font-semibold text-heading mb-6">Personal information</h2>
+                    <form
+                        onSubmit={handleProfileSubmit}
+                        className="bg-white rounded-2xl border border-border-light/50 p-6 md:p-8 max-w-2xl"
+                    >
+                        <h2 className="text-base font-semibold text-heading mb-6">
+                            Personal information
+                        </h2>
                         <div className="space-y-5">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
-                                    <label
-                                        className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">First
-                                        name</label>
+                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                        First name
+                                    </label>
                                     <input
                                         type="text"
                                         value={profileForm.first_name}
-                                        onChange={(e) => setProfileForm({...profileForm, first_name: e.target.value})}
+                                        onChange={(e) =>
+                                            setProfileForm({
+                                                ...profileForm,
+                                                first_name: e.target.value,
+                                            })
+                                        }
                                         className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
                                     />
                                 </div>
                                 <div>
-                                    <label
-                                        className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Last
-                                        name</label>
+                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                        Last name
+                                    </label>
                                     <input
                                         type="text"
                                         value={profileForm.last_name}
-                                        onChange={(e) => setProfileForm({...profileForm, last_name: e.target.value})}
+                                        onChange={(e) =>
+                                            setProfileForm({
+                                                ...profileForm,
+                                                last_name: e.target.value,
+                                            })
+                                        }
                                         className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
                                     />
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
-                                    <label
-                                        className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Email</label>
+                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                        Email
+                                    </label>
                                     <input
                                         type="email"
                                         value={profileForm.email}
-                                        onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                                        onChange={(e) =>
+                                            setProfileForm({
+                                                ...profileForm,
+                                                email: e.target.value,
+                                            })
+                                        }
                                         className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
                                     />
                                 </div>
                                 <div>
-                                    <label
-                                        className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Phone</label>
+                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                        Phone
+                                    </label>
                                     <input
                                         type="tel"
                                         value={profileForm.phone}
-                                        onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                                        onChange={(e) =>
+                                            setProfileForm({
+                                                ...profileForm,
+                                                phone: e.target.value,
+                                            })
+                                        }
                                         className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
                                     />
                                 </div>
@@ -351,7 +406,9 @@ const Settings = () => {
                                 disabled={updateProfile.isPending}
                                 className="py-2.5 px-5 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200 flex items-center gap-2"
                             >
-                                {updateProfile.isPending && <LucideLoader2 className="w-3 h-3 animate-spin"/>}
+                                {updateProfile.isPending && (
+                                    <LucideLoader2 className="w-3 h-3 animate-spin" />
+                                )}
                                 Save changes
                             </button>
                         </div>
@@ -363,17 +420,19 @@ const Settings = () => {
                             to="/onboarding/questionnaire"
                             className="mt-6 max-w-2xl flex items-center gap-4 p-5 rounded-2xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-colors duration-200 group"
                         >
-                            <div
-                                className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
-                                <LucideClipboardList className="w-5 h-5 text-accent"/>
+                            <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
+                                <LucideClipboardList className="w-5 h-5 text-accent" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-heading">Health questionnaire</p>
-                                <p className="text-xs text-muted">Complete your travel health questionnaire for
-                                    personalised recommendations.</p>
+                                <p className="text-sm font-semibold text-heading">
+                                    Health questionnaire
+                                </p>
+                                <p className="text-xs text-muted">
+                                    Complete your travel health questionnaire
+                                    for personalised recommendations.
+                                </p>
                             </div>
-                            <LucideArrowRight
-                                className="w-4 h-4 text-accent shrink-0 group-hover:translate-x-0.5 transition-transform"/>
+                            <LucideArrowRight className="w-4 h-4 text-accent shrink-0 group-hover:translate-x-0.5 transition-transform" />
                         </Link>
                     )}
                 </>
@@ -381,41 +440,63 @@ const Settings = () => {
 
             {/* Password tab */}
             {tab === "password" && (
-                <form onSubmit={handlePasswordSubmit}
-                      className="bg-white rounded-2xl border border-border-light/50 p-6 md:p-8 max-w-2xl">
-                    <h2 className="text-base font-semibold text-heading mb-6">Change password</h2>
+                <form
+                    onSubmit={handlePasswordSubmit}
+                    className="bg-white rounded-2xl border border-border-light/50 p-6 md:p-8 max-w-2xl"
+                >
+                    <h2 className="text-base font-semibold text-heading mb-6">
+                        Change password
+                    </h2>
                     <div className="space-y-5">
                         <div>
-                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Current
-                                password</label>
+                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                Current password
+                            </label>
                             <input
                                 type="password"
                                 value={passwordForm.currentPassword}
-                                onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                                onChange={(e) =>
+                                    setPasswordForm({
+                                        ...passwordForm,
+                                        currentPassword: e.target.value,
+                                    })
+                                }
                                 placeholder="••••••••"
                                 className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">New
-                                password</label>
+                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                New password
+                            </label>
                             <input
                                 type="password"
                                 value={passwordForm.newPassword}
-                                onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                                onChange={(e) =>
+                                    setPasswordForm({
+                                        ...passwordForm,
+                                        newPassword: e.target.value,
+                                    })
+                                }
                                 placeholder="Min. 8 characters"
                                 className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">Confirm
-                                new password</label>
+                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                Confirm new password
+                            </label>
                             <input
                                 type="password"
                                 value={passwordForm.confirmPassword}
-                                onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                                onChange={(e) =>
+                                    setPasswordForm({
+                                        ...passwordForm,
+                                        confirmPassword: e.target.value,
+                                    })
+                                }
                                 placeholder="••••••••"
                                 className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
                                 required
@@ -428,7 +509,9 @@ const Settings = () => {
                             disabled={updatePassword.isPending}
                             className="py-2.5 px-5 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200 flex items-center gap-2"
                         >
-                            {updatePassword.isPending && <LucideLoader2 className="w-3 h-3 animate-spin"/>}
+                            {updatePassword.isPending && (
+                                <LucideLoader2 className="w-3 h-3 animate-spin" />
+                            )}
                             Update password
                         </button>
                     </div>
@@ -439,36 +522,57 @@ const Settings = () => {
             {tab === "billing" && (
                 <div className="space-y-6 max-w-2xl">
                     <div className="bg-white rounded-2xl border border-border-light/50 p-6">
-                        <h2 className="text-base font-semibold text-heading mb-4">Credits</h2>
+                        <h2 className="text-base font-semibold text-heading mb-4">
+                            Credits
+                        </h2>
                         <div className="flex items-baseline gap-2 mb-4">
-                            <span className="text-4xl font-serif text-heading">{user?.credits ?? 0}</span>
-                            <span className="text-sm text-muted">credits remaining</span>
+                            <span className="text-4xl font-serif text-heading">
+                                {user?.credits ?? 0}
+                            </span>
+                            <span className="text-sm text-muted">
+                                credits remaining
+                            </span>
                         </div>
                         <button
                             onClick={() => setPurchaseCreditsOpen(true)}
                             className="py-2.5 px-5 rounded-xl bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent/90 transition-colors duration-200"
                         >
-                            {isCompanyUser ? "Request credits" : "Purchase credits"}
+                            {isCompanyUser ?
+                                "Request credits"
+                            :   "Purchase credits"}
                         </button>
                     </div>
 
                     {/* Billing currency — only editable for individual users */}
                     <div className="bg-white rounded-2xl border border-border-light/50 p-6">
-                        <h2 className="text-base font-semibold text-heading mb-1">Billing currency</h2>
-                        {isCompanyUser ? (
+                        <h2 className="text-base font-semibold text-heading mb-1">
+                            Billing currency
+                        </h2>
+                        {isCompanyUser ?
                             <p className="text-xs text-muted mb-4">
                                 Your billing currency is set by{" "}
-                                <span className="font-semibold text-heading">{company?.name}</span> and cannot be
-                                changed here.
+                                <span className="font-semibold text-heading">
+                                    {company?.name}
+                                </span>{" "}
+                                and cannot be changed here.
                             </p>
-                        ) : (
-                            <p className="text-xs text-muted mb-4">Choose the currency for credit purchases.</p>
-                        )}
+                        :   <p className="text-xs text-muted mb-4">
+                                Choose the currency for credit purchases.
+                            </p>
+                        }
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-                            {(Object.keys(CURRENCY_SYMBOLS) as BillingCurrency[]).map((c) => {
+                            {(
+                                Object.keys(
+                                    CURRENCY_SYMBOLS,
+                                ) as BillingCurrency[]
+                            ).map((c) => {
                                 const symbol = CURRENCY_SYMBOLS[c];
-                                const pricing = creditPricing?.find(p => p.currency === c);
-                                const getDefaultPrice = (currency: BillingCurrency) => {
+                                const pricing = creditPricing?.find(
+                                    (p) => p.currency === c,
+                                );
+                                const getDefaultPrice = (
+                                    currency: BillingCurrency,
+                                ) => {
                                     switch (currency) {
                                         case "USD":
                                             return 3.23;
@@ -480,22 +584,36 @@ const Settings = () => {
                                             return 5000;
                                     }
                                 };
-                                const perCredit = pricing?.pricePerCredit ?? getDefaultPrice(c);
-                                const selected = isCompanyUser ? activeCurrency === c : currencyForm === c;
+                                const perCredit =
+                                    pricing?.pricePerCredit ??
+                                    getDefaultPrice(c);
+                                const selected =
+                                    isCompanyUser ?
+                                        activeCurrency === c
+                                    :   currencyForm === c;
                                 return (
                                     <button
                                         key={c}
                                         disabled={isCompanyUser}
-                                        onClick={() => !isCompanyUser && setCurrencyForm(c)}
+                                        onClick={() =>
+                                            !isCompanyUser && setCurrencyForm(c)
+                                        }
                                         className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-sm font-semibold transition-all duration-200 ${
-                                            selected
-                                                ? "border-accent bg-accent/5 text-accent"
-                                                : "border-border-light text-muted hover:border-accent/40"
+                                            selected ?
+                                                "border-accent bg-accent/5 text-accent"
+                                            :   "border-border-light text-muted hover:border-accent/40"
                                         } ${isCompanyUser ? "cursor-default opacity-60" : "cursor-pointer"}`}
                                     >
-                                        <span className="text-lg">{symbol}</span>
-                                        <span className="text-xs font-medium">{c}</span>
-                                        <span className="text-xs text-muted">{symbol}{perCredit}/credit</span>
+                                        <span className="text-lg">
+                                            {symbol}
+                                        </span>
+                                        <span className="text-xs font-medium">
+                                            {c}
+                                        </span>
+                                        <span className="text-xs text-muted">
+                                            {symbol}
+                                            {perCredit}/credit
+                                        </span>
                                     </button>
                                 );
                             })}
@@ -503,15 +621,21 @@ const Settings = () => {
                         {!isCompanyUser && (
                             <div className="flex items-center justify-between pt-4 border-t border-border-light/50">
                                 <p className="text-xs text-muted">
-                                    1 credit
-                                    = {currencySymbol}{effectivePricing.pricePerCredit.toLocaleString()} {currencyForm}
+                                    1 credit = {currencySymbol}
+                                    {effectivePricing.pricePerCredit.toLocaleString()}{" "}
+                                    {currencyForm}
                                 </p>
                                 <button
                                     onClick={handleSaveCurrency}
-                                    disabled={savingCurrency || currencyForm === user?.billing_currency}
+                                    disabled={
+                                        savingCurrency ||
+                                        currencyForm === user?.billing_currency
+                                    }
                                     className="py-2 px-4 rounded-xl bg-dark text-background-primary font-semibold text-xs cursor-pointer hover:bg-darkest transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                 >
-                                    {savingCurrency && <LucideLoader2 className="w-3 h-3 animate-spin"/>}
+                                    {savingCurrency && (
+                                        <LucideLoader2 className="w-3 h-3 animate-spin" />
+                                    )}
                                     Save
                                 </button>
                             </div>
@@ -519,16 +643,23 @@ const Settings = () => {
                     </div>
 
                     <div className="bg-white rounded-2xl border border-border-light/50 p-6">
-                        <h2 className="text-base font-semibold text-heading mb-4">Plan</h2>
+                        <h2 className="text-base font-semibold text-heading mb-4">
+                            Plan
+                        </h2>
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-heading capitalize">{isCompanyUser ? "Company" : "Individual"}</p>
+                                <p className="text-sm font-medium text-heading capitalize">
+                                    {isCompanyUser ? "Company" : "Individual"}
+                                </p>
                                 <p className="text-xs text-muted">
-                                    {isCompanyUser ? "Organisational billing" : "Pay-per-plan pricing"}
+                                    {isCompanyUser ?
+                                        "Organisational billing"
+                                    :   "Pay-per-plan pricing"}
                                 </p>
                             </div>
-                            <span
-                                className="text-xs font-semibold text-accent bg-accent/10 px-3 py-1 rounded-full">Active</span>
+                            <span className="text-xs font-semibold text-accent bg-accent/10 px-3 py-1 rounded-full">
+                                Active
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -548,14 +679,19 @@ const Settings = () => {
                             onClick={() => setPurchaseCreditsOpen(false)}
                             className="absolute top-4 right-4 p-1.5 rounded-lg text-muted hover:text-heading hover:bg-background-primary transition-colors duration-200 cursor-pointer"
                         >
-                            <LucideX className="w-4 h-4"/>
+                            <LucideX className="w-4 h-4" />
                         </button>
 
-                        {isCompanyUser ? (
+                        {isCompanyUser ?
                             /* ── Company user view - Request credits from HR ── */
                             <>
-                                <h2 className="text-base font-semibold text-heading mb-1">Request credits</h2>
-                                <p className="text-xs text-muted mb-6">Submit a credit request to your HR department.</p>
+                                <h2 className="text-base font-semibold text-heading mb-1">
+                                    Request credits
+                                </h2>
+                                <p className="text-xs text-muted mb-6">
+                                    Submit a credit request to your HR
+                                    department.
+                                </p>
 
                                 <div className="mb-4">
                                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
@@ -565,7 +701,14 @@ const Settings = () => {
                                         type="number"
                                         min={1}
                                         value={creditCount}
-                                        onChange={(e) => setCreditCount(Math.max(1, Number(e.target.value)))}
+                                        onChange={(e) =>
+                                            setCreditCount(
+                                                Math.max(
+                                                    1,
+                                                    Number(e.target.value),
+                                                ),
+                                            )
+                                        }
                                         className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
                                         placeholder="Enter number of credits"
                                     />
@@ -577,7 +720,9 @@ const Settings = () => {
                                     </label>
                                     <textarea
                                         value={requestReason}
-                                        onChange={(e) => setRequestReason(e.target.value)}
+                                        onChange={(e) =>
+                                            setRequestReason(e.target.value)
+                                        }
                                         rows={3}
                                         className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200 resize-none"
                                         placeholder="Why do you need these credits?"
@@ -585,89 +730,83 @@ const Settings = () => {
                                 </div>
 
                                 <button
-                                    onClick={async () => {
-                                        if (!requestReason.trim()) {
-                                            toast.error("Please provide a reason for your request");
-                                            return;
-                                        }
-                                        if (!company?.id) {
-                                            toast.error("Company not found");
-                                            return;
-                                        }
-                                        setRequestingCredits(true);
-                                        try {
-                                            await createCreditRequest.mutateAsync({
-                                                companyId: company.id,
-                                                creditsRequested: creditCount,
-                                                reason: requestReason,
-                                                status: "pending",
-                                            });
-                                            toast.success("Credit request submitted to HR");
-                                            setPurchaseCreditsOpen(false);
-                                            setRequestReason("");
-                                            setCreditCount(1);
-                                        } catch {
-                                            toast.error("Failed to submit credit request");
-                                        } finally {
-                                            setRequestingCredits(false);
-                                        }
-                                    }}
+                                    onClick={handleCreditRequest}
                                     disabled={requestingCredits}
                                     className="w-full py-3 rounded-xl bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent/90 transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
-                                    {requestingCredits ? (
+                                    {requestingCredits ?
                                         <>
-                                            <LucideLoader2 className="w-4 h-4 animate-spin"/>
+                                            <LucideLoader2 className="w-4 h-4 animate-spin" />
                                             Submitting...
                                         </>
-                                    ) : (
-                                        <>
-                                            <LucideSend className="w-4 h-4"/>
+                                    :   <>
+                                            <LucideSend className="w-4 h-4" />
                                             Submit to HR
                                         </>
-                                    )}
+                                    }
                                 </button>
                             </>
-                        ) : (
-                            /* ── Individual user view ── */
+                        :   /* ── Individual user view ── */
                             <>
-                                <h2 className="text-base font-semibold text-heading mb-1">Purchase credits</h2>
-                                <p className="text-xs text-muted mb-6">Select a credit pack that works for you.</p>
+                                <h2 className="text-base font-semibold text-heading mb-1">
+                                    Purchase credits
+                                </h2>
+                                <p className="text-xs text-muted mb-6">
+                                    Select a credit pack that works for you.
+                                </p>
 
                                 {/* Tiered pricing cards */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                                     {[
-                                        {credits: 1, label: "1 credit", popular: false},
-                                        {credits: 5, label: "5 credits", popular: false},
-                                        {credits: 10, label: "10 credits", popular: true},
+                                        {
+                                            credits: 1,
+                                            label: "1 credit",
+                                            popular: false,
+                                        },
+                                        {
+                                            credits: 5,
+                                            label: "5 credits",
+                                            popular: false,
+                                        },
+                                        {
+                                            credits: 10,
+                                            label: "10 credits",
+                                            popular: true,
+                                        },
                                     ].map((tier) => {
-                                        const {
-                                            basePrice,
-                                            discount,
-                                            total
-                                        } = calculatePriceWithDiscount(tier.credits, activePricing, effectivePricing.pricePerCredit);
-                                        const discountLabel = getDiscountLabel(tier.credits, effectivePricing.pricePerCredit, activePricing);
-                                        const isSelected = creditCount === tier.credits;
+                                        const { basePrice, discount, total } =
+                                            calculatePriceWithDiscount(
+                                                tier.credits,
+                                                activePricing,
+                                                effectivePricing.pricePerCredit,
+                                            );
+                                        const discountLabel = getDiscountLabel(
+                                            tier.credits,
+                                            effectivePricing.pricePerCredit,
+                                            activePricing,
+                                        );
+                                        const isSelected =
+                                            creditCount === tier.credits;
                                         return (
                                             <button
                                                 key={tier.credits}
-                                                onClick={() => setCreditCount(tier.credits)}
+                                                onClick={() =>
+                                                    setCreditCount(tier.credits)
+                                                }
                                                 className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                                                    isSelected
-                                                        ? "border-accent bg-accent/5"
-                                                        : "border-border-light hover:border-accent/50"
+                                                    isSelected ?
+                                                        "border-accent bg-accent/5"
+                                                    :   "border-border-light hover:border-accent/50"
                                                 }`}
                                             >
                                                 {tier.popular && (
-                                                    <span
-                                                        className="absolute -top-2 right-3 px-2 py-0.5 bg-accent text-white text-xs font-semibold rounded-full">
+                                                    <span className="absolute -top-2 right-3 px-2 py-0.5 bg-accent text-white text-xs font-semibold rounded-full">
                                                         Popular
                                                     </span>
                                                 )}
                                                 {discountLabel && (
-                                                    <span
-                                                        className="absolute -top-2 left-3 px-2 py-0.5 bg-green-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
-                                                        <LucideTag className="w-3 h-3"/>
+                                                    <span className="absolute -top-2 left-3 px-2 py-0.5 bg-green-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                                                        <LucideTag className="w-3 h-3" />
                                                         {discountLabel}
                                                     </span>
                                                 )}
@@ -677,24 +816,27 @@ const Settings = () => {
                                                 <div className="text-xs text-muted mb-2">
                                                     {tier.label}
                                                 </div>
-                                                {discount > 0 ? (
+                                                {discount > 0 ?
                                                     <>
-                                                        <div
-                                                            className="text-lg font-semibold text-heading line-through opacity-50">
-                                                            {currencySymbol}{basePrice.toLocaleString()}
+                                                        <div className="text-lg font-semibold text-heading line-through opacity-50">
+                                                            {currencySymbol}
+                                                            {basePrice.toLocaleString()}
                                                         </div>
                                                         <div className="text-lg font-bold text-green-600">
-                                                            {currencySymbol}{total.toLocaleString()}
+                                                            {currencySymbol}
+                                                            {total.toLocaleString()}
                                                         </div>
                                                         <div className="text-xs text-green-600 font-medium">
-                                                            Save {currencySymbol}{discount.toLocaleString()}
+                                                            Save{" "}
+                                                            {currencySymbol}
+                                                            {discount.toLocaleString()}
                                                         </div>
                                                     </>
-                                                ) : (
-                                                    <div className="text-lg font-semibold text-heading">
-                                                        {currencySymbol}{basePrice.toLocaleString()}
+                                                :   <div className="text-lg font-semibold text-heading">
+                                                        {currencySymbol}
+                                                        {basePrice.toLocaleString()}
                                                     </div>
-                                                )}
+                                                }
                                             </button>
                                         );
                                     })}
@@ -702,8 +844,7 @@ const Settings = () => {
 
                                 {/* Custom amount option */}
                                 <div className="mb-6">
-                                    <label
-                                        className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                                         Or enter custom amount
                                     </label>
                                     <input
@@ -711,7 +852,17 @@ const Settings = () => {
                                         min={1}
                                         max={100}
                                         value={creditCount}
-                                        onChange={(e) => setCreditCount(Math.max(1, Math.min(100, Number(e.target.value))))}
+                                        onChange={(e) =>
+                                            setCreditCount(
+                                                Math.max(
+                                                    1,
+                                                    Math.min(
+                                                        100,
+                                                        Number(e.target.value),
+                                                    ),
+                                                ),
+                                            )
+                                        }
                                         className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
                                         placeholder="Enter number of credits"
                                     />
@@ -720,35 +871,57 @@ const Settings = () => {
                                 {/* Pricing summary */}
                                 <div className="bg-background-primary rounded-xl p-4 mb-6 space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs text-muted">Credits</span>
-                                        <span className="text-sm font-semibold text-heading">{creditCount}</span>
+                                        <span className="text-xs text-muted">
+                                            Credits
+                                        </span>
+                                        <span className="text-sm font-semibold text-heading">
+                                            {creditCount}
+                                        </span>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs text-muted">Price per credit ({activeCurrency})</span>
+                                        <span className="text-xs text-muted">
+                                            Price per credit ({activeCurrency})
+                                        </span>
                                         <span className="text-sm font-semibold text-heading">
-                                            {currencySymbol}{effectivePricing.pricePerCredit.toLocaleString()}
+                                            {currencySymbol}
+                                            {effectivePricing.pricePerCredit.toLocaleString()}
                                         </span>
                                     </div>
                                     {(() => {
-                                        const calc = calculatePriceWithDiscount(creditCount, activePricing, effectivePricing.pricePerCredit);
-                                        return calc.discount > 0 && (
-                                            <div className="flex items-center justify-between text-green-600">
-                                                <span className="text-xs">Discount</span>
-                                                <span className="text-sm font-semibold">
-                                                    -{currencySymbol}{calc.discount.toLocaleString()}
-                                                </span>
-                                            </div>
+                                        const calc = calculatePriceWithDiscount(
+                                            creditCount,
+                                            activePricing,
+                                            effectivePricing.pricePerCredit,
+                                        );
+                                        return (
+                                            calc.discount > 0 && (
+                                                <div className="flex items-center justify-between text-green-600">
+                                                    <span className="text-xs">
+                                                        Discount
+                                                    </span>
+                                                    <span className="text-sm font-semibold">
+                                                        -{currencySymbol}
+                                                        {calc.discount.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            )
                                         );
                                     })()}
-                                    <div
-                                        className="pt-2 border-t border-border-light/50 flex items-center justify-between">
-                                        <span
-                                            className="text-xs font-semibold text-muted">Total ({activeCurrency})</span>
+                                    <div className="pt-2 border-t border-border-light/50 flex items-center justify-between">
+                                        <span className="text-xs font-semibold text-muted">
+                                            Total ({activeCurrency})
+                                        </span>
                                         <span className="text-lg font-bold text-heading">
-                                            {currencySymbol}{(() => {
-                                            const calc = calculatePriceWithDiscount(creditCount, activePricing, effectivePricing.pricePerCredit);
-                                            return calc.total.toLocaleString();
-                                        })()}
+                                            {currencySymbol}
+                                            {(() => {
+                                                const calc =
+                                                    calculatePriceWithDiscount(
+                                                        creditCount,
+                                                        activePricing,
+                                                        effectivePricing.pricePerCredit,
+                                                    );
+                                                return calc.total.toLocaleString();
+                                            })()}
                                         </span>
                                     </div>
                                 </div>
@@ -756,36 +929,52 @@ const Settings = () => {
                                 {/* Discount tiers info */}
                                 {effectivePricing && (
                                     <div className="bg-accent/5 rounded-xl p-4 mb-6">
-                                        <h4 className="text-xs font-semibold text-heading mb-2">Bulk Discounts
-                                            Available:</h4>
+                                        <h4 className="text-xs font-semibold text-heading mb-2">
+                                            Bulk Discounts Available:
+                                        </h4>
                                         <div className="space-y-1 text-xs text-muted">
-                                            {effectivePricing.discountTier1Threshold && effectivePricing.discountTier1Amount && (
-                                                <div className="flex items-center gap-2">
-                                                    <LucideCheck className="w-3 h-3 text-green-600"/>
-                                                    <span>
-                                                        Order {currencySymbol}{effectivePricing.discountTier1Threshold.toLocaleString()}+ 
-                                                        to save {currencySymbol}{effectivePricing.discountTier1Amount.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {effectivePricing.discountTier2Threshold && effectivePricing.discountTier2Amount && (
-                                                <div className="flex items-center gap-2">
-                                                    <LucideCheck className="w-3 h-3 text-green-600"/>
-                                                    <span>
-                                                        Order {currencySymbol}{effectivePricing.discountTier2Threshold.toLocaleString()}+ 
-                                                        to save {currencySymbol}{effectivePricing.discountTier2Amount.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {effectivePricing.discountTier3Threshold && effectivePricing.discountTier3Amount && (
-                                                <div className="flex items-center gap-2">
-                                                    <LucideCheck className="w-3 h-3 text-green-600"/>
-                                                    <span>
-                                                        Order {currencySymbol}{effectivePricing.discountTier3Threshold.toLocaleString()}+ 
-                                                        to save {currencySymbol}{effectivePricing.discountTier3Amount.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            )}
+                                            {effectivePricing.discountTier1Threshold &&
+                                                effectivePricing.discountTier1Amount && (
+                                                    <div className="flex items-center gap-2">
+                                                        <LucideCheck className="w-3 h-3 text-green-600" />
+                                                        <span>
+                                                            Order{" "}
+                                                            {currencySymbol}
+                                                            {effectivePricing.discountTier1Threshold.toLocaleString()}
+                                                            + to save{" "}
+                                                            {currencySymbol}
+                                                            {effectivePricing.discountTier1Amount.toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            {effectivePricing.discountTier2Threshold &&
+                                                effectivePricing.discountTier2Amount && (
+                                                    <div className="flex items-center gap-2">
+                                                        <LucideCheck className="w-3 h-3 text-green-600" />
+                                                        <span>
+                                                            Order{" "}
+                                                            {currencySymbol}
+                                                            {effectivePricing.discountTier2Threshold.toLocaleString()}
+                                                            + to save{" "}
+                                                            {currencySymbol}
+                                                            {effectivePricing.discountTier2Amount.toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            {effectivePricing.discountTier3Threshold &&
+                                                effectivePricing.discountTier3Amount && (
+                                                    <div className="flex items-center gap-2">
+                                                        <LucideCheck className="w-3 h-3 text-green-600" />
+                                                        <span>
+                                                            Order{" "}
+                                                            {currencySymbol}
+                                                            {effectivePricing.discountTier3Threshold.toLocaleString()}
+                                                            + to save{" "}
+                                                            {currencySymbol}
+                                                            {effectivePricing.discountTier3Amount.toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                )}
                                         </div>
                                     </div>
                                 )}
@@ -795,17 +984,15 @@ const Settings = () => {
                                     disabled={processingPayment}
                                     className="w-full py-3 rounded-xl bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent/90 transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
-                                    {processingPayment ? (
+                                    {processingPayment ?
                                         <>
-                                            <LucideLoader2 className="w-4 h-4 animate-spin"/>
+                                            <LucideLoader2 className="w-4 h-4 animate-spin" />
                                             Processing...
                                         </>
-                                    ) : (
-                                        <>Proceed to payment</>
-                                    )}
+                                    :   <>Proceed to payment</>}
                                 </button>
                             </>
-                        )}
+                        }
                     </div>
                 </div>
             )}
