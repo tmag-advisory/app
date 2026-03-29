@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LucidePlusCircle, LucideFileText, LucideX, LucideCheckCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface PaymentSuccessData {
     success: boolean;
@@ -15,7 +15,7 @@ interface PaymentSuccessModalProps {
     onClose: () => void;
 }
 
-const ease = [0.25, 0.1, 0.25, 1];
+const ease: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 
 export const PaymentSuccessModal = ({ onClose }: PaymentSuccessModalProps) => {
     const navigate = useNavigate();

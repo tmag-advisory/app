@@ -86,32 +86,6 @@ const VARIANTS: HeroVariant[] = [
 
 const RANDOM_VARIANT = VARIANTS[Math.floor(Math.random() * VARIANTS.length)];
 
-const IMAGES = [
-    "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=1200&q=80",
-    "https://images.unsplash.com/photo-1571772996211-2f02c9727629?w=1200&q=80",
-    "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&q=80",
-    "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&q=80",
-    "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1200&q=80",
-    "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1200&q=80",
-];
-
-const CLIP_PATHS = [
-    "polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%)",
-    "polygon(0% 0%, 100% 0%, 96% 100%, 4% 100%)",
-    "polygon(10% 0%, 100% 6%, 90% 100%, 0% 94%)",
-    "polygon(0% 10%, 94% 0%, 100% 90%, 6% 100%)",
-    "polygon(3% 0%, 100% 3%, 97% 100%, 0% 97%)",
-    "polygon(0% 0%, 100% 0%, 100% 100%, 5% 100%)",
-];
-
-const LAYOUT_CONFIG = [
-    { clipIdx: 0, height: "h-[18rem] md:h-[22rem] lg:h-[28rem]", mask: "linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)", rounded: "rounded-b-3xl", overlay: "linear-gradient(135deg, rgba(42,30,20,0.32) 0%, rgba(42,30,20,0.08) 40%, rgba(26,15,8,0.12) 70%, rgba(42,30,20,0.42) 100%)" },
-    { clipIdx: 1, height: "h-[18rem] md:h-[22rem] lg:h-[28rem]", mask: "linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)", rounded: "rounded-b-3xl", overlay: "linear-gradient(to bottom, rgba(42,30,20,0.28) 0%, rgba(42,30,20,0.06) 50%, rgba(42,30,20,0.34) 100%)" },
-    { clipIdx: 2, height: "h-[18rem] md:h-[22rem] lg:h-[28rem]", mask: "linear-gradient(to bottom, transparent 0%, black 8%, black 100%)", rounded: "rounded-b-3xl", overlay: "linear-gradient(160deg, rgba(42,30,20,0.26) 0%, rgba(26,15,8,0.06) 50%, rgba(42,30,20,0.36) 100%)" },
-    { clipIdx: 3, height: "h-[12rem] md:h-[16rem] lg:h-[20rem]", mask: "linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)", rounded: "rounded-b-xl", overlay: "linear-gradient(180deg, rgba(42,30,20,0.28) 0%, rgba(26,15,8,0.04) 40%, rgba(42,30,20,0.38) 100%)" },
-    { clipIdx: 4, height: "h-[18rem] md:h-[22rem] lg:h-[28rem]", mask: "linear-gradient(to bottom, transparent 0%, black 5%, black 100%)", rounded: "rounded-b-3xl", overlay: "linear-gradient(150deg, rgba(42,30,20,0.3) 0%, rgba(26,15,8,0.08) 60%, rgba(42,30,20,0.38) 100%)" },
-    { clipIdx: 5, height: "h-[18rem] md:h-[22rem] lg:h-[28rem]", mask: "linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)", rounded: "rounded-b-3xl", overlay: "linear-gradient(to right, rgba(42,30,20,0.36) 0%, rgba(42,30,20,0.04) 50%, rgba(26,15,8,0.18) 100%)" },
-];
 
 const RISK_STYLE: Record<RiskLevel, { badge: string; dot: string }> = {
     Low: { badge: "bg-emerald-50 text-emerald-700 border border-emerald-200", dot: "bg-emerald-500" },
@@ -157,13 +131,6 @@ const HL_SIZE = [
     "text-5xl md:text-6xl lg:text-7xl xl:text-8xl",
 ];
 
-const MARKERS = [
-    { x: 18, y: 32, delay: 0 },
-    { x: 48, y: 22, delay: 0.5 },
-    { x: 72, y: 46, delay: 1.0 },
-    { x: 34, y: 60, delay: 1.5 },
-    { x: 84, y: 36, delay: 2.0 },
-];
 
 const CardContent = ({ d }: { d: DestinationData }) => {
     const r = RISK_STYLE[d.risk];

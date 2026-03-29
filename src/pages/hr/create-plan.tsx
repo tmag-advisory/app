@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePlanStore } from "../../stores/planStore";
 import { useCreateTravelPlan, useEmployees } from "../../api/hooks";
