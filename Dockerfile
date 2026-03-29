@@ -8,12 +8,14 @@ RUN bun install --frozen-lockfile
 COPY . .
 RUN bun run build
 
-FROM oven/bun:latest AS runner
+FROM node:alpine AS runner
 
 WORKDIR /app
+
+RUN npm install -g serve
 
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-CMD ["bun", "x", "serve", "-l", "0.0.0.0", "-p", "3000", "dist"]
+CMD ["serve", "-l", "3000", "dist"]
