@@ -45,6 +45,7 @@ const FinalCTASection = () => {
                             variant="secondary"
                             icon={<LucideArrowRight />}
                             className="!bg-white/15 !text-white hover:!bg-white/25 border-none"
+                            link="/contact?type=SALES"
                         >
                             Talk to sales
                         </Button>

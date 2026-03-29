@@ -787,3 +787,41 @@ export interface ComplianceReportDto {
   totalRecords: number;
   generatedAt: string;
 }
+
+// ─── Contact ─────────────────────────────────────────────────
+
+export type ContactInquiryType = "SUPPORT" | "DEMO" | "SALES" | "GENERAL";
+export type ContactStatus = "NEW" | "IN_PROGRESS" | "RESOLVED";
+
+export interface ContactRequest {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  inquiryType: ContactInquiryType;
+}
+
+export interface ContactResponse {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  inquiryType: ContactInquiryType;
+  status: ContactStatus;
+  createdAt: string;
+}
+
+// ─── Newsletter ───────────────────────────────────────────────
+
+export interface NewsletterSubscribeRequest {
+  email: string;
+}
+
+export interface NewsletterSubscribeResponse {
+  id: number;
+  email: string;
+  isActive: boolean;
+  subscribedAt: string;
+}
+

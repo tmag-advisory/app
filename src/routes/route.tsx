@@ -25,6 +25,7 @@ const HelpCenter = lazy(() => import("../pages/help/help"));
 const Documentation = lazy(() => import("../pages/docs/docs"));
 const Status = lazy(() => import("../pages/status/status"));
 const Community = lazy(() => import("../pages/community/community"));
+const ContactPage = lazy(() => import("../pages/contact/contact"));
 
 // Auth pages (lazy-loaded)
 const Login = lazy(() => import("../pages/auth/login"));
@@ -88,6 +89,7 @@ const router = createBrowserRouter([
             { path: "docs", element: <Documentation /> },
             { path: "status", element: <Status /> },
             { path: "community", element: <Community /> },
+            { path: "contact", element: <ContactPage /> },
         ],
     },
 

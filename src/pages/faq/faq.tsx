@@ -194,7 +194,7 @@ const FAQPage = () => {
                             We're happy to help with anything not covered above.
                         </p>
                         <div className="flex items-center justify-center gap-4 flex-wrap">
-                            <Button variant="primary">Contact support</Button>
+                            <Button variant="primary" link="/contact?type=SUPPORT">Contact support</Button>
                             <Button variant="secondary" icon={<LucideArrowRight />}>
                                 hello@tmag.health
                             </Button>

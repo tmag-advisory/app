@@ -181,7 +181,7 @@ const PricingPage = () => {
             <Button
               variant="primary"
               className="relative z-10 self-stretch bg-white !text-dark hover:bg-white/90 text-center justify-center flex"
-              link="/for-companies"
+              link="/contact?type=SALES"
             >
               Talk to sales
             </Button>

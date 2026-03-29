@@ -4,6 +4,11 @@ import type {
   PaginatedResponse,
   PaginationParams,
   SelectOption,
+  // Contact
+  ContactRequest,
+  ContactResponse,
+  NewsletterSubscribeRequest,
+  NewsletterSubscribeResponse,
   // Auth
   LoginRequest,
   RegisterRequest,
@@ -580,4 +585,18 @@ export const reportsApi = {
 
   getComplianceReportCsv: (companyId?: number) =>
     api.get<string>("/reports/compliance/csv", { params: companyId ? { companyId } : {}, responseType: 'text' }),
+};
+
+// ─── Contact ─────────────────────────────────────────────────
+
+export const contactApi = {
+  submit: (data: ContactRequest) =>
+    api.post<ApiResponse<ContactResponse>>("/contact", data).then((r) => r.data.data),
+};
+
+// ─── Newsletter ───────────────────────────────────────────────
+
+export const newsletterApi = {
+  subscribe: (data: NewsletterSubscribeRequest) =>
+    api.post<ApiResponse<NewsletterSubscribeResponse>>("/newsletter/subscribe", data).then((r) => r.data.data),
 };

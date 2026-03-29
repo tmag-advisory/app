@@ -70,7 +70,7 @@ const ForCompanies = () => {
                     personalized health plans for your entire team in minutes.
                 </p>
                 <div className="flex items-center gap-4 mt-8 flex-wrap justify-center">
-                    <Button variant="primary">Request a demo</Button>
+                    <Button variant="primary" link="/contact?type=DEMO">Request a demo</Button>
                     <Button variant="secondary" icon={<LucideArrowRight />} link="/pricing">
                         View pricing
                     </Button>
@@ -305,6 +305,7 @@ const ForCompanies = () => {
                         <Button
                             variant="primary"
                             className="bg-white !text-dark hover:bg-white/90"
+                            link="/contact?type=DEMO"
                         >
                             Request a demo
                         </Button>

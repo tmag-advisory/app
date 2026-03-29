@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { LucideArrowUpRight, LucideMail, LucideMapPin, LucidePhone } from "lucide-react";
 import { Link } from "react-router-dom";
 import Button from "../ui/Button";
+import { useNewsletterSubscribe } from "../../api/hooks";
 
 const footerLinks = [
     {
@@ -42,6 +44,14 @@ const footerLinks = [
 ];
 
 const FooterSection = () => {
+    const [newsletterEmail, setNewsletterEmail] = useState("");
+    const { mutate: subscribe, isPending: isSubscribing, isSuccess: isSubscribed, isError: isSubscribeError, error: subscribeError } = useNewsletterSubscribe();
+
+    const handleSubscribe = (e: React.FormEvent) => {
+        e.preventDefault();
+        subscribe({ email: newsletterEmail });
+    };
+
     return (
         <footer className="relative bg-darkest text-white min-h-screen flex flex-col overflow-hidden">
             {/* Ambient orbs */}
@@ -119,19 +129,37 @@ const FooterSection = () => {
                                 destination alerts, outbreak updates, and expert
                                 tips—straight to your inbox.
                             </p>
-                            <div className="flex items-stretch gap-3 mt-6 max-w-md">
-                                <input
-                                    type="email"
-                                    placeholder="Enter your email"
-                                    className="flex-1 bg-white/6 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-white/25 transition-colors duration-200"
-                                />
-                                <Button
-                                    variant="primary"
-                                    className="bg-white! text-dark! hover:bg-white/90! shrink-0"
-                                >
-                                    Subscribe
-                                </Button>
-                            </div>
+                            {isSubscribed ? (
+                                <p className="text-sm text-accent mt-6 font-medium">
+                                    You're subscribed! Look for updates in your inbox.
+                                </p>
+                            ) : (
+                                <form onSubmit={handleSubscribe} className="flex items-stretch gap-3 mt-6 max-w-md">
+                                    <input
+                                        type="email"
+                                        value={newsletterEmail}
+                                        onChange={(e) => setNewsletterEmail(e.target.value)}
+                                        placeholder="Enter your email"
+                                        required
+                                        className="flex-1 bg-white/6 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-white/25 transition-colors duration-200"
+                                    />
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        className="bg-white! text-dark! hover:bg-white/90! shrink-0"
+                                        disabled={isSubscribing}
+                                    >
+                                        {isSubscribing ? "…" : "Subscribe"}
+                                    </Button>
+                                </form>
+                            )}
+                            {isSubscribeError && (
+                                <p className="text-xs text-red-400 mt-2">
+                                    {(subscribeError as { response?: { data?: { message?: string } } })?.response?.data?.message === "Already subscribed"
+                                        ? "You're already subscribed."
+                                        : "Something went wrong. Please try again."}
+                                </p>
+                            )}
                         </div>
 
                         {/* Contact info */}

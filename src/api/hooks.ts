@@ -23,6 +23,8 @@ import {
   companyAdminCreditsApi,
   planUsageLedgerApi,
   reportsApi,
+  contactApi,
+  newsletterApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -61,6 +63,8 @@ import type {
   CreditPurchaseRequest,
   GoogleCallbackRequest,
   PlanUsageLedgerResponse,
+  ContactRequest,
+  NewsletterSubscribeRequest,
 } from "./types";
 
 // ─── Query Keys ──────────────────────────────────────────────
@@ -1102,5 +1106,21 @@ export function useComplianceReport(companyId?: number) {
   return useQuery({
     queryKey: ["reports", "compliance", companyId],
     queryFn: () => reportsApi.getComplianceReport(companyId),
+  });
+}
+
+// ─── Contact Hooks ────────────────────────────────────────────
+
+export function useSubmitContact() {
+  return useMutation({
+    mutationFn: (data: ContactRequest) => contactApi.submit(data),
+  });
+}
+
+// ─── Newsletter Hooks ─────────────────────────────────────────
+
+export function useNewsletterSubscribe() {
+  return useMutation({
+    mutationFn: (data: NewsletterSubscribeRequest) => newsletterApi.subscribe(data),
   });
 }
