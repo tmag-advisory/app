@@ -8,14 +8,11 @@ RUN bun install --frozen-lockfile
 COPY . .
 RUN bun run build
 
-FROM node:alpine AS runner
+FROM nginx:alpine AS runner
 
-WORKDIR /app
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-RUN npm install -g serve
+EXPOSE 80
 
-COPY --from=builder /app/dist ./dist
-
-EXPOSE 3000
-
-CMD ["serve", "-l", "3000", "dist"]
+CMD ["nginx", "-g", "daemon off;"]
