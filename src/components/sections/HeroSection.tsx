@@ -49,7 +49,7 @@ const VARIANTS: HeroVariant[] = [
     {
         eyebrow: "Expert-reviewed. Always current.",
         headlineLines: ["Know Before", "You", "Go."],
-        subtext: "From vaccines to food safety alerts, we identify what your destination demands—and build a plan that travels with you.",
+        subtext: "From vaccines to food safety alerts, we identify what your destination demands and build a plan that travels with you.",
         cta: "Get Protected Now",
         destinations: [
             { country: "Mexico", flag: "🇲🇽", risk: "Moderate", alert: "Water safety" },
