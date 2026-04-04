@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import AnimateIn from "../../components/animations/AnimateIn";
 import { useAuth } from "../../context/AuthContext";
 import { useOnboardingStore } from "../../context/OnboardingContext";
 import { useVerifyEmail, useResendVerificationEmail } from "../../api/hooks";
@@ -34,7 +33,7 @@ const Register = () => {
         name: "",
         email: "",
         password: "",
-        confirm: "",
+        showPassword: false,
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -146,7 +145,7 @@ const Register = () => {
 
     if (step === "verify") {
         return (
-            <AnimateIn type="fade">
+            <div>
                 <button
                     type="button"
                     onClick={() => setStep("form")}
@@ -207,18 +206,55 @@ const Register = () => {
                         </button>
                     </p>
                 </div>
-            </AnimateIn>
+            </div>
         );
     }
 
     return (
-        <AnimateIn type="fade">
+        <div>
             <h1 className="text-3xl md:text-4xl font-serif text-heading mb-2">
                 Create your account.
             </h1>
             <p className="text-sm text-body mb-8">
                 Start with a free travel health plan — no credit card required.
             </p>
+
+            <div className="flex gap-3 mb-6">
+                <GoogleSignInButton disabled={loading} />
+                <button
+                    type="button"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-border-light text-heading text-sm font-semibold cursor-pointer hover:bg-button-secondary transition-colors duration-200"
+                >
+                    <svg className="w-5 h-5" viewBox="0 0 23 23">
+                        <path fill="#f35325" d="M1 1h10v10H1z" />
+                        <path fill="#81bc06" d="M12 1h10v10H12z" />
+                        <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                        <path fill="#ffba08" d="M12 12h10v10H12z" />
+                    </svg>
+                    Microsoft
+                </button>
+                <button
+                    type="button"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-border-light text-heading text-sm font-semibold cursor-pointer hover:bg-button-secondary transition-colors duration-200"
+                >
+                    <svg
+                        className="w-5 h-5"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                    >
+                        <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                    </svg>
+                    Apple
+                </button>
+            </div>
+
+            <div className="flex items-center gap-3 mb-6">
+                <div className="flex-1 h-px bg-border-light" />
+                <span className="text-xs text-muted uppercase tracking-wider">
+                    or sign up with email
+                </span>
+                <div className="flex-1 h-px bg-border-light" />
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -251,27 +287,33 @@ const Register = () => {
                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                         Password
                     </label>
-                    <input
-                        type="password"
-                        value={form.password}
-                        onChange={(e) => update("password", e.target.value)}
-                        placeholder="Min. 8 characters"
-                        className="w-full bg-white border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
-                        required
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                        Confirm password
-                    </label>
-                    <input
-                        type="password"
-                        value={form.confirm}
-                        onChange={(e) => update("confirm", e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full bg-white border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
-                        required
-                    />
+                    <div className="relative">
+                        <input
+                            type={form.showPassword ? "text" : "password"}
+                            value={form.password}
+                            onChange={(e) => update("password", e.target.value)}
+                            placeholder="Min. 8 characters"
+                            className="w-full bg-white border border-border-light rounded-xl px-4 py-3 pr-11 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setForm((f) => ({ ...f, showPassword: !f.showPassword }))}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-heading transition-colors"
+                            aria-label={form.showPassword ? "Hide password" : "Show password"}
+                        >
+                            {form.showPassword ? (
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                </svg>
+                            ) : (
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
                 </div>
 
                 <button
@@ -287,43 +329,6 @@ const Register = () => {
                 </button>
             </form>
 
-            <div className="flex items-center gap-3 my-6">
-                <div className="flex-1 h-px bg-border-light" />
-                <span className="text-xs text-muted uppercase tracking-wider">
-                    or continue with
-                </span>
-                <div className="flex-1 h-px bg-border-light" />
-            </div>
-
-            <div className="flex gap-3">
-                <GoogleSignInButton disabled={loading} />
-                <button
-                    type="button"
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-border-light text-heading text-sm font-semibold cursor-pointer hover:bg-button-secondary transition-colors duration-200"
-                >
-                    <svg className="w-5 h-5" viewBox="0 0 23 23">
-                        <path fill="#f35325" d="M1 1h10v10H1z" />
-                        <path fill="#81bc06" d="M12 1h10v10H12z" />
-                        <path fill="#05a6f0" d="M1 12h10v10H1z" />
-                        <path fill="#ffba08" d="M12 12h10v10H12z" />
-                    </svg>
-                    Microsoft
-                </button>
-                <button
-                    type="button"
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-border-light text-heading text-sm font-semibold cursor-pointer hover:bg-button-secondary transition-colors duration-200"
-                >
-                    <svg
-                        className="w-5 h-5"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                    >
-                        <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-                    </svg>
-                    Apple
-                </button>
-            </div>
-
             <p className="text-sm text-body text-center mt-6">
                 Already have an account?{" "}
                 <Link
@@ -333,7 +338,7 @@ const Register = () => {
                     Sign in
                 </Link>
             </p>
-        </AnimateIn>
+        </div>
     );
 };
 

@@ -219,7 +219,7 @@ const HowItWorks = () => {
                     what you'll get before you pay for anything.
                 </p>
                 <div className="flex items-center justify-center gap-4 flex-wrap">
-                    <Button variant="primary">Get your free plan</Button>
+                    <Button variant="primary" link="/register">Get My Free Plan</Button>
                     <Button variant="secondary" icon={<LucideArrowRight />} link="/pricing">
                         View pricing
                     </Button>

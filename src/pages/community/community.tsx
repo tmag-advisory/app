@@ -130,7 +130,7 @@ const Community = () => {
                         Free to join. Connect with travelers, share tips, and
                         stay informed about travel health worldwide.
                     </p>
-                    <Button variant="primary">Get started</Button>
+                    <Button variant="primary" link="/register">Get My Free Plan</Button>
                 </AnimateIn>
             </section>
         </main>

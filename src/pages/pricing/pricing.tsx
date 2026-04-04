@@ -19,6 +19,13 @@ const PricingPage = () => {
           No subscriptions, no hidden fees. Buy credits, generate
           plans, travel safely. That's it.
         </p>
+        <div className="mt-8 inline-flex items-center gap-3 bg-accent/10 border border-accent/20 rounded-2xl px-6 py-4">
+          <span className="text-lg">🎉</span>
+          <p className="text-sm font-medium text-heading">
+            Your first plan is completely free.{" "}
+            <span className="text-muted font-normal">No credit card. No catch.</span>
+          </p>
+        </div>
       </AnimateIn>
 
       {/* Pricing cards */}
@@ -99,7 +106,7 @@ const PricingPage = () => {
               </ul>
             </div>
             <Button link="/register" variant="primary" className="self-stretch text-center justify-center flex">
-              Get started free
+              Get My Free Plan
             </Button>
           </AnimateIn>
 

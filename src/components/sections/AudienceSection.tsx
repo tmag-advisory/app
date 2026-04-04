@@ -59,8 +59,8 @@ const AudienceSection = () => {
                             ))}
                         </ul>
                     </div>
-                    <Button variant="secondary" icon={<LucideArrowRight />} className="self-start">
-                        Get your plan
+                    <Button variant="secondary" icon={<LucideArrowRight />} className="self-start" link="/register">
+                        Get My Free Plan
                     </Button>
                 </AnimateIn>
 

@@ -1,5 +1,6 @@
 import { LucideArrowRight, LucideShield } from "lucide-react";
 import { useRef, useLayoutEffect } from "react";
+import { Link } from "react-router-dom";
 import gsap from "gsap";
 import Button from "../ui/Button";
 import StarRating from "../ui/StarRating";
@@ -21,70 +22,18 @@ interface HeroVariant {
     destinations: DestinationData[];
 }
 
-const VARIANTS: HeroVariant[] = [
-    {
-        eyebrow: "Physician-designed. Evidence-based.",
-        headlineLines: ["Travel Far.", "Come Back", "Safe."],
-        subtext: "We map every health risk between you and your destination—then build a personalized plan that protects you abroad.",
-        cta: "Get My Free Plan",
-        destinations: [
-            { country: "Japan", flag: "🇯🇵", risk: "Low" },
-            { country: "Kenya", flag: "🇰🇪", risk: "High", alert: "Malaria zone" },
-            { country: "Brazil", flag: "🇧🇷", risk: "Moderate", alert: "Yellow fever" },
-            { country: "India", flag: "🇮🇳", risk: "High", alert: "Multiple vaccines" },
-        ],
-    },
-    {
-        eyebrow: "100+ Countries indexed worldwide.",
-        headlineLines: ["Your Health.", "Every", "Destination."],
-        subtext: "Expert travel medicine guidance built for your itinerary, health history, and risk tolerance.",
-        cta: "Start For Free",
-        destinations: [
-            { country: "Thailand", flag: "🇹🇭", risk: "Moderate", alert: "Dengue risk" },
-            { country: "Morocco", flag: "🇲🇦", risk: "Moderate" },
-            { country: "Peru", flag: "🇵🇪", risk: "High", alert: "Altitude + Malaria" },
-            { country: "Nigeria", flag: "🇳🇬", risk: "High", alert: "Yellow fever req." },
-        ],
-    },
-    {
-        eyebrow: "Expert-reviewed. Always current.",
-        headlineLines: ["Know Before", "You", "Go."],
-        subtext: "From vaccines to food safety alerts, we identify what your destination demands and build a plan that travels with you.",
-        cta: "Get Protected Now",
-        destinations: [
-            { country: "Mexico", flag: "🇲🇽", risk: "Moderate", alert: "Water safety" },
-            { country: "Vietnam", flag: "🇻🇳", risk: "Moderate", alert: "Hepatitis A/B" },
-            { country: "Egypt", flag: "🇪🇬", risk: "Moderate", alert: "Typhoid risk" },
-            { country: "Ghana", flag: "🇬🇭", risk: "High", alert: "Malaria zone" },
-        ],
-    },
-    {
-        eyebrow: "Trusted by companies worldwide.",
-        headlineLines: ["The Health", "Guide Your", "Trip Needs."],
-        subtext: "Intelligent travel health assessments backed by physician review. Personalized for your trip, not just your passport.",
-        cta: "Create My Plan",
-        destinations: [
-            { country: "Indonesia", flag: "🇮🇩", risk: "Moderate", alert: "Rabies risk" },
-            { country: "Colombia", flag: "🇨🇴", risk: "Moderate" },
-            { country: "Tanzania", flag: "🇹🇿", risk: "High", alert: "Malaria + Yellow fever" },
-            { country: "Turkey", flag: "🇹🇷", risk: "Low" },
-        ],
-    },
-    {
-        eyebrow: "Physician-reviewed. Real-time alerts.",
-        headlineLines: ["Adventure", "Without the", "Risk."],
-        subtext: "We do the medical homework so you can focus on the journey. Personalized, evidence-based, ready in minutes.",
-        cta: "Plan My Trip",
-        destinations: [
-            { country: "South Africa", flag: "🇿🇦", risk: "Moderate", alert: "Malaria (north)" },
-            { country: "Philippines", flag: "🇵🇭", risk: "Moderate", alert: "Dengue risk" },
-            { country: "Rwanda", flag: "🇷🇼", risk: "High", alert: "Malaria zone" },
-            { country: "Pakistan", flag: "🇵🇰", risk: "High", alert: "Polio zone" },
-        ],
-    },
-];
-
-const RANDOM_VARIANT = VARIANTS[Math.floor(Math.random() * VARIANTS.length)];
+const HERO_VARIANT: HeroVariant = {
+    eyebrow: "Physician-designed. Evidence-based.",
+    headlineLines: ["Travel Far.", "Come Back", "Safe."],
+    subtext: "Get a personalized travel health plan in under 2 minutes — vaccines, medications, disease risks, and more.",
+    cta: "Get My Free Plan",
+    destinations: [
+        { country: "Japan", flag: "🇯🇵", risk: "Low" },
+        { country: "Kenya", flag: "🇰🇪", risk: "High", alert: "Malaria zone" },
+        { country: "Brazil", flag: "🇧🇷", risk: "Moderate", alert: "Yellow fever" },
+        { country: "India", flag: "🇮🇳", risk: "High", alert: "Multiple vaccines" },
+    ],
+};
 
 
 const RISK_STYLE: Record<RiskLevel, { badge: string; dot: string }> = {
@@ -214,13 +163,13 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
     const sectionRef = useRef<HTMLElement>(null);
     const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
-    const variant = RANDOM_VARIANT;
+    const variant = HERO_VARIANT;
 
     useLayoutEffect(() => {
         const ctx = gsap.context(() => {
             gsap.from("[data-hero-anim]", {
                 y: 36,
-                opacity: 0,
+                opacity: 0.8,
                 duration: 0.8,
                 ease: "power3.out",
                 stagger: 0.1,
@@ -231,7 +180,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
             gsap.from("[data-dest-card]", {
                 x: fromX,
                 y: fromY,
-                opacity: 0,
+                opacity: 0.8,
                 duration: 0.75,
                 ease: "back.out(1.3)",
                 stagger: 0.14,
@@ -315,7 +264,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                             <p data-hero-anim className="text-body leading-relaxed max-w-md sm:text-lg">{variant.subtext}</p>
                             <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8">
                                 <Button variant="primary" link="/register">{variant.cta}</Button>
-                                <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>How it works</Button>
+                                <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">See how it works <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
                             </div>
                             <StatsRow />
                         </div>
@@ -345,7 +294,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                     <p data-hero-anim className="text-body leading-relaxed max-w-xl sm:text-lg">{variant.subtext}</p>
                     <div data-hero-anim className="flex flex-wrap items-center justify-center gap-4 mt-8">
                         <Button variant="primary" link="/register">{variant.cta}</Button>
-                        <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>How it works</Button>
+                        <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">See how it works <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
                     </div>
                     <div className="hidden lg:grid grid-cols-4 gap-4 mt-12 w-full">
                         {variant.destinations.map((d) => (<div key={d.country} data-dest-card className={CARD_CLS}><CardContent d={d} /></div>))}

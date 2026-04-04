@@ -28,16 +28,22 @@ const testimonials = [
         quote: "TMAG gave me a complete malaria prevention plan in under two minutes. My doctor was impressed I came so prepared.",
         name: "Sarah K.",
         role: "Backpacker · Southeast Asia trip",
+        initials: "SK",
+        color: "bg-emerald-100 text-emerald-700",
     },
     {
         quote: "We rolled this out to 200+ employees traveling across Africa. The compliance reports alone saved us weeks of work.",
         name: "James L.",
         role: "Head of Global Mobility · TechCorp",
+        initials: "JL",
+        color: "bg-blue-100 text-blue-700",
     },
     {
         quote: "I have a chronic condition and was nervous about traveling to South America. The personalized plan addressed every concern I had.",
         name: "Maria R.",
         role: "Solo traveler · Brazil & Peru",
+        initials: "MR",
+        color: "bg-amber-100 text-amber-700",
     },
 ];
 
@@ -79,21 +85,26 @@ const TrustSection = () => {
                         <motion.div
                             variants={staggerItem}
                             key={t.name}
-                            className="bg-background-primary rounded-2xl p-8 flex flex-col justify-between"
+                            className="bg-background-primary rounded-2xl p-8 flex flex-col justify-between shadow-sm border border-border-light"
                         >
                             <div>
                                 <StarRating count={5} />
-                                <p className="text-sm text-heading leading-relaxed mt-4 mb-6">
+                                <p className="text-base font-medium text-heading leading-relaxed mt-4 mb-6">
                                     "{t.quote}"
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-sm font-semibold text-heading">
-                                    {t.name}
-                                </p>
-                                <p className="text-xs text-body mt-0.5">
-                                    {t.role}
-                                </p>
+                            <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${t.color}`}>
+                                    {t.initials}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-heading">
+                                        {t.name}
+                                    </p>
+                                    <p className="text-xs text-body mt-0.5">
+                                        {t.role}
+                                    </p>
+                                </div>
                             </div>
                         </motion.div>
                     ))}

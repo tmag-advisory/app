@@ -4,25 +4,37 @@ import Button from "../ui/Button";
 import AnimateIn from "../animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
 
-const plans = [
+type Plan = {
+    name: string;
+    price: string;
+    period: string;
+    description: string;
+    features: string[];
+    cta: string;
+    ctaLink: string;
+    highlighted: boolean;
+};
+
+const plans: Plan[] = [
     {
-        name: "Explorer",
+        name: "Individual",
         price: "Free",
         period: "",
-        description: "Quick guidance for a single destination.",
+        description: "Your first full health plan, on us.",
         features: [
             "1 destination report",
             "Basic vaccine checklist",
             "General risk overview",
             "Email delivery",
         ],
-        cta: "Start free",
+        cta: "Get My Free Plan",
+        ctaLink: "/register",
         highlighted: false,
     },
     {
-        name: "Traveler",
+        name: "Individual+",
         price: "$9",
-        period: "/ trip",
+        period: "/ credit",
         description: "A full personalized health plan for your trip.",
         features: [
             "Unlimited destinations per trip",
@@ -32,11 +44,12 @@ const plans = [
             "Doctor-ready summary",
             "Pre-existing condition support",
         ],
-        cta: "Get your plan",
+        cta: "Get My Free Plan",
+        ctaLink: "/register",
         highlighted: true,
     },
     {
-        name: "Enterprise",
+        name: "Corporate",
         price: "Custom",
         period: "",
         description: "Protect every employee, every trip.",
@@ -49,6 +62,7 @@ const plans = [
             "Custom SLA & support",
         ],
         cta: "Contact sales",
+        ctaLink: "/contact?type=SALES",
         highlighted: false,
     },
 ];
@@ -137,12 +151,13 @@ const PricingSection = () => {
                             {plan.highlighted ? (
                                 <Button
                                     variant="primary"
+                                    link={plan.ctaLink}
                                     className="relative z-10 self-stretch bg-white !text-dark hover:bg-white/90 text-center justify-center flex"
                                 >
                                     {plan.cta}
                                 </Button>
                             ) : (
-                                <Button variant="secondary" icon={<LucideArrowRight />} className="self-start relative z-10">
+                                <Button variant="secondary" icon={<LucideArrowRight />} link={plan.ctaLink} className="self-start relative z-10">
                                     {plan.cta}
                                 </Button>
                             )}

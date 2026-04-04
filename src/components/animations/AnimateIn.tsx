@@ -4,12 +4,12 @@ import { useMemo, type ReactNode, type CSSProperties } from "react";
 type AnimationType = "fadeUp" | "fadeDown" | "fadeLeft" | "fadeRight" | "fade" | "scaleUp";
 
 const hidden: Record<AnimationType, TargetAndTransition> = {
-    fadeUp: { opacity: 0, y: 40 },
-    fadeDown: { opacity: 0, y: -40 },
-    fadeLeft: { opacity: 0, x: -40 },
-    fadeRight: { opacity: 0, x: 40 },
-    fade: { opacity: 0 },
-    scaleUp: { opacity: 0, scale: 0.92 },
+    fadeUp: { opacity: 0.8, y: 40 },
+    fadeDown: { opacity: 0.8, y: -40 },
+    fadeLeft: { opacity: 0.8, x: -40 },
+    fadeRight: { opacity: 0.8, x: 40 },
+    fade: { opacity: 0.8 },
+    scaleUp: { opacity: 0.8, scale: 0.92 },
 };
 
 const visible: TargetAndTransition = { opacity: 1, x: 0, y: 0, scale: 1 };

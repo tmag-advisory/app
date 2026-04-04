@@ -18,12 +18,12 @@ const Home = () => {
         <main>
             <HeroSection layout={heroLayout} />
             <BrandsSection />
-            <WhoWeAreSection />
             <HowItWorksSection />
+            <SamplePlanSection />
             <WhatAICoversSection />
             <AudienceSection />
+            <WhoWeAreSection />
             <TrustSection />
-            <SamplePlanSection />
             <PricingSection />
             <FAQSection />
             <FinalCTASection />

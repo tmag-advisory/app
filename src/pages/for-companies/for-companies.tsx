@@ -8,6 +8,7 @@ import {
     LucideFileText,
     LucidePlug,
 } from "lucide-react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
@@ -54,6 +55,12 @@ const features = [
 ];
 
 const ForCompanies = () => {
+    const [leadForm, setLeadForm] = useState({ email: "", size: "" });
+    const handleLeadSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        window.location.href = `/contact?type=DEMO&email=${encodeURIComponent(leadForm.email)}&size=${encodeURIComponent(leadForm.size)}`;
+    };
+
     return (
         <main>
             {/* Hero */}
@@ -302,13 +309,34 @@ const ForCompanies = () => {
                             Book a 15-minute demo and we'll show you how TMAG
                             fits into your travel risk management workflow.
                         </p>
-                        <Button
-                            variant="primary"
-                            className="bg-white !text-dark hover:bg-white/90"
-                            link="/contact?type=DEMO"
-                        >
-                            Request a demo
-                        </Button>
+                        <form onSubmit={handleLeadSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                            <input
+                                type="email"
+                                required
+                                placeholder="Work email"
+                                value={leadForm.email}
+                                onChange={(e) => setLeadForm((f) => ({ ...f, email: e.target.value }))}
+                                className="flex-1 bg-white/15 border border-white/25 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/50 outline-none focus:border-white/60 transition-colors duration-200"
+                            />
+                            <select
+                                required
+                                value={leadForm.size}
+                                onChange={(e) => setLeadForm((f) => ({ ...f, size: e.target.value }))}
+                                className="bg-white/15 border border-white/25 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-white/60 transition-colors duration-200 cursor-pointer"
+                            >
+                                <option value="" disabled className="text-heading">Team size</option>
+                                <option value="1-10" className="text-heading">1–10 employees</option>
+                                <option value="11-50" className="text-heading">11–50 employees</option>
+                                <option value="51-200" className="text-heading">51–200 employees</option>
+                                <option value="200+" className="text-heading">200+ employees</option>
+                            </select>
+                            <button
+                                type="submit"
+                                className="px-5 py-3 rounded-xl bg-white text-dark font-semibold text-sm cursor-pointer hover:bg-white/90 transition-colors duration-200 whitespace-nowrap"
+                            >
+                                Request demo
+                            </button>
+                        </form>
                     </AnimateIn>
                 </div>
             </section>

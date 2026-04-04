@@ -45,6 +45,7 @@ const footerLinks = [
 
 const FooterSection = () => {
     const [newsletterEmail, setNewsletterEmail] = useState("");
+    const [destination, setDestination] = useState("");
     const { mutate: subscribe, isPending: isSubscribing, isSuccess: isSubscribed, isError: isSubscribeError, error: subscribeError } = useNewsletterSubscribe();
 
     const handleSubscribe = (e: React.FormEvent) => {
@@ -125,16 +126,22 @@ const FooterSection = () => {
                                 TMAG
                             </span>
                             <p className="text-sm text-white/40 leading-relaxed mt-4 max-w-sm">
-                                Stay ahead of travel health risks. Get weekly
-                                destination alerts, outbreak updates, and expert
-                                tips—straight to your inbox.
+                                Get the travel health alert for your next
+                                destination — free in your inbox.
                             </p>
                             {isSubscribed ? (
                                 <p className="text-sm text-accent mt-6 font-medium">
                                     You're subscribed! Look for updates in your inbox.
                                 </p>
                             ) : (
-                                <form onSubmit={handleSubscribe} className="flex items-stretch gap-3 mt-6 max-w-md">
+                                <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row items-stretch gap-3 mt-6 max-w-md">
+                                    <input
+                                        type="text"
+                                        value={destination}
+                                        onChange={(e) => setDestination(e.target.value)}
+                                        placeholder="Your destination"
+                                        className="flex-1 bg-white/6 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-white/25 transition-colors duration-200"
+                                    />
                                     <input
                                         type="email"
                                         value={newsletterEmail}

@@ -136,9 +136,15 @@ const Login = () => {
             <p className="text-sm text-body text-center mt-6">
                 Don't have an account?{" "}
                 <Link to="/register" className="text-accent font-medium hover:underline">
-                    Create one
+                    Start free — your first plan costs nothing.
                 </Link>
             </p>
+
+            <div className="mt-6 pt-6 border-t border-border-light text-center">
+                <Link to="/" className="text-xs text-muted hover:text-heading transition-colors duration-200">
+                    ← Back to home
+                </Link>
+            </div>
         </AnimateIn>
     );
 };
