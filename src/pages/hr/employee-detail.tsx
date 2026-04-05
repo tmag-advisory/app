@@ -2,6 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEmployee, useTravelPlans } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { LucideArrowLeft, LucideLoader2, LucideMapPin, LucideCoins, LucideClipboardList } from "lucide-react";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 const EmployeeDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -50,7 +52,7 @@ const EmployeeDetail = () => {
             </button>
 
             {/* Profile header */}
-            <div className="bg-white rounded-2xl border border-border-light/50 p-6 mb-6">
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6 mb-6")}>
                 <div className="flex items-start gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-button-secondary flex items-center justify-center text-xl font-semibold text-heading shrink-0">
                         {employee.name.charAt(0)}
@@ -72,7 +74,7 @@ const EmployeeDetail = () => {
 
             {/* Stats grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white rounded-2xl border border-border-light/50 p-5">
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5")}>
                     <div className="flex items-center gap-3 mb-3">
                         <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                             <LucideCoins className="w-4 h-4 text-accent" />
@@ -89,7 +91,7 @@ const EmployeeDetail = () => {
                     <p className="text-xs text-muted mt-1">{creditUsagePercent}% used</p>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-border-light/50 p-5">
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5")}>
                     <div className="flex items-center gap-3 mb-3">
                         <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                             <LucideClipboardList className="w-4 h-4 text-accent" />
@@ -100,7 +102,7 @@ const EmployeeDetail = () => {
                     <p className="text-xs text-muted mt-1">Travel plans generated</p>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-border-light/50 p-5">
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5")}>
                     <div className="flex items-center gap-3 mb-3">
                         <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                             <LucideMapPin className="w-4 h-4 text-accent" />
@@ -113,7 +115,7 @@ const EmployeeDetail = () => {
             </div>
 
             {/* Recent plans */}
-            <div className="bg-white rounded-2xl border border-border-light/50 overflow-hidden">
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
                 <div className="px-6 py-4 border-b border-border-light/50">
                     <h3 className="text-base font-semibold text-heading">Recent travel plans</h3>
                 </div>

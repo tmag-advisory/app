@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useCredits, useCreditPurchaseHistory, usePlanUsageLedgerHistory } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 import {
     LucideLoader2,
     LucideArrowDownRight,
@@ -344,32 +345,32 @@ const Transactions = () => {
 
             {/* Summary cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white rounded-2xl border border-border-light/50 p-5">
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5")}>
                     <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">Credits Purchased</p>
                     <p className="text-2xl font-serif text-heading">{totalPurchased}</p>
                 </div>
-                <div className="bg-white rounded-2xl border border-border-light/50 p-5">
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5")}>
                     <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">Total Spent</p>
                     <p className="text-2xl font-serif text-heading">
                         {totalSpent > 0 ? `${purchases[0]?.currencySymbol ?? ""}${totalSpent.toLocaleString()}` : "—"}
                     </p>
                 </div>
-                <div className="bg-white rounded-2xl border border-border-light/50 p-5">
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5")}>
                     <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">Credits Used</p>
                     <p className="text-2xl font-serif text-heading">{totalUsed}</p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 mb-6 bg-white rounded-xl border border-border-light/50 p-1 w-fit">
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "flex gap-1 mb-6 p-1 w-fit")}>
                 {tabs.map((tab) => (
                     <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
                         className={cn(
-                            "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer",
+                            "px-4 py-2 rounded-3xl text-sm font-medium transition-all duration-300 ease-out cursor-pointer",
                             activeTab === tab.key
-                                ? "bg-dark text-white"
+                                ? "bg-dark text-white shadow-sm"
                                 : "text-muted hover:text-heading hover:bg-background-secondary",
                         )}
                     >
@@ -379,7 +380,7 @@ const Transactions = () => {
             </div>
 
             {/* Transactions table */}
-            <div className="bg-white rounded-2xl border border-border-light/50 overflow-hidden">
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[540px]">
                         <thead>

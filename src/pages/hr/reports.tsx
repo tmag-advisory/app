@@ -4,6 +4,8 @@ import { useTravelPlans, useEmployees, useUsageReport, usePlanHistory, useCompli
 import { reportsApi } from "../../api/api";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { LucideDownload, LucideFileText, LucideBarChart3, LucideShieldCheck, LucideLoader2 } from "lucide-react";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 const Reports = () => {
     const { selectedCompanyId } = usePlanStore();
@@ -106,7 +108,7 @@ const Reports = () => {
 
             {/* Summary stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <div className="bg-white rounded-2xl border border-border-light/50 p-5 text-center">
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5 text-center")}>
                     {isLoading ? (
                         <LucideLoader2 className="w-4 h-4 animate-spin mx-auto" />
                     ) : (
@@ -114,7 +116,7 @@ const Reports = () => {
                     )}
                     <span className="text-xs text-muted">Total plans</span>
                 </div>
-                <div className="bg-white rounded-2xl border border-border-light/50 p-5 text-center">
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5 text-center")}>
                     {isLoading ? (
                         <LucideLoader2 className="w-4 h-4 animate-spin mx-auto" />
                     ) : (
@@ -122,7 +124,7 @@ const Reports = () => {
                     )}
                     <span className="text-xs text-muted">Employees</span>
                 </div>
-                <div className="bg-white rounded-2xl border border-border-light/50 p-5 text-center">
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5 text-center")}>
                     {isLoading ? (
                         <LucideLoader2 className="w-4 h-4 animate-spin mx-auto" />
                     ) : (
@@ -130,7 +132,7 @@ const Reports = () => {
                     )}
                     <span className="text-xs text-muted">Travel plans</span>
                 </div>
-                <div className="bg-white rounded-2xl border border-border-light/50 p-5 text-center">
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5 text-center")}>
                     {isLoading ? (
                         <LucideLoader2 className="w-4 h-4 animate-spin mx-auto" />
                     ) : (
@@ -145,7 +147,10 @@ const Reports = () => {
                 {reportTypes.map((report) => (
                     <div
                         key={report.id}
-                        className="bg-white rounded-2xl border border-border-light/50 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                        className={cn(
+                            DASHBOARD_GLASS_SURFACE,
+                            "p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4",
+                        )}
                     >
                         <div className="flex items-start gap-4">
                             <div className="w-10 h-10 rounded-xl bg-dark text-background-primary flex items-center justify-center shrink-0">

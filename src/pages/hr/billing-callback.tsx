@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { useHrVerifyCreditPurchase } from "../../api/hooks";
 import { LucideCheckCircle, LucideXCircle, LucideLoader2 } from "lucide-react";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 type PaymentStatus = "verifying" | "success" | "failed";
 
@@ -93,7 +95,7 @@ const HRPaymentCallback = () => {
                         <h1 className="text-2xl font-serif text-heading mb-3">
                             Payment successful
                         </h1>
-                        <div className="bg-white rounded-2xl border border-border-light/50 p-6 mb-6">
+                        <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6 mb-6")}>
                             <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                                 Credits added
                             </p>

@@ -89,6 +89,129 @@ interface TripItineraryData {
     legs?: TripLeg[];
 }
 
+function daysInclusiveBetween(start?: string, end?: string): number {
+    if (!start?.trim() || !end?.trim()) return 0;
+    const a = new Date(start);
+    const b = new Date(end);
+    if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
+    const diff = Math.ceil((b.getTime() - a.getTime()) / 86400000) + 1;
+    return diff > 0 ? diff : 0;
+}
+
+const TRAVEL_PURPOSE_TO_PLAN: Record<string, string> = {
+    leisure_tourism: "Leisure",
+    business_work: "Business",
+    study_relocation: "Study",
+    visiting_family_friends: "Leisure",
+    religious_pilgrimage: "Other",
+    other: "Other",
+    // Backward compatibility for older seeded questionnaires.
+    tourism: "Leisure",
+    business: "Business",
+    visiting_family: "Leisure",
+    study_work: "Study",
+    volunteer: "Volunteer",
+    pilgrimage: "Other",
+};
+
+/** Build create-plan payload from questionnaire answers (travel section). */
+function derivePlanFromQuestionnaireAnswers(
+    answers: Record<string, unknown>
+): { destination: string; country: string; duration: number; purpose: string; medicalConsiderations: string } | null {
+    const newCountriesRaw = answers.travel_countries;
+    const newCountries = Array.isArray(newCountriesRaw)
+        ? (newCountriesRaw as string[]).map((c) => c.trim()).filter(Boolean)
+        : [];
+    const newCity = typeof answers.travel_city_region === "string"
+        ? answers.travel_city_region.trim()
+        : "";
+    const newDeparture = typeof answers.departure_date === "string"
+        ? answers.departure_date.trim()
+        : "";
+    const newReturnOrDuration = typeof answers.return_date_or_duration === "string"
+        ? answers.return_date_or_duration.trim()
+        : "";
+
+    let destination = "";
+    let country = "";
+    let duration = 0;
+
+    if (newCountries.length > 0) {
+        country = newCountries[0];
+        const countryList = newCountries.join(", ");
+        destination = [newCity, countryList].filter(Boolean).join(", ") || countryList;
+
+        // If user entered an ISO date, calculate from departure date.
+        if (/^\d{4}-\d{2}-\d{2}$/.test(newReturnOrDuration)) {
+            duration = daysInclusiveBetween(newDeparture, newReturnOrDuration);
+        } else {
+            const durationFromText = parseInt(newReturnOrDuration, 10);
+            if (!Number.isNaN(durationFromText) && durationFromText > 0) {
+                duration = durationFromText;
+            }
+        }
+    } else {
+        // Backward compatibility path for legacy `trip_itinerary` answers.
+        const raw = answers.trip_itinerary;
+        if (!raw || typeof raw !== "object") return null;
+        const t = raw as TripItineraryData;
+        const tripType = t.tripType || "one";
+
+        if (tripType === "one") {
+            country = (t.oneDestination || "").trim();
+            const city = (t.oneCity || "").trim();
+            destination = [city, country].filter(Boolean).join(", ") || country;
+            duration = daysInclusiveBetween(t.oneDepartureDate, t.oneReturnDate);
+        } else if (tripType === "return") {
+            country = (t.returnTo || "").trim();
+            const city = (t.returnCity || "").trim();
+            const from = (t.returnFrom || "").trim();
+            destination = [city, country].filter(Boolean).join(", ");
+            if (from && country) {
+                destination = `${from} → ${destination || country}`;
+            }
+            if (!destination) destination = country;
+            duration = daysInclusiveBetween(t.returnDepartureDate, t.returnReturnDate);
+        } else if (tripType === "multi") {
+            const legs = t.legs || [];
+            const parts = legs
+                .map((leg) => [leg.city, leg.to].filter(Boolean).join(", ").trim())
+                .filter(Boolean);
+            destination = parts.join(" → ");
+            country = (legs[0]?.to || "").trim();
+            if (legs.length > 0) {
+                const firstArrival = legs[0]?.arrivalDate;
+                const lastDeparture = legs[legs.length - 1]?.departureDate;
+                duration = daysInclusiveBetween(firstArrival, lastDeparture);
+            }
+        }
+    }
+
+    if (!country.trim()) return null;
+
+    const purposeSelections = answers.purpose_of_travel ?? answers.travel_purpose;
+    let purpose = "Leisure";
+    if (Array.isArray(purposeSelections) && purposeSelections.length > 0) {
+        const first = purposeSelections[0] as string;
+        purpose = TRAVEL_PURPOSE_TO_PLAN[first] ?? "Other";
+    }
+
+    const extra =
+        typeof answers.additional_considerations === "string"
+            ? answers.additional_considerations.trim()
+            : typeof answers.additional_information === "string"
+                ? answers.additional_information.trim()
+            : "";
+
+    return {
+        destination: destination || country,
+        country,
+        duration: duration > 0 ? duration : 7,
+        purpose,
+        medicalConsiderations: extra,
+    };
+}
+
 // ─── Icon Map ────────────────────────────────────────────────
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -201,6 +324,7 @@ const TravelHealthQuestionnaire = () => {
     const pendingSaveRef = useRef(false);
     const latestStateRef = useRef({ answers: {} as Record<string, unknown>, categoryIndex: 0, questionIndex: -1 });
     const restoredRef = useRef(false);
+    const generatingPlanLabelRef = useRef({ destination: "", country: "" });
 
     const categories: (QuestionCategory & { parsedQuestions: Question[] })[] =
         (categoriesRaw || []).map((cat: QuestionCategory) => ({
@@ -212,8 +336,6 @@ const TravelHealthQuestionnaire = () => {
             ) as Question[],
         }));
 
-    console.log("[render] categoryIndex:", categoryIndex, "categories:", categories.length, "showIntro:", showIntro, "answers:", Object.keys(answers).length);
-
     const currentCategory = categories[categoryIndex];
     const visibleQuestions =
         currentCategory?.parsedQuestions.filter((q) =>
@@ -224,8 +346,6 @@ const TravelHealthQuestionnaire = () => {
 
     // Restore progress (only once per mount, only if server returned valid progress)
     useEffect(() => {
-        console.log("[questionnaire] savedProgress:", JSON.stringify(savedProgress));
-        console.log("[questionnaire] categoryIndex:", categoryIndex, "answers keys:", Object.keys(answers).length);
         if (restoredRef.current) return;
         if (
             savedProgress &&
@@ -439,20 +559,40 @@ const TravelHealthQuestionnaire = () => {
     const updatePlanForm = (field: string, value: string) =>
         setPlanForm((f) => ({ ...f, [field]: value }));
 
-    const handleCreatePlan = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const submitTravelPlan = async (payload: {
+        destination: string;
+        country: string;
+        duration: number;
+        purpose: string;
+        medicalConsiderations: string;
+    }) => {
         const credits = user?.credits ?? 0;
         if (credits <= 0) {
             toast.error("You don't have enough credits.");
             return;
         }
+        generatingPlanLabelRef.current = {
+            destination: payload.destination,
+            country: payload.country,
+        };
         try {
             const result = await createPlan.mutateAsync({
-                destination: planForm.destination,
-                country: planForm.country,
-                duration: parseInt(planForm.duration) || 0,
-                purpose: planForm.purpose,
-                medicalConsiderations: planForm.medicalConsiderations,
+                destination: payload.destination,
+                country: payload.country,
+                duration: payload.duration,
+                purpose: payload.purpose,
+                tripType: "one-way",
+                tripDetailsJson: JSON.stringify({
+                    tripType: "one-way",
+                    stops: [
+                        {
+                            city: payload.destination,
+                            country: payload.country,
+                            order: 1,
+                        },
+                    ],
+                }),
+                medicalConsiderations: payload.medicalConsiderations,
                 userId: user?.id,
                 status: "completed",
                 riskScore: 1,
@@ -469,6 +609,36 @@ const TravelHealthQuestionnaire = () => {
         } catch {
             toast.error("Failed to generate plan. Please try again.");
         }
+    };
+
+    const handleCreatePlan = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await submitTravelPlan({
+            destination: planForm.destination,
+            country: planForm.country,
+            duration: parseInt(planForm.duration, 10) || 0,
+            purpose: planForm.purpose,
+            medicalConsiderations: planForm.medicalConsiderations,
+        });
+    };
+
+    const handlePlanFirstTrip = async () => {
+        const derived = derivePlanFromQuestionnaireAnswers(answers);
+        if (!derived) {
+            toast.error(
+                "We couldn't read your trip details. Add your destination below to generate a plan."
+            );
+            setShowCreatePlan(true);
+            return;
+        }
+        setPlanForm({
+            destination: derived.destination,
+            country: derived.country,
+            duration: String(derived.duration),
+            purpose: derived.purpose,
+            medicalConsiderations: derived.medicalConsiderations,
+        });
+        await submitTravelPlan(derived);
     };
 
     // ─── Complete Screen ──────────────────────────────────────
@@ -505,7 +675,11 @@ const TravelHealthQuestionnaire = () => {
                             className="text-sm text-body max-w-sm mx-auto leading-relaxed"
                         >
                             Cross-referencing WHO, CDC, and local health data for{" "}
-                            <strong className="text-heading">{planForm.destination || planForm.country}</strong>.
+                            <strong className="text-heading">
+                                {generatingPlanLabelRef.current.destination ||
+                                    generatingPlanLabelRef.current.country}
+                            </strong>
+                            .
                         </motion.p>
                     </div>
                 </div>
@@ -553,8 +727,9 @@ const TravelHealthQuestionnaire = () => {
                                     transition={{ delay: 0.3 }}
                                     className="text-sm text-muted leading-relaxed mb-8 text-center"
                                 >
-                                    Your health profile is complete. Your health advisor is
-                                    ready — where are you headed?
+                                    Your health profile is complete. We will use the trip you
+                                    entered at the start of the questionnaire to generate your
+                                    first advisory.
                                 </motion.p>
 
                                 <motion.button
@@ -566,8 +741,10 @@ const TravelHealthQuestionnaire = () => {
                                         stiffness: 300,
                                         damping: 24,
                                     }}
-                                    onClick={() => setShowCreatePlan(true)}
-                                    className="w-full mb-3 p-7 rounded-3xl outline-dark/20 outline-2 relative overflow-hidden group cursor-pointer text-left"
+                                    type="button"
+                                    onClick={() => void handlePlanFirstTrip()}
+                                    disabled={credits === 0 || createPlan.isPending}
+                                    className="w-full mb-3 p-7 rounded-3xl outline-dark/20 outline-2 relative overflow-hidden group cursor-pointer text-left disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <div className="absolute inset-0 bg-linear-to-br from-accent/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
@@ -584,16 +761,53 @@ const TravelHealthQuestionnaire = () => {
                                     </motion.div>
 
                                     <p className="text-xl font-serif mb-1">
-                                        Plan your first trip
+                                        Generate your travel health plan
                                     </p>
                                     <p className="text-xs mb-5 leading-relaxed">
-                                        Get personalised health advice, vaccines &amp;
-                                        safety alerts for your destination.
+                                        Uses your questionnaire trip, dates, and purpose — one
+                                        credit, no extra forms.
                                     </p>
                                     <span className="inline-flex items-center gap-1.5 text-accent text-xs font-semibold">
-                                        Start now{" "}
+                                        Generate plan{" "}
                                         <LucideArrowRight className="w-3.5 h-3.5" />
                                     </span>
+                                </motion.button>
+
+                                {credits === 0 && (
+                                    <p className="text-center text-xs text-muted mb-3">
+                                        You need at least one credit to generate a plan.{" "}
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate(dashboardPath)}
+                                            className="text-accent font-medium hover:underline cursor-pointer"
+                                        >
+                                            Go to dashboard
+                                        </button>{" "}
+                                        to purchase credits.
+                                    </p>
+                                )}
+
+                                <motion.button
+                                    type="button"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.55 }}
+                                    onClick={() => {
+                                        const d = derivePlanFromQuestionnaireAnswers(answers);
+                                        if (d) {
+                                            setPlanForm({
+                                                destination: d.destination,
+                                                country: d.country,
+                                                duration: String(d.duration),
+                                                purpose: d.purpose,
+                                                medicalConsiderations: d.medicalConsiderations,
+                                            });
+                                        }
+                                        setShowCreatePlan(true);
+                                    }}
+                                    className="w-full py-2.5 text-xs text-muted font-medium hover:text-heading transition-colors cursor-pointer"
+                                >
+                                    Enter trip details manually instead
                                 </motion.button>
 
                                 <motion.button

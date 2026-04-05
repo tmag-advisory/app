@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import StarRating from "../ui/StarRating";
 import AnimateIn from "../animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
-
 const badges = [
     {
         icon: <LucideShieldCheck className="w-5 h-5" />,

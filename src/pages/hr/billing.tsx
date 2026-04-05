@@ -5,6 +5,8 @@ import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import { LucideCoins, LucideTrendingUp, LucideCalendar, LucideLoader2, LucideExternalLink } from "lucide-react";
 import toast from "react-hot-toast";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 const creditPackages = [50, 100, 200];
 
@@ -63,7 +65,7 @@ const Billing = () => {
             </div>
 
             {/* Purchase credits */}
-            <div className="bg-white rounded-2xl border border-border-light/50 p-6 mb-6">
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6 mb-6")}>
                 <h2 className="text-base font-semibold text-heading mb-4">Purchase credits</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     {creditPackages.map((credits, idx) => {
@@ -124,7 +126,7 @@ const Billing = () => {
             </div>
 
             {/* Credit history */}
-            <div className="bg-white rounded-2xl border border-border-light/50 overflow-hidden">
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
                 <div className="px-4 sm:px-6 py-4 border-b border-border-light/50">
                     <h2 className="text-base font-semibold text-heading">Credit history</h2>
                 </div>

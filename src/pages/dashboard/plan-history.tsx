@@ -3,6 +3,8 @@ import { useTravelPlans } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { LucideArrowRight, LucideSearch, LucideLoader2 } from "lucide-react";
 import { useState } from "react";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
 const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
@@ -31,12 +33,12 @@ const PlanHistory = () => {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search plans…"
-                    className="w-full bg-white border border-border-light/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
+                    className="w-full border border-border-light/55 bg-white/80 backdrop-blur-md rounded-xl pl-10 pr-4 py-2.5 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200 shadow-sm"
                 />
             </div>
 
             {/* Plans table */}
-            <div className="bg-white rounded-2xl border border-border-light/50 overflow-hidden">
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
                 <div className="overflow-x-auto">
                 <table className="w-full min-w-[540px]">
                     <thead>

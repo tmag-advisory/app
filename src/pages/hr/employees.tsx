@@ -12,6 +12,8 @@ import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { LucideSearch, LucideUserPlus, LucideMoreHorizontal, LucideLoader2, LucideCheck, LucideX } from "lucide-react";
 import { AxiosError } from "axios";
 import toast from "react-hot-toast";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 const Employees = () => {
     const navigate = useNavigate();
@@ -110,7 +112,7 @@ const Employees = () => {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search employees..."
-                        className="w-full bg-white border border-border-light/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
+                        className="w-full border border-border-light/55 bg-white/80 backdrop-blur-md rounded-xl pl-10 pr-4 py-2.5 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200 shadow-sm"
                     />
                 </div>
                 <button
@@ -123,7 +125,7 @@ const Employees = () => {
 
             {/* Invite form */}
             {showInvite && (
-                <div className="bg-white rounded-2xl border border-border-light/50 p-6 mb-6 max-w-lg">
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6 mb-6 max-w-lg")}>
                     <h3 className="text-base font-semibold text-heading mb-4">Invite new employee</h3>
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -177,7 +179,7 @@ const Employees = () => {
             )}
 
             {/* Employees table */}
-            <div className="bg-white rounded-2xl border border-border-light/50">
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
                 <div>
                     <table className="w-full min-w-135">
                         <thead>

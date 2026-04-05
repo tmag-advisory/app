@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useTravelPlans, useOnboarding } from "../../api/hooks";
+import { useTravelPlans, useOnboarding, useDashboardAnalytics } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
+import DashboardAnalyticsCharts from "../../components/dashboard/DashboardAnalyticsCharts";
 import { LucideCoins, LucideFileText, LucidePlusCircle, LucideArrowRight, LucideClipboardList, LucideLoader2 } from "lucide-react";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
 const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
@@ -18,6 +21,7 @@ const DashboardOverview = () => {
     const { user } = useAuth();
     const { data: plansData, isLoading: plansLoading } = useTravelPlans({ per_page: 5 });
     const { data: onboardingData } = useOnboarding();
+    const { data: dashboardAnalytics, isLoading: analyticsLoading } = useDashboardAnalytics(undefined);
     
     const plans = plansData?.data || [];
     const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
@@ -30,7 +34,10 @@ const DashboardOverview = () => {
             {showQuestionnaireBanner && (
                 <Link
                     to="/onboarding/questionnaire"
-                    className="mb-6 flex items-center gap-4 p-5 rounded-2xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-colors duration-200 group"
+                    className={cn(
+                        DASHBOARD_GLASS_SURFACE,
+                        "mb-6 flex items-center gap-4 p-5 border-accent/25 bg-white/80 hover:border-accent/35 transition-colors duration-200 group",
+                    )}
                 >
                     <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center flex-shrink-0">
                         <LucideClipboardList className="w-5 h-5 text-accent" />
@@ -58,7 +65,7 @@ const DashboardOverview = () => {
                 />
                 <Link
                     to="/dashboard/create-plan"
-                    className="bg-dark rounded-2xl p-6 flex flex-col justify-between hover:bg-darkest transition-colors duration-200"
+                    className="rounded-3xl border border-dark/20 bg-linear-to-br from-dark to-darkest p-6 flex flex-col justify-between text-white shadow-[0_4px_16px_-6px_rgba(10,20,18,0.18)] hover:from-darkest hover:to-darkest transition-all duration-200"
                 >
                     <LucidePlusCircle className="w-6 h-6 text-white/40 mb-6" />
                     <div>
@@ -72,8 +79,14 @@ const DashboardOverview = () => {
                 </Link>
             </div>
 
+            <DashboardAnalyticsCharts
+                data={dashboardAnalytics}
+                isLoading={analyticsLoading}
+                variant="individual"
+            />
+
             {/* Recent plans */}
-            <div className="bg-white rounded-2xl border border-border-light/50 overflow-hidden">
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
                 <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border-light/50">
                     <h2 className="text-base font-semibold text-heading">Recent plans</h2>
                     <Link to="/dashboard/plans" className="text-xs text-accent font-medium hover:underline flex items-center gap-1">

@@ -27,6 +27,8 @@ import toast from "react-hot-toast";
 import type {BillingCurrency, CreditPricingResponse} from "../../api/types";
 import * as React from "react";
 import {AxiosError} from "axios";
+import {cn} from "../../lib/utils";
+import {DASHBOARD_GLASS_SURFACE} from "../../components/dashboard/dashboardChrome";
 
 const CURRENCY_SYMBOLS: Record<BillingCurrency, string> = {
     USD: "$",
@@ -123,43 +125,43 @@ const Settings = () => {
         switch (currency) {
             case "USD":
                 return {
-                    pricePerCredit: 3.23,
-                    discountTier1Threshold: 32.26,
-                    discountTier1Amount: 3.23,
-                    discountTier2Threshold: 64.52,
-                    discountTier2Amount: 5.48,
-                    discountTier3Threshold: 322.58,
-                    discountTier3Amount: 12.9
+                    pricePerCredit: 32.26,
+                    discountTier1Threshold: 322.58,
+                    discountTier1Amount: 32.26,
+                    discountTier2Threshold: 645.16,
+                    discountTier2Amount: 54.84,
+                    discountTier3Threshold: 3225.81,
+                    discountTier3Amount: 129.03
                 };
             case "EUR":
                 return {
-                    pricePerCredit: 2.94,
-                    discountTier1Threshold: 29.41,
-                    discountTier1Amount: 2.94,
-                    discountTier2Threshold: 58.82,
-                    discountTier2Amount: 5,
-                    discountTier3Threshold: 294.12,
-                    discountTier3Amount: 11.76
+                    pricePerCredit: 29.41,
+                    discountTier1Threshold: 294.12,
+                    discountTier1Amount: 29.41,
+                    discountTier2Threshold: 588.24,
+                    discountTier2Amount: 50,
+                    discountTier3Threshold: 2941.18,
+                    discountTier3Amount: 117.65
                 };
             case "GBP":
                 return {
-                    pricePerCredit: 2.56,
-                    discountTier1Threshold: 25.64,
-                    discountTier1Amount: 2.56,
-                    discountTier2Threshold: 51.28,
-                    discountTier2Amount: 4.36,
-                    discountTier3Threshold: 256.41,
-                    discountTier3Amount: 10.26
+                    pricePerCredit: 25.64,
+                    discountTier1Threshold: 256.41,
+                    discountTier1Amount: 25.64,
+                    discountTier2Threshold: 512.82,
+                    discountTier2Amount: 43.59,
+                    discountTier3Threshold: 2564.10,
+                    discountTier3Amount: 102.56
                 };
             default:
                 return {
-                    pricePerCredit: 5000,
-                    discountTier1Threshold: 50000,
-                    discountTier1Amount: 5000,
-                    discountTier2Threshold: 100000,
-                    discountTier2Amount: 8500,
-                    discountTier3Threshold: 500000,
-                    discountTier3Amount: 20000
+                    pricePerCredit: 50000,
+                    discountTier1Threshold: 500000,
+                    discountTier1Amount: 50000,
+                    discountTier2Threshold: 1000000,
+                    discountTier2Amount: 85000,
+                    discountTier3Threshold: 5000000,
+                    discountTier3Amount: 200000
                 };
         }
     };
@@ -325,7 +327,7 @@ const Settings = () => {
                 <>
                     <form
                         onSubmit={handleProfileSubmit}
-                        className="bg-white rounded-2xl border border-border-light/50 p-6 md:p-8 max-w-2xl"
+                        className={cn(DASHBOARD_GLASS_SURFACE, "p-6 md:p-8 max-w-2xl")}
                     >
                         <h2 className="text-base font-semibold text-heading mb-6">
                             Personal information
@@ -442,7 +444,7 @@ const Settings = () => {
             {tab === "password" && (
                 <form
                     onSubmit={handlePasswordSubmit}
-                    className="bg-white rounded-2xl border border-border-light/50 p-6 md:p-8 max-w-2xl"
+                    className={cn(DASHBOARD_GLASS_SURFACE, "p-6 md:p-8 max-w-2xl")}
                 >
                     <h2 className="text-base font-semibold text-heading mb-6">
                         Change password
@@ -521,7 +523,7 @@ const Settings = () => {
             {/* Billing tab */}
             {tab === "billing" && (
                 <div className="space-y-6 max-w-2xl">
-                    <div className="bg-white rounded-2xl border border-border-light/50 p-6">
+                    <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6")}>
                         <h2 className="text-base font-semibold text-heading mb-4">
                             Credits
                         </h2>
@@ -544,7 +546,7 @@ const Settings = () => {
                     </div>
 
                     {/* Billing currency — only editable for individual users */}
-                    <div className="bg-white rounded-2xl border border-border-light/50 p-6">
+                    <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6")}>
                         <h2 className="text-base font-semibold text-heading mb-1">
                             Billing currency
                         </h2>
@@ -575,13 +577,13 @@ const Settings = () => {
                                 ) => {
                                     switch (currency) {
                                         case "USD":
-                                            return 3.23;
+                                            return 32.26;
                                         case "EUR":
-                                            return 2.94;
+                                            return 29.41;
                                         case "GBP":
-                                            return 2.56;
+                                            return 25.64;
                                         default:
-                                            return 5000;
+                                            return 50000;
                                     }
                                 };
                                 const perCredit =
@@ -642,7 +644,7 @@ const Settings = () => {
                         )}
                     </div>
 
-                    <div className="bg-white rounded-2xl border border-border-light/50 p-6">
+                    <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6")}>
                         <h2 className="text-base font-semibold text-heading mb-4">
                             Plan
                         </h2>
@@ -672,7 +674,7 @@ const Settings = () => {
                     onClick={() => setPurchaseCreditsOpen(false)}
                 >
                     <div
-                        className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 md:p-8"
+                        className={cn(DASHBOARD_GLASS_SURFACE, "relative w-full max-w-md p-6 md:p-8")}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button

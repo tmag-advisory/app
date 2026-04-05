@@ -92,6 +92,7 @@ import type {
   // Reports
   UsageReportSummary,
   PlanHistoryDto,
+  DashboardAnalyticsDto,
   ComplianceReportDto,
 } from "./types";
 
@@ -233,6 +234,10 @@ export const travelPlansApi = {
 
   delete: (id: number) =>
     api.delete<ApiResponse<null>>(`/travel-plans/${id}`).then((r) => r.data.data),
+
+  /** Server-generated PDF (OpenHTMLToPDF). Requires completed plan; same auth as other travel-plan routes. */
+  downloadPdfBlob: (id: number) =>
+    api.get<Blob>(`/travel-plans/${id}/pdf`, { responseType: "blob" }).then((r) => r.data),
 };
 
 // ─── Credit Requests ─────────────────────────────────────────
@@ -585,6 +590,13 @@ export const reportsApi = {
 
   getComplianceReportCsv: (companyId?: number) =>
     api.get<string>("/reports/compliance/csv", { params: companyId ? { companyId } : {}, responseType: 'text' }),
+
+  getDashboardAnalytics: (companyId?: number) =>
+    api
+      .get<ApiResponse<DashboardAnalyticsDto>>("/reports/dashboard/analytics", {
+        params: companyId !== undefined ? { companyId } : {},
+      })
+      .then((r) => r.data.data),
 };
 
 // ─── Contact ─────────────────────────────────────────────────

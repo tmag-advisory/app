@@ -3,6 +3,8 @@ import { usePlanStore } from "../../stores/planStore";
 import { useCreditRequests, useApproveCreditRequest, useRejectCreditRequest } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { LucideLoader2 } from "lucide-react";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 const statusStyles: Record<string, string> = {
     pending: "text-gold bg-gold/10",
@@ -55,7 +57,7 @@ const CreditRequests = () => {
             </div>
 
             {/* Requests */}
-            <div className="bg-white rounded-2xl border border-border-light/50 overflow-hidden">
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-135">
                         <thead>

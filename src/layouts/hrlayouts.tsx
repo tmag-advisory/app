@@ -8,6 +8,11 @@ import {
     LucideMailQuestion,
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
+import {
+    DashboardAmbientBackground,
+    DASHBOARD_GLASS_SURFACE,
+} from "../components/dashboard/dashboardChrome";
+import { cn } from "../lib/utils";
 
 const HRDashboardLayout = () => {
     const { canAccessHR } = useAuth();
@@ -22,8 +27,9 @@ const HRDashboardLayout = () => {
     // Still loading — show spinner
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-background-primary flex items-center justify-center">
-                <LucideLoader2 className="w-6 h-6 text-accent animate-spin" />
+            <div className="relative min-h-screen overflow-x-hidden bg-background-primary flex items-center justify-center">
+                <DashboardAmbientBackground />
+                <LucideLoader2 className="relative z-10 w-6 h-6 text-accent animate-spin" />
             </div>
         );
     }
@@ -31,8 +37,14 @@ const HRDashboardLayout = () => {
     // Loaded but no companies
     if (isSuccess && !hasCompany) {
         return (
-            <div className="min-h-screen bg-background-primary flex items-center justify-center px-6">
-                <div className="max-w-md text-center">
+            <div className="relative min-h-screen overflow-x-hidden bg-background-primary flex items-center justify-center px-6">
+                <DashboardAmbientBackground />
+                <div
+                    className={cn(
+                        DASHBOARD_GLASS_SURFACE,
+                        "relative z-10 max-w-md text-center px-8 py-10",
+                    )}
+                >
                     <div className="w-16 h-16 rounded-2xl bg-gold/10 flex items-center justify-center mx-auto mb-6">
                         <LucideBuilding2 className="w-8 h-8 text-gold" />
                     </div>
@@ -45,7 +57,7 @@ const HRDashboardLayout = () => {
                         access the HR dashboard and manage employees, travel
                         requests, and billing.
                     </p>
-                    <div className="bg-button-secondary rounded-2xl p-5 mb-8 text-left">
+                    <div className="rounded-2xl border border-border-light/40 bg-background-primary/60 p-5 mb-8 text-left backdrop-blur-sm">
                         <div className="flex items-start gap-3">
                             <LucideMailQuestion className="w-5 h-5 text-muted mt-0.5 shrink-0" />
                             <div>
@@ -79,10 +91,11 @@ const HRDashboardLayout = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background-primary">
+        <div className="relative min-h-screen overflow-x-hidden bg-background-primary">
+            <DashboardAmbientBackground />
             <Sidebar />
             <Toaster position="top-right" containerStyle={{ fontSize: "14px" }} />
-            <main className="lg:ml-64 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 max-w-7xl">
+            <main className="relative z-10 lg:ml-64 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 max-w-7xl">
                 <Outlet />
             </main>
         </div>

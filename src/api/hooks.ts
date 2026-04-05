@@ -418,6 +418,11 @@ export function useAcceptInvitation() {
 
 // ─── Travel Plan Hooks ───────────────────────────────────────
 
+/** Matches spring-server TravelPlan / PlanGenerationService lifecycle (QUEUED → PROCESSING → COMPLETED). */
+export function isTravelPlanGeneratingStatus(status: string | undefined): boolean {
+  return status === "QUEUED" || status === "PENDING" || status === "PROCESSING";
+}
+
 export function useTravelPlans(params?: PaginationParams) {
   return useQuery({
     queryKey: queryKeys.travelPlans.list(params),
@@ -439,8 +444,7 @@ export function useTravelPlan(id: number) {
     enabled: id > 0,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      if (status === "PENDING" || status === "PROCESSING") return 3000;
-      return false;
+      return isTravelPlanGeneratingStatus(status) ? 3000 : false;
     },
   });
 }
@@ -1106,6 +1110,14 @@ export function useComplianceReport(companyId?: number) {
   return useQuery({
     queryKey: ["reports", "compliance", companyId],
     queryFn: () => reportsApi.getComplianceReport(companyId),
+  });
+}
+
+export function useDashboardAnalytics(companyId?: number, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["reports", "dashboard-analytics", companyId ?? "me"],
+    queryFn: () => reportsApi.getDashboardAnalytics(companyId),
+    enabled: options?.enabled !== false,
   });
 }
 

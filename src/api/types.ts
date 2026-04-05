@@ -205,12 +205,112 @@ export interface PurchaseCreditsRequest {
 
 // ─── Travel Plan ─────────────────────────────────────────────
 
+/** Mirrors spring-server GeneratedPlanPayload; present on GET /travel-plans/:id when a row exists. */
+export interface GeneratedPlanPayload {
+  status: string;
+  planJson: string | null;
+  provider?: string | null;
+  modelUsed?: string | null;
+  tokensUsed?: number | null;
+  processingTimeMs?: number | null;
+  errorMessage?: string | null;
+}
+
+/** Parsed from AI output (PlanGenerationService JSON schema). */
+export interface GeneratedPlanTripAtGlance {
+  durationDays?: number;
+  purpose?: string;
+  travelling?: string;
+  accommodation?: string;
+  insurance?: string;
+}
+
+export interface GeneratedPlanHealthRiskItem {
+  category: string;
+  level: string;
+  summary: string;
+}
+
+export interface GeneratedPlanVaccinationItem {
+  vaccine: string;
+  status: string;
+  recommendation: string;
+  action: string;
+}
+
+export interface GeneratedPlanRecommendationItem {
+  title: string;
+  details: string;
+}
+
+export interface GeneratedPlanAfterReturn {
+  within1Week?: string[];
+  within4Weeks?: string[];
+  beyond4Weeks?: string[];
+  redFlag?: string;
+}
+
+export interface GeneratedPlanClinic {
+  name: string;
+  address: string;
+  phone: string;
+  distance: string;
+  notes: string;
+}
+
+export interface GeneratedPlanEmbassyContact {
+  name: string;
+  details: string;
+}
+
+export interface GeneratedPlanEmergencyContact {
+  label: string;
+  value: string;
+}
+
+export interface GeneratedPlanMedicalCare {
+  clinics?: GeneratedPlanClinic[];
+  embassyContacts?: GeneratedPlanEmbassyContact[];
+  emergencyContacts?: GeneratedPlanEmergencyContact[];
+}
+
+export interface GeneratedPlanItineraryRouteAdviceItem {
+  stop: string;
+  country: string;
+  guidance: string;
+}
+
+export interface GeneratedPlanItineraryGuidance {
+  tripType?: "ONE_WAY" | "RETURN" | "MULTI_STOP";
+  summary?: string;
+  routeAdvice?: GeneratedPlanItineraryRouteAdviceItem[];
+  returnGuidance?: string[];
+}
+
+export interface GeneratedPlanContent {
+  reportTitle?: string;
+  travellerName?: string;
+  destination?: string;
+  travelDates?: string;
+  tripAtGlance?: GeneratedPlanTripAtGlance;
+  healthRiskOverview?: GeneratedPlanHealthRiskItem[];
+  vaccinations?: GeneratedPlanVaccinationItem[];
+  recommendations?: GeneratedPlanRecommendationItem[];
+  afterReturn?: GeneratedPlanAfterReturn;
+  medicalCare?: GeneratedPlanMedicalCare;
+  itineraryGuidance?: GeneratedPlanItineraryGuidance;
+  nextSteps?: string[];
+  medicalDisclaimer?: string;
+}
+
 export interface TravelPlanResponse {
   id: number;
   destination: string;
   country: string;
   duration: number;
   purpose: string;
+  tripType?: "one-way" | "return" | "multi";
+  tripDetailsJson?: string;
   riskScore: number;
   status: string;
   medicalConsiderations: string;
@@ -225,6 +325,7 @@ export interface TravelPlanResponse {
   userId?: number;
   createdAt: string;
   updatedAt: string;
+  generatedPlan?: GeneratedPlanPayload | null;
 }
 
 export interface CreateTravelPlanRequest {
@@ -235,6 +336,8 @@ export interface CreateTravelPlanRequest {
   country: string;
   duration: number;
   purpose: string;
+  tripType?: "one-way" | "return" | "multi";
+  tripDetailsJson?: string;
   riskScore?: number;
   status?: string;
   medicalConsiderations?: string;
@@ -770,6 +873,30 @@ export interface PlanHistoryDto {
   employeeName: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface NamedCountDto {
+  name: string;
+  count: number;
+}
+
+export interface MonthCountDto {
+  month: string;
+  count: number;
+}
+
+export interface TopEmployeePlansDto {
+  name: string;
+  plansGenerated: number;
+  creditsUsed: number;
+}
+
+export interface DashboardAnalyticsDto {
+  plansByStatus: NamedCountDto[];
+  plansCreatedLastSixMonths: MonthCountDto[];
+  topDestinations: NamedCountDto[];
+  topEmployeesByPlans: TopEmployeePlansDto[];
+  creditRequestsByStatus: NamedCountDto[];
 }
 
 export interface ComplianceAuditDto {
