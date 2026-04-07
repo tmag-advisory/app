@@ -27,6 +27,13 @@ const Status = lazy(() => import("../pages/status/status"));
 const Community = lazy(() => import("../pages/community/community"));
 const ContactPage = lazy(() => import("../pages/contact/contact"));
 
+// Shop pages (lazy-loaded)
+const ShopPage = lazy(() => import("../pages/shop/shop"));
+const EbookDetailPage = lazy(() => import("../pages/shop/ebook-detail"));
+const CartPage = lazy(() => import("../pages/shop/cart"));
+const CheckoutPage = lazy(() => import("../pages/shop/checkout"));
+const EbookOrderConfirmation = lazy(() => import("../pages/shop/order-confirmation"));
+
 // Auth pages (lazy-loaded)
 const Login = lazy(() => import("../pages/auth/login"));
 const Register = lazy(() => import("../pages/auth/register"));
@@ -46,6 +53,7 @@ const PlanHistory = lazy(() => import("../pages/dashboard/plan-history"));
 const PlanDetails = lazy(() => import("../pages/dashboard/plan-details"));
 const Settings = lazy(() => import("../pages/dashboard/settings"));
 const Transactions = lazy(() => import("../pages/dashboard/transactions"));
+const MyEbooks = lazy(() => import("../pages/dashboard/my-ebooks"));
 
 // HR dashboard (lazy-loaded)
 const HROverview = lazy(() => import("../pages/hr/overview"));
@@ -90,8 +98,15 @@ const router = createBrowserRouter([
             { path: "status", element: <Status /> },
             { path: "community", element: <Community /> },
             { path: "contact", element: <ContactPage /> },
+            { path: "shop", element: <ShopPage /> },
+            { path: "shop/:slug", element: <EbookDetailPage /> },
+            { path: "shop/cart", element: <CartPage /> },
         ],
     },
+
+    // Shop checkout (standalone, no nav)
+    { path: "shop/checkout", element: <CheckoutPage /> },
+    { path: "shop/order-confirmation", element: <EbookOrderConfirmation /> },
 
     // Auth
     {
@@ -154,6 +169,7 @@ const router = createBrowserRouter([
             { path: "plans/:id", element: <PlanDetails /> },
             { path: "settings", element: <Settings /> },
             { path: "transactions", element: <Transactions /> },
+            { path: "my-ebooks", element: <MyEbooks /> },
         ],
     },
 

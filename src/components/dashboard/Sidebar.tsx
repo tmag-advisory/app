@@ -18,6 +18,7 @@ import {
     LucideChevronsUpDown,
     LucideBuilding2,
     LucideReceipt,
+    LucideBookOpen,
 } from "lucide-react";
 
 interface NavItem {
@@ -31,6 +32,7 @@ const individualNav: NavItem[] = [
     { label: "Create Plan", href: "/dashboard/create-plan", icon: <LucidePlusCircle className="w-4 h-4" /> },
     { label: "My Plans", href: "/dashboard/plans", icon: <LucideFileText className="w-4 h-4" /> },
     { label: "Transactions", href: "/dashboard/transactions", icon: <LucideReceipt className="w-4 h-4" /> },
+    { label: "My Ebooks", href: "/dashboard/my-ebooks", icon: <LucideBookOpen className="w-4 h-4" /> },
     { label: "Settings", href: "/dashboard/settings", icon: <LucideSettings className="w-4 h-4" /> },
 ];
 

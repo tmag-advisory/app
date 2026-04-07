@@ -94,6 +94,16 @@ import type {
   PlanHistoryDto,
   DashboardAnalyticsDto,
   ComplianceReportDto,
+  // Ebooks
+  EbookResponse,
+  EbookCheckoutRequest,
+  EbookCheckoutResponse,
+  EbookOrderResponse,
+  CartItemResponse,
+  CartCheckoutRequest,
+  CartCheckoutResponse,
+  ExchangeRatesResponse,
+  SupportedCurrency,
 } from "./types";
 
 // ─── Generic CRUD helpers ────────────────────────────────────
@@ -597,6 +607,65 @@ export const reportsApi = {
         params: companyId !== undefined ? { companyId } : {},
       })
       .then((r) => r.data.data),
+};
+
+// ─── Ebooks ──────────────────────────────────────────────────
+
+export const ebooksApi = {
+  list: () =>
+    api.get<ApiResponse<EbookResponse[]>>("/ebooks").then((r) => r.data.data),
+
+  getBySlug: (slug: string) =>
+    api.get<ApiResponse<EbookResponse>>(`/ebooks/${slug}`).then((r) => r.data.data),
+
+  checkout: (data: EbookCheckoutRequest) =>
+    api.post<ApiResponse<EbookCheckoutResponse>>("/ebooks/checkout", data).then((r) => r.data.data),
+
+  verifyOrder: (data: { txRef: string; transactionId?: string }) =>
+    api.post<ApiResponse<EbookOrderResponse>>("/ebooks/orders/verify", data).then((r) => r.data.data),
+
+  getOrderStatus: (txRef: string) =>
+    api.get<ApiResponse<EbookOrderResponse>>(`/ebooks/orders/${txRef}`).then((r) => r.data.data),
+
+  myOrders: () =>
+    api.get<ApiResponse<EbookOrderResponse[]>>("/ebooks/my-orders").then((r) => r.data.data),
+};
+
+// ─── Cart ────────────────────────────────────────────────────
+
+export const cartApi = {
+  getCart: () =>
+    api.get<ApiResponse<CartItemResponse[]>>("/cart").then((r) => r.data.data),
+
+  addItem: (ebookVersionId: number) =>
+    api.post<ApiResponse<CartItemResponse[]>>("/cart/add", { ebookVersionId }).then((r) => r.data.data),
+
+  removeItem: (cartItemId: number) =>
+    api.delete<ApiResponse<CartItemResponse[]>>(`/cart/${cartItemId}`).then((r) => r.data.data),
+
+  clearCart: () =>
+    api.delete<ApiResponse<CartItemResponse[]>>("/cart").then((r) => r.data.data),
+
+  syncCart: (items: { ebookVersionId: number }[]) =>
+    api.post<ApiResponse<CartItemResponse[]>>("/cart/sync", items).then((r) => r.data.data),
+
+  checkout: (data: CartCheckoutRequest) =>
+    api.post<ApiResponse<CartCheckoutResponse>>("/cart/checkout", data).then((r) => r.data.data),
+};
+
+// ─── Exchange Rates ──────────────────────────────────────────
+
+export const exchangeRatesApi = {
+  getRates: () =>
+    api.get<ApiResponse<ExchangeRatesResponse>>("/exchange-rates").then((r) => r.data.data),
+
+  getCurrencies: () =>
+    api.get<ApiResponse<SupportedCurrency[]>>("/exchange-rates/currencies").then((r) => r.data.data),
+
+  convert: (amount: number, from: string, to: string) =>
+    api.get<ApiResponse<{ convertedAmount: number; symbol: string }>>("/exchange-rates/convert", {
+      params: { amount, from, to },
+    }).then((r) => r.data.data),
 };
 
 // ─── Contact ─────────────────────────────────────────────────

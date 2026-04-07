@@ -1,10 +1,17 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Button from "../ui/Button";
 import NavLink from "../ui/NavLink";
+import { useCartStore } from "../../stores/cartStore";
+import { LucideShoppingCart } from "lucide-react";
 
 const Navbar = () => {
     const [open, setOpen] = useState(false);
+    const { pathname } = useLocation();
+    const { itemCount, togglePanel } = useCartStore();
+    const count = itemCount();
+
+    const isShopPage = pathname.startsWith("/shop");
 
     return (
         <nav className="px-8 lg:px-16 py-5 max-w-350 mx-auto">
@@ -21,6 +28,22 @@ const Navbar = () => {
                 </Link>
 
                 <div className="flex justify-end items-center gap-3">
+                    {/* Cart icon — only on shop pages */}
+                    {isShopPage && (
+                        <button
+                            onClick={togglePanel}
+                            className="relative p-2 hover:bg-background-primary rounded-lg transition-colors"
+                            aria-label="Shopping cart"
+                        >
+                            <LucideShoppingCart className="w-5 h-5 text-heading" />
+                            {count > 0 && (
+                                <span className="absolute -top-0.5 -right-0.5 bg-accent text-white text-[10px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center min-w-[18px] min-h-[18px]">
+                                    {count}
+                                </span>
+                            )}
+                        </button>
+                    )}
+
                     <div className="hidden md:flex items-center gap-3">
                         <NavLink href="/login">Sign In</NavLink>
                         <Button variant="secondary" link="/register">Get My Free Plan</Button>

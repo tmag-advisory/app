@@ -201,7 +201,7 @@ function derivePlanFromQuestionnaireAnswers(
             ? answers.additional_considerations.trim()
             : typeof answers.additional_information === "string"
                 ? answers.additional_information.trim()
-            : "";
+                : "";
 
     return {
         destination: destination || country,
@@ -292,6 +292,57 @@ function shouldShowQuestion(
     return true;
 }
 
+const LEGACY_TRAVEL_KEYS = new Set([
+    "travel_countries",
+    "travel_city_region",
+    "departure_date",
+    "return_date_or_duration",
+]);
+
+function shouldHideLegacyTravelQuestion(
+    question: Question,
+    categoryQuestions: Question[]
+): boolean {
+    const hasTripItinerary = categoryQuestions.some((q) => q.key === "trip_itinerary");
+    return hasTripItinerary && LEGACY_TRAVEL_KEYS.has(question.key);
+}
+
+function isTripItineraryComplete(data: TripItineraryData | undefined): boolean {
+    if (!data) return false;
+    if (data.tripType === "one") {
+        return Boolean(
+            data.oneDestination?.trim() &&
+            data.oneDepartureDate?.trim() &&
+            data.oneReturnDate?.trim()
+        );
+    }
+    if (data.tripType === "return") {
+        return Boolean(
+            data.returnFrom?.trim() &&
+            data.returnTo?.trim() &&
+            data.returnDepartureDate?.trim() &&
+            data.returnReturnDate?.trim()
+        );
+    }
+    const legs = data.legs || [];
+    if (legs.length < 2) return false;
+    return legs.every((leg) =>
+        Boolean(leg.from?.trim() && leg.to?.trim() && leg.arrivalDate?.trim() && leg.departureDate?.trim())
+    );
+}
+
+function isQuestionAnswered(question: Question, answers: Record<string, unknown>): boolean {
+    if (!question.required) return true;
+    const value = answers[question.key];
+    if (question.type === "checkbox" || question.type === "multi_country") {
+        return Array.isArray(value) && value.length > 0;
+    }
+    if (question.type === "trip_itinerary") {
+        return isTripItineraryComplete(value as TripItineraryData | undefined);
+    }
+    return String(value ?? "").trim().length > 0;
+}
+
 // ─── Main Component ──────────────────────────────────────────
 
 const TravelHealthQuestionnaire = () => {
@@ -338,8 +389,10 @@ const TravelHealthQuestionnaire = () => {
 
     const currentCategory = categories[categoryIndex];
     const visibleQuestions =
-        currentCategory?.parsedQuestions.filter((q) =>
-            shouldShowQuestion(q, answers)
+        currentCategory?.parsedQuestions.filter(
+            (q) =>
+                !shouldHideLegacyTravelQuestion(q, currentCategory.parsedQuestions) &&
+                shouldShowQuestion(q, answers)
         ) || [];
     const currentQuestion =
         questionIndex >= 0 ? visibleQuestions[questionIndex] : null;
@@ -449,6 +502,10 @@ const TravelHealthQuestionnaire = () => {
     // ─── Navigation ──────────────────────────────────────────
 
     const goNext = () => {
+        if (currentQuestion && !isQuestionAnswered(currentQuestion, answers)) {
+            toast.error("Please answer this required question before continuing.");
+            return;
+        }
         setDirection(1);
         const next = questionIndex + 1;
         if (next >= visibleQuestions.length) {
@@ -526,15 +583,15 @@ const TravelHealthQuestionnaire = () => {
     // This makes early progress more rewarding and feels less overwhelming
     const totalSections = categories.length;
     const completedSections = categoryIndex;
-    const currentSectionProgress = visibleQuestions.length > 0 
-        ? (questionIndex + 1) / visibleQuestions.length 
+    const currentSectionProgress = visibleQuestions.length > 0
+        ? (questionIndex + 1) / visibleQuestions.length
         : 0;
-    
+
     const progressPercent = totalSections > 0
         ? Math.min(
             Math.round(((completedSections + currentSectionProgress) / totalSections) * 100),
             100
-          )
+        )
         : 0;
 
     const isLastQuestion =
@@ -604,7 +661,6 @@ const TravelHealthQuestionnaire = () => {
                 emergencyContacts: "[]",
             });
             await refreshProfile();
-            toast.success("Plan generated successfully!");
             navigate(`/dashboard/plans/${result.id}`);
         } catch {
             toast.error("Failed to generate plan. Please try again.");
@@ -1008,31 +1064,45 @@ const TravelHealthQuestionnaire = () => {
                 </div>
             </div>
 
-            {/* ── Category Pills ───────────────────────────── */}
-            <div className="px-5 sm:px-8 pt-5 pb-2 flex items-center justify-center gap-1.5 flex-wrap">
-                {categories.map((cat, i) => (
-                    <div
-                        key={cat.category_key}
-                        className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
-                            i === categoryIndex
-                                ? "bg-heading text-white"
-                                : i < categoryIndex
-                                  ? "bg-accent/15 text-accent"
-                                  : "bg-border-light/40 text-muted/60"
-                        }`}
-                    >
-                        {i < categoryIndex && (
-                            <LucideCheck className="w-2.5 h-2.5" />
-                        )}
-                        <span className="hidden sm:inline">{cat.category_name}</span>
-                        <span className="sm:hidden">{i + 1}</span>
+            {/* ── Category Timeline ────────────────────────── */}
+            <div className="px-5 sm:px-8 pt-5 pb-2 overflow-x-auto">
+                <div className="mx-auto w-full max-w-5xl flex justify-center">
+                    <div className="min-w-max px-1">
+                        <div className="relative flex items-start gap-3">
+                            <div className="absolute left-4 right-4 top-4 h-px bg-border-light/80" />
+                            {categories.map((cat, i) => (
+                                <div key={cat.category_key} className="relative flex w-[150px] flex-col items-center">
+                                    <div
+                                        className={`z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 text-[11px] font-bold transition-colors ${i < categoryIndex
+                                                ? "border-accent bg-accent text-white"
+                                                : i === categoryIndex
+                                                    ? "border-heading bg-heading text-white"
+                                                    : "border-border-light bg-white text-muted"
+                                            }`}
+                                    >
+                                        {i < categoryIndex ? <LucideCheck className="w-3.5 h-3.5" /> : i + 1}
+                                    </div>
+                                    <p
+                                        className={`mt-2 text-center text-[11px] font-semibold leading-snug ${i === categoryIndex
+                                                ? "text-heading"
+                                                : i < categoryIndex
+                                                    ? "text-accent"
+                                                    : "text-muted"
+                                            }`}
+                                    >
+                                        {cat.category_name}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                ))}
+                </div>
             </div>
 
             {/* ── Main Content ─────────────────────────────── */}
             <div className="flex-1 flex items-start sm:items-center justify-center px-5 sm:px-8 pt-6 pb-32">
-                <div className="w-full max-w-lg">
+                <div className="w-full max-w-5xl flex justify-center">
+                    <div className="w-full max-w-lg">
                     <AnimatePresence mode="wait" custom={direction}>
                         {showIntro ? (
                             <motion.div
@@ -1171,6 +1241,7 @@ const TravelHealthQuestionnaire = () => {
                             </motion.div>
                         ) : null}
                     </AnimatePresence>
+                    </div>
                 </div>
             </div>
 
@@ -1237,7 +1308,11 @@ const TripItineraryInput = ({
     value: TripItineraryData;
     onChange: (val: unknown) => void;
 }) => {
-    const data: TripItineraryData = { ...value, tripType: "one", legs: [] };
+    const data: TripItineraryData = {
+        ...value,
+        tripType: value?.tripType ?? "one",
+        legs: value?.legs ?? [],
+    };
 
     const update = (patch: Partial<TripItineraryData>) => {
         onChange({ ...data, ...patch });
@@ -1283,11 +1358,10 @@ const TripItineraryInput = ({
                         key={tab.value}
                         type="button"
                         onClick={() => setTripType(tab.value)}
-                        className={`flex-1 px-2 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer ${
-                            data.tripType === tab.value
+                        className={`flex-1 px-2 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer ${data.tripType === tab.value
                                 ? "bg-dark text-white shadow-sm"
                                 : "bg-white border-2 border-border-light/60 text-muted hover:border-border hover:text-heading"
-                        }`}
+                            }`}
                     >
                         <span className="mr-1">{tab.icon}</span>
                         <span className="hidden sm:inline">{tab.label}</span>
@@ -1594,30 +1668,27 @@ const QuestionInput = ({
                             }}
                             type="button"
                             onClick={() => onChange(opt.value)}
-                            className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
-                                value === opt.value
+                            className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${value === opt.value
                                     ? "border-accent bg-white shadow-sm"
                                     : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
-                            }`}
+                                }`}
                         >
                             <div className="flex items-center gap-3.5">
                                 <div
-                                    className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
-                                        value === opt.value
+                                    className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${value === opt.value
                                             ? "border-accent bg-accent"
                                             : "border-border"
-                                    }`}
+                                        }`}
                                 >
                                     {value === opt.value && (
                                         <div className="w-2 h-2 rounded-full bg-white" />
                                     )}
                                 </div>
                                 <span
-                                    className={`text-sm font-semibold transition-colors ${
-                                        value === opt.value
+                                    className={`text-sm font-semibold transition-colors ${value === opt.value
                                             ? "text-heading"
                                             : "text-body"
-                                    }`}
+                                        }`}
                                 >
                                     {opt.label}
                                 </span>
@@ -1647,28 +1718,25 @@ const QuestionInput = ({
                                 }}
                                 type="button"
                                 onClick={() => onToggleCheckbox(opt.value)}
-                                className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
-                                    checked
+                                className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${checked
                                         ? "border-accent bg-white shadow-sm"
                                         : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center gap-3.5">
                                     <div
-                                        className={`w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
-                                            checked
+                                        className={`w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${checked
                                                 ? "border-accent bg-accent"
                                                 : "border-border"
-                                        }`}
+                                            }`}
                                     >
                                         {checked && (
                                             <LucideCheck className="w-3 h-3 text-white" />
                                         )}
                                     </div>
                                     <span
-                                        className={`text-sm font-semibold transition-colors ${
-                                            checked ? "text-heading" : "text-body"
-                                        }`}
+                                        className={`text-sm font-semibold transition-colors ${checked ? "text-heading" : "text-body"
+                                            }`}
                                     >
                                         {opt.label}
                                     </span>
@@ -1756,15 +1824,14 @@ const QuestionInput = ({
                                                         s
                                                     )
                                                 }
-                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all duration-200 ${
-                                                    status === s
+                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all duration-200 ${status === s
                                                         ? s === "yes"
                                                             ? "bg-accent text-white"
                                                             : s === "no"
-                                                              ? "bg-red-500 text-white"
-                                                              : "bg-amber-400 text-white"
+                                                                ? "bg-red-500 text-white"
+                                                                : "bg-amber-400 text-white"
                                                         : "bg-border-light/50 text-muted hover:bg-border-light"
-                                                }`}
+                                                    }`}
                                             >
                                                 {s.charAt(0).toUpperCase() + s.slice(1)}
                                             </button>

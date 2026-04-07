@@ -347,6 +347,7 @@ export interface CreateTravelPlanRequest {
   medications?: string;
   waterFood?: string;
   emergencyContacts?: string;
+  questionnaireResponses?: string;
 }
 
 export interface UpdateTravelPlanRequest extends Partial<CreateTravelPlanRequest> { }
@@ -951,4 +952,124 @@ export interface NewsletterSubscribeResponse {
   isActive: boolean;
   subscribedAt: string;
 }
+
+// ─── Ebooks ───────────────────────────────────────────────────
+
+export interface EbookVersionResponse {
+  id: number;
+  label: string;
+  countryCode: string | null;
+  countryName: string | null;
+  region: string | null;
+  price: number;
+  currency: string;
+  currencySymbol: string;
+  fileSizeMb: number | null;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface EbookResponse {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  shortDescription: string | null;
+  author: string;
+  authorBio: string | null;
+  coverUrl: string | null;
+  previewUrl: string | null;
+  pageCount: number | null;
+  publishedYear: number | null;
+  isbn: string | null;
+  isActive: boolean;
+  isFeatured: boolean;
+  versions: EbookVersionResponse[];
+  createdAt: string;
+}
+
+export interface EbookCheckoutRequest {
+  ebookVersionId: number;
+  guestEmail?: string;
+  guestName?: string;
+  guestPhone?: string;
+}
+
+export interface EbookCheckoutResponse {
+  txRef: string;
+  paymentLink: string;
+  orderId: number;
+  ebookTitle: string;
+  versionLabel: string;
+  amount: number;
+  currency: string;
+  currencySymbol: string;
+}
+
+export interface EbookOrderResponse {
+  id: number;
+  txRef: string;
+  status: string;
+  buyerEmail: string;
+  buyerName: string;
+  buyerPhone: string | null;
+  isGuest: boolean;
+  userId: number | null;
+  ebookId: number;
+  ebookTitle: string;
+  ebookSlug: string;
+  versionLabel: string;
+  countryName: string | null;
+  amount: number;
+  amountPaid: number | null;
+  currency: string;
+  currencySymbol: string;
+  emailSent: boolean;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+export interface CartItemResponse {
+  id: number;
+  ebookId: number;
+  ebookTitle: string;
+  ebookSlug: string;
+  coverUrl: string | null;
+  ebookVersionId: number;
+  versionLabel: string;
+  countryName: string | null;
+  price: number;
+  currency: string;
+  currencySymbol: string;
+}
+
+export interface CartCheckoutRequest {
+  ebookVersionIds: number[];
+  guestEmail?: string;
+  guestName?: string;
+  guestPhone?: string;
+}
+
+export interface CartCheckoutResponse {
+  txRef: string;
+  paymentLink: string;
+  orderIds: number[];
+  totalAmount: number;
+  currency: string;
+  currencySymbol: string;
+  itemCount: number;
+}
+
+export interface SupportedCurrency {
+  code: string;
+  name: string;
+  symbol: string;
+}
+
+export interface ExchangeRatesResponse {
+  base: string;
+  rates: Record<string, number>;
+  lastFetched: string | null;
+}
+
 

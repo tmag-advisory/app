@@ -38,7 +38,7 @@ const HRDashboardLayout = () => {
     if (isSuccess && !hasCompany) {
         return (
             <div className="relative min-h-screen overflow-x-hidden bg-background-primary flex items-center justify-center px-6">
-                <DashboardAmbientBackground />
+                {/*<DashboardAmbientBackground />*/}
                 <div
                     className={cn(
                         DASHBOARD_GLASS_SURFACE,

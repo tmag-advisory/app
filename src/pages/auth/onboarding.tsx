@@ -605,7 +605,7 @@ const Onboarding = () => {
                                     transition={{ delay: 0.3 }}
                                     className="text-base text-body mb-4 leading-relaxed max-w-sm mx-auto"
                                 >
-                                    Would you like to complete our comprehensive travel health questionnaire? This helps our Intelligence System provide highly personalised recommendations.
+                                    Would you like to complete our comprehensive travel health questionnaire? It now starts with trip type selection (Single, Round Trip, or Multi-stop) to tailor recommendations from the first step.
                                 </motion.p>
                                 <motion.div
                                     initial={{ opacity: 0 }}

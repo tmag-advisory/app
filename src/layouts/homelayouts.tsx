@@ -2,6 +2,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Navbar from "../components/sections/Navbar";
 import FooterSection from "../components/sections/FooterSection";
+import CartPanel from "../components/sections/CartPanel";
 import PageTransitionLayout from "../components/transitions/PageTransitionLayout";
 import { AnimatePresence } from "framer-motion";
 
@@ -22,6 +23,7 @@ const HomeLayout = () => {
                     <Navbar />
                     <Outlet />
                     <FooterSection />
+                    <CartPanel />
                 </div>
             </AnimatePresence>
         </PageTransitionLayout>

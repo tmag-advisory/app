@@ -25,6 +25,9 @@ import {
   reportsApi,
   contactApi,
   newsletterApi,
+  ebooksApi,
+  cartApi,
+  exchangeRatesApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -65,6 +68,8 @@ import type {
   PlanUsageLedgerResponse,
   ContactRequest,
   NewsletterSubscribeRequest,
+  EbookCheckoutRequest,
+  CartCheckoutRequest,
 } from "./types";
 
 // ─── Query Keys ──────────────────────────────────────────────
@@ -1134,5 +1139,121 @@ export function useSubmitContact() {
 export function useNewsletterSubscribe() {
   return useMutation({
     mutationFn: (data: NewsletterSubscribeRequest) => newsletterApi.subscribe(data),
+  });
+}
+
+// ─── Ebook Hooks ──────────────────────────────────────────────
+
+export function useEbooks() {
+  return useQuery({
+    queryKey: ["ebooks"],
+    queryFn: () => ebooksApi.list(),
+  });
+}
+
+export function useEbook(slug: string) {
+  return useQuery({
+    queryKey: ["ebooks", slug],
+    queryFn: () => ebooksApi.getBySlug(slug),
+    enabled: !!slug,
+  });
+}
+
+export function useEbookCheckout() {
+  return useMutation({
+    mutationFn: (data: EbookCheckoutRequest) => ebooksApi.checkout(data),
+  });
+}
+
+export function useVerifyEbookOrder() {
+  return useMutation({
+    mutationFn: (data: { txRef: string; transactionId?: string }) =>
+      ebooksApi.verifyOrder(data),
+  });
+}
+
+export function useEbookOrderStatus(txRef: string, enabled = true) {
+  return useQuery({
+    queryKey: ["ebooks", "orders", txRef],
+    queryFn: () => ebooksApi.getOrderStatus(txRef),
+    enabled: !!txRef && enabled,
+  });
+}
+
+export function useMyEbookOrders() {
+  return useQuery({
+    queryKey: ["ebooks", "my-orders"],
+    queryFn: () => ebooksApi.myOrders(),
+  });
+}
+
+// ─── Cart Hooks ──────────────────────────────────────────────
+
+export function useCart(enabled = true) {
+  return useQuery({
+    queryKey: ["cart"],
+    queryFn: () => cartApi.getCart(),
+    enabled,
+  });
+}
+
+export function useAddToCart() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ebookVersionId: number) => cartApi.addItem(ebookVersionId),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["cart"], data);
+    },
+  });
+}
+
+export function useRemoveFromCart() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (cartItemId: number) => cartApi.removeItem(cartItemId),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["cart"], data);
+    },
+  });
+}
+
+export function useClearCart() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => cartApi.clearCart(),
+    onSuccess: () => {
+      queryClient.setQueryData(["cart"], []);
+    },
+  });
+}
+
+export function useSyncCart() {
+  return useMutation({
+    mutationFn: (items: { ebookVersionId: number }[]) => cartApi.syncCart(items),
+  });
+}
+
+export function useCartCheckout() {
+  return useMutation({
+    mutationFn: (data: CartCheckoutRequest) => cartApi.checkout(data),
+  });
+}
+
+// ─── Exchange Rate Hooks ────────────────────────────────────
+
+export function useExchangeRates() {
+  return useQuery({
+    queryKey: ["exchange-rates"],
+    queryFn: () => exchangeRatesApi.getRates(),
+    staleTime: 60 * 60 * 1000, // 1 hour
+    refetchInterval: 60 * 60 * 1000,
+  });
+}
+
+export function useSupportedCurrencies() {
+  return useQuery({
+    queryKey: ["exchange-rates", "currencies"],
+    queryFn: () => exchangeRatesApi.getCurrencies(),
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours
   });
 }
