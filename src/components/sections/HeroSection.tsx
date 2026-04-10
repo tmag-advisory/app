@@ -266,7 +266,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                                 <Button variant="primary" link="/register">{variant.cta}</Button>
                                 <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">See how it works <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
                             </div>
-                            <StatsRow />
+                            {/*<StatsRow />*/}
                         </div>
                         <div className="relative hidden lg:block h-[460px]">
                             <div aria-hidden className="absolute inset-0 flex items-center justify-center pointer-events-none"><LucideShield size={300} strokeWidth={0.4} className="text-accent opacity-[0.06]" /></div>
@@ -300,7 +300,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                         {variant.destinations.map((d) => (<div key={d.country} data-dest-card className={CARD_CLS}><CardContent d={d} /></div>))}
                     </div>
                     <MobileCards dests={variant.destinations} />
-                    <StatsRow className="justify-center" />
+                    {/*/!*<StatsRow className="justify-center" />*!/*/}
                 </div>
             </section>
         );
@@ -329,7 +329,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                                 <Button variant="primary" link="/register">{variant.cta}</Button>
                                 <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>How it works</Button>
                             </div>
-                            <StatsRow className="lg:justify-end" />
+                            {/*<StatsRow className="lg:justify-end" />*/}
                         </div>
                     </div>
                     <MobileCards dests={variant.destinations} />
@@ -363,7 +363,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                         </div>
                     </div>
                     <MobileCards dests={variant.destinations} />
-                    <StatsRow />
+                    {/*/!*<StatsRow />*!/*/}
                 </div>
             </section>
         );
@@ -424,7 +424,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                                 <Button variant="primary" link="/register">{variant.cta}</Button>
                                 <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>How it works</Button>
                             </div>
-                            <StatsRow />
+                            {/*<StatsRow />*/}
                         </div>
                         <div className="hidden lg:flex flex-col gap-3 w-52 pt-2">
                             {variant.destinations.map((d) => (<div key={d.country} data-dest-card className={CARD_CLS}><CardContent d={d} /></div>))}
@@ -456,7 +456,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                     <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>How it works</Button>
                 </div>
                 <MobileCards dests={variant.destinations} />
-                <StatsRow className="justify-center" />
+                {/*<StatsRow className="justify-center" />*/}
             </div>
         </section>
     );

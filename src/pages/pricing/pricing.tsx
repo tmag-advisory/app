@@ -1,8 +1,41 @@
-import { LucideCheck, LucideArrowRight } from "lucide-react";
+import { LucideCheck, LucideArrowRight, LucideKey, LucideHeadphones, LucideUsers, LucideShield } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
+import { companyPlans, elevatedPlanFeatures } from "../../constants/companyPlans";
+
+const individualPlans = [
+  {
+    name: "Explorer",
+    price: "Free",
+    period: "",
+    description: "Quick guidance for a single destination.",
+    features: [
+      "1 destination report",
+      "Basic vaccine checklist",
+      "General risk overview",
+      "Email delivery",
+    ],
+    cta: "Start free",
+    highlighted: false,
+  },
+  {
+    name: "Credits",
+    price: "Pay as you go",
+    period: "",
+    description: "Buy credits and generate full travel health plans on demand.",
+    features: [
+      "Full vaccine & medication plan",
+      "Emergency contacts & clinics",
+      "Downloadable PDF reports",
+      "Buy as many credits as you want",
+      "Credits never expire",
+    ],
+    cta: "Get started",
+    highlighted: true,
+  },
+];
 
 const PricingPage = () => {
   return (
@@ -16,187 +49,203 @@ const PricingPage = () => {
           Simple, <span className="italic">honest</span> pricing.
         </h1>
         <p className="sm:text-lg text-body mt-6 max-w-xl leading-relaxed">
-          No subscriptions, no hidden fees. Buy credits, generate
-          plans, travel safely. That's it.
+          Whether you're planning a single trip or managing travel for an entire company,
+          we've got a plan for you.
         </p>
-        <div className="mt-8 inline-flex items-center gap-3 bg-accent/10 border border-accent/20 rounded-2xl px-6 py-4">
-          <span className="text-lg">🎉</span>
-          <p className="text-sm font-medium text-heading">
-            Your first plan is completely free.{" "}
-            <span className="text-muted font-normal">No credit card. No catch.</span>
-          </p>
-        </div>
       </AnimateIn>
 
-      {/* Pricing cards */}
-      <section className="px-8 lg:px-16 pb-24 max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Individual */}
-          <AnimateIn type="fadeLeft" className="bg-button-secondary rounded-3xl p-8 md:p-10 flex flex-col justify-between">
-            <div>
-              <h3 className="text-2xl font-serif text-heading mb-1">
-                Individual
-              </h3>
-              <p className="text-sm text-body mb-6">
-                For solo travelers, families, and anyone planning
-                a trip.
-              </p>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-5xl font-serif text-heading">
-                  $9
-                </span>
-                <span className="text-sm text-body">
-                  / credit
-                </span>
-              </div>
-              <p className="text-xs text-muted mb-8">
-                1 credit = 1 full travel health plan. First plan free.
-              </p>
+      {/* Individual plans */}
+      <section className="px-8 lg:px-16 pb-8 max-w-7xl mx-auto">
+        <AnimateIn className="text-center mb-10">
+          <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-3">
+            For <span className="italic">individuals</span>
+          </h2>
+          <p className="text-sm text-muted max-w-md mx-auto">
+            Buy credits and use them for your trips. One credit = one travel health plan.
+          </p>
+        </AnimateIn>
 
-              <div className="border-t border-border pt-6 mb-8">
-                <p className="text-xs uppercase tracking-wider text-muted font-semibold mb-4">
-                  Credit packs
-                </p>
-                <div className="space-y-3">
-                  {[
-                    { credits: "1 credit", price: "$9" },
-                    { credits: "5 credits", price: "$39", save: "Save 13%" },
-                    { credits: "10 credits", price: "$69", save: "Save 23%" },
-                  ].map((pack) => (
-                    <div
-                      key={pack.credits}
-                      className="flex items-center justify-between bg-background-primary rounded-xl px-4 py-3"
-                    >
-                      <span className="text-sm font-medium text-heading">
-                        {pack.credits}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {pack.save && (
-                          <span className="text-xs font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">
-                            {pack.save}
-                          </span>
-                        )}
-                        <span className="text-sm font-semibold text-heading">
-                          {pack.price}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Full personalized health plan per credit",
-                  "Unlimited destinations per plan",
-                  "Downloadable PDF report",
-                  "Doctor-ready summary",
-                  "Pre-existing condition support",
-                  "Emergency contacts & clinic finder",
-                  "Credits never expire",
-                ].map((f) => (
-                  <li
-                    key={f}
-                    className="flex items-start gap-3 text-sm text-heading"
-                  >
-                    <LucideCheck className="w-4 h-4 mt-0.5 text-accent shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <Button link="/register" variant="primary" className="self-stretch text-center justify-center flex">
-              Get My Free Plan
-            </Button>
-          </AnimateIn>
-
-          {/* Corporate */}
-          <AnimateIn type="fadeRight" delay={0.1} className="relative rounded-3xl p-8 md:p-10 flex flex-col justify-between overflow-hidden">
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(135deg, #2a7a6a 0%, #1a6a7a 30%, #187080 55%, #1a6878 80%, #246858 100%)",
-              }}
-            />
-            <span className="absolute top-6 right-6 text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full z-10">
-              Volume pricing
-            </span>
-
-            <div className="relative z-10">
-              <h3 className="text-2xl font-serif text-white mb-1">
-                Corporate
-              </h3>
-              <p className="text-sm text-white/60 mb-6">
-                For organizations sending employees abroad.
-              </p>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-5xl font-serif text-white">
-                  Custom
-                </span>
-              </div>
-              <p className="text-xs text-white/40 mb-8">
-                Credit-based pricing scaled to your team size and travel volume.
-              </p>
-
-              <div className="border-t border-white/10 pt-6 mb-8">
-                <p className="text-xs uppercase tracking-wider text-white/30 font-semibold mb-4">
-                  Starts at
-                </p>
-                <div className="space-y-3">
-                  {[
-                    { credits: "50 credits", price: "from $5/credit" },
-                    { credits: "200 credits", price: "from $4/credit" },
-                    { credits: "500+ credits", price: "Custom rate" },
-                  ].map((pack) => (
-                    <div
-                      key={pack.credits}
-                      className="flex items-center justify-between rounded-xl px-4 py-3"
-                      style={{ background: "rgba(255,255,255,0.08)" }}
-                    >
-                      <span className="text-sm font-medium text-white">
-                        {pack.credits}
-                      </span>
-                      <span className="text-sm font-semibold text-white/80">
-                        {pack.price}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Everything in Individual",
-                  "HR & compliance dashboard",
-                  "Bulk plan generation",
-                  "Duty-of-care documentation",
-                  "Risk reports per destination",
-                  "API access & travel platform integrations",
-                  "Dedicated account manager",
-                ].map((f) => (
-                  <li
-                    key={f}
-                    className="flex items-start gap-3 text-sm text-white"
-                  >
-                    <LucideCheck className="w-4 h-4 mt-0.5 text-white/50 shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <Button
-              variant="primary"
-              className="relative z-10 self-stretch bg-white !text-dark hover:bg-white/90 text-center justify-center flex"
-              link="/contact?type=SALES"
+        <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto" stagger={0.15}>
+          {individualPlans.map((plan) => (
+            <motion.div
+              variants={staggerItem}
+              key={plan.name}
+              className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden ${
+                plan.highlighted ? "" : "bg-button-secondary"
+              }`}
             >
-              Talk to sales
-            </Button>
-          </AnimateIn>
-        </div>
+              {plan.highlighted && (
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #2a7a6a 0%, #1a6a7a 30%, #187080 55%, #1a6878 80%, #246858 100%)",
+                  }}
+                />
+              )}
+              {plan.highlighted && (
+                <span className="absolute top-6 right-6 text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full">
+                  Most popular
+                </span>
+              )}
+              <div className="relative z-10">
+                <h3 className={`text-lg font-semibold mb-1 ${plan.highlighted ? "text-white" : "text-heading"}`}>
+                  {plan.name}
+                </h3>
+                <p className={`text-sm mb-6 ${plan.highlighted ? "text-white/60" : "text-body"}`}>
+                  {plan.description}
+                </p>
+                <div className="flex items-baseline gap-1 mb-8">
+                  <span className={`text-4xl font-serif ${plan.highlighted ? "text-white" : "text-heading"}`}>
+                    {plan.price}
+                  </span>
+                  {plan.period && (
+                    <span className={`text-sm ${plan.highlighted ? "text-white/60" : "text-body"}`}>
+                      {plan.period}
+                    </span>
+                  )}
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((f) => (
+                    <li
+                      key={f}
+                      className={`flex items-start gap-3 text-sm ${plan.highlighted ? "text-white" : "text-heading"}`}
+                    >
+                      <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${plan.highlighted ? "text-white/60" : "text-accent"}`} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {plan.highlighted ? (
+                <Button
+                  variant="primary"
+                  link="/auth/register"
+                  className="relative z-10 self-stretch bg-white !text-dark hover:bg-white/90 text-center justify-center flex"
+                >
+                  {plan.cta}
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  icon={<LucideArrowRight />}
+                  link={plan.name === "Credits" ? "/auth/register" : "/auth/register"}
+                  className="self-start relative z-10"
+                >
+                  {plan.cta}
+                </Button>
+              )}
+            </motion.div>
+          ))}
+        </StaggerGroup>
       </section>
 
-      {/* FAQ-like section */}
+      {/* Divider */}
+      <div className="px-8 lg:px-16 py-8 max-w-7xl mx-auto">
+        <div className="border-t border-border-light/50"></div>
+      </div>
+
+      {/* Company plans */}
+      <section className="px-8 lg:px-16 pb-24 max-w-7xl mx-auto">
+        <AnimateIn className="text-center mb-10">
+          <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-3">
+            For <span className="italic">companies</span>
+          </h2>
+          <p className="text-sm text-muted max-w-md mx-auto">
+            Team plans with signup credits, employee management, and admin tools.
+          </p>
+        </AnimateIn>
+
+        <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6" stagger={0.1}>
+          {companyPlans.map((plan) => (
+            <motion.div
+              variants={staggerItem}
+              key={plan.tier}
+              className={`rounded-3xl p-8 flex flex-col justify-between ${
+                plan.tier === "diamond"
+                  ? "relative overflow-hidden"
+                  : "bg-button-secondary"
+              }`}
+            >
+              {plan.tier === "diamond" && (
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #2a7a6a 0%, #1a6a7a 30%, #187080 55%, #1a6878 80%, #246858 100%)",
+                  }}
+                />
+              )}
+              {plan.tier === "diamond" && (
+                <span className="absolute top-6 right-6 text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full">
+                  Best for API teams
+                </span>
+              )}
+              <div className="relative z-10">
+                <h3 className={`text-2xl font-serif mb-1 ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
+                  {plan.name}
+                </h3>
+                <p className={`text-sm mb-6 ${plan.tier === "diamond" ? "text-white/60" : "text-body"}`}>
+                  {plan.description}
+                </p>
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className={`text-5xl font-serif ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
+                    {plan.signupCredits}
+                  </span>
+                  <span className={`text-sm ${plan.tier === "diamond" ? "text-white/60" : "text-body"}`}>
+                    signup credits
+                  </span>
+                </div>
+                <p className={`text-xs mb-8 ${plan.tier === "diamond" ? "text-white/40" : "text-muted"}`}>
+                  {plan.signupCredits} signup credits included
+                </p>
+                <ul className="space-y-3 mb-8">
+                  <li className={`flex items-start gap-3 text-sm ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
+                    <LucideUsers className={`w-4 h-4 mt-0.5 shrink-0 ${plan.tier === "diamond" ? "text-white/50" : "text-accent"}`} />
+                    {plan.employeeLimit}
+                  </li>
+                  <li className={`flex items-start gap-3 text-sm ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
+                    <LucideKey className={`w-4 h-4 mt-0.5 shrink-0 ${plan.apiAccess ? (plan.tier === "diamond" ? "text-white/50" : "text-accent") : "text-muted/40"}`} />
+                    API access {plan.apiAccess ? "included" : "not included"}
+                  </li>
+                  <li className={`flex items-start gap-3 text-sm ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
+                    <LucideHeadphones className={`w-4 h-4 mt-0.5 shrink-0 ${plan.customSupport ? (plan.tier === "diamond" ? "text-white/50" : "text-accent") : "text-muted/40"}`} />
+                    Custom support {plan.customSupport ? "included" : "not included"}
+                  </li>
+                  <li className={`flex items-start gap-3 text-sm ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
+                    <LucideShield className={`w-4 h-4 mt-0.5 shrink-0 ${plan.multipleAdminAccounts ? (plan.tier === "diamond" ? "text-white/50" : "text-accent") : "text-muted/40"}`} />
+                    Multiple admins {plan.multipleAdminAccounts ? "included" : "not included"}
+                  </li>
+                </ul>
+              </div>
+              <Button
+                variant={plan.tier === "diamond" ? "primary" : "secondary"}
+                className={`relative z-10 self-stretch text-center justify-center flex ${plan.tier === "diamond" ? "bg-white !text-dark hover:bg-white/90" : ""}`}
+                link={plan.tier === "diamond" ? "/contact?type=SALES" : "/contact?type=DEMO"}
+              >
+                {plan.tier === "diamond" ? "Talk to sales" : "Get started"}
+              </Button>
+            </motion.div>
+          ))}
+        </StaggerGroup>
+
+        {/* Elevated features */}
+        <AnimateIn className="mt-10">
+          <div className="bg-button-secondary rounded-3xl border border-border-light/60 p-8">
+            <h3 className="text-xl font-serif text-heading mb-5">Included in Silver, Gold, and Diamond</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {elevatedPlanFeatures.map((feature) => (
+                <div key={feature} className="flex items-start gap-3 text-sm text-heading">
+                  <LucideCheck className="w-4 h-4 mt-0.5 text-accent shrink-0" />
+                  {feature}
+                </div>
+              ))}
+            </div>
+          </div>
+        </AnimateIn>
+      </section>
+
+      {/* FAQ section */}
       <div className="bg-background-secondary">
         <section className="px-8 lg:px-16 py-24 max-w-5xl mx-auto">
           <AnimateIn>
@@ -207,20 +256,28 @@ const PricingPage = () => {
           <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6" stagger={0.1}>
             {[
               {
-                q: "Is the first plan really free?",
-                a: "Yes. Sign up and generate your first travel health plan at no cost. No credit card required.",
+                q: "How do credits work?",
+                a: "One credit generates one complete travel health plan for one trip. Individual users can buy credits directly. Company plans include signup credits that are distributed to employees.",
               },
               {
-                q: "What counts as one credit?",
-                a: "One credit generates one complete travel health plan for one trip—regardless of how many destinations that trip includes.",
+                q: "Can I buy more credits later?",
+                a: "Yes. Individual users can purchase credits anytime. Company admins can top up credits or request additional allocations from their dashboard.",
+              },
+              {
+                q: "What's the difference between individual and company plans?",
+                a: "Individual plans are pay-per-trip or buy-credits. Company plans bundle signup credits with employee management, multiple admins, API access, and compliance tools.",
+              },
+              {
+                q: "Can I upgrade my company plan?",
+                a: "Yes. Contact our sales team and we'll migrate your account to a higher tier. Any unused credits transfer over.",
               },
               {
                 q: "Do credits expire?",
                 a: "Never. Your credits stay in your account until you use them, whether that's next week or next year.",
               },
               {
-                q: "Can I upgrade to Corporate later?",
-                a: "Absolutely. Contact our sales team and we'll migrate your account. Any unused individual credits transfer over.",
+                q: "Is there a free trial?",
+                a: "Yes. The Explorer plan is completely free and gives you one destination report with basic vaccine checklists and risk overview.",
               },
             ].map((item) => (
               <motion.div variants={staggerItem} key={item.q} className="bg-background-primary rounded-2xl p-6">

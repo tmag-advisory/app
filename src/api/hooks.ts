@@ -28,6 +28,7 @@ import {
   ebooksApi,
   cartApi,
   exchangeRatesApi,
+  publicPlansApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -1255,5 +1256,23 @@ export function useSupportedCurrencies() {
     queryKey: ["exchange-rates", "currencies"],
     queryFn: () => exchangeRatesApi.getCurrencies(),
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
+  });
+}
+
+// ─── Public Plans Hooks ─────────────────────────────────────
+
+export function usePublicPlans() {
+  return useQuery({
+    queryKey: ["public-plans"],
+    queryFn: () => publicPlansApi.list(),
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+}
+
+export function usePublicPlan(id: number) {
+  return useQuery({
+    queryKey: ["public-plans", id],
+    queryFn: () => publicPlansApi.get(id),
+    enabled: id > 0,
   });
 }

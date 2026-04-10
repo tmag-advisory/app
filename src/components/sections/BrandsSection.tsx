@@ -15,7 +15,7 @@ const BrandsSection = () => {
             <div className="grid grid-cols-3 gap-6 text-center">
                 {stats.map((s) => (
                     <div key={s.label} className="flex flex-col items-center gap-1">
-                        <span className="text-3xl md:text-4xl font-serif font-bold text-heading">{s.value}</span>
+                        <span className="text-3xl md:text-5xl font-serif text-heading">{s.value}</span>
                         <span className="text-xs text-muted">{s.label}</span>
                     </div>
                 ))}

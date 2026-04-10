@@ -77,7 +77,7 @@ const WhoWeAreSection = () => {
                             ))}
                         </StaggerGroup>
                     </div>
-                </div>/
+                </div>
             </section >
         </div >
     );

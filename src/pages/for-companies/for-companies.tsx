@@ -7,12 +7,15 @@ import {
     LucideCheck,
     LucideFileText,
     LucidePlug,
+    LucideKey,
+    LucideHeadphones,
 } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
+import { companyPlans, elevatedPlanFeatures } from "../../constants/companyPlans";
 
 const workflowSteps = [
     {
@@ -48,10 +51,7 @@ const features = [
     "Duty-of-care audit trail",
     "Credit allocation across departments",
     "Role-based access (HR, travel managers, admins)",
-    "SSO and SAML integration",
-    "REST API for travel platform integration",
-    "Dedicated account manager",
-    "Custom SLA and priority support",
+    ...elevatedPlanFeatures,
 ];
 
 const ForCompanies = () => {
@@ -103,6 +103,66 @@ const ForCompanies = () => {
                             <span className="text-xs text-muted">
                                 {stat.label}
                             </span>
+                        </motion.div>
+                    ))}
+                </StaggerGroup>
+            </section>
+
+            {/* Company plans */}
+            <section className="px-8 lg:px-16 pb-20 max-w-7xl mx-auto">
+                <AnimateIn className="text-center mb-12">
+                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
+                        Company plans
+                    </span>
+                    <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
+                        Bronze, Silver, Gold, and <span className="italic">Diamond</span>.
+                    </h2>
+                </AnimateIn>
+                <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6" stagger={0.1}>
+                    {companyPlans.map((plan) => (
+                        <motion.div
+                            variants={staggerItem}
+                            key={plan.tier}
+                            className={`rounded-2xl p-6 border flex flex-col ${plan.tier === "diamond" ? "bg-dark text-white border-dark" : "bg-background-primary border-border-light/50"}`}
+                        >
+                            {plan.tier === "diamond" && (
+                                <span className="self-start text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full mb-4">
+                                    Best for API teams
+                                </span>
+                            )}
+                            <h3 className={`text-xl font-serif mb-1 ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>{plan.name}</h3>
+                            <p className={`text-xs mb-4 ${plan.tier === "diamond" ? "text-white/60" : "text-muted"}`}>{plan.description}</p>
+                            <div className="flex items-baseline gap-1 mb-1">
+                                <p className={`text-3xl font-serif ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
+                                    {plan.signupCredits}
+                                </p>
+                                <span className={`text-sm ${plan.tier === "diamond" ? "text-white/60" : "text-muted"}`}>signup credits</span>
+                            </div>
+                                <ul className="space-y-2.5 my-6 flex-1">
+                                <li className={`flex items-center gap-2 text-xs ${plan.tier === "diamond" ? "text-white/80" : "text-body"}`}>
+                                    <LucideUsers className={`w-3.5 h-3.5 ${plan.tier === "diamond" ? "text-white/60" : "text-accent"}`} />
+                                    {plan.employeeLimit}
+                                </li>
+                                <li className={`flex items-center gap-2 text-xs ${plan.tier === "diamond" ? "text-white/80" : "text-body"}`}>
+                                    <LucideKey className={`w-3.5 h-3.5 ${plan.apiAccess ? (plan.tier === "diamond" ? "text-white/60" : "text-accent") : "text-muted/40"}`} />
+                                    API access {plan.apiAccess ? "included" : "not included"}
+                                </li>
+                                <li className={`flex items-center gap-2 text-xs ${plan.tier === "diamond" ? "text-white/80" : "text-body"}`}>
+                                    <LucideHeadphones className={`w-3.5 h-3.5 ${plan.customSupport ? (plan.tier === "diamond" ? "text-white/60" : "text-accent") : "text-muted/40"}`} />
+                                    Custom support {plan.customSupport ? "included" : "not included"}
+                                </li>
+                                <li className={`flex items-center gap-2 text-xs ${plan.tier === "diamond" ? "text-white/80" : "text-body"}`}>
+                                    <LucideShieldCheck className={`w-3.5 h-3.5 ${plan.multipleAdminAccounts ? (plan.tier === "diamond" ? "text-white/60" : "text-accent") : "text-muted/40"}`} />
+                                    Multiple admins {plan.multipleAdminAccounts ? "included" : "not included"}
+                                </li>
+                            </ul>
+                            <Button
+                                variant={plan.tier === "diamond" ? "primary" : "secondary"}
+                                link={plan.tier === "diamond" ? "/contact?type=SALES" : "/pricing"}
+                                className={plan.tier === "diamond" ? "bg-white !text-dark hover:bg-white/90 w-full text-center justify-center flex" : "w-full text-center justify-center flex"}
+                            >
+                                {plan.tier === "diamond" ? "Talk to sales" : "View plans"}
+                            </Button>
                         </motion.div>
                     ))}
                 </StaggerGroup>

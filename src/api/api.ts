@@ -681,3 +681,25 @@ export const newsletterApi = {
   subscribe: (data: NewsletterSubscribeRequest) =>
     api.post<ApiResponse<NewsletterSubscribeResponse>>("/newsletter/subscribe", data).then((r) => r.data.data),
 };
+
+// ─── Public Plans ───────────────────────────────────────────
+
+export interface PublicPlanResponse {
+  id: number;
+  code: string;
+  displayName: string;
+  signupCredits: number;
+  maxEmployees: number;
+  customSupportEnabled: boolean;
+  apiAccessEnabled: boolean;
+  multipleAdminAccountsEnabled: boolean;
+  highEmployeeLimitEnabled: boolean;
+}
+
+export const publicPlansApi = {
+  list: () =>
+    api.get<ApiResponse<PublicPlanResponse[]>>("/public/plans").then((r) => r.data.data),
+
+  get: (id: number) =>
+    api.get<ApiResponse<PublicPlanResponse>>(`/public/plans/${id}`).then((r) => r.data.data),
+};
