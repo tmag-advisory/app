@@ -68,6 +68,10 @@ const HRBillingCallback = lazy(() => import("../pages/hr/billing-callback"));
 // Payment pages
 const PaymentCallback = lazy(() => import("../pages/payment/callback"));
 
+// Company onboarding pages
+const CompanyOnboarding = lazy(() => import("../pages/company-onboarding/company-onboarding"));
+const CompanyOnboardingCallback = lazy(() => import("../pages/company-onboarding/callback"));
+
 // Error pages (lazy-loaded)
 const NotFound = lazy(() => import("../pages/not-found/not-found"));
 const ServerError = lazy(() => import("../pages/not-found/server-error"));
@@ -107,6 +111,10 @@ const router = createBrowserRouter([
     // Shop checkout (standalone, no nav)
     { path: "shop/checkout", element: <CheckoutPage /> },
     { path: "shop/order-confirmation", element: <EbookOrderConfirmation /> },
+
+    // Company onboarding (standalone, no nav)
+    { path: "company-onboarding", element: <CompanyOnboarding /> },
+    { path: "company-onboarding/callback", element: <CompanyOnboardingCallback /> },
 
     // Auth
     {

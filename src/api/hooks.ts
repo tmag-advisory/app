@@ -29,6 +29,7 @@ import {
   cartApi,
   exchangeRatesApi,
   publicPlansApi,
+  companyOnboardingApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -1274,5 +1275,39 @@ export function usePublicPlan(id: number) {
     queryKey: ["public-plans", id],
     queryFn: () => publicPlansApi.get(id),
     enabled: id > 0,
+  });
+}
+
+// ─── Company Onboarding Hooks ─────────────────────────────────
+
+export function useSubmitCompanyOnboarding() {
+  return useMutation({
+    mutationFn: (data: import("./types").CompanyOnboardingRequest) =>
+      companyOnboardingApi.submit(data),
+  });
+}
+
+export function useInitiateOnboardingPayment() {
+  return useMutation({
+    mutationFn: (id: number) => companyOnboardingApi.initiatePayment(id),
+  });
+}
+
+export function useVerifyOnboardingPayment() {
+  return useMutation({
+    mutationFn: ({ txRef, transactionId }: { txRef: string; transactionId?: string }) =>
+      companyOnboardingApi.verifyPayment(txRef, transactionId),
+  });
+}
+
+export function useOnboardingStatus(id: number) {
+  return useQuery({
+    queryKey: ["company-onboarding", id],
+    queryFn: () => companyOnboardingApi.getStatus(id),
+    enabled: id > 0,
+    refetchInterval: (query) => {
+      const data = query.state.data as import("./types").CompanyOnboardingResponse | undefined;
+      return data?.status === "pending_approval" ? 5000 : false;
+    },
   });
 }

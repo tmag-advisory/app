@@ -694,6 +694,10 @@ export interface PublicPlanResponse {
   apiAccessEnabled: boolean;
   multipleAdminAccountsEnabled: boolean;
   highEmployeeLimitEnabled: boolean;
+  priceUsd: number;
+  priceNgn: number;
+  priceEur: number;
+  priceGbp: number;
 }
 
 export const publicPlansApi = {
@@ -702,4 +706,22 @@ export const publicPlansApi = {
 
   get: (id: number) =>
     api.get<ApiResponse<PublicPlanResponse>>(`/public/plans/${id}`).then((r) => r.data.data),
+};
+
+// ─── Company Onboarding ────────────────────────────────────
+
+export const companyOnboardingApi = {
+  submit: (data: import("./types").CompanyOnboardingRequest) =>
+    api.post<ApiResponse<import("./types").CompanyOnboardingResponse>>("/public/company-onboarding", data).then((r) => r.data.data),
+
+  initiatePayment: (id: number) =>
+    api.post<ApiResponse<import("./types").OnboardingPaymentInitiate>>(`/public/company-onboarding/${id}/pay`).then((r) => r.data.data),
+
+  verifyPayment: (txRef: string, transactionId?: string) =>
+    api.get<ApiResponse<import("./types").CompanyOnboardingResponse>>("/public/company-onboarding/verify", {
+      params: { tx_ref: txRef, transaction_id: transactionId },
+    }).then((r) => r.data.data),
+
+  getStatus: (id: number) =>
+    api.get<ApiResponse<import("./types").CompanyOnboardingResponse>>(`/public/company-onboarding/${id}/status`).then((r) => r.data.data),
 };

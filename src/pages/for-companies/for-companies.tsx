@@ -10,7 +10,6 @@ import {
     LucideKey,
     LucideHeadphones,
 } from "lucide-react";
-import { useState } from "react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
@@ -55,12 +54,6 @@ const features = [
 ];
 
 const ForCompanies = () => {
-    const [leadForm, setLeadForm] = useState({ email: "", size: "" });
-    const handleLeadSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        window.location.href = `/contact?type=DEMO&email=${encodeURIComponent(leadForm.email)}&size=${encodeURIComponent(leadForm.size)}`;
-    };
-
     return (
         <main>
             {/* Hero */}
@@ -77,7 +70,7 @@ const ForCompanies = () => {
                     personalized health plans for your entire team in minutes.
                 </p>
                 <div className="flex items-center gap-4 mt-8 flex-wrap justify-center">
-                    <Button variant="primary" link="/contact?type=DEMO">Request a demo</Button>
+                    <Button variant="primary" link="/company-onboarding">Get started</Button>
                     <Button variant="secondary" icon={<LucideArrowRight />} link="/pricing">
                         View pricing
                     </Button>
@@ -158,10 +151,10 @@ const ForCompanies = () => {
                             </ul>
                             <Button
                                 variant={plan.tier === "diamond" ? "primary" : "secondary"}
-                                link={plan.tier === "diamond" ? "/contact?type=SALES" : "/pricing"}
+                                link="/company-onboarding"
                                 className={plan.tier === "diamond" ? "bg-white !text-dark hover:bg-white/90 w-full text-center justify-center flex" : "w-full text-center justify-center flex"}
                             >
-                                {plan.tier === "diamond" ? "Talk to sales" : "View plans"}
+                                Get started
                             </Button>
                         </motion.div>
                     ))}
@@ -363,40 +356,19 @@ const ForCompanies = () => {
                     />
                     <AnimateIn type="scaleUp" className="relative z-10 max-w-xl mx-auto">
                         <h2 className="text-4xl md:text-5xl text-white leading-[1.1] font-serif mb-4">
-                            See it in action.
+                            Ready to get started?
                         </h2>
                         <p className="text-sm text-white/70 leading-relaxed max-w-md mx-auto mb-8">
-                            Book a 15-minute demo and we'll show you how TMAG
-                            fits into your travel risk management workflow.
+                            Choose a plan, set up your team, and start generating
+                            travel health plans for your employees in minutes.
                         </p>
-                        <form onSubmit={handleLeadSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                            <input
-                                type="email"
-                                required
-                                placeholder="Work email"
-                                value={leadForm.email}
-                                onChange={(e) => setLeadForm((f) => ({ ...f, email: e.target.value }))}
-                                className="flex-1 bg-white/15 border border-white/25 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/50 outline-none focus:border-white/60 transition-colors duration-200"
-                            />
-                            <select
-                                required
-                                value={leadForm.size}
-                                onChange={(e) => setLeadForm((f) => ({ ...f, size: e.target.value }))}
-                                className="bg-white/15 border border-white/25 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-white/60 transition-colors duration-200 cursor-pointer"
-                            >
-                                <option value="" disabled className="text-heading">Team size</option>
-                                <option value="1-10" className="text-heading">1–10 employees</option>
-                                <option value="11-50" className="text-heading">11–50 employees</option>
-                                <option value="51-200" className="text-heading">51–200 employees</option>
-                                <option value="200+" className="text-heading">200+ employees</option>
-                            </select>
-                            <button
-                                type="submit"
-                                className="px-5 py-3 rounded-xl bg-white text-dark font-semibold text-sm cursor-pointer hover:bg-white/90 transition-colors duration-200 whitespace-nowrap"
-                            >
-                                Request demo
-                            </button>
-                        </form>
+                        <Button
+                            variant="primary"
+                            link="/company-onboarding"
+                            className="bg-white !text-dark hover:bg-white/90 mx-auto"
+                        >
+                            Start onboarding
+                        </Button>
                     </AnimateIn>
                 </div>
             </section>

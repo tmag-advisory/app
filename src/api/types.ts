@@ -1072,4 +1072,54 @@ export interface ExchangeRatesResponse {
   lastFetched: string | null;
 }
 
+// ============ Company Onboarding ============
+
+export interface TeamMember {
+  name: string;
+  email: string;
+  role: "admin" | "hr";
+}
+
+export interface CompanyOnboardingRequest {
+  companyName: string;
+  industry: string;
+  contactEmail: string;
+  contactPhone: string;
+  website: string;
+  billingCurrency: string;
+  selectedPlanCode: string;
+  sampleRequest: string;
+  teamMembers: TeamMember[];
+}
+
+export interface CompanyOnboardingResponse {
+  id: number;
+  companyName: string;
+  industry: string;
+  contactEmail: string;
+  contactPhone: string;
+  website: string;
+  billingCurrency: string;
+  selectedPlanCode: string;
+  sampleRequest: string;
+  teamMembers: TeamMember[];
+  txRef: string;
+  paymentStatus: string;
+  paymentAmount: number;
+  paymentCurrency: string;
+  status: string;
+  rejectionReason: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdCompanyId: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OnboardingPaymentInitiate {
+  txRef: string;
+  paymentLink: string;
+  amount: number;
+  currency: string;
+}
 

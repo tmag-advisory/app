@@ -221,9 +221,9 @@ const PricingPage = () => {
               <Button
                 variant={plan.tier === "diamond" ? "primary" : "secondary"}
                 className={`relative z-10 self-stretch text-center justify-center flex ${plan.tier === "diamond" ? "bg-white !text-dark hover:bg-white/90" : ""}`}
-                link={plan.tier === "diamond" ? "/contact?type=SALES" : "/contact?type=DEMO"}
+                link="/company-onboarding"
               >
-                {plan.tier === "diamond" ? "Talk to sales" : "Get started"}
+                Get started
               </Button>
             </motion.div>
           ))}
