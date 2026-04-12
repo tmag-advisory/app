@@ -210,19 +210,72 @@ const Onboarding = () => {
         updateProfile.isPending;
 
     return (
-        <div className="min-h-screen bg-background-primary flex flex-col">
-            {/* Top bar */}
-            <div className="px-6 sm:px-8 py-5 flex items-center justify-between">
+        <div className="min-h-screen bg-background-primary flex flex-col lg:flex-row">
+            {/* Mobile Top bar / Desktop Minimal Header */}
+            <div className="px-6 sm:px-8 py-5 flex items-center justify-between lg:fixed lg:w-full lg:z-30 lg:bg-background-primary/80 lg:backdrop-blur-md lg:border-b lg:border-border-light/60">
                 <Link to="/" className="text-heading tracking-tight text-xl font-serif font-medium">
                     TMAG
                 </Link>
-                <span className="text-xs text-muted tabular-nums">
+                {/* Mobile step counter */}
+                <span className="lg:hidden text-xs text-muted tabular-nums">
                     Step {step + 1} of {steps.length}
                 </span>
             </div>
 
-            {/* Progress */}
-            <div className="px-6 sm:px-8 max-w-2xl mx-auto w-full">
+            {/* Desktop Sidebar Progress */}
+            <div className="hidden lg:flex lg:w-80 lg:shrink-0 lg:flex-col lg:border-r lg:border-border-light/60 lg:bg-background-primary lg:pt-20">
+                <div className="flex-1 px-6 py-8">
+                    {/* Progress header */}
+                    <div className="mb-8">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-heading">Onboarding</span>
+                            <span className="text-sm font-bold text-accent">Step {step + 1} of {steps.length}</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-border-light overflow-hidden">
+                            <motion.div
+                                className="h-full rounded-full bg-accent"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${((step + 0.5) / steps.length) * 100}%` }}
+                                transition={{ duration: 0.5, ease: "easeOut" }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Steps list - vertical */}
+                    <nav className="space-y-2">
+                        {steps.map((s, i) => (
+                            <div
+                                key={s}
+                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${
+                                    i === step
+                                        ? "bg-accent/10 border border-accent/20"
+                                        : i < step
+                                            ? "text-accent"
+                                            : "text-muted"
+                                }`}
+                            >
+                                <div
+                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
+                                        i < step
+                                            ? "bg-accent text-white"
+                                            : i === step
+                                                ? "bg-heading text-white"
+                                                : "bg-border-light text-muted"
+                                    }`}
+                                >
+                                    {i < step ? <LucideCheck className="w-3.5 h-3.5" /> : i + 1}
+                                </div>
+                                <span className={`text-sm font-medium ${i === step ? "text-heading" : ""}`}>
+                                    {s}
+                                </span>
+                            </div>
+                        ))}
+                    </nav>
+                </div>
+            </div>
+
+            {/* Mobile Progress - horizontal */}
+            <div className="lg:hidden px-6 sm:px-8 max-w-2xl mx-auto w-full pt-4">
                 <div className="flex items-center gap-2">
                     {steps.map((s, i) => (
                         <div key={s} className="flex-1">
@@ -244,7 +297,7 @@ const Onboarding = () => {
             </div>
 
             {/* Content */}
-            <div className="flex-1 flex items-center justify-center px-6 pb-16 pt-4">
+            <div className="flex-1 flex items-center justify-center px-6 pb-16 pt-4 lg:pt-20">
                 <div className="w-full max-w-lg">
                     {error && (
                         <motion.div

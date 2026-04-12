@@ -3,13 +3,16 @@ import { motion } from "framer-motion";
 import {
     LucideArrowLeft,
     LucideArrowRight,
+    LucideCalendarDays,
     LucideCheck,
     LucideGlobe,
     LucideLoader2,
+    LucideMapPin,
+    LucidePlaneLanding,
+    LucidePlaneTakeoff,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import CountryPicker from "../CountryPicker";
-import TripItineraryFlow, { type TripItineraryData, type MultiStopLeg } from "./TripItineraryFlow";
 import { useOnboardingQuestions } from "../../api/hooks";
 
 interface QuestionOption {
@@ -21,7 +24,7 @@ interface Question {
     key: string;
     text: string;
     description?: string;
-    type: "radio" | "checkbox" | "text" | "textarea" | "date" | "country" | "multi_country" | "trip_itinerary";
+    type: "radio" | "checkbox" | "text" | "textarea" | "date" | "country" | "multi_country";
     required?: boolean;
     options?: QuestionOption[];
     placeholder?: string;
@@ -95,43 +98,6 @@ function daysInclusiveBetween(start?: string, end?: string): number {
     return diff > 0 ? diff : 0;
 }
 
-function isTripItineraryComplete(data: TripItineraryData | undefined): boolean {
-    if (!data) return false;
-    if (data.tripType === "one") {
-        return Boolean(
-            data.oneTo?.trim() &&
-            data.oneDepartureDate?.trim() &&
-            data.oneLengthOfStay?.trim() &&
-            data.onePurpose?.trim()
-        );
-    }
-    if (data.tripType === "return") {
-        return Boolean(
-            data.returnFrom?.trim() &&
-            data.returnTo?.trim() &&
-            data.returnDepartureDate?.trim() &&
-            data.returnReturnDate?.trim()
-        );
-    }
-    if (data.tripType === "multi") {
-        const legs = data.multiLegs ?? [];
-        if (legs.length < 1) return false;
-        return legs.every(
-            (leg) => leg.country?.trim() && leg.arrivalDate?.trim() && leg.nights?.trim()
-        );
-    }
-    if (data.tripType === "transit") {
-        return Boolean(
-            data.transitFrom?.trim() &&
-            data.transitFinalDestination?.trim() &&
-            data.transitLocation?.trim() &&
-            data.transitDuration?.trim() &&
-            data.transitDepartureDate?.trim()
-        );
-    }
-    return false;
-}
-
 const TRAVEL_PURPOSE_TO_PLAN: Record<string, string> = {
     leisure_tourism: "Leisure",
     business_work: "Business",
@@ -154,24 +120,6 @@ function toNonEmptyStringArray(value: unknown): string[] {
 
 function getDisplayValue(question: Question, value: unknown): string {
     if (value == null) return "Not provided";
-    if (question.type === "trip_itinerary") {
-        const trip = value as TripItineraryData;
-        if (!trip?.tripType) return "Not provided";
-        if (trip.tripType === "one") {
-            return `One-way: ${(trip.oneFrom ?? "").trim()} → ${(trip.oneTo ?? "").trim()}`;
-        }
-        if (trip.tripType === "return") {
-            return `Return: ${(trip.returnFrom ?? "").trim()} → ${(trip.returnTo ?? "").trim()}`;
-        }
-        if (trip.tripType === "multi") {
-            const count = trip.multiLegs?.length ?? 0;
-            return `Multi-destination: ${count} stop(s)`;
-        }
-        if (trip.tripType === "transit") {
-            return `Transit: ${(trip.transitFrom ?? "").trim()} via ${(trip.transitLocation ?? "").trim()} → ${(trip.transitFinalDestination ?? "").trim()}`;
-        }
-        return "Not provided";
-    }
     if (question.type === "checkbox") {
         const selected = toNonEmptyStringArray(value);
         if (selected.length === 0) return "Not provided";
@@ -192,18 +140,16 @@ function getDisplayValue(question: Question, value: unknown): string {
 
 function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): QuestionnairePlanPayload | null {
     const travelCountries = toNonEmptyStringArray(answers.travel_countries);
-    const itinerary = (answers.trip_itinerary as TripItineraryData | undefined) ?? undefined;
-
-    if (travelCountries.length === 0 && !itinerary) return null;
+    if (travelCountries.length === 0) return null;
 
     const city = typeof answers.travel_city_region === "string" ? answers.travel_city_region.trim() : "";
     const departureDate = typeof answers.departure_date === "string" ? answers.departure_date.trim() : "";
     const returnDateOrDuration =
         typeof answers.return_date_or_duration === "string" ? answers.return_date_or_duration.trim() : "";
 
-    let primaryCountry = travelCountries[0] ?? "";
+    const primaryCountry = travelCountries[0] ?? "";
     const destinationCountries = travelCountries.join(", ");
-    let destination = [city, destinationCountries].filter(Boolean).join(", ") || destinationCountries;
+    const destination = [city, destinationCountries].filter(Boolean).join(", ") || destinationCountries;
 
     let duration = 7;
     let tripType: "one-way" | "return" = "one-way";
@@ -227,83 +173,6 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
         if (!Number.isNaN(parsedDuration) && parsedDuration > 0) duration = parsedDuration;
     }
 
-    if (!primaryCountry && itinerary) {
-        if (itinerary.tripType === "one") {
-            primaryCountry = (itinerary.oneTo ?? "").trim();
-            const fromCity = (itinerary.oneFrom ?? "").trim();
-            destination = primaryCountry;
-            if (fromCity) destination = `${fromCity} → ${destination}`;
-            duration = 7;
-            tripType = "one-way";
-            tripDetailsJson = JSON.stringify({
-                tripType: "one-way",
-                departureCity: fromCity,
-                destination: primaryCountry,
-                departureDate: itinerary.oneDepartureDate ?? "",
-                lengthOfStay: itinerary.oneLengthOfStay ?? "",
-                purpose: itinerary.onePurpose ?? "",
-                flightNumber: itinerary.oneFlightNumber ?? "",
-                accommodationType: itinerary.oneAccommodationType ?? "",
-                stops: [{ city: "", country: primaryCountry, order: 1 }],
-            });
-        } else if (itinerary.tripType === "return") {
-            const from = (itinerary.returnFrom ?? "").trim();
-            const to = (itinerary.returnTo ?? "").trim();
-            primaryCountry = to;
-            destination = to;
-            if (from) destination = `${from} → ${destination}`;
-            tripType = "return";
-            duration = 7;
-            tripDetailsJson = JSON.stringify({
-                tripType: "return",
-                departureCity: from,
-                destination: to,
-                departureDate: itinerary.returnDepartureDate ?? "",
-                returnDate: itinerary.returnReturnDate ?? "",
-                outboundFlightNumber: itinerary.outboundFlightNumber ?? "",
-                returnFlightNumber: itinerary.returnFlightNumber ?? "",
-                accommodationType: itinerary.returnAccommodationType ?? "",
-                stops: [{ city: "", country: to, order: 1 }],
-            });
-        } else if (itinerary.tripType === "multi") {
-            const legs = itinerary.multiLegs ?? [];
-            const parts = legs
-                .map((leg) => [leg.city?.trim(), leg.country?.trim()].filter(Boolean).join(", "))
-                .filter(Boolean);
-            destination = parts.join(" → ");
-            primaryCountry = (legs[0]?.country ?? "").trim();
-            tripDetailsJson = JSON.stringify({
-                tripType: "multi",
-                departingFrom: itinerary.multiDepartingFrom ?? "",
-                finalReturnDestination: itinerary.multiFinalReturnDestination ?? "",
-                overallReturnDate: itinerary.multiOverallReturnDate ?? "",
-                stops: legs.map((leg, index) => ({
-                    city: (leg.city ?? "").trim(),
-                    country: (leg.country ?? "").trim(),
-                    arrivalDate: leg.arrivalDate ?? "",
-                    nights: leg.nights ?? "",
-                    accommodationType: leg.accommodationType ?? "",
-                    order: index + 1,
-                })),
-            });
-        } else if (itinerary.tripType === "transit") {
-            primaryCountry = (itinerary.transitFinalDestination ?? "").trim();
-            destination = `${(itinerary.transitFrom ?? "").trim()} via ${(itinerary.transitLocation ?? "").trim()} → ${primaryCountry}`;
-            tripDetailsJson = JSON.stringify({
-                tripType: "transit",
-                departureCity: itinerary.transitFrom ?? "",
-                finalDestination: itinerary.transitFinalDestination ?? "",
-                transitLocation: itinerary.transitLocation ?? "",
-                transitDuration: itinerary.transitDuration ?? "",
-                departureDate: itinerary.transitDepartureDate ?? "",
-                returnDate: itinerary.transitReturnDate ?? "",
-                stops: [{ city: "", country: primaryCountry, order: 1 }],
-            });
-        }
-    }
-
-    if (!primaryCountry) return null;
-
     const purposeSelections = answers.purpose_of_travel;
     let purpose = "Leisure";
     if (Array.isArray(purposeSelections) && purposeSelections.length > 0) {
@@ -325,6 +194,30 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
         tripDetailsJson,
         questionnaireResponses: answers,
     };
+}
+
+function isTripItineraryComplete(data: TripItineraryData | undefined): boolean {
+    if (!data) return false;
+    if (data.tripType === "one") {
+        return Boolean(
+            data.oneDestination?.trim() &&
+            data.oneDepartureDate?.trim() &&
+            data.oneReturnDate?.trim()
+        );
+    }
+    if (data.tripType === "return") {
+        return Boolean(
+            data.returnFrom?.trim() &&
+            data.returnTo?.trim() &&
+            data.returnDepartureDate?.trim() &&
+            data.returnReturnDate?.trim()
+        );
+    }
+    const legs = data.legs ?? [];
+    if (legs.length < 2) return false;
+    return legs.every((leg) =>
+        Boolean(leg.from?.trim() && leg.to?.trim() && leg.arrivalDate?.trim() && leg.departureDate?.trim())
+    );
 }
 
 const PlanQuestionnaireFlow = ({
@@ -359,9 +252,6 @@ const PlanQuestionnaireFlow = ({
     const isRequiredAnswered = (question: Question): boolean => {
         if (!question.required) return true;
         const value = answers[question.key];
-        if (question.type === "trip_itinerary") {
-            return isTripItineraryComplete(value as TripItineraryData | undefined);
-        }
         if (question.type === "checkbox" || question.type === "multi_country") {
             return toNonEmptyStringArray(value).length > 0;
         }
@@ -469,18 +359,20 @@ const PlanQuestionnaireFlow = ({
                                 {categories.map((cat, idx) => (
                                     <div key={cat.category_key} className="relative flex w-[140px] flex-col items-center">
                                         <div
-                                            className={`z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 text-[11px] font-bold ${idx < categoryIndex
-                                                ? "border-accent bg-accent text-white"
-                                                : idx === categoryIndex
-                                                    ? "border-heading bg-heading text-white"
-                                                    : "border-border-light bg-white text-muted"
-                                                }`}
+                                            className={`z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 text-[11px] font-bold ${
+                                                idx < categoryIndex
+                                                    ? "border-accent bg-accent text-white"
+                                                    : idx === categoryIndex
+                                                      ? "border-heading bg-heading text-white"
+                                                      : "border-border-light bg-white text-muted"
+                                            }`}
                                         >
                                             {idx < categoryIndex ? <LucideCheck className="h-3.5 w-3.5" /> : idx + 1}
                                         </div>
                                         <p
-                                            className={`mt-2 text-center text-[11px] font-semibold leading-snug ${idx === categoryIndex ? "text-heading" : idx < categoryIndex ? "text-accent" : "text-muted"
-                                                }`}
+                                            className={`mt-2 text-center text-[11px] font-semibold leading-snug ${
+                                                idx === categoryIndex ? "text-heading" : idx < categoryIndex ? "text-accent" : "text-muted"
+                                            }`}
                                         >
                                             {cat.category_name}
                                         </p>
@@ -620,10 +512,11 @@ const QuestionInput = ({
                             key={option.value}
                             type="button"
                             onClick={() => onChange(option.value)}
-                            className={`w-full text-left p-4 rounded-xl border text-[15px] font-semibold transition-colors ${value === option.value
-                                ? "border-accent bg-accent/10 text-heading"
-                                : "border-border-light/70 bg-white text-body hover:border-border-light"
-                                }`}
+                            className={`w-full text-left p-4 rounded-xl border text-[15px] font-semibold transition-colors ${
+                                value === option.value
+                                    ? "border-accent bg-accent/10 text-heading"
+                                    : "border-border-light/70 bg-white text-body hover:border-border-light"
+                            }`}
                         >
                             {option.label}
                         </button>
@@ -640,8 +533,9 @@ const QuestionInput = ({
                                 key={option.value}
                                 type="button"
                                 onClick={() => onToggleCheckbox(option.value)}
-                                className={`w-full text-left p-4 rounded-xl border text-[15px] font-semibold transition-colors ${checked ? "border-accent bg-accent/10 text-heading" : "border-border-light/70 bg-white text-body hover:border-border-light"
-                                    }`}
+                                className={`w-full text-left p-4 rounded-xl border text-[15px] font-semibold transition-colors ${
+                                    checked ? "border-accent bg-accent/10 text-heading" : "border-border-light/70 bg-white text-body hover:border-border-light"
+                                }`}
                             >
                                 {option.label}
                             </button>
@@ -685,13 +579,6 @@ const QuestionInput = ({
                     placeholder={question.placeholder}
                 />
             );
-        case "trip_itinerary":
-            return (
-                <TripItineraryFlow
-                    value={(value as TripItineraryData) || { tripType: "one" }}
-                    onChange={(data) => onChange(data)}
-                />
-            );
         default:
             return (
                 <input
@@ -709,6 +596,278 @@ const FieldLabel = ({ label }: { label: string }) => (
     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</label>
 );
 
+const TripItineraryInput = ({
+    value,
+    onChange,
+}: {
+    value: TripItineraryData;
+    onChange: (value: unknown) => void;
+}) => {
+    const data: TripItineraryData = {
+        ...value,
+        tripType: value?.tripType ?? "one",
+        legs: value?.legs ?? [],
+    };
+
+    const update = (patch: Partial<TripItineraryData>) => onChange({ ...data, ...patch });
+    const setTripType = (tripType: TripItineraryData["tripType"]) => {
+        const patch: Partial<TripItineraryData> = { tripType };
+        if (tripType === "multi" && (!data.legs || data.legs.length < 2)) {
+            patch.legs = [
+                { from: "", to: "", city: "", arrivalDate: "", departureDate: "" },
+                { from: "", to: "", city: "", arrivalDate: "", departureDate: "" },
+            ];
+        }
+        update(patch);
+    };
+    const updateLeg = (index: number, patch: Partial<TripLeg>) => {
+        const legs = [...(data.legs ?? [])];
+        legs[index] = { ...legs[index], ...patch };
+        update({ legs });
+    };
+    const addLeg = () =>
+        update({
+            legs: [...(data.legs ?? []), { from: "", to: "", city: "", arrivalDate: "", departureDate: "" }],
+        });
+    const removeLeg = (index: number) =>
+        update({ legs: (data.legs ?? []).filter((_, idx) => idx !== index) });
+
+    return (
+        <div className="space-y-5">
+            <div className="grid grid-cols-3 gap-2.5">
+                {[
+                    { value: "one" as const, label: "Single trip" },
+                    { value: "return" as const, label: "Round trip" },
+                    { value: "multi" as const, label: "Multi-stop" },
+                ].map((option) => (
+                    <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setTripType(option.value)}
+                        className={`px-3 py-2.5 rounded-xl text-sm font-semibold border ${
+                            data.tripType === option.value
+                                ? "bg-dark text-white border-dark"
+                                : "bg-white text-muted border-border-light"
+                        }`}
+                    >
+                        {option.label}
+                    </button>
+                ))}
+            </div>
+
+            {data.tripType === "one" && (
+                <div className="space-y-4">
+                    <div>
+                        <FieldLabel label="Destination country" />
+                        <div className="relative">
+                            <LucideGlobe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                            <CountryPicker
+                                value={data.oneDestination ?? ""}
+                                onChange={(country) => update({ oneDestination: country })}
+                                placeholder="Select destination country"
+                                inputClassName="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 pr-10 text-[15px] font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent"
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <FieldLabel label="City or region" />
+                        <div className="relative">
+                            <LucideMapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                            <input
+                                type="text"
+                                value={data.oneCity ?? ""}
+                                onChange={(e) => update({ oneCity: e.target.value })}
+                                placeholder="Enter city or region (optional)"
+                                className="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 text-[15px] font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent"
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <FieldLabel label="Departure date" />
+                            <div className="relative">
+                                <LucidePlaneTakeoff className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                <input
+                                    type="date"
+                                    value={data.oneDepartureDate ?? ""}
+                                    onChange={(e) => update({ oneDepartureDate: e.target.value })}
+                                    className="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 text-[15px] font-medium text-heading outline-none focus:border-accent"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <FieldLabel label="Return date" />
+                            <div className="relative">
+                                <LucidePlaneLanding className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                <input
+                                    type="date"
+                                    value={data.oneReturnDate ?? ""}
+                                    onChange={(e) => update({ oneReturnDate: e.target.value })}
+                                    className="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 text-[15px] font-medium text-heading outline-none focus:border-accent"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {data.tripType === "return" && (
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <FieldLabel label="From country" />
+                            <div className="relative">
+                                <LucidePlaneTakeoff className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                <CountryPicker
+                                    value={data.returnFrom ?? ""}
+                                    onChange={(country) => update({ returnFrom: country })}
+                                    placeholder="Select departure country"
+                                    inputClassName="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 pr-10 text-[15px] font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <FieldLabel label="To country" />
+                            <div className="relative">
+                                <LucidePlaneLanding className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                <CountryPicker
+                                    value={data.returnTo ?? ""}
+                                    onChange={(country) => update({ returnTo: country })}
+                                    placeholder="Select destination country"
+                                    inputClassName="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 pr-10 text-[15px] font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <FieldLabel label="City or region" />
+                        <div className="relative">
+                            <LucideMapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                            <input
+                                type="text"
+                                value={data.returnCity ?? ""}
+                                onChange={(e) => update({ returnCity: e.target.value })}
+                                placeholder="Enter city or region (optional)"
+                                className="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 text-[15px] font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent"
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <FieldLabel label="Departure date" />
+                            <div className="relative">
+                                <LucideCalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                <input
+                                    type="date"
+                                    value={data.returnDepartureDate ?? ""}
+                                    onChange={(e) => update({ returnDepartureDate: e.target.value })}
+                                    className="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 text-[15px] font-medium text-heading outline-none focus:border-accent"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <FieldLabel label="Return date" />
+                            <div className="relative">
+                                <LucideCalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                <input
+                                    type="date"
+                                    value={data.returnReturnDate ?? ""}
+                                    onChange={(e) => update({ returnReturnDate: e.target.value })}
+                                    className="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 text-[15px] font-medium text-heading outline-none focus:border-accent"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {data.tripType === "multi" && (
+                <div className="space-y-4">
+                    {(data.legs ?? []).map((leg, index) => (
+                        <div key={index} className="rounded-xl border border-border-light/70 bg-background-primary/60 p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs font-semibold text-muted">Stop {index + 1}</p>
+                                {index > 0 && (
+                                    <button type="button" onClick={() => removeLeg(index)} className="text-xs text-muted hover:text-heading">
+                                        Remove
+                                    </button>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <FieldLabel label="From country" />
+                                    <div className="relative">
+                                        <LucidePlaneTakeoff className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                        <CountryPicker
+                                            value={leg.from}
+                                            onChange={(country) => updateLeg(index, { from: country })}
+                                            placeholder="Select departure country"
+                                            inputClassName="w-full bg-white border border-border-light rounded-xl px-4 py-3 pl-10 pr-8 text-sm font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <FieldLabel label="To country" />
+                                    <div className="relative">
+                                        <LucidePlaneLanding className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                        <CountryPicker
+                                            value={leg.to}
+                                            onChange={(country) => updateLeg(index, { to: country })}
+                                            placeholder="Select destination country"
+                                            inputClassName="w-full bg-white border border-border-light rounded-xl px-4 py-3 pl-10 pr-8 text-sm font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <FieldLabel label="City or region" />
+                                <div className="relative">
+                                    <LucideMapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                    <input
+                                        type="text"
+                                        value={leg.city}
+                                        onChange={(e) => updateLeg(index, { city: e.target.value })}
+                                        placeholder="Enter city or region (optional)"
+                                        className="w-full bg-white border border-border-light rounded-xl px-4 py-3 pl-10 text-sm font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <FieldLabel label="Arrival date" />
+                                    <div className="relative">
+                                        <LucideCalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                        <input
+                                            type="date"
+                                            value={leg.arrivalDate}
+                                            onChange={(e) => updateLeg(index, { arrivalDate: e.target.value })}
+                                            className="w-full bg-white border border-border-light rounded-xl px-4 py-3 pl-10 text-sm font-medium text-heading outline-none focus:border-accent"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <FieldLabel label="Departure date" />
+                                    <div className="relative">
+                                        <LucideCalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                        <input
+                                            type="date"
+                                            value={leg.departureDate}
+                                            onChange={(e) => updateLeg(index, { departureDate: e.target.value })}
+                                            className="w-full bg-white border border-border-light rounded-xl px-4 py-3 pl-10 text-sm font-medium text-heading outline-none focus:border-accent"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    <button type="button" onClick={addLeg} className="text-xs font-semibold text-accent hover:underline">
+                        + Add stop
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const MultiCountryInput = ({
     value,
@@ -739,12 +898,12 @@ const MultiCountryInput = ({
                         <FieldLabel label={`Destination country ${idx + 1}`} />
                         <div className="relative">
                             <LucideGlobe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                            <CountryPicker
-                                value={country}
-                                onChange={(name) => updateCountry(idx, name)}
-                                placeholder={placeholder ?? "Select a country"}
-                                inputClassName="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 pr-10 text-[15px] font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent"
-                            />
+                        <CountryPicker
+                            value={country}
+                            onChange={(name) => updateCountry(idx, name)}
+                            placeholder={placeholder ?? "Select a country"}
+                            inputClassName="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 pr-10 text-[15px] font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent"
+                        />
                         </div>
                     </div>
                     {countries.length > 1 && (

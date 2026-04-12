@@ -28,7 +28,6 @@ import {
 } from "../../api/hooks";
 import toast from "react-hot-toast";
 import { getAuthCookie } from "../../api/axios";
-import TripItineraryFlow from "../../components/plan/TripItineraryFlow";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -47,7 +46,7 @@ interface Question {
     key: string;
     text: string;
     description?: string;
-    type: "radio" | "checkbox" | "text" | "textarea" | "date" | "vaccine_table" | "country" | "multi_country" | "trip_itinerary";
+    type: "radio" | "checkbox" | "text" | "textarea" | "date" | "vaccine_table" | "country" | "multi_country";
     required?: boolean;
     options?: QuestionOption[];
     vaccines?: VaccineEntry[];
@@ -64,69 +63,6 @@ interface QuestionCategory {
     display_order: number;
     is_optional: boolean;
     questions: string;
-}
-
-interface TripItineraryData {
-    tripType: "one" | "return" | "multi" | "transit";
-    oneFrom?: string;
-    oneTo?: string;
-    oneDepartureDate?: string;
-    oneLengthOfStay?: string;
-    onePurpose?: string;
-    oneFlightNumber?: string;
-    oneAccommodationType?: string;
-    returnFrom?: string;
-    returnTo?: string;
-    returnDepartureDate?: string;
-    returnReturnDate?: string;
-    outboundFlightNumber?: string;
-    returnFlightNumber?: string;
-    returnAccommodationType?: string;
-    multiDepartingFrom?: string;
-    multiFinalReturnDestination?: string;
-    multiLegs?: { country: string; city: string; arrivalDate: string; nights: string; accommodationType: string }[];
-    multiOverallReturnDate?: string;
-    transitFrom?: string;
-    transitFinalDestination?: string;
-    transitLocation?: string;
-    transitDuration?: string;
-    transitDepartureDate?: string;
-    transitReturnDate?: string;
-}
-
-function isTripItineraryComplete(data: TripItineraryData | undefined): boolean {
-    if (!data) return false;
-    if (data.tripType === "one") {
-        return Boolean(
-            data.oneTo?.trim() &&
-            data.oneDepartureDate?.trim() &&
-            data.oneLengthOfStay?.trim() &&
-            data.onePurpose?.trim()
-        );
-    }
-    if (data.tripType === "return") {
-        return Boolean(
-            data.returnFrom?.trim() &&
-            data.returnTo?.trim() &&
-            data.returnDepartureDate?.trim() &&
-            data.returnReturnDate?.trim()
-        );
-    }
-    if (data.tripType === "multi") {
-        const legs = data.multiLegs || [];
-        if (legs.length < 1) return false;
-        return legs.every((leg) => leg.country?.trim() && leg.arrivalDate?.trim() && leg.nights?.trim());
-    }
-    if (data.tripType === "transit") {
-        return Boolean(
-            data.transitFrom?.trim() &&
-            data.transitFinalDestination?.trim() &&
-            data.transitLocation?.trim() &&
-            data.transitDuration?.trim() &&
-            data.transitDepartureDate?.trim()
-        );
-    }
-    return false;
 }
 
 function daysInclusiveBetween(start?: string, end?: string): number {
@@ -162,8 +98,6 @@ function derivePlanFromQuestionnaireAnswers(
     const newCountries = Array.isArray(newCountriesRaw)
         ? (newCountriesRaw as string[]).map((c) => c.trim()).filter(Boolean)
         : [];
-    const itinerary = (answers.trip_itinerary as TripItineraryData | undefined) ?? undefined;
-
     const newCity = typeof answers.travel_city_region === "string"
         ? answers.travel_city_region.trim()
         : "";
@@ -174,54 +108,21 @@ function derivePlanFromQuestionnaireAnswers(
         ? answers.return_date_or_duration.trim()
         : "";
 
-    let destination = "";
-    let country = "";
+    if (newCountries.length === 0) return null;
+
+    const country = newCountries[0];
+    const countryList = newCountries.join(", ");
+    const destination = [newCity, countryList].filter(Boolean).join(", ") || countryList;
+
     let duration = 0;
-
-    if (newCountries.length > 0) {
-        country = newCountries[0];
-        const countryList = newCountries.join(", ");
-        destination = [newCity, countryList].filter(Boolean).join(", ") || countryList;
-
-        if (/^\d{4}-\d{2}-\d{2}$/.test(newReturnOrDuration)) {
-            duration = daysInclusiveBetween(newDeparture, newReturnOrDuration);
-        } else {
-            const durationFromText = parseInt(newReturnOrDuration, 10);
-            if (!Number.isNaN(durationFromText) && durationFromText > 0) {
-                duration = durationFromText;
-            }
-        }
-    } else if (itinerary) {
-        const tripType = itinerary.tripType || "one";
-
-        if (tripType === "one") {
-            country = (itinerary.oneTo || "").trim();
-            const fromCity = (itinerary.oneFrom || "").trim();
-            destination = country;
-            if (fromCity) destination = `${fromCity} → ${destination}`;
-            duration = 7;
-        } else if (tripType === "return") {
-            country = (itinerary.returnTo || "").trim();
-            const from = (itinerary.returnFrom || "").trim();
-            destination = country;
-            if (from) destination = `${from} → ${destination}`;
-            duration = 7;
-        } else if (tripType === "multi") {
-            const legs = itinerary.multiLegs || [];
-            const parts = legs
-                .map((leg) => [leg.city, leg.country].filter(Boolean).join(", ").trim())
-                .filter(Boolean);
-            destination = parts.join(" → ");
-            country = (legs[0]?.country || "").trim();
-            duration = 7;
-        } else if (tripType === "transit") {
-            country = (itinerary.transitFinalDestination || "").trim();
-            destination = `${(itinerary.transitFrom || "").trim()} via ${(itinerary.transitLocation || "").trim()} → ${country}`;
-            duration = 7;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(newReturnOrDuration)) {
+        duration = daysInclusiveBetween(newDeparture, newReturnOrDuration);
+    } else {
+        const durationFromText = parseInt(newReturnOrDuration, 10);
+        if (!Number.isNaN(durationFromText) && durationFromText > 0) {
+            duration = durationFromText;
         }
     }
-
-    if (!country.trim()) return null;
 
     const purposeSelections = answers.purpose_of_travel ?? answers.travel_purpose;
     let purpose = "Leisure";
@@ -333,9 +234,6 @@ function shouldShowQuestion(
 function isQuestionAnswered(question: Question, answers: Record<string, unknown>): boolean {
     if (!question.required) return true;
     const value = answers[question.key];
-    if (question.type === "trip_itinerary") {
-        return isTripItineraryComplete(value as TripItineraryData | undefined);
-    }
     if (question.type === "checkbox" || question.type === "multi_country") {
         return Array.isArray(value) && value.length > 0;
     }
@@ -1026,16 +924,16 @@ const TravelHealthQuestionnaire = () => {
     // ─── Render ──────────────────────────────────────────────
 
     return (
-        <div className="min-h-screen bg-background-primary flex flex-col lg:flex-row">
+        <div className="min-h-screen bg-background-primary flex flex-col">
 
-            {/* ── Mobile Top Bar / Desktop Minimal Header ─────────────────────────────────── */}
-            <div className="sticky top-0 z-30 px-5 sm:px-8 py-4 flex items-center justify-between border-b border-border-light/60 bg-background-primary/80 backdrop-blur-md lg:fixed lg:w-full">
+            {/* ── Top Bar ─────────────────────────────────── */}
+            <div className="sticky top-0 z-30 px-5 sm:px-8 py-4 flex items-center justify-between border-b border-border-light/60 bg-background-primary/80 backdrop-blur-md">
                 <span className="text-heading tracking-tight text-lg font-serif font-medium select-none">
                     TMAG
                 </span>
                 <div className="flex items-center gap-5">
-                    {/* Progress bar - mobile only */}
-                    <div className="flex lg:hidden items-center gap-2.5">
+                    {/* Progress bar */}
+                    <div className="hidden sm:flex items-center gap-2.5">
                         <div className="w-28 h-1 rounded-full bg-border-light overflow-hidden">
                             <motion.div
                                 className="h-full rounded-full bg-accent"
@@ -1061,69 +959,8 @@ const TravelHealthQuestionnaire = () => {
                 </div>
             </div>
 
-            {/* ── Desktop Sidebar Progress ────────────────────────── */}
-            <div className="hidden lg:flex lg:w-80 lg:shrink-0 lg:flex-col lg:border-r lg:border-border-light/60 lg:bg-background-primary lg:pt-20">
-                <div className="flex-1 px-6 py-8 overflow-y-auto">
-                    {/* Progress header */}
-                    <div className="mb-8">
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-medium text-heading">Progress</span>
-                            <span className="text-sm font-bold text-accent">{progressPercent}%</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-border-light overflow-hidden">
-                            <motion.div
-                                className="h-full rounded-full bg-accent"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progressPercent}%` }}
-                                transition={{ duration: 0.5, ease: "easeOut" }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Category list - vertical */}
-                    <nav className="space-y-1">
-                        {categories.map((cat, i) => (
-                            <div
-                                key={cat.category_key}
-                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${
-                                    i === categoryIndex
-                                        ? "bg-accent/10 border border-accent/20"
-                                        : i < categoryIndex
-                                            ? "text-accent"
-                                            : "text-muted"
-                                }`}
-                            >
-                                <div
-                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
-                                        i < categoryIndex
-                                            ? "bg-accent text-white"
-                                            : i === categoryIndex
-                                                ? "bg-heading text-white"
-                                                : "bg-border-light text-muted"
-                                    }`}
-                                >
-                                    {i < categoryIndex ? <LucideCheck className="w-3.5 h-3.5" /> : i + 1}
-                                </div>
-                                <div className="min-w-0">
-                                    <p className={`text-sm font-medium truncate ${
-                                        i === categoryIndex ? "text-heading" : ""
-                                    }`}>
-                                        {cat.category_name}
-                                    </p>
-                                    {i === categoryIndex && (
-                                        <p className="text-xs text-muted mt-0.5">
-                                            {questionIndex >= 0 ? `Question ${questionIndex + 1} of ${visibleQuestions.length}` : "Introduction"}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </nav>
-                </div>
-            </div>
-
-            {/* ── Mobile Category Timeline ────────────────────────── */}
-            <div className="lg:hidden px-5 sm:px-8 pt-5 pb-2 overflow-x-auto">
+            {/* ── Category Timeline ────────────────────────── */}
+            <div className="px-5 sm:px-8 pt-5 pb-2 overflow-x-auto">
                 <div className="mx-auto w-full max-w-5xl flex justify-center">
                     <div className="min-w-max px-1">
                         <div className="relative flex items-start gap-3">
@@ -1158,7 +995,7 @@ const TravelHealthQuestionnaire = () => {
             </div>
 
             {/* ── Main Content ─────────────────────────────── */}
-            <div className="flex-1 flex items-start sm:items-center justify-center px-5 sm:px-8 pt-6 pb-32 lg:pt-24">
+            <div className="flex-1 flex items-start sm:items-center justify-center px-5 sm:px-8 pt-6 pb-32">
                 <div className="w-full max-w-5xl flex justify-center">
                     <div className="w-full max-w-lg">
                     <AnimatePresence mode="wait" custom={direction}>
@@ -1345,6 +1182,284 @@ const TravelHealthQuestionnaire = () => {
                 </div>
             )}
         </div>
+    );
+};
+
+// ─── Trip Itinerary Input ────────────────────────────────────
+
+const tripCls = {
+    input: "w-full bg-white border-2 border-border-light/60 rounded-xl px-4 py-3 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium",
+    cardInput: "w-full bg-background-primary border-2 border-border-light/60 rounded-xl px-4 py-3 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium",
+    country: "w-full bg-white border-2 border-border-light/60 rounded-xl px-4 py-3 pr-10 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium",
+    cardCountry: "w-full bg-background-primary border-2 border-border-light/60 rounded-xl px-4 py-3 pr-10 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium",
+    label: "block text-xs font-bold text-heading mb-1.5",
+    badge: "text-[10px] font-bold tracking-widest text-accent uppercase bg-accent/10 px-2.5 py-1 rounded-full",
+};
+
+const TripItineraryInput = ({
+    value,
+    onChange,
+}: {
+    value: TripItineraryData;
+    onChange: (val: unknown) => void;
+}) => {
+    const data: TripItineraryData = {
+        ...value,
+        tripType: value?.tripType ?? "one",
+        legs: value?.legs ?? [],
+    };
+
+    const update = (patch: Partial<TripItineraryData>) => {
+        onChange({ ...data, ...patch });
+    };
+
+    const setTripType = (type: TripItineraryData["tripType"]) => {
+        const patch: Partial<TripItineraryData> = { tripType: type };
+        if (type === "multi" && (!data.legs || data.legs.length < 2)) {
+            const existing = data.legs || [];
+            const newLegs = [...existing];
+            while (newLegs.length < 2) {
+                newLegs.push({ from: "", to: "", city: "", arrivalDate: "", departureDate: "" });
+            }
+            patch.legs = newLegs;
+        }
+        update(patch);
+    };
+
+    const addLeg = () => {
+        update({ legs: [...(data.legs || []), { from: "", to: "", city: "", arrivalDate: "", departureDate: "" }] });
+    };
+
+    const removeLeg = (index: number) => {
+        update({ legs: (data.legs || []).filter((_, i) => i !== index) });
+    };
+
+    const updateLeg = (index: number, patch: Partial<TripLeg>) => {
+        const legs = [...(data.legs || [])];
+        legs[index] = { ...legs[index], ...patch };
+        update({ legs });
+    };
+
+    return (
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+            {/* Trip Type Tabs */}
+            <div className="flex gap-2">
+                {([
+                    { value: "one" as const, label: "One Country", icon: "✈" },
+                    { value: "return" as const, label: "Return Trip", icon: "↩" },
+                    { value: "multi" as const, label: "Multi-Stop", icon: "🗺" },
+                ] as const).map((tab) => (
+                    <button
+                        key={tab.value}
+                        type="button"
+                        onClick={() => setTripType(tab.value)}
+                        className={`flex-1 px-2 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer ${data.tripType === tab.value
+                                ? "bg-dark text-white shadow-sm"
+                                : "bg-white border-2 border-border-light/60 text-muted hover:border-border hover:text-heading"
+                            }`}
+                    >
+                        <span className="mr-1">{tab.icon}</span>
+                        <span className="hidden sm:inline">{tab.label}</span>
+                        <span className="sm:hidden">{tab.label.split(" ")[0]}</span>
+                    </button>
+                ))}
+            </div>
+
+            {/* ── One Country ── */}
+            {data.tripType === "one" && (
+                <div className="space-y-3">
+                    <div>
+                        <label className={tripCls.label}>
+                            Destination Country <span className="text-red-400">*</span>
+                        </label>
+                        <CountryPicker
+                            value={data.oneDestination || ""}
+                            onChange={(name) => update({ oneDestination: name })}
+                            inputClassName={tripCls.country}
+                            placeholder="e.g. Ghana"
+                        />
+                    </div>
+                    <div>
+                        <label className={tripCls.label}>
+                            City or Region <span className="text-muted/50 font-normal">(optional)</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={data.oneCity || ""}
+                            onChange={(e) => update({ oneCity: e.target.value })}
+                            placeholder="e.g. Accra, Northern Region"
+                            className={tripCls.input}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className={tripCls.label}>
+                                Departure Date <span className="text-red-400">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                value={data.oneDepartureDate || ""}
+                                onChange={(e) => update({ oneDepartureDate: e.target.value })}
+                                className={tripCls.input}
+                            />
+                        </div>
+                        <div>
+                            <label className={tripCls.label}>
+                                Return Date <span className="text-red-400">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                value={data.oneReturnDate || ""}
+                                onChange={(e) => update({ oneReturnDate: e.target.value })}
+                                className={tripCls.input}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Return Trip ── */}
+            {data.tripType === "return" && (
+                <div className="bg-white border-2 border-border-light/60 rounded-2xl p-5 space-y-3">
+                    <span className={tripCls.badge}>Outbound</span>
+                    <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-end">
+                        <div>
+                            <label className={tripCls.label}>From</label>
+                            <CountryPicker
+                                value={data.returnFrom || ""}
+                                onChange={(name) => update({ returnFrom: name })}
+                                inputClassName={tripCls.cardCountry}
+                                placeholder="Departure country"
+                            />
+                        </div>
+                        <div className="text-muted/40 text-lg pb-3 text-center">→</div>
+                        <div>
+                            <label className={tripCls.label}>To</label>
+                            <CountryPicker
+                                value={data.returnTo || ""}
+                                onChange={(name) => update({ returnTo: name })}
+                                inputClassName={tripCls.cardCountry}
+                                placeholder="Destination country"
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className={tripCls.label}>
+                            City or Region <span className="text-muted/50 font-normal">(optional)</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={data.returnCity || ""}
+                            onChange={(e) => update({ returnCity: e.target.value })}
+                            placeholder="e.g. Lagos, rural areas"
+                            className={tripCls.cardInput}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className={tripCls.label}>Departure Date</label>
+                            <input
+                                type="date"
+                                value={data.returnDepartureDate || ""}
+                                onChange={(e) => update({ returnDepartureDate: e.target.value })}
+                                className={tripCls.cardInput}
+                            />
+                        </div>
+                        <div>
+                            <label className={tripCls.label}>Return Date</label>
+                            <input
+                                type="date"
+                                value={data.returnReturnDate || ""}
+                                onChange={(e) => update({ returnReturnDate: e.target.value })}
+                                className={tripCls.cardInput}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Multiple Destinations ── */}
+            {data.tripType === "multi" && (
+                <div className="space-y-3">
+                    {(data.legs || []).map((leg, i) => (
+                        <div key={i} className="bg-white border-2 border-border-light/60 rounded-2xl p-5 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className={tripCls.badge}>Destination {i + 1}</span>
+                                {i > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeLeg(i)}
+                                        className="text-muted/50 hover:text-red-500 transition-colors cursor-pointer p-1"
+                                    >
+                                        <LucideX className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-end">
+                                <div>
+                                    <label className={tripCls.label}>From</label>
+                                    <CountryPicker
+                                        value={leg.from}
+                                        onChange={(name) => updateLeg(i, { from: name })}
+                                        inputClassName={tripCls.cardCountry}
+                                        placeholder="From country"
+                                    />
+                                </div>
+                                <div className="text-muted/40 text-lg pb-3 text-center">→</div>
+                                <div>
+                                    <label className={tripCls.label}>To</label>
+                                    <CountryPicker
+                                        value={leg.to}
+                                        onChange={(name) => updateLeg(i, { to: name })}
+                                        inputClassName={tripCls.cardCountry}
+                                        placeholder="Destination country"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className={tripCls.label}>
+                                    City or Region <span className="text-muted/50 font-normal">(optional)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={leg.city}
+                                    onChange={(e) => updateLeg(i, { city: e.target.value })}
+                                    placeholder="e.g. Lagos, rural areas"
+                                    className={tripCls.cardInput}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className={tripCls.label}>Arrival Date</label>
+                                    <input
+                                        type="date"
+                                        value={leg.arrivalDate}
+                                        onChange={(e) => updateLeg(i, { arrivalDate: e.target.value })}
+                                        className={tripCls.cardInput}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={tripCls.label}>Departure Date</label>
+                                    <input
+                                        type="date"
+                                        value={leg.departureDate}
+                                        onChange={(e) => updateLeg(i, { departureDate: e.target.value })}
+                                        className={tripCls.cardInput}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={addLeg}
+                        className="w-full py-3.5 rounded-2xl border-2 border-dashed border-border-light text-sm font-semibold text-muted/60 hover:border-accent hover:text-accent hover:bg-accent/5 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                        <LucidePlus className="w-4 h-4" /> Add Another Destination
+                    </button>
+                </div>
+            )}
+        </motion.div>
     );
 };
 
@@ -1659,14 +1774,6 @@ const QuestionInput = ({
                     value={Array.isArray(value) ? (value as string[]) : []}
                     onChange={onChange}
                     placeholder={question.placeholder}
-                />
-            );
-
-        case "trip_itinerary":
-            return (
-                <TripItineraryFlow
-                    value={(value as TripItineraryData) || { tripType: "one" }}
-                    onChange={(data) => onChange(data)}
                 />
             );
 
