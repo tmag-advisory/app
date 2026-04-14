@@ -20,18 +20,18 @@ const getRiskLabel = (score: number) => {
 const DashboardOverview = () => {
     const { user } = useAuth();
     const { data: plansData, isLoading: plansLoading } = useTravelPlans({ per_page: 5 });
-    const { data: onboardingData } = useOnboarding();
+    // const { data: onboardingData } = useOnboarding();
     const { data: dashboardAnalytics, isLoading: analyticsLoading } = useDashboardAnalytics(undefined);
-    
+
     const plans = plansData?.data || [];
-    const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
+    // const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
 
     return (
         <div>
             <DashboardHeader title={`Welcome back, ${user?.first_name ?? ""}.`} />
 
             {/* Questionnaire banner */}
-            {showQuestionnaireBanner && (
+            {/*{showQuestionnaireBanner && (
                 <Link
                     to="/onboarding/questionnaire"
                     className={cn(
@@ -48,7 +48,7 @@ const DashboardOverview = () => {
                     </div>
                     <LucideArrowRight className="w-4 h-4 text-accent flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
-            )}
+            )}*/}
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -93,7 +93,7 @@ const DashboardOverview = () => {
                         View all <LucideArrowRight className="w-3 h-3" />
                     </Link>
                 </div>
-                
+
                 {plansLoading ? (
                     <div className="flex items-center justify-center py-12">
                         <LucideLoader2 className="w-6 h-6 text-accent animate-spin" />

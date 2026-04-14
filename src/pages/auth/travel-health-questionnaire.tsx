@@ -6,6 +6,8 @@ import {
     LucideArrowRight,
     LucideArrowLeft,
     LucideCheck,
+    LucideCheckCircle,
+    LucideChevronDown,
     LucidePlane,
     LucideHeartPulse,
     LucideSyringe,
@@ -74,17 +76,15 @@ interface TripItineraryData {
     oneLengthOfStay?: string;
     onePurpose?: string;
     oneFlightNumber?: string;
-    oneAccommodationType?: string;
     returnFrom?: string;
     returnTo?: string;
     returnDepartureDate?: string;
     returnReturnDate?: string;
     outboundFlightNumber?: string;
     returnFlightNumber?: string;
-    returnAccommodationType?: string;
     multiDepartingFrom?: string;
     multiFinalReturnDestination?: string;
-    multiLegs?: { country: string; city: string; arrivalDate: string; nights: string; accommodationType: string }[];
+    multiLegs?: { country: string; city: string; arrivalDate: string; nights: string }[];
     multiOverallReturnDate?: string;
     transitFrom?: string;
     transitFinalDestination?: string;
@@ -178,20 +178,7 @@ function derivePlanFromQuestionnaireAnswers(
     let country = "";
     let duration = 0;
 
-    if (newCountries.length > 0) {
-        country = newCountries[0];
-        const countryList = newCountries.join(", ");
-        destination = [newCity, countryList].filter(Boolean).join(", ") || countryList;
-
-        if (/^\d{4}-\d{2}-\d{2}$/.test(newReturnOrDuration)) {
-            duration = daysInclusiveBetween(newDeparture, newReturnOrDuration);
-        } else {
-            const durationFromText = parseInt(newReturnOrDuration, 10);
-            if (!Number.isNaN(durationFromText) && durationFromText > 0) {
-                duration = durationFromText;
-            }
-        }
-    } else if (itinerary) {
+    if (itinerary) {
         const tripType = itinerary.tripType || "one";
 
         if (tripType === "one") {
@@ -218,6 +205,19 @@ function derivePlanFromQuestionnaireAnswers(
             country = (itinerary.transitFinalDestination || "").trim();
             destination = `${(itinerary.transitFrom || "").trim()} via ${(itinerary.transitLocation || "").trim()} → ${country}`;
             duration = 7;
+        }
+    } else if (newCountries.length > 0) {
+        country = newCountries[0];
+        const countryList = newCountries.join(", ");
+        destination = [newCity, countryList].filter(Boolean).join(", ") || countryList;
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(newReturnOrDuration)) {
+            duration = daysInclusiveBetween(newDeparture, newReturnOrDuration);
+        } else {
+            const durationFromText = parseInt(newReturnOrDuration, 10);
+            if (!Number.isNaN(durationFromText) && durationFromText > 0) {
+                duration = durationFromText;
+            }
         }
     }
 
@@ -369,6 +369,9 @@ const TravelHealthQuestionnaire = () => {
         purpose: "Leisure",
         medicalConsiderations: "",
     });
+
+    // Mobile accordion state for progress tracker
+    const [mobileAccordionOpen, setMobileAccordionOpen] = useState(false);
 
     const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const pendingSaveRef = useRef(false);
@@ -1085,29 +1088,26 @@ const TravelHealthQuestionnaire = () => {
                         {categories.map((cat, i) => (
                             <div
                                 key={cat.category_key}
-                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${
-                                    i === categoryIndex
-                                        ? "bg-accent/10 border border-accent/20"
-                                        : i < categoryIndex
-                                            ? "text-accent"
-                                            : "text-muted"
-                                }`}
+                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${i === categoryIndex
+                                    ? "bg-accent/10 border border-accent/20"
+                                    : i < categoryIndex
+                                        ? "text-accent"
+                                        : "text-muted"
+                                    }`}
                             >
                                 <div
-                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
-                                        i < categoryIndex
-                                            ? "bg-accent text-white"
-                                            : i === categoryIndex
-                                                ? "bg-heading text-white"
-                                                : "bg-border-light text-muted"
-                                    }`}
+                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${i < categoryIndex
+                                        ? "bg-accent text-white"
+                                        : i === categoryIndex
+                                            ? "bg-heading text-white"
+                                            : "bg-border-light text-muted"
+                                        }`}
                                 >
                                     {i < categoryIndex ? <LucideCheck className="w-3.5 h-3.5" /> : i + 1}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className={`text-sm font-medium truncate ${
-                                        i === categoryIndex ? "text-heading" : ""
-                                    }`}>
+                                    <p className={`text-sm font-medium truncate ${i === categoryIndex ? "text-heading" : ""
+                                        }`}>
                                         {cat.category_name}
                                     </p>
                                     {i === categoryIndex && (
@@ -1122,183 +1122,241 @@ const TravelHealthQuestionnaire = () => {
                 </div>
             </div>
 
-            {/* ── Mobile Category Timeline ────────────────────────── */}
-            <div className="lg:hidden px-5 sm:px-8 pt-5 pb-2 overflow-x-auto">
-                <div className="mx-auto w-full max-w-5xl flex justify-center">
-                    <div className="min-w-max px-1">
-                        <div className="relative flex items-start gap-3">
-                            <div className="absolute left-4 right-4 top-4 h-px bg-border-light/80" />
-                            {categories.map((cat, i) => (
-                                <div key={cat.category_key} className="relative flex w-[150px] flex-col items-center">
-                                    <div
-                                        className={`z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 text-[11px] font-bold transition-colors ${i < categoryIndex
-                                                ? "border-accent bg-accent text-white"
-                                                : i === categoryIndex
-                                                    ? "border-heading bg-heading text-white"
-                                                    : "border-border-light bg-white text-muted"
-                                            }`}
-                                    >
-                                        {i < categoryIndex ? <LucideCheck className="w-3.5 h-3.5" /> : i + 1}
-                                    </div>
-                                    <p
-                                        className={`mt-2 text-center text-[11px] font-semibold leading-snug ${i === categoryIndex
-                                                ? "text-heading"
-                                                : i < categoryIndex
-                                                    ? "text-accent"
-                                                    : "text-muted"
-                                            }`}
-                                    >
-                                        {cat.category_name}
-                                    </p>
-                                </div>
-                            ))}
+            {/* ── Mobile Accordion Progress Tracker ────────────────────────── */}
+            <div className="lg:hidden px-4 sm:px-6 pt-4 pb-2">
+                {/* Accordion header - always visible */}
+                <button
+                    type="button"
+                    onClick={() => setMobileAccordionOpen(!mobileAccordionOpen)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-button-secondary rounded-xl border border-border-light/60 transition-all duration-200"
+                >
+                    <div className="flex items-center gap-3">
+                        {/* Current section indicator */}
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-heading text-white text-xs font-bold">
+                            {categoryIndex + 1}
+                        </div>
+                        <div className="text-left">
+                            <p className="text-xs text-muted font-medium">Section {categoryIndex + 1} of {categories.length}</p>
+                            <p className="text-sm font-semibold text-heading truncate max-w-[180px]">
+                                {currentCategory?.category_name || "Loading..."}
+                            </p>
                         </div>
                     </div>
-                </div>
+                    <div className="flex items-center gap-3">
+                        {/* Progress percentage */}
+                        <span className="text-sm font-bold text-accent tabular-nums">{progressPercent}%</span>
+                        {/* Chevron */}
+                        <div className={`transition-transform duration-200 ${mobileAccordionOpen ? "rotate-180" : ""}`}>
+                            <LucideChevronDown className="w-5 h-5 text-muted" />
+                        </div>
+                    </div>
+                </button>
+
+                {/* Accordion content - expandable sections list */}
+                <AnimatePresence>
+                    {mobileAccordionOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="overflow-hidden"
+                        >
+                            <div className="pt-3 pb-2 space-y-1">
+                                {categories.map((cat, i) => (
+                                    <button
+                                        key={cat.category_key}
+                                        type="button"
+                                        onClick={() => {
+                                            if (i !== categoryIndex) {
+                                                setDirection(i > categoryIndex ? 1 : -1);
+                                                setCategoryIndex(i);
+                                                setQuestionIndex(-1);
+                                                setShowIntro(true);
+                                            }
+                                            setMobileAccordionOpen(false);
+                                        }}
+                                        disabled={i === categoryIndex}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${i === categoryIndex
+                                            ? "bg-accent/10 border border-accent/20"
+                                            : i < categoryIndex
+                                                ? "hover:bg-accent/5 text-accent"
+                                                : "hover:bg-border-light/50 text-muted"
+                                            } ${i !== categoryIndex ? "cursor-pointer" : "cursor-default"}`}
+                                    >
+                                        {/* Status indicator */}
+                                        <div
+                                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${i < categoryIndex
+                                                ? "bg-accent text-white"
+                                                : i === categoryIndex
+                                                    ? "bg-heading text-white"
+                                                    : "bg-border-light text-muted"
+                                                }`}
+                                        >
+                                            {i < categoryIndex ? (
+                                                <LucideCheck className="w-3.5 h-3.5" />
+                                            ) : (
+                                                i + 1
+                                            )}
+                                        </div>
+                                        {/* Section name */}
+                                        <span className={`text-sm font-medium truncate ${i === categoryIndex ? "text-heading" : ""}`}>
+                                            {cat.category_name}
+                                        </span>
+                                        {/* Completed indicator */}
+                                        {i < categoryIndex && (
+                                            <LucideCheckCircle className="w-4 h-4 ml-auto text-accent shrink-0" />
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* ── Main Content ─────────────────────────────── */}
             <div className="flex-1 flex items-start sm:items-center justify-center px-5 sm:px-8 pt-6 pb-32 lg:pt-24">
                 <div className="w-full max-w-5xl flex justify-center">
                     <div className="w-full max-w-lg">
-                    <AnimatePresence mode="wait" custom={direction}>
-                        {showIntro ? (
-                            <motion.div
-                                key={`intro-${categoryIndex}`}
-                                variants={introVariants}
-                                initial="hidden"
-                                animate="visible"
-                                exit="exit"
-                                className="text-center py-8 sm:py-16"
-                            >
-                                {/* Icon */}
+                        <AnimatePresence mode="wait" custom={direction}>
+                            {showIntro ? (
                                 <motion.div
-                                    initial={{ scale: 0, rotate: -25 }}
-                                    animate={{ scale: 1, rotate: 0 }}
-                                    transition={{
-                                        delay: 0.1,
-                                        type: "spring",
-                                        stiffness: 260,
-                                        damping: 18,
-                                    }}
-                                    className="w-24 h-24 rounded-3xl bg-accent/10 flex items-center justify-center mx-auto mb-8 text-accent"
+                                    key={`intro-${categoryIndex}`}
+                                    variants={introVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                    className="text-center py-8 sm:py-16"
                                 >
-                                    {iconMap[currentCategory.category_icon] || (
-                                        <LucideSparkles className="w-12 h-12" />
-                                    )}
-                                </motion.div>
-
-                                {/* Label */}
-                                <motion.p
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: 0.2 }}
-                                    className="text-sm font-bold tracking-[0.14em] text-accent uppercase mb-4"
-                                >
-                                    Section {categoryIndex + 1} of {categories.length}
-                                </motion.p>
-
-                                {/* Title */}
-                                <motion.h2
-                                    initial={{ opacity: 0, y: 14 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.25 }}
-                                    className="text-4xl sm:text-5xl font-serif text-heading mb-5 leading-tight"
-                                >
-                                    {currentCategory.category_name}
-                                </motion.h2>
-
-                                {/* Description */}
-                                <motion.p
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.32 }}
-                                    className="text-base text-muted max-w-sm mx-auto leading-relaxed mb-12"
-                                >
-                                    {currentCategory.category_description}
-                                </motion.p>
-
-                                {/* Actions */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.4 }}
-                                    className="flex items-center justify-center gap-3"
-                                >
-                                    <button
-                                        onClick={startCategory}
-                                        className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl bg-dark text-white font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200"
+                                    {/* Icon */}
+                                    <motion.div
+                                        initial={{ scale: 0, rotate: -25 }}
+                                        animate={{ scale: 1, rotate: 0 }}
+                                        transition={{
+                                            delay: 0.1,
+                                            type: "spring",
+                                            stiffness: 260,
+                                            damping: 18,
+                                        }}
+                                        className="w-24 h-24 rounded-3xl bg-accent/10 flex items-center justify-center mx-auto mb-8 text-accent"
                                     >
-                                        Begin <LucideArrowRight className="w-4 h-4" />
-                                    </button>
-                                    {currentCategory.is_optional && (
-                                        <button
-                                            onClick={skipCategory}
-                                            className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-white border border-border-light text-muted font-semibold text-sm cursor-pointer hover:border-border hover:text-heading transition-all duration-200"
-                                        >
-                                            <LucideSkipForward className="w-4 h-4" />
-                                            Skip
-                                        </button>
-                                    )}
-                                </motion.div>
-                            </motion.div>
-                        ) : currentQuestion ? (
-                            <motion.div
-                                key={`q-${currentCategory.category_key}-${currentQuestion.key}`}
-                                custom={direction}
-                                variants={questionVariants}
-                                initial="enter"
-                                animate="center"
-                                exit="exit"
-                            >
-                                {/* Question counter */}
-                                <div className="flex items-center gap-2 mb-5">
-                                    <span className="text-sm font-bold tracking-wider text-accent uppercase">
+                                        {iconMap[currentCategory.category_icon] || (
+                                            <LucideSparkles className="w-12 h-12" />
+                                        )}
+                                    </motion.div>
+
+                                    {/* Label */}
+                                    <motion.p
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.2 }}
+                                        className="text-sm font-bold tracking-[0.14em] text-accent uppercase mb-4"
+                                    >
+                                        Section {categoryIndex + 1} of {categories.length}
+                                    </motion.p>
+
+                                    {/* Title */}
+                                    <motion.h2
+                                        initial={{ opacity: 0, y: 14 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.25 }}
+                                        className="text-4xl sm:text-5xl font-serif text-heading mb-5 leading-tight"
+                                    >
                                         {currentCategory.category_name}
-                                    </span>
-                                    <span className="text-sm text-muted/60">
-                                        {questionIndex + 1} / {visibleQuestions.length}
-                                    </span>
-                                </div>
+                                    </motion.h2>
 
-                                {/* Question text */}
-                                <h3 className="text-3xl sm:text-4xl font-serif text-heading mb-2 leading-snug">
-                                    {currentQuestion.text}
-                                    {currentQuestion.required && (
-                                        <span className="text-red-400 ml-1 text-lg">*</span>
+                                    {/* Description */}
+                                    <motion.p
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.32 }}
+                                        className="text-base text-muted max-w-sm mx-auto leading-relaxed mb-12"
+                                    >
+                                        {currentCategory.category_description}
+                                    </motion.p>
+
+                                    {/* Actions */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.4 }}
+                                        className="flex items-center justify-center gap-3"
+                                    >
+                                        <button
+                                            onClick={startCategory}
+                                            className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl bg-dark text-white font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200"
+                                        >
+                                            Begin <LucideArrowRight className="w-4 h-4" />
+                                        </button>
+                                        {currentCategory.is_optional && (
+                                            <button
+                                                onClick={skipCategory}
+                                                className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-white border border-border-light text-muted font-semibold text-sm cursor-pointer hover:border-border hover:text-heading transition-all duration-200"
+                                            >
+                                                <LucideSkipForward className="w-4 h-4" />
+                                                Skip
+                                            </button>
+                                        )}
+                                    </motion.div>
+                                </motion.div>
+                            ) : currentQuestion ? (
+                                <motion.div
+                                    key={`q-${currentCategory.category_key}-${currentQuestion.key}`}
+                                    custom={direction}
+                                    variants={questionVariants}
+                                    initial="enter"
+                                    animate="center"
+                                    exit="exit"
+                                >
+                                    {/* Question counter */}
+                                    <div className="flex items-center gap-2 mb-5">
+                                        <span className="text-sm font-bold tracking-wider text-accent uppercase">
+                                            {currentCategory.category_name}
+                                        </span>
+                                        <span className="text-sm text-muted/60">
+                                            {questionIndex + 1} / {visibleQuestions.length}
+                                        </span>
+                                    </div>
+
+                                    {/* Question text */}
+                                    <h3 className="text-3xl sm:text-4xl font-serif text-heading mb-2 leading-snug">
+                                        {currentQuestion.text}
+                                        {currentQuestion.required && (
+                                            <span className="text-red-400 ml-1 text-lg">*</span>
+                                        )}
+                                    </h3>
+
+                                    {/* Question description */}
+                                    {currentQuestion.description && (
+                                        <p className="text-base text-muted mb-8 leading-relaxed">
+                                            {currentQuestion.description}
+                                        </p>
                                     )}
-                                </h3>
 
-                                {/* Question description */}
-                                {currentQuestion.description && (
-                                    <p className="text-base text-muted mb-8 leading-relaxed">
-                                        {currentQuestion.description}
-                                    </p>
-                                )}
-
-                                {/* Input */}
-                                <div className={currentQuestion.description ? "" : "mt-7"}>
-                                    <QuestionInput
-                                        question={currentQuestion}
-                                        value={answers[currentQuestion.key]}
-                                        onChange={(val) =>
-                                            setAnswer(currentQuestion.key, val)
-                                        }
-                                        onToggleCheckbox={(val) =>
-                                            toggleCheckbox(currentQuestion.key, val)
-                                        }
-                                        onSetVaccineStatus={setVaccineStatus}
-                                        vaccineStatuses={
-                                            (answers.vaccine_status as Record<
-                                                string,
-                                                Record<string, string>
-                                            >) || {}
-                                        }
-                                    />
-                                </div>
-                            </motion.div>
-                        ) : null}
-                    </AnimatePresence>
+                                    {/* Input */}
+                                    <div className={currentQuestion.description ? "" : "mt-7"}>
+                                        <QuestionInput
+                                            question={currentQuestion}
+                                            value={answers[currentQuestion.key]}
+                                            onChange={(val) =>
+                                                setAnswer(currentQuestion.key, val)
+                                            }
+                                            onToggleCheckbox={(val) =>
+                                                toggleCheckbox(currentQuestion.key, val)
+                                            }
+                                            onSetVaccineStatus={setVaccineStatus}
+                                            vaccineStatuses={
+                                                (answers.vaccine_status as Record<
+                                                    string,
+                                                    Record<string, string>
+                                                >) || {}
+                                            }
+                                        />
+                                    </div>
+                                </motion.div>
+                            ) : null}
+                        </AnimatePresence>
                     </div>
                 </div>
             </div>
@@ -1449,15 +1507,15 @@ const QuestionInput = ({
                             type="button"
                             onClick={() => onChange(opt.value)}
                             className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${value === opt.value
-                                    ? "border-accent bg-white shadow-sm"
-                                    : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
+                                ? "border-accent bg-white shadow-sm"
+                                : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
                                 }`}
                         >
                             <div className="flex items-center gap-3.5">
                                 <div
                                     className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${value === opt.value
-                                            ? "border-accent bg-accent"
-                                            : "border-border"
+                                        ? "border-accent bg-accent"
+                                        : "border-border"
                                         }`}
                                 >
                                     {value === opt.value && (
@@ -1466,8 +1524,8 @@ const QuestionInput = ({
                                 </div>
                                 <span
                                     className={`text-sm font-semibold transition-colors ${value === opt.value
-                                            ? "text-heading"
-                                            : "text-body"
+                                        ? "text-heading"
+                                        : "text-body"
                                         }`}
                                 >
                                     {opt.label}
@@ -1499,15 +1557,15 @@ const QuestionInput = ({
                                 type="button"
                                 onClick={() => onToggleCheckbox(opt.value)}
                                 className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${checked
-                                        ? "border-accent bg-white shadow-sm"
-                                        : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
+                                    ? "border-accent bg-white shadow-sm"
+                                    : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
                                     }`}
                             >
                                 <div className="flex items-center gap-3.5">
                                     <div
                                         className={`w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${checked
-                                                ? "border-accent bg-accent"
-                                                : "border-border"
+                                            ? "border-accent bg-accent"
+                                            : "border-border"
                                             }`}
                                     >
                                         {checked && (
@@ -1605,12 +1663,12 @@ const QuestionInput = ({
                                                     )
                                                 }
                                                 className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all duration-200 ${status === s
-                                                        ? s === "yes"
-                                                            ? "bg-accent text-white"
-                                                            : s === "no"
-                                                                ? "bg-red-500 text-white"
-                                                                : "bg-amber-400 text-white"
-                                                        : "bg-border-light/50 text-muted hover:bg-border-light"
+                                                    ? s === "yes"
+                                                        ? "bg-accent text-white"
+                                                        : s === "no"
+                                                            ? "bg-red-500 text-white"
+                                                            : "bg-amber-400 text-white"
+                                                    : "bg-border-light/50 text-muted hover:bg-border-light"
                                                     }`}
                                             >
                                                 {s.charAt(0).toUpperCase() + s.slice(1)}

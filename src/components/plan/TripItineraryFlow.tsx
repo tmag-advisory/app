@@ -11,7 +11,6 @@ import {
     LucidePlus,
     LucideX,
     LucideClock,
-    LucideBuilding2,
     LucideBriefcase,
     LucideNavigation,
 } from "lucide-react";
@@ -24,7 +23,6 @@ export interface MultiStopLeg {
     city: string;
     arrivalDate: string;
     nights: string;
-    accommodationType: string;
 }
 
 export interface TripItineraryData {
@@ -37,7 +35,6 @@ export interface TripItineraryData {
     oneLengthOfStay?: string;
     onePurpose?: string;
     oneFlightNumber?: string;
-    oneAccommodationType?: string;
 
     // Return
     returnFrom?: string;
@@ -46,7 +43,6 @@ export interface TripItineraryData {
     returnReturnDate?: string;
     outboundFlightNumber?: string;
     returnFlightNumber?: string;
-    returnAccommodationType?: string;
 
     // Multi-Destination
     multiDepartingFrom?: string;
@@ -86,14 +82,6 @@ const ONE_WAY_PURPOSE_OPTIONS = [
     { value: "volunteering", label: "Volunteering / mission" },
     { value: "return_origin", label: "Return to country of origin" },
     { value: "other", label: "Other" },
-];
-
-const ACCOMMODATION_OPTIONS = [
-    { value: "resort_hotel", label: "Resort / hotel (air-conditioned)" },
-    { value: "guesthouse", label: "Guesthouse / hostel" },
-    { value: "private_home", label: "Private home / Airbnb" },
-    { value: "rural_camping", label: "Rural / bush / camping" },
-    { value: "mixed", label: "Mixed" },
 ];
 
 const TRANSIT_DURATION_OPTIONS = [
@@ -208,7 +196,7 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
         if (tripType === "multi" && (!data.multiLegs || data.multiLegs.length === 0)) {
             update({
                 tripType,
-                multiLegs: [{ country: "", city: "", arrivalDate: "", nights: "", accommodationType: "" }],
+                multiLegs: [{ country: "", city: "", arrivalDate: "", nights: "" }],
             });
         }
         setStep(1);
@@ -220,7 +208,7 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
         update({
             multiLegs: [
                 ...(data.multiLegs ?? []),
-                { country: "", city: "", arrivalDate: "", nights: "", accommodationType: "" },
+                { country: "", city: "", arrivalDate: "", nights: "" },
             ],
         });
 
@@ -351,25 +339,6 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
                                 </div>
                             </SectionCard>
 
-                            <SectionCard title="Accommodation" icon={<LucideBuilding2 className="w-4 h-4 text-accent" />}>
-                                <div>
-                                    <label className={fieldLabelCls}>Accommodation type at destination</label>
-                                    <SelectPill
-                                        options={ACCOMMODATION_OPTIONS}
-                                        value={data.oneAccommodationType}
-                                        onChange={(v) => update({ oneAccommodationType: v })}
-                                    />
-                                    <div className="mt-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => update({ oneAccommodationType: "" })}
-                                            className="text-xs text-muted hover:text-accent cursor-pointer"
-                                        >
-                                            Not yet arranged
-                                        </button>
-                                    </div>
-                                </div>
-                            </SectionCard>
                         </div>
                     )}
 
@@ -452,13 +421,6 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
                                 </div>
                             </SectionCard>
 
-                            <SectionCard title="Accommodation" icon={<LucideBuilding2 className="w-4 h-4 text-accent" />}>
-                                <SelectPill
-                                    options={ACCOMMODATION_OPTIONS}
-                                    value={data.returnAccommodationType}
-                                    onChange={(v) => update({ returnAccommodationType: v })}
-                                />
-                            </SectionCard>
                         </div>
                     )}
 
@@ -563,14 +525,6 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
                                                     className={`${inputCls} text-sm`}
                                                 />
                                             </div>
-                                        </div>
-                                        <div>
-                                            <label className={fieldLabelCls}>Accommodation type</label>
-                                            <SelectPill
-                                                options={ACCOMMODATION_OPTIONS}
-                                                value={leg.accommodationType}
-                                                onChange={(v) => updateLeg(i, { accommodationType: v })}
-                                            />
                                         </div>
                                     </div>
                                 ))}

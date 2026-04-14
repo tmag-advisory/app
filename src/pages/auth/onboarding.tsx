@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LucideUser, LucideBuilding2, LucideArrowRight, LucideArrowLeft, LucideClipboardList, LucideSparkles, LucideCheck, LucideGift, LucideZap, LucideShield, LucideActivity } from "lucide-react";
+import { LucideUser, LucideBuilding2, LucideArrowRight, LucideArrowLeft, LucideCheck, LucideGift, LucideZap, LucideShield, LucideActivity } from "lucide-react";
 import { useUpsertOnboarding, useAdvanceOnboardingStage, useUpdateProfile, useOnboarding, useValidateCompanyCode, useMyCompanies } from "../../api/hooks";
 import { useOnboardingStore } from "../../context/OnboardingContext";
 import { useAuth } from "../../context/AuthContext";
 import { canAccessHR } from "../../lib/canAccessHr";
 import CountryPicker from "../../components/CountryPicker";
 
-const steps = ["User Type", "Profile", "Welcome", "Questionnaire"];
+const steps = ["User Type", "Profile", "Welcome"];
 
 // ─── Motion Variants ─────────────────────────────────────────
 
@@ -54,7 +54,7 @@ const Onboarding = () => {
     const isInvitedUser = !!invitedCompany;
 
     const stage = user?.onboarding_stage ?? 2;
-    const initialStep = stage >= 5 ? 3 : Math.min(Math.max(stage - 2, 0), 3);
+    const initialStep = stage >= 5 ? 2 : Math.min(Math.max(stage - 2, 0), 2);
     const [step, setStep] = useState(initialStep);
     const [direction, setDirection] = useState(1);
     const [userType, setUserType] = useState<"individual" | "company" | null>(null);
@@ -186,22 +186,12 @@ const Onboarding = () => {
                 resetOnboarding();
                 navigate("/hr");
             } else {
-                goTo(3);
+                resetOnboarding();
+                navigate(userType === "company" ? "/hr" : "/onboarding/questionnaire");
             }
         } catch {
             setError("Failed. Please try again.");
         }
-    };
-
-    const handleSkipQuestionnaire = async () => {
-        resetOnboarding();
-        await refreshProfile();
-        navigate(userType === "company" ? "/hr" : "/dashboard");
-    };
-
-    const handleStartQuestionnaire = () => {
-        resetOnboarding();
-        navigate("/onboarding/questionnaire");
     };
 
     const isLoading =
@@ -246,22 +236,20 @@ const Onboarding = () => {
                         {steps.map((s, i) => (
                             <div
                                 key={s}
-                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${
-                                    i === step
-                                        ? "bg-accent/10 border border-accent/20"
-                                        : i < step
-                                            ? "text-accent"
-                                            : "text-muted"
-                                }`}
+                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${i === step
+                                    ? "bg-accent/10 border border-accent/20"
+                                    : i < step
+                                        ? "text-accent"
+                                        : "text-muted"
+                                    }`}
                             >
                                 <div
-                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
-                                        i < step
-                                            ? "bg-accent text-white"
-                                            : i === step
-                                                ? "bg-heading text-white"
-                                                : "bg-border-light text-muted"
-                                    }`}
+                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${i < step
+                                        ? "bg-accent text-white"
+                                        : i === step
+                                            ? "bg-heading text-white"
+                                            : "bg-border-light text-muted"
+                                        }`}
                                 >
                                     {i < step ? <LucideCheck className="w-3.5 h-3.5" /> : i + 1}
                                 </div>
@@ -471,15 +459,14 @@ const Onboarding = () => {
                                                     onChange={(e) => !isInvitedUser && handleCompanyCodeChange(e.target.value)}
                                                     readOnly={isInvitedUser}
                                                     placeholder="TMA-XXXX"
-                                                    className={`w-full border-2 rounded-2xl px-5 py-3.5 pr-12 text-base text-heading placeholder:text-muted/40 outline-none transition-colors duration-200 ${
-                                                        isInvitedUser
-                                                            ? "bg-button-secondary border-border-light/60 cursor-not-allowed"
-                                                            : codeIsValid
+                                                    className={`w-full border-2 rounded-2xl px-5 py-3.5 pr-12 text-base text-heading placeholder:text-muted/40 outline-none transition-colors duration-200 ${isInvitedUser
+                                                        ? "bg-button-secondary border-border-light/60 cursor-not-allowed"
+                                                        : codeIsValid
                                                             ? "bg-white border-green-400 focus:border-green-500"
                                                             : codeIsInvalid
-                                                            ? "bg-white border-red-400 focus:border-red-500"
-                                                            : "bg-white border-border-light/60 focus:border-accent"
-                                                    }`}
+                                                                ? "bg-white border-red-400 focus:border-red-500"
+                                                                : "bg-white border-border-light/60 focus:border-accent"
+                                                        }`}
                                                 />
                                                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
                                                     {codeValidating && (
@@ -578,7 +565,7 @@ const Onboarding = () => {
                                     className="mb-8 p-4 rounded-xl bg-accent/5 border border-accent/20 max-w-sm mx-auto"
                                 >
                                     <p className="text-sm text-heading font-semibold mb-1">Your free plan includes 1 health report</p>
-                                    <p className="text-xs text-muted">Additional reports are ₦5,000 each. No subscriptions, no hidden fees.</p>
+                                    <p className="text-xs text-muted">Additional reports are ₦50,000 each. No subscriptions, no hidden fees.</p>
                                 </motion.div>
 
                                 <motion.div
@@ -621,74 +608,6 @@ const Onboarding = () => {
                                 >
                                     {isLoading ? "Setting up…" : <>Get started <LucideArrowRight className="w-4 h-4" /></>}
                                 </motion.button>
-                            </motion.div>
-                        )}
-
-                        {/* ── Step 3: Questionnaire Invite ── */}
-                        {step === 3 && (
-                            <motion.div
-                                key="step-3"
-                                custom={direction}
-                                variants={stepVariants}
-                                initial="enter"
-                                animate="center"
-                                exit="exit"
-                                className="text-center"
-                            >
-                                <motion.div
-                                    initial={{ scale: 0, rotate: -20 }}
-                                    animate={{ scale: 1, rotate: 0 }}
-                                    transition={{ delay: 0.1, type: "spring", stiffness: 260, damping: 18 }}
-                                    className="w-20 h-20 rounded-3xl bg-accent/10 flex items-center justify-center mx-auto mb-8"
-                                >
-                                    <LucideClipboardList className="w-10 h-10 text-accent" />
-                                </motion.div>
-
-                                <motion.h1
-                                    initial={{ opacity: 0, y: 12 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                    className="text-4xl sm:text-5xl font-serif text-heading mb-4 leading-tight"
-                                >
-                                    One more thing
-                                </motion.h1>
-                                <motion.p
-                                    initial={{ opacity: 0, y: 12 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.3 }}
-                                    className="text-base text-body mb-4 leading-relaxed max-w-sm mx-auto"
-                                >
-                                    Would you like to complete our comprehensive travel health questionnaire? It now starts with trip type selection (Single, Round Trip, or Multi-stop) to tailor recommendations from the first step.
-                                </motion.p>
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: 0.4 }}
-                                    className="flex items-center gap-2 justify-center mb-10"
-                                >
-                                    <LucideSparkles className="w-4 h-4 text-accent" />
-                                    <span className="text-sm font-semibold text-accent">Takes about 5 minutes</span>
-                                </motion.div>
-
-                                <motion.div
-                                    initial={{ opacity: 0, y: 12 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5 }}
-                                    className="space-y-3"
-                                >
-                                    <button
-                                        onClick={handleStartQuestionnaire}
-                                        className="w-full py-4 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200 flex items-center justify-center gap-2"
-                                    >
-                                        Yes, let's do it <LucideArrowRight className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={handleSkipQuestionnaire}
-                                        className="w-full py-3.5 rounded-2xl text-muted font-medium text-sm cursor-pointer hover:text-heading hover:bg-button-secondary transition-all duration-200"
-                                    >
-                                        Skip for now, I'll do it later
-                                    </button>
-                                </motion.div>
                             </motion.div>
                         )}
                     </AnimatePresence>

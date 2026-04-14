@@ -4,12 +4,13 @@ import {
     LucideArrowLeft,
     LucideArrowRight,
     LucideCheck,
-    LucideGlobe,
     LucideLoader2,
+    LucidePlus,
+    LucideX,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import CountryPicker from "../CountryPicker";
-import TripItineraryFlow, { type TripItineraryData, type MultiStopLeg } from "./TripItineraryFlow";
+import TripItineraryFlow, { type TripItineraryData } from "./TripItineraryFlow";
 import { useOnboardingQuestions } from "../../api/hooks";
 
 interface QuestionOption {
@@ -152,6 +153,12 @@ function toNonEmptyStringArray(value: unknown): string[] {
     return value.map((entry) => String(entry).trim()).filter(Boolean);
 }
 
+/** Preserve empty slots so "Add another country" rows are not stripped on re-render. */
+function toMultiCountryEditArray(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    return value.map((entry) => String(entry ?? ""));
+}
+
 function getDisplayValue(question: Question, value: unknown): string {
     if (value == null) return "Not provided";
     if (question.type === "trip_itinerary") {
@@ -227,7 +234,7 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
         if (!Number.isNaN(parsedDuration) && parsedDuration > 0) duration = parsedDuration;
     }
 
-    if (!primaryCountry && itinerary) {
+    if (itinerary) {
         if (itinerary.tripType === "one") {
             primaryCountry = (itinerary.oneTo ?? "").trim();
             const fromCity = (itinerary.oneFrom ?? "").trim();
@@ -243,7 +250,6 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
                 lengthOfStay: itinerary.oneLengthOfStay ?? "",
                 purpose: itinerary.onePurpose ?? "",
                 flightNumber: itinerary.oneFlightNumber ?? "",
-                accommodationType: itinerary.oneAccommodationType ?? "",
                 stops: [{ city: "", country: primaryCountry, order: 1 }],
             });
         } else if (itinerary.tripType === "return") {
@@ -262,7 +268,6 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
                 returnDate: itinerary.returnReturnDate ?? "",
                 outboundFlightNumber: itinerary.outboundFlightNumber ?? "",
                 returnFlightNumber: itinerary.returnFlightNumber ?? "",
-                accommodationType: itinerary.returnAccommodationType ?? "",
                 stops: [{ city: "", country: to, order: 1 }],
             });
         } else if (itinerary.tripType === "multi") {
@@ -282,7 +287,6 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
                     country: (leg.country ?? "").trim(),
                     arrivalDate: leg.arrivalDate ?? "",
                     nights: leg.nights ?? "",
-                    accommodationType: leg.accommodationType ?? "",
                     order: index + 1,
                 })),
             });
@@ -609,49 +613,105 @@ const QuestionInput = ({
     onToggleCheckbox: (value: string) => void;
 }) => {
     const baseInputClass =
-        "w-full bg-white border border-border-light rounded-xl px-4 py-3.5 text-[15px] font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent";
+        "w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium";
 
     switch (question.type) {
         case "radio":
             return (
-                <div className="space-y-3">
-                    {(question.options ?? []).map((option) => (
-                        <button
+                <div className="space-y-2.5">
+                    {(question.options ?? []).map((option, i) => (
+                        <motion.button
                             key={option.value}
                             type="button"
                             onClick={() => onChange(option.value)}
-                            className={`w-full text-left p-4 rounded-xl border text-[15px] font-semibold transition-colors ${value === option.value
-                                ? "border-accent bg-accent/10 text-heading"
-                                : "border-border-light/70 bg-white text-body hover:border-border-light"
+                            initial={{ opacity: 0, y: 14 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{
+                                delay: i * 0.055,
+                                type: "spring",
+                                stiffness: 380,
+                                damping: 30,
+                            }}
+                            className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${value === option.value
+                                ? "border-accent bg-white shadow-sm"
+                                : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
                                 }`}
                         >
-                            {option.label}
-                        </button>
+                            <div className="flex items-center gap-3.5">
+                                <div
+                                    className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${value === option.value
+                                        ? "border-accent bg-accent"
+                                        : "border-border"
+                                        }`}
+                                >
+                                    {value === option.value && (
+                                        <div className="w-2 h-2 rounded-full bg-white" />
+                                    )}
+                                </div>
+                                <span
+                                    className={`text-sm font-semibold transition-colors ${value === option.value
+                                        ? "text-heading"
+                                        : "text-body"
+                                        }`}
+                                >
+                                    {option.label}
+                                </span>
+                            </div>
+                        </motion.button>
                     ))}
                 </div>
             );
         case "checkbox":
             return (
-                <div className="space-y-3">
-                    {(question.options ?? []).map((option) => {
+                <div className="space-y-2.5">
+                    {(question.options ?? []).map((option, i) => {
                         const checked = toNonEmptyStringArray(value).includes(option.value);
                         return (
-                            <button
+                            <motion.button
                                 key={option.value}
                                 type="button"
                                 onClick={() => onToggleCheckbox(option.value)}
-                                className={`w-full text-left p-4 rounded-xl border text-[15px] font-semibold transition-colors ${checked ? "border-accent bg-accent/10 text-heading" : "border-border-light/70 bg-white text-body hover:border-border-light"
+                                initial={{ opacity: 0, y: 14 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{
+                                    delay: i * 0.055,
+                                    type: "spring",
+                                    stiffness: 380,
+                                    damping: 30,
+                                }}
+                                className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${checked
+                                    ? "border-accent bg-white shadow-sm"
+                                    : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
                                     }`}
                             >
-                                {option.label}
-                            </button>
+                                <div className="flex items-center gap-3.5">
+                                    <div
+                                        className={`w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${checked
+                                            ? "border-accent bg-accent"
+                                            : "border-border"
+                                            }`}
+                                    >
+                                        {checked && (
+                                            <LucideCheck className="w-3 h-3 text-white" />
+                                        )}
+                                    </div>
+                                    <span
+                                        className={`text-sm font-semibold transition-colors ${checked ? "text-heading" : "text-body"
+                                            }`}
+                                    >
+                                        {option.label}
+                                    </span>
+                                </div>
+                            </motion.button>
                         );
                     })}
                 </div>
             );
         case "textarea":
             return (
-                <textarea
+                <motion.textarea
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
                     value={String(value ?? "")}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={question.placeholder}
@@ -661,7 +721,9 @@ const QuestionInput = ({
             );
         case "date":
             return (
-                <input
+                <motion.input
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
                     type="date"
                     value={String(value ?? "")}
                     onChange={(e) => onChange(e.target.value)}
@@ -670,17 +732,22 @@ const QuestionInput = ({
             );
         case "country":
             return (
-                <CountryPicker
-                    value={String(value ?? "")}
-                    onChange={(name) => onChange(name)}
-                    placeholder={question.placeholder ?? "Select country"}
-                    inputClassName={`${baseInputClass} pr-10`}
-                />
+                <motion.div
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                >
+                    <CountryPicker
+                        value={String(value ?? "")}
+                        onChange={(name) => onChange(name)}
+                        placeholder={question.placeholder ?? "Select country"}
+                        inputClassName={`${baseInputClass} pr-10`}
+                    />
+                </motion.div>
             );
         case "multi_country":
             return (
                 <MultiCountryInput
-                    value={toNonEmptyStringArray(value)}
+                    value={toMultiCountryEditArray(value)}
                     onChange={onChange}
                     placeholder={question.placeholder}
                 />
@@ -694,7 +761,9 @@ const QuestionInput = ({
             );
         default:
             return (
-                <input
+                <motion.input
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
                     type="text"
                     value={String(value ?? "")}
                     onChange={(e) => onChange(e.target.value)}
@@ -704,11 +773,6 @@ const QuestionInput = ({
             );
     }
 };
-
-const FieldLabel = ({ label }: { label: string }) => (
-    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</label>
-);
-
 
 const MultiCountryInput = ({
     value,
@@ -732,28 +796,24 @@ const MultiCountryInput = ({
     };
 
     return (
-        <div className="space-y-4">
-            {countries.map((country, idx) => (
-                <div key={`${idx}-${country}`} className="flex items-start gap-2">
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+            {countries.map((country, i) => (
+                <div key={i} className="flex items-start gap-2">
                     <div className="flex-1">
-                        <FieldLabel label={`Destination country ${idx + 1}`} />
-                        <div className="relative">
-                            <LucideGlobe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                            <CountryPicker
-                                value={country}
-                                onChange={(name) => updateCountry(idx, name)}
-                                placeholder={placeholder ?? "Select a country"}
-                                inputClassName="w-full bg-white border border-border-light rounded-xl px-4 py-3.5 pl-10 pr-10 text-[15px] font-medium text-heading placeholder:text-muted/55 outline-none focus:border-accent"
-                            />
-                        </div>
+                        <CountryPicker
+                            value={country}
+                            onChange={(name) => updateCountry(i, name)}
+                            placeholder={placeholder ?? "Select a country"}
+                            inputClassName="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 pr-10 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium"
+                        />
                     </div>
                     {countries.length > 1 && (
                         <button
                             type="button"
-                            onClick={() => removeCountry(idx)}
-                            className="mt-2 text-sm text-muted hover:text-heading"
+                            onClick={() => removeCountry(i)}
+                            className="mt-3.5 text-muted/50 hover:text-red-500 transition-colors cursor-pointer p-1"
                         >
-                            Remove
+                            <LucideX className="w-4 h-4" />
                         </button>
                     )}
                 </div>
@@ -761,11 +821,11 @@ const MultiCountryInput = ({
             <button
                 type="button"
                 onClick={addCountry}
-                className="text-xs font-semibold text-accent hover:underline"
+                className="w-full py-3 rounded-xl border-2 border-dashed border-border-light text-xs font-semibold text-muted/60 hover:border-accent hover:text-accent hover:bg-accent/5 transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
             >
-                + Add another country
+                <LucidePlus className="w-3.5 h-3.5" /> Add Another Country
             </button>
-        </div>
+        </motion.div>
     );
 };
 

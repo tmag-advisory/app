@@ -80,15 +80,15 @@ const HRCreatePlan = () => {
             <DashboardAmbientBackground />
             <DashboardHeader title="Create plan for employee" />
             {!employeeId ? (
-                <div className={`relative z-10 max-w-4xl ${DASHBOARD_GLASS_SURFACE} p-6 md:p-8`}>
-                    <div className="mb-5">
+                <div className={`relative z-10 max-w-2xl mx-auto px-6 ${DASHBOARD_GLASS_SURFACE} p-8 md:p-10`}>
+                    <div className="mb-8">
                         <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-accent mb-2">Employee Selection</p>
-                        <h2 className="text-3xl md:text-4xl font-serif text-heading mb-2 tracking-tight">Who is this plan for?</h2>
-                        <p className="text-sm md:text-base text-muted leading-relaxed max-w-3xl">
-                            Choose an active employee first. After selection, you’ll complete the same detailed questionnaire flow used in onboarding.
+                        <h2 className="text-3xl md:text-4xl font-serif text-heading mb-3 tracking-tight">Who is this plan for?</h2>
+                        <p className="text-sm md:text-base text-muted leading-relaxed">
+                            Choose an active employee first. After selection, you'll complete the same detailed questionnaire flow used in onboarding.
                         </p>
                     </div>
-                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                    <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                         {employees.length === 0 ? (
                             <p className="text-sm text-muted py-6 text-center">No active employees found.</p>
                         ) : (
@@ -129,20 +129,20 @@ const HRCreatePlan = () => {
                     </div>
                 </div>
             ) : (
-                <div className="relative z-10 max-w-5xl space-y-5">
-                    <div className={`${DASHBOARD_GLASS_SURFACE} p-6 md:p-8`}>
+                <div className="relative z-10 max-w-5xl mx-auto px-6 space-y-8">
+                    <div className={`${DASHBOARD_GLASS_SURFACE} p-8 md:p-10`}>
                         <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-accent mb-2">HR Advisory Builder</p>
-                        <h2 className="text-3xl md:text-4xl font-serif text-heading leading-tight mb-2">
+                        <h2 className="text-3xl md:text-4xl font-serif text-heading leading-tight mb-3">
                             Prepare a high-context plan for this traveller
                         </h2>
-                        <p className="text-sm md:text-base text-muted leading-relaxed max-w-3xl">
+                        <p className="text-sm md:text-base text-muted leading-relaxed">
                             Complete each questionnaire section carefully, then verify all answers before generating.
                             This helps produce safer, more personalised guidance for the selected employee.
                         </p>
                     </div>
 
                     <div className={DASHBOARD_GLASS_SURFACE}>
-                        <div className="p-6 md:p-8">
+                        <div className="p-8 md:p-12 lg:p-14">
                             <PlanQuestionnaireFlow
                                 credits={credits}
                                 verifyTopSlot={verifyTopSlot}
