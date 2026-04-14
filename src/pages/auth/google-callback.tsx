@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { canAccessHR } from "../../lib/canAccessHr";
 import AnimateIn from "../../components/animations/AnimateIn";
 import { LucideLoader } from "lucide-react";
 import api from "../../api/axios";
+import { getPostAuthRedirect, performRedirect } from "../../lib/roleRedirect";
 
 const GoogleCallback = () => {
     const navigate = useNavigate();
@@ -39,7 +39,7 @@ const GoogleCallback = () => {
                 const stage = user.onboarding_stage;
 
                 if (stage > 4) {
-                    navigate(canAccessHR(user) ? "/hr" : "/dashboard", { replace: true });
+                    performRedirect(getPostAuthRedirect(user), navigate, true);
                 } else {
                     navigate("/onboarding", { replace: true });
                 }

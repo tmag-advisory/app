@@ -1,39 +1,63 @@
-import { LucideCheck, LucideArrowRight, LucideKey, LucideHeadphones, LucideUsers, LucideShield } from "lucide-react";
+import { LucideCheck, LucideArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
-import { companyPlans, elevatedPlanFeatures } from "../../constants/companyPlans";
+import { creditPlans, premiumFeatures } from "../../constants/companyPlans";
 
 const individualPlans = [
   {
-    name: "Explorer",
+    name: "Essential",
+    code: "ESSENTIAL",
     price: "Free",
-    period: "",
-    description: "Quick guidance for a single destination.",
+    priceNote: "1 credit included at signup",
+    description: "Generic destination health education for casual travellers.",
     features: [
-      "1 destination report",
-      "Basic vaccine checklist",
-      "General risk overview",
-      "Email delivery",
+      "Destination health risk overview",
+      "General food & water safety",
+      "Environmental considerations",
+      "Post-return awareness note",
+      "WHO & CDC validated guidance",
     ],
     cta: "Start free",
     highlighted: false,
+    tier: "free",
   },
   {
-    name: "Credits",
-    price: "Pay as you go",
-    period: "",
-    description: "Buy credits and generate full travel health plans on demand.",
+    name: "Standard",
+    code: "STANDARD",
+    price: "$50",
+    priceNote: "per credit",
+    description: "Fully personalised travel health report across 14 clinical decision trees.",
     features: [
-      "Full vaccine & medication plan",
-      "Emergency contacts & clinics",
-      "Downloadable PDF reports",
-      "Buy as many credits as you want",
-      "Credits never expire",
+      "Trip at a glance summary",
+      "Personalised health risk overview",
+      "Vaccination gap analysis",
+      "Activity & destination-specific guidance",
+      "Emergency contacts & local clinics",
+      "After-return symptom timeline",
+      "Next steps checklist",
     ],
     cta: "Get started",
     highlighted: true,
+    tier: "standard",
+  },
+  {
+    name: "Premium",
+    code: "PREMIUM",
+    price: "$100",
+    priceNote: "per credit",
+    description: "Everything in Standard plus clinical-grade extras for high-risk or complex trips.",
+    features: [
+      "All Standard plan features",
+      "Pre-travel preparation checklist",
+      "Medication & supplies packing list",
+      "Doctor-ready clinical summary letter",
+      "Priority physician review flag",
+    ],
+    cta: "Get Premium",
+    highlighted: false,
+    tier: "premium",
   },
 ];
 
@@ -61,17 +85,17 @@ const PricingPage = () => {
             For <span className="italic">individuals</span>
           </h2>
           <p className="text-sm text-muted max-w-md mx-auto">
-            Buy credits and use them for your trips. One credit = one travel health plan.
+            One credit = one travel health plan. Choose the depth of report that fits your trip.
           </p>
         </AnimateIn>
 
-        <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto" stagger={0.15}>
+        <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto" stagger={0.12}>
           {individualPlans.map((plan) => (
             <motion.div
               variants={staggerItem}
               key={plan.name}
               className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden ${
-                plan.highlighted ? "" : "bg-button-secondary"
+                plan.highlighted ? "" : plan.tier === "premium" ? "bg-button-secondary border border-amber-200/60" : "bg-button-secondary"
               }`}
             >
               {plan.highlighted && (
@@ -88,6 +112,11 @@ const PricingPage = () => {
                   Most popular
                 </span>
               )}
+              {plan.tier === "premium" && (
+                <span className="absolute top-6 right-6 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                  Best report
+                </span>
+              )}
               <div className="relative z-10">
                 <h3 className={`text-lg font-semibold mb-1 ${plan.highlighted ? "text-white" : "text-heading"}`}>
                   {plan.name}
@@ -95,23 +124,21 @@ const PricingPage = () => {
                 <p className={`text-sm mb-6 ${plan.highlighted ? "text-white/60" : "text-body"}`}>
                   {plan.description}
                 </p>
-                <div className="flex items-baseline gap-1 mb-8">
-                  <span className={`text-4xl font-serif ${plan.highlighted ? "text-white" : "text-heading"}`}>
+                <div className="flex items-baseline gap-1.5 mb-1">
+                  <span className={`text-4xl font-serif ${plan.highlighted ? "text-white" : plan.tier === "premium" ? "text-amber-700" : "text-heading"}`}>
                     {plan.price}
                   </span>
-                  {plan.period && (
-                    <span className={`text-sm ${plan.highlighted ? "text-white/60" : "text-body"}`}>
-                      {plan.period}
-                    </span>
-                  )}
                 </div>
+                <p className={`text-xs mb-8 ${plan.highlighted ? "text-white/50" : "text-muted"}`}>
+                  {plan.priceNote}
+                </p>
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((f) => (
                     <li
                       key={f}
                       className={`flex items-start gap-3 text-sm ${plan.highlighted ? "text-white" : "text-heading"}`}
                     >
-                      <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${plan.highlighted ? "text-white/60" : "text-accent"}`} />
+                      <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${plan.highlighted ? "text-white/60" : plan.tier === "premium" ? "text-amber-600" : "text-accent"}`} />
                       {f}
                     </li>
                   ))}
@@ -129,8 +156,8 @@ const PricingPage = () => {
                 <Button
                   variant="secondary"
                   icon={<LucideArrowRight />}
-                  link={plan.name === "Credits" ? "/auth/register" : "/auth/register"}
-                  className="self-start relative z-10"
+                  link="/auth/register"
+                  className={`self-start relative z-10 ${plan.tier === "premium" ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`}
                 >
                   {plan.cta}
                 </Button>
@@ -152,22 +179,24 @@ const PricingPage = () => {
             For <span className="italic">companies</span>
           </h2>
           <p className="text-sm text-muted max-w-md mx-auto">
-            Team plans with signup credits, employee management, and admin tools.
+            Your team buys credits and uses them to generate travel health plans. Choose the plan tier that matches your reporting needs.
           </p>
         </AnimateIn>
 
-        <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6" stagger={0.1}>
-          {companyPlans.map((plan) => (
+        <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl justify-center mx-auto" stagger={0.12}>
+          {creditPlans.map((plan) => (
             <motion.div
               variants={staggerItem}
               key={plan.tier}
-              className={`rounded-3xl p-8 flex flex-col justify-between ${
-                plan.tier === "diamond"
-                  ? "relative overflow-hidden"
+              className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden ${
+                plan.tier === "standard"
+                  ? ""
+                  : plan.tier === "premium"
+                  ? "bg-button-secondary border border-amber-200/60"
                   : "bg-button-secondary"
               }`}
             >
-              {plan.tier === "diamond" && (
+              {plan.tier === "standard" && (
                 <div
                   className="absolute inset-0"
                   style={{
@@ -176,67 +205,73 @@ const PricingPage = () => {
                   }}
                 />
               )}
-              {plan.tier === "diamond" && (
+              {plan.tier === "standard" && (
                 <span className="absolute top-6 right-6 text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full">
-                  Best for API teams
+                  Most popular
+                </span>
+              )}
+              {plan.tier === "premium" && (
+                <span className="absolute top-6 right-6 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                  Best report
                 </span>
               )}
               <div className="relative z-10">
-                <h3 className={`text-2xl font-serif mb-1 ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
+                <h3 className={`text-lg font-semibold mb-1 ${plan.tier === "standard" ? "text-white" : "text-heading"}`}>
                   {plan.name}
                 </h3>
-                <p className={`text-sm mb-6 ${plan.tier === "diamond" ? "text-white/60" : "text-body"}`}>
+                <p className={`text-sm mb-6 ${plan.tier === "standard" ? "text-white/60" : "text-body"}`}>
                   {plan.description}
                 </p>
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className={`text-5xl font-serif ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
-                    {plan.signupCredits}
-                  </span>
-                  <span className={`text-sm ${plan.tier === "diamond" ? "text-white/60" : "text-body"}`}>
-                    signup credits
+                <div className="flex items-baseline gap-1.5 mb-1">
+                  <span className={`text-4xl font-serif ${plan.tier === "standard" ? "text-white" : plan.tier === "premium" ? "text-amber-700" : "text-heading"}`}>
+                    {plan.priceUsd === 0 ? "Free" : `$${plan.priceUsd}`}
                   </span>
                 </div>
-                <p className={`text-xs mb-8 ${plan.tier === "diamond" ? "text-white/40" : "text-muted"}`}>
-                  {plan.signupCredits} signup credits included
+                <p className={`text-xs mb-8 ${plan.tier === "standard" ? "text-white/50" : "text-muted"}`}>
+                  {plan.priceUsd === 0 ? "included at signup" : "per credit"}
                 </p>
                 <ul className="space-y-3 mb-8">
-                  <li className={`flex items-start gap-3 text-sm ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
-                    <LucideUsers className={`w-4 h-4 mt-0.5 shrink-0 ${plan.tier === "diamond" ? "text-white/50" : "text-accent"}`} />
-                    {plan.employeeLimit}
-                  </li>
-                  <li className={`flex items-start gap-3 text-sm ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
-                    <LucideKey className={`w-4 h-4 mt-0.5 shrink-0 ${plan.apiAccess ? (plan.tier === "diamond" ? "text-white/50" : "text-accent") : "text-muted/40"}`} />
-                    API access {plan.apiAccess ? "included" : "not included"}
-                  </li>
-                  <li className={`flex items-start gap-3 text-sm ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
-                    <LucideHeadphones className={`w-4 h-4 mt-0.5 shrink-0 ${plan.customSupport ? (plan.tier === "diamond" ? "text-white/50" : "text-accent") : "text-muted/40"}`} />
-                    Custom support {plan.customSupport ? "included" : "not included"}
-                  </li>
-                  <li className={`flex items-start gap-3 text-sm ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
-                    <LucideShield className={`w-4 h-4 mt-0.5 shrink-0 ${plan.multipleAdminAccounts ? (plan.tier === "diamond" ? "text-white/50" : "text-accent") : "text-muted/40"}`} />
-                    Multiple admins {plan.multipleAdminAccounts ? "included" : "not included"}
-                  </li>
+                  {plan.features.map((f) => (
+                    <li
+                      key={f}
+                      className={`flex items-start gap-3 text-sm ${plan.tier === "standard" ? "text-white" : "text-heading"}`}
+                    >
+                      <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${plan.tier === "standard" ? "text-white/60" : plan.tier === "premium" ? "text-amber-600" : "text-accent"}`} />
+                      {f}
+                    </li>
+                  ))}
                 </ul>
               </div>
-              <Button
-                variant={plan.tier === "diamond" ? "primary" : "secondary"}
-                className={`relative z-10 self-stretch text-center justify-center flex ${plan.tier === "diamond" ? "bg-white !text-dark hover:bg-white/90" : ""}`}
-                link="/company-onboarding"
-              >
-                Get started
-              </Button>
+              {plan.tier === "standard" ? (
+                <Button
+                  variant="primary"
+                  link="/company-onboarding"
+                  className="relative z-10 self-stretch bg-white !text-dark hover:bg-white/90 text-center justify-center flex"
+                >
+                  Get started
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  icon={<LucideArrowRight />}
+                  link="/company-onboarding"
+                  className={`self-start relative z-10 ${plan.tier === "premium" ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`}
+                >
+                  Get started
+                </Button>
+              )}
             </motion.div>
           ))}
         </StaggerGroup>
 
-        {/* Elevated features */}
+        {/* Premium extras callout */}
         <AnimateIn className="mt-10">
-          <div className="bg-button-secondary rounded-3xl border border-border-light/60 p-8">
-            <h3 className="text-xl font-serif text-heading mb-5">Included in Silver, Gold, and Diamond</h3>
+          <div className="bg-button-secondary rounded-3xl border border-amber-200/60 p-8">
+            <h3 className="text-xl font-serif text-heading mb-5">Exclusive to Premium</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {elevatedPlanFeatures.map((feature) => (
+              {premiumFeatures.map((feature) => (
                 <div key={feature} className="flex items-start gap-3 text-sm text-heading">
-                  <LucideCheck className="w-4 h-4 mt-0.5 text-accent shrink-0" />
+                  <LucideCheck className="w-4 h-4 mt-0.5 text-amber-600 shrink-0" />
                   {feature}
                 </div>
               ))}
@@ -264,8 +299,8 @@ const PricingPage = () => {
                 a: "Yes. Individual users can purchase credits anytime. Company admins can top up credits or request additional allocations from their dashboard.",
               },
               {
-                q: "What's the difference between individual and company plans?",
-                a: "Individual plans are pay-per-trip or buy-credits. Company plans bundle signup credits with employee management, multiple admins, API access, and compliance tools.",
+                q: "What's the difference between Standard and Premium?",
+                a: "Standard ($50/credit) generates a fully personalised travel health report covering vaccines, medications, risks, and emergency contacts. Premium ($100/credit) adds a Pre-Travel Checklist, Medication Packing List, and a Doctor-Ready Clinical Summary Letter for your GP.",
               },
               {
                 q: "Can I upgrade my company plan?",
@@ -276,8 +311,8 @@ const PricingPage = () => {
                 a: "Never. Your credits stay in your account until you use them, whether that's next week or next year.",
               },
               {
-                q: "Is there a free trial?",
-                a: "Yes. The Explorer plan is completely free and gives you one destination report with basic vaccine checklists and risk overview.",
+                q: "Is there a free tier?",
+                a: "Yes. Every new account receives 1 free Essential credit — a destination health education report with no personal data required. Upgrade to Standard or Premium for a fully personalised plan.",
               },
             ].map((item) => (
               <motion.div variants={staggerItem} key={item.q} className="bg-background-primary rounded-2xl p-6">

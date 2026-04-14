@@ -19,6 +19,7 @@ import {
   profileApi,
   onboardingApi,
   creditPricingApi,
+  creditPlansApi,
   creditPurchaseApi,
   companyAdminCreditsApi,
   planUsageLedgerApi,
@@ -202,6 +203,10 @@ export const queryKeys = {
     all: ["credit-pricing"] as const,
     list: () => [...["credit-pricing"], "list"] as const,
     byCurrency: (currency: string) => [...["credit-pricing"], "currency", currency] as const,
+  },
+  creditPlans: {
+    all: ["user-credit-plans"] as const,
+    list: () => [...["user-credit-plans"], "list"] as const,
   },
   creditPurchases: {
     all: ["credit-purchases"] as const,
@@ -995,6 +1000,16 @@ export function useCreditPricingByCurrency(currency: string) {
     queryKey: queryKeys.creditPricing.byCurrency(currency),
     queryFn: () => creditPricingApi.getByCurrency(currency),
     enabled: !!currency,
+  });
+}
+
+// ─── User Credit Plan Hooks ─────────────────────────────────────
+
+export function useCreditPlans() {
+  return useQuery<import("./types").CreditPlan[]>({
+    queryKey: queryKeys.creditPlans.list(),
+    queryFn: () => creditPlansApi.list(),
+    staleTime: 10 * 60 * 1000,
   });
 }
 

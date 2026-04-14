@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import AnimateIn from "../../components/animations/AnimateIn";
-import { canAccessHR } from "../../lib/canAccessHr";
 import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
+import { getPostAuthRedirect, performRedirect } from "../../lib/roleRedirect";
 
 const Login = () => {
     const { login } = useAuth();
@@ -21,7 +21,7 @@ const Login = () => {
             const user = await login({ email, password });
             const stage = user.onboarding_stage;
             if (stage > 4) {
-                navigate(canAccessHR(user) ? "/hr" : "/dashboard");
+                performRedirect(getPostAuthRedirect(user), navigate);
             } else if (!user.is_verified) {
                 navigate(`/verify-email?email=${encodeURIComponent(email)}`);
             } else {

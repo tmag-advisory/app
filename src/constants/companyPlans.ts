@@ -1,67 +1,64 @@
-export type CompanyPlanTier = "bronze" | "silver" | "gold" | "diamond";
+export type CreditPlanTier = "essential" | "standard" | "premium";
 
-export interface CompanyPlanDefinition {
-  tier: CompanyPlanTier;
+export interface CreditPlanDefinition {
+  tier: CreditPlanTier;
+  code: "ESSENTIAL" | "STANDARD" | "PREMIUM";
   name: string;
-  signupCredits: number;
-  employeeLimit: string;
-  apiAccess: boolean;
-  customSupport: boolean;
-  multipleAdminAccounts: boolean;
-  highEmployeeLimit: boolean;
+  priceUsd: number;
   description: string;
+  features: string[];
 }
 
-export const companyPlans: CompanyPlanDefinition[] = [
+export const creditPlans: CreditPlanDefinition[] = [
+  // {
+  //   tier: "essential",
+  //   code: "ESSENTIAL",
+  //   name: "Essential",
+  //   priceUsd: 0,
+  //   description: "Generic destination health education for casual travellers. No personal data required.",
+  //   features: [
+  //     "Destination health risk overview",
+  //     "General food & water safety guidance",
+  //     "Environmental considerations",
+  //     "Post-return awareness note",
+  //     "WHO & CDC validated guidance",
+  //   ],
+  // },
   {
-    tier: "bronze",
-    name: "Bronze",
-    signupCredits: 100,
-    employeeLimit: "1–100 employees",
-    apiAccess: false,
-    customSupport: false,
-    multipleAdminAccounts: false,
-    highEmployeeLimit: false,
-    description: "Great for small teams getting started with travel health planning.",
+    tier: "standard",
+    code: "STANDARD",
+    name: "Standard",
+    priceUsd: 50,
+    description: "Fully personalised travel health report using all questionnaire inputs across 14 clinical decision trees.",
+    features: [
+      "Trip at a glance summary",
+      "Personalised health risk overview",
+      "Vaccination gap analysis",
+      "Activity & destination-specific guidance",
+      "Emergency contacts & local clinics",
+      "After-return symptom timeline",
+      "Next steps checklist",
+    ],
   },
   {
-    tier: "silver",
-    name: "Silver",
-    signupCredits: 200,
-    employeeLimit: "Up to 500 employees",
-    apiAccess: true,
-    customSupport: true,
-    multipleAdminAccounts: true,
-    highEmployeeLimit: false,
-    description: "For growing teams that need integrations and stronger admin controls.",
-  },
-  {
-    tier: "gold",
-    name: "Gold",
-    signupCredits: 500,
-    employeeLimit: "Up to 1,000 employees",
-    apiAccess: true,
-    customSupport: true,
-    multipleAdminAccounts: true,
-    highEmployeeLimit: false,
-    description: "For larger organizations with high travel volume and compliance demands.",
-  },
-  {
-    tier: "diamond",
-    name: "Diamond",
-    signupCredits: 1000,
-    employeeLimit: "Up to 100,000 employees",
-    apiAccess: true,
-    customSupport: true,
-    multipleAdminAccounts: true,
-    highEmployeeLimit: true,
-    description: "Enterprise scale with highest credits, full API access, and priority support.",
+    tier: "premium",
+    code: "PREMIUM",
+    name: "Premium",
+    priceUsd: 100,
+    description: "Everything in Standard plus clinical-grade extras for high-risk or complex trips.",
+    features: [
+      "All Standard plan features",
+      "Pre-travel preparation checklist",
+      "Medication & supplies packing list",
+      "Doctor-ready clinical summary letter",
+      "Priority physician review flag",
+    ],
   },
 ];
 
-export const elevatedPlanFeatures = [
-  "Custom support",
-  "API access",
-  "Multiple admin accounts",
-  "Access to 100,000 employees",
+export const premiumFeatures = [
+  "Pre-travel preparation checklist",
+  "Medication & supplies packing list",
+  "Doctor-ready clinical summary letter",
+  "Priority physician review flag",
 ];

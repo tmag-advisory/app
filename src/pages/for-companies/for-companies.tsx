@@ -7,14 +7,12 @@ import {
     LucideCheck,
     LucideFileText,
     LucidePlug,
-    LucideKey,
-    LucideHeadphones,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
-import { companyPlans, elevatedPlanFeatures } from "../../constants/companyPlans";
+import { creditPlans, premiumFeatures } from "../../constants/companyPlans";
 
 const workflowSteps = [
     {
@@ -50,7 +48,7 @@ const features = [
     "Duty-of-care audit trail",
     "Credit allocation across departments",
     "Role-based access (HR, travel managers, admins)",
-    ...elevatedPlanFeatures,
+    ...premiumFeatures,
 ];
 
 const ForCompanies = () => {
@@ -108,51 +106,64 @@ const ForCompanies = () => {
                         Company plans
                     </span>
                     <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
-                        Bronze, Silver, Gold, and <span className="italic">Diamond</span>.
+                        Essential, Standard, and <span className="italic">Premium</span>.
                     </h2>
                 </AnimateIn>
-                <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6" stagger={0.1}>
-                    {companyPlans.map((plan) => (
+                <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto" stagger={0.12}>
+                    {creditPlans.map((plan) => (
                         <motion.div
                             variants={staggerItem}
                             key={plan.tier}
-                            className={`rounded-2xl p-6 border flex flex-col ${plan.tier === "diamond" ? "bg-dark text-white border-dark" : "bg-background-primary border-border-light/50"}`}
+                            className={`relative rounded-2xl p-6 border flex flex-col overflow-hidden ${
+                                plan.tier === "standard"
+                                    ? "bg-dark border-dark text-white"
+                                    : plan.tier === "premium"
+                                    ? "bg-background-primary border-amber-200/60"
+                                    : "bg-background-primary border-border-light/50"
+                            }`}
                         >
-                            {plan.tier === "diamond" && (
-                                <span className="self-start text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full mb-4">
-                                    Best for API teams
+                            {plan.tier === "essential" && (
+                                <span className="self-start text-xs font-semibold text-accent bg-accent/10 border border-accent/20 px-3 py-1 rounded-full mb-4">
+                                    Free to start
                                 </span>
                             )}
-                            <h3 className={`text-xl font-serif mb-1 ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>{plan.name}</h3>
-                            <p className={`text-xs mb-4 ${plan.tier === "diamond" ? "text-white/60" : "text-muted"}`}>{plan.description}</p>
-                            <div className="flex items-baseline gap-1 mb-1">
-                                <p className={`text-3xl font-serif ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
-                                    {plan.signupCredits}
+                            {plan.tier === "standard" && (
+                                <span className="self-start text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full mb-4">
+                                    Most popular
+                                </span>
+                            )}
+                            {plan.tier === "premium" && (
+                                <span className="self-start text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full mb-4">
+                                    Best report
+                                </span>
+                            )}
+                            <h3 className={`text-xl font-serif mb-1 ${plan.tier === "standard" ? "text-white" : "text-heading"}`}>
+                                {plan.name}
+                            </h3>
+                            <p className={`text-xs mb-4 ${plan.tier === "standard" ? "text-white/60" : "text-muted"}`}>
+                                {plan.description}
+                            </p>
+                            <div className="flex items-baseline gap-1.5 mb-1">
+                                <p className={`text-3xl font-serif ${plan.tier === "standard" ? "text-white" : plan.tier === "premium" ? "text-amber-700" : "text-heading"}`}>
+                                    {plan.priceUsd === 0 ? "Free" : `$${plan.priceUsd}`}
                                 </p>
-                                <span className={`text-sm ${plan.tier === "diamond" ? "text-white/60" : "text-muted"}`}>signup credits</span>
                             </div>
-                                <ul className="space-y-2.5 my-6 flex-1">
-                                <li className={`flex items-center gap-2 text-xs ${plan.tier === "diamond" ? "text-white/80" : "text-body"}`}>
-                                    <LucideUsers className={`w-3.5 h-3.5 ${plan.tier === "diamond" ? "text-white/60" : "text-accent"}`} />
-                                    {plan.employeeLimit}
-                                </li>
-                                <li className={`flex items-center gap-2 text-xs ${plan.tier === "diamond" ? "text-white/80" : "text-body"}`}>
-                                    <LucideKey className={`w-3.5 h-3.5 ${plan.apiAccess ? (plan.tier === "diamond" ? "text-white/60" : "text-accent") : "text-muted/40"}`} />
-                                    API access {plan.apiAccess ? "included" : "not included"}
-                                </li>
-                                <li className={`flex items-center gap-2 text-xs ${plan.tier === "diamond" ? "text-white/80" : "text-body"}`}>
-                                    <LucideHeadphones className={`w-3.5 h-3.5 ${plan.customSupport ? (plan.tier === "diamond" ? "text-white/60" : "text-accent") : "text-muted/40"}`} />
-                                    Custom support {plan.customSupport ? "included" : "not included"}
-                                </li>
-                                <li className={`flex items-center gap-2 text-xs ${plan.tier === "diamond" ? "text-white/80" : "text-body"}`}>
-                                    <LucideShieldCheck className={`w-3.5 h-3.5 ${plan.multipleAdminAccounts ? (plan.tier === "diamond" ? "text-white/60" : "text-accent") : "text-muted/40"}`} />
-                                    Multiple admins {plan.multipleAdminAccounts ? "included" : "not included"}
-                                </li>
+                            <span className={`text-xs mb-5 ${plan.tier === "standard" ? "text-white/50" : "text-muted"}`}>
+                                {plan.priceUsd === 0 ? "included at signup" : "per credit"}
+                            </span>
+                            <ul className="space-y-2.5 flex-1">
+                                {plan.features.map((f) => (
+                                    <li key={f} className={`flex items-start gap-2 text-xs ${plan.tier === "standard" ? "text-white/80" : "text-body"}`}>
+                                        <LucideCheck className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${plan.tier === "standard" ? "text-white/60" : plan.tier === "premium" ? "text-amber-600" : "text-accent"}`} />
+                                        {f}
+                                    </li>
+                                ))}
                             </ul>
                             <Button
-                                variant={plan.tier === "diamond" ? "primary" : "secondary"}
+                                variant={plan.tier === "standard" ? "primary" : "secondary"}
                                 link="/company-onboarding"
-                                className={plan.tier === "diamond" ? "bg-white !text-dark hover:bg-white/90 w-full text-center justify-center flex" : "w-full text-center justify-center flex"}
+                                icon={plan.tier !== "standard" ? <LucideArrowRight /> : undefined}
+                                className={`mt-6 ${plan.tier === "standard" ? "bg-white !text-dark hover:bg-white/90 w-full text-center justify-center flex" : plan.tier === "premium" ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`}
                             >
                                 Get started
                             </Button>

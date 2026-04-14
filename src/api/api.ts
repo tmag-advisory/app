@@ -528,6 +528,15 @@ export const creditPricingApi = {
     }).then((r) => r.data.data),
 };
 
+// ─── User Credit Plans ────────────────────────────────────────────
+export const creditPlansApi = {
+  list: () =>
+    api.get<ApiResponse<import("./types").CreditPlan[]>>("/user-credit-plans").then((r) => r.data.data),
+
+  getById: (id: number) =>
+    api.get<ApiResponse<import("./types").CreditPlan>>(`/user-credit-plans/${id}`).then((r) => r.data.data),
+};
+
 // ─── Credit Purchase ────────────────────────────────────────────
 export const creditPurchaseApi = {
   initiate: (data: CreditPurchaseRequest) =>

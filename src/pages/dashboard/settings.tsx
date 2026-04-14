@@ -646,23 +646,58 @@ const Settings = () => {
 
                     <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6")}>
                         <h2 className="text-base font-semibold text-heading mb-4">
-                            Plan
+                            Your plan
                         </h2>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-heading capitalize">
-                                    {isCompanyUser ? "Company" : "Individual"}
-                                </p>
-                                <p className="text-xs text-muted">
-                                    {isCompanyUser ?
-                                        "Organisational billing"
-                                    :   "Pay-per-plan pricing"}
-                                </p>
-                            </div>
-                            <span className="text-xs font-semibold text-accent bg-accent/10 px-3 py-1 rounded-full">
-                                Active
-                            </span>
-                        </div>
+                        {(() => {
+                            const plan = user?.user_credit_plan;
+                            const planName = plan?.displayName ?? (isCompanyUser ? "Company" : "Individual");
+                            const planDescription = plan?.description ?? (isCompanyUser ? "Organisational billing" : "Pay-per-plan pricing");
+                            const basePriceUsd = plan?.basePriceUsd ?? null;
+                            const planCode = plan?.code ?? null;
+                            const planBadgeColor =
+                                planCode === "PREMIUM" ? "text-amber-700 bg-amber-50 border-amber-200" :
+                                planCode === "STANDARD" ? "text-accent bg-accent/10 border-accent/20" :
+                                "text-muted bg-muted/10 border-border-light";
+                            return (
+                                <div>
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <p className="text-sm font-semibold text-heading">{planName}</p>
+                                                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${planBadgeColor}`}>
+                                                    Active
+                                                </span>
+                                            </div>
+                                            {basePriceUsd !== null && basePriceUsd > 0 && (
+                                                <p className="text-xs text-accent font-semibold mb-1">
+                                                    ${basePriceUsd.toFixed(0)} USD per credit
+                                                </p>
+                                            )}
+                                            {basePriceUsd === 0 && (
+                                                <p className="text-xs text-muted font-semibold mb-1">Free tier</p>
+                                            )}
+                                            <p className="text-xs text-muted leading-relaxed max-w-sm line-clamp-2">
+                                                {planDescription}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {basePriceUsd !== null && basePriceUsd > 0 && (
+                                        <div className="mt-3 pt-3 border-t border-border-light/50">
+                                            <p className="text-xs text-muted">
+                                                Price in {activeCurrency}:{" "}
+                                                <span className="font-semibold text-heading">
+                                                    {currencySymbol}
+                                                    {activePricing?.pricePerCredit != null
+                                                        ? activePricing.pricePerCredit.toLocaleString()
+                                                        : (effectivePricing as any).pricePerCredit?.toLocaleString() ?? "—"}{" "}
+                                                    per credit
+                                                </span>
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             )}
@@ -753,6 +788,19 @@ const Settings = () => {
                                 <h2 className="text-base font-semibold text-heading mb-1">
                                     Purchase credits
                                 </h2>
+                                {user?.user_credit_plan && (
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-xs text-muted">Plan:</span>
+                                        <span className="text-xs font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                                            {user.user_credit_plan.displayName}
+                                        </span>
+                                        {user.user_credit_plan.basePriceUsd > 0 && (
+                                            <span className="text-xs text-muted">
+                                                — ${user.user_credit_plan.basePriceUsd.toFixed(0)} USD/credit
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                                 <p className="text-xs text-muted mb-6">
                                     Select a credit pack that works for you.
                                 </p>

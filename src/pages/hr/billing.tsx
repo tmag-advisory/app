@@ -3,10 +3,11 @@ import { usePlanStore } from "../../stores/planStore";
 import { useCredits, useMyCompanies, useHrCreditQuote, useHrPurchaseCredits } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
-import { LucideCoins, LucideTrendingUp, LucideCalendar, LucideLoader2, LucideExternalLink } from "lucide-react";
+import { LucideCoins, LucideTrendingUp, LucideCalendar, LucideLoader2, LucideExternalLink, LucideShield } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
+import type { CreditPlan } from "../../api/types";
 
 const creditPackages = [50, 100, 200];
 
@@ -24,6 +25,7 @@ const Billing = () => {
     const creditHistory = creditsData?.data || [];
     const totalAllocated = company?.total_credits ?? 0;
     const totalUsed = company?.used_credits ?? 0;
+    const creditPlan: CreditPlan | null | undefined = (company as any)?.credit_plan ?? (company as any)?.creditPlan ?? null;
 
     const [quotes, setQuotes] = useState<Record<number, any>>({});
 
@@ -64,9 +66,51 @@ const Billing = () => {
                 <StatCard label="Next renewal" value="Mar 15" icon={<LucideCalendar className="w-4 h-4" />} detail="Annual agreement" />
             </div>
 
+            {/* Company plan info */}
+            {creditPlan && (
+                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6 mb-6")}>
+                    <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                            <div className="mt-0.5 p-2 rounded-lg bg-accent/10">
+                                <LucideShield className="w-4 h-4 text-accent" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <h2 className="text-sm font-semibold text-heading">
+                                        {creditPlan.displayName} Plan
+                                    </h2>
+                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                                        creditPlan.code === "PREMIUM"
+                                            ? "text-amber-700 bg-amber-50 border-amber-200"
+                                            : "text-accent bg-accent/10 border-accent/20"
+                                    }`}>
+                                        Active
+                                    </span>
+                                </div>
+                                {creditPlan.basePriceUsd > 0 && (
+                                    <p className="text-xs text-accent font-semibold mb-1">
+                                        ${creditPlan.basePriceUsd.toFixed(0)} USD per credit
+                                    </p>
+                                )}
+                                <p className="text-xs text-muted leading-relaxed max-w-sm">
+                                    {creditPlan.description}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Purchase credits */}
             <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6 mb-6")}>
-                <h2 className="text-base font-semibold text-heading mb-4">Purchase credits</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-base font-semibold text-heading">Purchase credits</h2>
+                    {creditPlan && creditPlan.basePriceUsd > 0 && (
+                        <span className="text-xs text-muted">
+                            {creditPlan.displayName}: ${creditPlan.basePriceUsd.toFixed(0)} USD/credit
+                        </span>
+                    )}
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     {creditPackages.map((credits, idx) => {
                         const quote = quotes[credits];

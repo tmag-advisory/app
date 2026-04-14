@@ -5,6 +5,7 @@ import FooterSection from "../components/sections/FooterSection";
 import CartPanel from "../components/sections/CartPanel";
 import PageTransitionLayout from "../components/transitions/PageTransitionLayout";
 import { AnimatePresence } from "framer-motion";
+import { Toaster } from "react-hot-toast";
 
 const ScrollToTop = () => {
     const { pathname } = useLocation();
@@ -20,6 +21,7 @@ const HomeLayout = () => {
             <AnimatePresence mode="wait">
                 <div className="min-h-screen bg-background-primary">
                     <ScrollToTop />
+                    <Toaster position="top-right" containerStyle={{ fontSize: "14px" }} />
                     <Navbar />
                     <Outlet />
                     <FooterSection />

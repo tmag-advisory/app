@@ -2,6 +2,21 @@
 
 export type BillingCurrency = "USD" | "NGN" | "EUR" | "GBP";
 
+// ─── User Credit Plans ────────────────────────────────────────
+
+export type CreditPlanCode = "ESSENTIAL" | "STANDARD" | "PREMIUM";
+
+export interface CreditPlan {
+  id: number;
+  code: CreditPlanCode;
+  displayName: string;
+  basePriceUsd: number;
+  description: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Common ──────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
@@ -110,8 +125,10 @@ export interface UserResponse {
   credits: number;
   type: string;
   roleId: number;
+  billingCurrency?: BillingCurrency;
   createdAt: string;
   updatedAt: string;
+  userCreditPlan?: CreditPlan | null;
 }
 
 // ─── Company ─────────────────────────────────────────────────
@@ -126,8 +143,10 @@ export interface CompanyResponse {
   plan: string;
   companyCode: string;
   logoId?: number;
+  billingCurrency?: BillingCurrency;
   createdAt: string;
   updatedAt: string;
+  creditPlan?: CreditPlan | null;
 }
 
 export interface CreateCompanyRequest {
@@ -604,8 +623,10 @@ export interface ProfileResponse {
   credits: number;
   type: string;
   roleId: number;
+  billingCurrency?: BillingCurrency;
   createdAt: string;
   updatedAt: string;
+  userCreditPlan?: CreditPlan | null;
 }
 
 export interface UpdateProfileRequest {
@@ -648,6 +669,7 @@ export interface MyCompanyMembership {
   role: string;
   credits_allocated: number;
   credits_used: number;
+  credit_plan?: CreditPlan | null;
 }
 
 export interface CreateCompanyUserRequest {
@@ -1088,6 +1110,7 @@ export interface CompanyOnboardingRequest {
   website: string;
   billingCurrency: string;
   selectedPlanCode: string;
+  creditCount?: number;
   sampleRequest: string;
   teamMembers: TeamMember[];
 }
@@ -1101,6 +1124,7 @@ export interface CompanyOnboardingResponse {
   website: string;
   billingCurrency: string;
   selectedPlanCode: string;
+  creditCount?: number | null;
   sampleRequest: string;
   teamMembers: TeamMember[];
   txRef: string;

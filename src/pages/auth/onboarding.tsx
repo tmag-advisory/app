@@ -5,7 +5,7 @@ import { LucideUser, LucideBuilding2, LucideArrowRight, LucideArrowLeft, LucideC
 import { useUpsertOnboarding, useAdvanceOnboardingStage, useUpdateProfile, useOnboarding, useValidateCompanyCode, useMyCompanies } from "../../api/hooks";
 import { useOnboardingStore } from "../../context/OnboardingContext";
 import { useAuth } from "../../context/AuthContext";
-import { canAccessHR } from "../../lib/canAccessHr";
+import { getOnboardingCompletionRedirect, performRedirect } from "../../lib/roleRedirect";
 import CountryPicker from "../../components/CountryPicker";
 
 const steps = ["User Type", "Profile", "Welcome"];
@@ -181,14 +181,9 @@ const Onboarding = () => {
             await upsertOnboarding.mutateAsync({ complete: true });
             await advanceStage.mutateAsync({ stage: 5 });
             await refreshProfile();
-
-            if (canAccessHR(user)) {
-                resetOnboarding();
-                navigate("/hr");
-            } else {
-                resetOnboarding();
-                navigate(userType === "company" ? "/hr" : "/onboarding/questionnaire");
-            }
+            resetOnboarding();
+            const destination = getOnboardingCompletionRedirect(user, userType);
+            performRedirect(destination, navigate);
         } catch {
             setError("Failed. Please try again.");
         }

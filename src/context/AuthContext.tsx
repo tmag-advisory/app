@@ -34,6 +34,7 @@ export interface AuthUser {
     credits: number;
     billing_currency: BillingCurrency;
     extend: AuthRole;
+    user_credit_plan?: import("../api/types").CreditPlan | null;
 }
 
 
@@ -175,6 +176,7 @@ function buildAuthUser(d: Record<string, unknown>): AuthUser {
             role_id: extend?.role_id ?? 0,
             role_name: extend?.role_name ?? "",
         },
+        user_credit_plan: (d.userCreditPlan ?? d.user_credit_plan) as import("../api/types").CreditPlan | null ?? null,
     };
 }
 
@@ -199,5 +201,6 @@ function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
             role_id: extend?.role_id ?? 0,
             role_name: extend?.role_name ?? "",
         },
+        user_credit_plan: (d.userCreditPlan ?? d.user_credit_plan) as import("../api/types").CreditPlan | null ?? null,
     };
 }

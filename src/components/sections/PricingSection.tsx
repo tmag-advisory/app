@@ -1,41 +1,10 @@
-import { LucideCheck, LucideArrowRight, LucideUsers } from "lucide-react";
+import { LucideCheck, LucideArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../ui/Button";
 import AnimateIn from "../animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
-import { companyPlans } from "../../constants/companyPlans";
+import { creditPlans } from "../../constants/companyPlans";
 
-const individualPlans = [
-    {
-        name: "Explorer",
-        price: "Free",
-        period: "",
-        description: "Quick guidance for a single destination.",
-        features: [
-            "1 destination report",
-            "Basic vaccine checklist",
-            "General risk overview",
-            "Email delivery",
-        ],
-        cta: "Start free",
-        highlighted: false,
-    },
-    {
-        name: "Credits",
-        price: "Pay as you go",
-        period: "",
-        description: "Buy credits and generate full travel health plans on demand.",
-        features: [
-            "Full vaccine & medication plan",
-            "Emergency contacts & clinics",
-            "Downloadable PDF reports",
-            "Buy as many credits as you want",
-            "Credits never expire",
-        ],
-        cta: "Get started",
-        highlighted: true,
-    },
-];
 
 const PricingSection = () => {
     return (
@@ -61,16 +30,18 @@ const PricingSection = () => {
                         For individuals
                     </h3>
                 </AnimateIn>
-                <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-16" stagger={0.15}>
-                    {individualPlans.map((plan) => (
+                <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-16" stagger={0.12}>
+                    {creditPlans.map((plan) => (
                         <motion.div
                             variants={staggerItem}
-                            key={plan.name}
+                            key={plan.tier}
                             className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden ${
-                                plan.highlighted ? "" : "bg-background-primary"
+                                plan.tier === "standard" ? "" :
+                                plan.tier === "premium" ? "bg-background-primary border border-amber-200/60" :
+                                "bg-background-primary"
                             }`}
                         >
-                            {plan.highlighted && (
+                            {plan.tier === "standard" && (
                                 <div
                                     className="absolute inset-0"
                                     style={{
@@ -79,48 +50,59 @@ const PricingSection = () => {
                                     }}
                                 />
                             )}
-                            {plan.highlighted && (
+                            {plan.tier === "standard" && (
                                 <span className="absolute top-6 right-6 text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full">
                                     Most popular
                                 </span>
                             )}
+                            {plan.tier === "premium" && (
+                                <span className="absolute top-6 right-6 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                                    Best report
+                                </span>
+                            )}
                             <div className="relative z-10">
-                                <h3 className={`text-lg font-semibold mb-1 ${plan.highlighted ? "text-white" : "text-heading"}`}>
+                                <h3 className={`text-lg font-semibold mb-1 ${plan.tier === "standard" ? "text-white" : "text-heading"}`}>
                                     {plan.name}
                                 </h3>
-                                <p className={`text-sm mb-6 ${plan.highlighted ? "text-white/60" : "text-body"}`}>
+                                <p className={`text-sm mb-6 ${plan.tier === "standard" ? "text-white/60" : "text-body"}`}>
                                     {plan.description}
                                 </p>
-                                <div className="flex items-baseline gap-1 mb-8">
-                                    <span className={`text-4xl font-serif ${plan.highlighted ? "text-white" : "text-heading"}`}>
-                                        {plan.price}
+                                <div className="flex items-baseline gap-1 mb-1">
+                                    <span className={`text-4xl font-serif ${plan.tier === "standard" ? "text-white" : plan.tier === "premium" ? "text-amber-700" : "text-heading"}`}>
+                                        {plan.priceUsd === 0 ? "Free" : `$${plan.priceUsd}`}
                                     </span>
-                                    {plan.period && (
-                                        <span className={`text-sm ${plan.highlighted ? "text-white/60" : "text-body"}`}>
-                                            {plan.period}
-                                        </span>
-                                    )}
                                 </div>
+                                <p className={`text-xs mb-8 ${plan.tier === "standard" ? "text-white/50" : "text-muted"}`}>
+                                    {plan.priceUsd === 0 ? "1 credit included at signup" : "per credit (USD)"}
+                                </p>
                                 <ul className="space-y-3 mb-8">
                                     {plan.features.map((f) => (
-                                        <li key={f} className={`flex items-start gap-3 text-sm ${plan.highlighted ? "text-white" : "text-heading"}`}>
-                                            <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${plan.highlighted ? "text-white/60" : "text-accent"}`} />
+                                        <li
+                                            key={f}
+                                            className={`flex items-start gap-3 text-sm ${plan.tier === "standard" ? "text-white" : "text-heading"}`}
+                                        >
+                                            <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${plan.tier === "standard" ? "text-white/60" : plan.tier === "premium" ? "text-amber-600" : "text-accent"}`} />
                                             {f}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
-                            {plan.highlighted ? (
+                            {plan.tier === "standard" ? (
                                 <Button
                                     variant="primary"
-                                    link="/pricing"
+                                    link="/auth/register"
                                     className="relative z-10 self-stretch bg-white !text-dark hover:bg-white/90 text-center justify-center flex"
                                 >
-                                    {plan.cta}
+                                    Get started
                                 </Button>
                             ) : (
-                                <Button variant="secondary" icon={<LucideArrowRight />} link="/pricing" className="self-start relative z-10">
-                                    {plan.cta}
+                                <Button
+                                    variant="secondary"
+                                    icon={<LucideArrowRight />}
+                                    link="/auth/register"
+                                    className={`self-start relative z-10 ${plan.tier === "premium" ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`}
+                                >
+                                    {plan.priceUsd === 0 ? "Start free" : "Get started"}
                                 </Button>
                             )}
                         </motion.div>
@@ -133,16 +115,18 @@ const PricingSection = () => {
                         For companies
                     </h3>
                 </AnimateIn>
-                <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6" stagger={0.15}>
-                    {companyPlans.map((plan) => (
+                <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto" stagger={0.12}>
+                    {creditPlans.map((plan) => (
                         <motion.div
                             variants={staggerItem}
                             key={plan.tier}
                             className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden ${
-                                plan.tier === "diamond" ? "" : "bg-background-primary"
+                                plan.tier === "standard" ? "" :
+                                plan.tier === "premium" ? "bg-background-primary border border-amber-200/60" :
+                                "bg-background-primary"
                             }`}
                         >
-                            {plan.tier === "diamond" && (
+                            {plan.tier === "standard" && (
                                 <div
                                     className="absolute inset-0"
                                     style={{
@@ -151,57 +135,58 @@ const PricingSection = () => {
                                     }}
                                 />
                             )}
-                            {plan.tier === "diamond" && (
+                            {plan.tier === "standard" && (
                                 <span className="absolute top-6 right-6 text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full">
-                                    Best for API teams
+                                    Most popular
+                                </span>
+                            )}
+                            {plan.tier === "premium" && (
+                                <span className="absolute top-6 right-6 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                                    Best report
                                 </span>
                             )}
                             <div className="relative z-10">
-                                <h3 className={`text-lg font-semibold mb-1 ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
+                                <h3 className={`text-lg font-semibold mb-1 ${plan.tier === "standard" ? "text-white" : "text-heading"}`}>
                                     {plan.name}
                                 </h3>
-                                <p className={`text-sm mb-6 ${plan.tier === "diamond" ? "text-white/60" : "text-body"}`}>
+                                <p className={`text-sm mb-6 ${plan.tier === "standard" ? "text-white/60" : "text-body"}`}>
                                     {plan.description}
                                 </p>
-                                <div className="flex items-baseline gap-1 mb-8">
-                                    <span className={`text-4xl font-serif ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}>
-                                        {plan.signupCredits}
-                                    </span>
-                                    <span className={`text-sm ${plan.tier === "diamond" ? "text-white/60" : "text-body"}`}>
-                                        signup credits
+                                <div className="flex items-baseline gap-1 mb-1">
+                                    <span className={`text-4xl font-serif ${plan.tier === "standard" ? "text-white" : plan.tier === "premium" ? "text-amber-700" : "text-heading"}`}>
+                                        {plan.priceUsd === 0 ? "Free" : `$${plan.priceUsd}`}
                                     </span>
                                 </div>
+                                <p className={`text-xs mb-8 ${plan.tier === "standard" ? "text-white/50" : "text-muted"}`}>
+                                    {plan.priceUsd === 0 ? "included at signup" : "per credit (USD)"}
+                                </p>
                                 <ul className="space-y-3 mb-8">
-                                    {[
-                                        plan.employeeLimit,
-                                        `API access: ${plan.apiAccess ? "Included" : "Not included"}`,
-                                        `Custom support: ${plan.customSupport ? "Included" : "Not included"}`,
-                                        `Multiple admins: ${plan.multipleAdminAccounts ? "Included" : "Not included"}`,
-                                    ].map((f, i) => (
+                                    {plan.features.map((f) => (
                                         <li
                                             key={f}
-                                            className={`flex items-start gap-3 text-sm ${plan.tier === "diamond" ? "text-white" : "text-heading"}`}
+                                            className={`flex items-start gap-3 text-sm ${plan.tier === "standard" ? "text-white" : "text-heading"}`}
                                         >
-                                            {i === 0 ? (
-                                                <LucideUsers className={`w-4 h-4 mt-0.5 shrink-0 ${plan.tier === "diamond" ? "text-white/60" : "text-accent"}`} />
-                                            ) : (
-                                                <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${plan.tier === "diamond" ? "text-white/60" : "text-accent"}`} />
-                                            )}
+                                            <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${plan.tier === "standard" ? "text-white/60" : plan.tier === "premium" ? "text-amber-600" : "text-accent"}`} />
                                             {f}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
-                            {plan.tier === "diamond" ? (
+                            {plan.tier === "standard" ? (
                                 <Button
                                     variant="primary"
-                                    link="/contact?type=SALES"
+                                    link="/company-onboarding"
                                     className="relative z-10 self-stretch bg-white !text-dark hover:bg-white/90 text-center justify-center flex"
                                 >
-                                    Talk to sales
+                                    Get started
                                 </Button>
                             ) : (
-                                <Button variant="secondary" icon={<LucideArrowRight />} link="/pricing" className="self-start relative z-10">
+                                <Button
+                                    variant="secondary"
+                                    icon={<LucideArrowRight />}
+                                    link="/pricing"
+                                    className={`self-start relative z-10 ${plan.tier === "premium" ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`}
+                                >
                                     View plans
                                 </Button>
                             )}
