@@ -4,6 +4,7 @@ import {
     useState,
     useEffect,
     useCallback,
+    useMemo,
     type ReactNode,
 } from "react";
 import type { BillingCurrency, LoginRequest, RegisterRequest } from "../api/types";
@@ -129,19 +130,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    const authContextValue = useMemo<AuthContextValue>(() => ({
+        user,
+        isAuthenticated: user !== null,
+        isLoading,
+        login,
+        register,
+        setAuthFromResponse,
+        logout,
+        canAccessHR: canAccessHR(user),
+        refreshProfile,
+    }), [user, isLoading, login, register, setAuthFromResponse, logout, refreshProfile]);
+
     return (
         <AuthContext.Provider
-            value={{
-                user,
-                isAuthenticated: user !== null,
-                isLoading,
-                login,
-                register,
-                setAuthFromResponse,
-                logout,
-                canAccessHR: canAccessHR(user),
-                refreshProfile,
-            }}
+            value={authContextValue}
         >
             {children}
         </AuthContext.Provider>
@@ -157,7 +160,7 @@ export const useAuth = (): AuthContextValue => {
 // ─── Helpers ─────────────────────────────────────────────────
 
 function buildAuthUser(d: Record<string, unknown>): AuthUser {
-    const extend = d.extend as { role_id?: number; role_name?: string } | undefined;
+    const extend = extractRole(d);
 
     return {
         id: d.id as number,
@@ -182,7 +185,7 @@ function buildAuthUser(d: Record<string, unknown>): AuthUser {
 
 // Login/register responses include extend.role
 function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
-    const extend = d.extend as { role_id?: number; role_name?: string } | undefined;
+    const extend = extractRole(d);
 
     return {
         id: d.id as number,
@@ -203,4 +206,29 @@ function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
         },
         user_credit_plan: (d.userCreditPlan ?? d.user_credit_plan) as import("../api/types").CreditPlan | null ?? null,
     };
+}
+
+function extractRole(d: Record<string, unknown>): { role_id?: number; role_name?: string } {
+    const directExtend = d.extend as { role_id?: number; role_name?: string } | undefined;
+    if (directExtend?.role_name || directExtend?.role_id) {
+        return directExtend;
+    }
+
+    const directRole = d.role as { role_id?: number; role_name?: string } | undefined;
+    if (directRole?.role_name || directRole?.role_id) {
+        return directRole;
+    }
+
+    const nestedUser = d.user as Record<string, unknown> | undefined;
+    const nestedExtend = nestedUser?.extend as { role_id?: number; role_name?: string } | undefined;
+    if (nestedExtend?.role_name || nestedExtend?.role_id) {
+        return nestedExtend;
+    }
+
+    const nestedRole = nestedUser?.role as { role_id?: number; role_name?: string } | undefined;
+    if (nestedRole?.role_name || nestedRole?.role_id) {
+        return nestedRole;
+    }
+
+    return {};
 }

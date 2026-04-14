@@ -16,12 +16,20 @@ const RoleGuard = ({ children, section, redirectTo }: RoleGuardProps) => {
 
     if (!user) return <Navigate to="/login" replace />;
 
-    if (section === "dashboard" && !canAccessDashboard(user)) {
-        return <Navigate to={redirectTo ?? "/hr"} replace />;
+    const canUseDashboard = canAccessDashboard(user);
+    const canUseHR = canAccessHR(user);
+
+    // Prevent redirect ping-pong when role is missing/unknown.
+    if (!canUseDashboard && !canUseHR) {
+        return <Navigate to="/unauthorized" replace />;
     }
 
-    if (section === "hr" && !canAccessHR(user)) {
-        return <Navigate to={redirectTo ?? "/dashboard"} replace />;
+    if (section === "dashboard" && !canUseDashboard) {
+        return <Navigate to={redirectTo ?? (canUseHR ? "/hr" : "/unauthorized")} replace />;
+    }
+
+    if (section === "hr" && !canUseHR) {
+        return <Navigate to={redirectTo ?? (canUseDashboard ? "/dashboard" : "/unauthorized")} replace />;
     }
 
     return <>{children}</>;
