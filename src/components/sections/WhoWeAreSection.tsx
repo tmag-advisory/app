@@ -27,7 +27,7 @@ const WhoWeAreSection = () => {
                     <p className="text-sm text-muted leading-relaxed max-w-sm md:mt-10 font-medium">
                         Founded by a travel medicine physician with 15 years of clinical experience,
                         TMAG combines medical expertise with advanced technology to deliver evidence-based travel health guidance.
-                        We listen first, recommend only what works, and build personalized plans you'll actually use—without the confusion or complexity.
+                        We listen first, recommend only what works, and build personalized plans you'll actually use without the confusion or complexity.
                     </p>
                 </AnimateIn>
 

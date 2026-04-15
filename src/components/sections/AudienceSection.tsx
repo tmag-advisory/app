@@ -48,7 +48,7 @@ const AudienceSection = () => {
                         </h3>
                         <p className="text-sm text-body leading-relaxed mb-6">
                             Solo adventurers, digital nomads, and family
-                            vacationers—get a plan built just for your trip.
+                            vacationers get a plan built just for your trip.
                         </p>
                         <ul className="space-y-3 mb-8">
                             {individualFeatures.map((f) => (
@@ -82,7 +82,7 @@ const AudienceSection = () => {
                             For Companies
                         </h3>
                         <p className="text-sm text-white/70 leading-relaxed mb-6">
-                            Protect your people at scale—meet duty-of-care obligations
+                            Protect your people at scale meet duty-of-care obligations
                             and keep every traveler informed.
                         </p>
                         <ul className="space-y-3 mb-8">

@@ -23,12 +23,12 @@ const planItems = [
     {
         icon: <LucideAlertTriangle className="w-4 h-4" />,
         category: "Risk alerts",
-        items: ["Dengue — high season in coastal regions", "Altitude sickness above 2,500 m", "Zika advisory for pregnant travelers"],
+        items: ["Dengue high season in coastal regions", "Altitude sickness above 2,500 m", "Zika advisory for pregnant travelers"],
     },
     {
         icon: <LucideDroplets className="w-4 h-4" />,
         category: "Water & food",
-        items: ["Avoid tap water — use bottled or purified", "Street food: stick to cooked-to-order stalls", "Carry water purification tablets"],
+        items: ["Avoid tap water use bottled or purified", "Street food: stick to cooked-to-order stalls", "Carry water purification tablets"],
     },
 ];
 
@@ -54,7 +54,7 @@ const SamplePlanSection = () => {
                 </div>
                 <p className="text-sm text-muted leading-relaxed max-w-sm md:mt-10 font-medium">
                     Here's a preview of a real advisory generated for a 10-day
-                    trip to Colombia. Your plan will be just as detailed—and
+                    trip to Colombia. Your plan will be just as detailed and
                     tailored to your needs.
                 </p>
             </AnimateIn>

@@ -73,7 +73,7 @@ const WhatAICoversSection = () => {
                     <p className="text-sm text-muted leading-relaxed max-w-sm md:mt-10 font-medium">
                         Our platform analyzes real-time data from WHO, CDC, and local
                         health authorities to give you comprehensive, up-to-date
-                        medical guidance—all in one place.
+                        medical guidance all in one place.
                     </p>
                 </AnimateIn>
 

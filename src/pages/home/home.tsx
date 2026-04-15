@@ -9,7 +9,7 @@ import PricingSection from "../../components/sections/PricingSection";
 import SamplePlanSection from "../../components/sections/SamplePlanSection";
 import TrustSection from "../../components/sections/TrustSection";
 import WhatAICoversSection from "../../components/sections/WhatAICoversSection";
-import WhoWeAreSection from "../../components/sections/WhoWeAreSection";
+// import WhoWeAreSection from "../../components/sections/WhoWeAreSection";
 
 const Home = () => {
     const heroLayout = useMemo(() => Math.floor(Math.random() * 7), []);
@@ -22,7 +22,7 @@ const Home = () => {
             <SamplePlanSection />
             <WhatAICoversSection />
             <AudienceSection />
-            <WhoWeAreSection />
+            {/*<WhoWeAreSection />*/}
             <TrustSection />
             <PricingSection />
             <FAQSection />

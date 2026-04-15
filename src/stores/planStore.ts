@@ -86,7 +86,7 @@ const MOCK_PLANS: TravelPlan[] = [
       "Altitude sickness risk above 2,500m in Bogotá",
     ],
     safetyAdvisories: [
-      "Avoid tap water — use bottled or purified",
+      "Avoid tap water use bottled or purified",
       "Carry antimalarial medication in rural areas",
       "Register with your embassy before departure",
     ],

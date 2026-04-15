@@ -25,7 +25,7 @@ interface HeroVariant {
 const HERO_VARIANT: HeroVariant = {
     eyebrow: "Physician-designed. Evidence-based.",
     headlineLines: ["Travel Far.", "Come Back", "Safe."],
-    subtext: "Get a personalized travel health plan in under 2 minutes — vaccines, medications, disease risks, and more.",
+    subtext: "Get a personalized travel health plan in under 2 minutes vaccines, medications, disease risks, and more.",
     cta: "Get My Free Plan",
     destinations: [
         { country: "Japan", flag: "🇯🇵", risk: "Low" },
@@ -386,14 +386,6 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4">
                             <Button variant="primary" link="/register">{variant.cta}</Button>
                             <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
-                        </div>
-                        <div className="flex items-center gap-5">
-                            {STATS.map((s) => (
-                                <div key={s.label} className="text-center">
-                                    <p className="text-lg font-bold font-serif text-heading">{s.value}</p>
-                                    <p className="text-[10px] text-muted">{s.label}</p>
-                                </div>
-                            ))}
                         </div>
                     </div>
                     <div className="flex gap-3 mt-10 overflow-x-auto pb-2 w-full lg:grid lg:grid-cols-4 lg:overflow-visible">
