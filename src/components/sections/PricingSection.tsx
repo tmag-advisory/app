@@ -90,7 +90,7 @@ const PricingSection = () => {
                             {plan.tier === "standard" ? (
                                 <Button
                                     variant="primary"
-                                    link="/auth/register"
+                                    link="/register"
                                     className="relative z-10 self-stretch bg-white !text-dark hover:bg-white/90 text-center justify-center flex"
                                 >
                                     Get started
@@ -99,7 +99,7 @@ const PricingSection = () => {
                                 <Button
                                     variant="secondary"
                                     icon={<LucideArrowRight />}
-                                    link="/auth/register"
+                                    link="/register"
                                     className={`self-start relative z-10 ${plan.tier === "premium" ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`}
                                 >
                                     {plan.priceUsd === 0 ? "Start free" : "Get started"}
