@@ -128,7 +128,7 @@ const FooterSection = () => {
                             </span>
                             <p className="text-sm text-white/40 leading-relaxed mt-4 max-w-sm">
                                 Get the travel health alert for your next
-                                destination — free in your inbox.
+                                destination free in your inbox.
                             </p>
                             {isSubscribed ? (
                                 <p className="text-sm text-accent mt-6 font-medium">

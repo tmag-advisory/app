@@ -18,7 +18,7 @@ const Navbar = () => {
             {/* Desktop row */}
             <div className="flex justify-between md:grid grid-cols-3 items-center">
                 <div className="hidden md:flex items-center gap-6 font-medium">
-                    <NavLink href="/how-it-works">Learn More</NavLink>
+                    <NavLink href="/about">About Us</NavLink>
                     <NavLink href="/pricing">Pricing</NavLink>
                 </div>
 

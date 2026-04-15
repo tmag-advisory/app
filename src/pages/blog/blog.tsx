@@ -146,7 +146,7 @@ const Blog = () => {
                         Get the travel health alert for your next destination.
                     </h2>
                     <p className="text-sm text-body leading-relaxed max-w-md mx-auto mb-8">
-                        Free in your inbox — outbreak alerts, destination-specific guidance, and expert tips.
+                        Free in your inbox outbreak alerts, destination-specific guidance, and expert tips.
                     </p>
                     {isSubscribed ? (
                         <p className="text-sm text-accent font-medium">
