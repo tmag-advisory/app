@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import AudienceSection from "../../components/sections/AudienceSection";
-import BrandsSection from "../../components/sections/BrandsSection";
+// import BrandsSection from "../../components/sections/BrandsSection";
 import FAQSection from "../../components/sections/FAQSection";
 import FinalCTASection from "../../components/sections/FinalCTASection";
 import HeroSection from "../../components/sections/HeroSection";
