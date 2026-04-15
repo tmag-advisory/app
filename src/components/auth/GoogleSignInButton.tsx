@@ -3,14 +3,20 @@ import api from "../../api/axios";
 
 interface GoogleSignInButtonProps {
     disabled?: boolean;
+    planCode?: string;
 }
 
-const GoogleSignInButton = ({ disabled = false }: GoogleSignInButtonProps) => {
+const GoogleSignInButton = ({ disabled = false, planCode }: GoogleSignInButtonProps) => {
     const [loading, setLoading] = useState(false);
 
     const handleClick = async () => {
         setLoading(true);
         try {
+            if (planCode) {
+                sessionStorage.setItem("pending_plan_code", planCode);
+            } else {
+                sessionStorage.removeItem("pending_plan_code");
+            }
             const res = await api.get("/auth/google/url");
             const url = res.data.data.url;
             window.location.href = url;

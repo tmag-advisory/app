@@ -65,6 +65,7 @@ export interface RegisterRequest {
   phone: string;
   email: string;
   password: string;
+  planCode?: string;
 }
 
 export interface ForgotPasswordRequest {

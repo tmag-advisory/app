@@ -147,7 +147,7 @@ const PricingPage = () => {
               {plan.highlighted ? (
                 <Button
                   variant="primary"
-                  link="/auth/register"
+                  link={`/register?plan=${plan.code}`}
                   className="relative z-10 self-stretch bg-white !text-dark hover:bg-white/90 text-center justify-center flex"
                 >
                   {plan.cta}
@@ -156,7 +156,7 @@ const PricingPage = () => {
                 <Button
                   variant="secondary"
                   icon={<LucideArrowRight />}
-                  link="/auth/register"
+                  link={`/register?plan=${plan.code}`}
                   className={`self-start relative z-10 ${plan.tier === "premium" ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`}
                 >
                   {plan.cta}

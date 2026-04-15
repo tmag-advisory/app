@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useTravelPlans, useOnboarding, useDashboardAnalytics } from "../../api/hooks";
+import { useTravelPlans, useDashboardAnalytics } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import DashboardAnalyticsCharts from "../../components/dashboard/DashboardAnalyticsCharts";
-import { LucideCoins, LucideFileText, LucidePlusCircle, LucideArrowRight, LucideClipboardList, LucideLoader2 } from "lucide-react";
+import { LucideCoins, LucideFileText, LucidePlusCircle, LucideArrowRight, LucideLoader2 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 

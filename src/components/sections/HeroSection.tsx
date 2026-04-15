@@ -135,16 +135,16 @@ const MobileCards = ({ dests }: { dests: DestinationData[] }) => (
     </div>
 );
 
-const StatsRow = ({ className = "" }: { className?: string }) => (
-    <div data-hero-anim className={`flex flex-wrap items-center gap-8 mt-10 pt-8 border-t border-border-light ${className}`}>
-        {STATS.map((s) => (
-            <div key={s.label}>
-                <p className="text-2xl font-bold font-serif text-heading">{s.value}</p>
-                <p className="text-xs text-muted mt-0.5">{s.label}</p>
-            </div>
-        ))}
-    </div>
-);
+// const StatsRow = ({ className = "" }: { className?: string }) => (
+//     <div data-hero-anim className={`flex flex-wrap items-center gap-8 mt-10 pt-8 border-t border-border-light ${className}`}>
+//         {STATS.map((s) => (
+//             <div key={s.label}>
+//                 <p className="text-2xl font-bold font-serif text-heading">{s.value}</p>
+//                 <p className="text-xs text-muted mt-0.5">{s.label}</p>
+//             </div>
+//         ))}
+//     </div>
+// );
 
 const Divider = ({ className = "" }: { className?: string }) => (
     <div data-hero-anim className={`flex items-center gap-3 mt-7 mb-6 w-full max-w-md ${className}`}>

@@ -30,7 +30,13 @@ const GoogleCallback = () => {
 
         const exchangeCode = async () => {
             try {
-                const res = await api.post("/auth/google/callback", { code });
+                const pendingPlan = sessionStorage.getItem("pending_plan_code");
+                if (pendingPlan) sessionStorage.removeItem("pending_plan_code");
+
+                const res = await api.post("/auth/google/callback", {
+                    code,
+                    planCode: pendingPlan ?? undefined,
+                });
                 const d = res.data.data;
 
                 if (cancelled) return;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useOnboardingStore } from "../../context/OnboardingContext";
 import { useVerifyEmail, useResendVerificationEmail } from "../../api/hooks";
@@ -8,11 +8,20 @@ import { AxiosError } from "axios";
 import { LucideLoader, LucideArrowLeft } from "lucide-react";
 import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 
+const planLabels: Record<string, { name: string; color: string }> = {
+    ESSENTIAL: { name: "Essential", color: "bg-gray-100 text-gray-700" },
+    STANDARD: { name: "Standard", color: "bg-accent/10 text-accent" },
+    PREMIUM: { name: "Premium", color: "bg-amber-50 text-amber-700" },
+};
+
 const Register = () => {
     const navigate = useNavigate();
     const { register } = useAuth();
     const [loading, setLoading] = useState(false);
     const { setStage } = useOnboardingStore();
+    const [searchParams] = useSearchParams();
+    const selectedPlan = searchParams.get("plan");
+    const planInfo = selectedPlan && planLabels[selectedPlan] ? planLabels[selectedPlan] : null;
     const toastkey = "register";
 
     const [step, setStep] = useState<"form" | "verify">("form");
@@ -50,6 +59,7 @@ const Register = () => {
                 username: String(
                     form.email.split("@")[0] + form.name.split(" ")[0]
                 ).toLowerCase(),
+                planCode: selectedPlan ?? undefined,
             });
             setRegisteredEmail(form.email);
             toast.success("Check your email for a verification code!", { id: toastkey });
@@ -215,12 +225,18 @@ const Register = () => {
             <h1 className="text-3xl md:text-4xl font-serif text-heading mb-2">
                 Create your account.
             </h1>
-            <p className="text-sm text-body mb-8">
+            <p className="text-sm text-body mb-4">
                 Start with a free travel health plan — no credit card required.
             </p>
 
+            {planInfo && (
+                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-6 ${planInfo.color}`}>
+                    Selected plan: {planInfo.name}
+                </div>
+            )}
+
             <div className="flex gap-3 mb-6">
-                <GoogleSignInButton disabled={loading} />
+                <GoogleSignInButton disabled={loading} planCode={selectedPlan ?? undefined} />
                 <button
                     type="button"
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-border-light text-heading text-sm font-semibold cursor-pointer hover:bg-button-secondary transition-colors duration-200"
