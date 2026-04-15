@@ -65,11 +65,11 @@ const FLOAT = [
     { y: 9, dur: 4.0 },
 ];
 
-const STATS = [
-    { value: "1K+", label: "Travel Plans Created" },
-    { value: "120+", label: "Countries covered" },
-    { value: "5+", label: "Health Professionals" },
-];
+// const STATS = [
+//     { value: "1K+", label: "Travel Plans Created" },
+//     { value: "120+", label: "Countries covered" },
+//     { value: "5+", label: "Health Professionals" },
+// ];
 
 const HL_SIZE = [
     "text-5xl md:text-6xl lg:text-7xl xl:text-[5.25rem]",
