@@ -17,7 +17,7 @@ const Home = () => {
     return (
         <main>
             <HeroSection layout={heroLayout} />
-            <BrandsSection />
+            {/*<BrandsSection />*/}
             <HowItWorksSection />
             <SamplePlanSection />
             <WhatAICoversSection />

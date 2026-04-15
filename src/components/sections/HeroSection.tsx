@@ -264,7 +264,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                             <p data-hero-anim className="text-body leading-relaxed max-w-md sm:text-lg">{variant.subtext}</p>
                             <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8">
                                 <Button variant="primary" link="/register">{variant.cta}</Button>
-                                <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">See how it works <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
+                                <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">Learn More <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
                             </div>
                             {/*<StatsRow />*/}
                         </div>
@@ -294,7 +294,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                     <p data-hero-anim className="text-body leading-relaxed max-w-xl sm:text-lg">{variant.subtext}</p>
                     <div data-hero-anim className="flex flex-wrap items-center justify-center gap-4 mt-8">
                         <Button variant="primary" link="/register">{variant.cta}</Button>
-                        <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">See how it works <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
+                        <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">Learn More <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
                     </div>
                     <div className="hidden lg:grid grid-cols-4 gap-4 mt-12 w-full">
                         {variant.destinations.map((d) => (<div key={d.country} data-dest-card className={CARD_CLS}><CardContent d={d} /></div>))}
@@ -327,7 +327,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                             <p data-hero-anim className="text-body leading-relaxed max-w-md sm:text-lg">{variant.subtext}</p>
                             <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8 lg:flex-row-reverse">
                                 <Button variant="primary" link="/register">{variant.cta}</Button>
-                                <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>How it works</Button>
+                                <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
                             </div>
                             {/*<StatsRow className="lg:justify-end" />*/}
                         </div>
@@ -355,7 +355,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                             <p data-hero-anim className="text-body leading-relaxed max-w-md sm:text-lg">{variant.subtext}</p>
                             <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8">
                                 <Button variant="primary" link="/register">{variant.cta}</Button>
-                                <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>How it works</Button>
+                                <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
                             </div>
                         </div>
                         <div className="hidden lg:grid grid-cols-2 gap-3">
@@ -385,7 +385,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                     <div data-hero-anim className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mt-8 w-full">
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4">
                             <Button variant="primary" link="/register">{variant.cta}</Button>
-                            <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>How it works</Button>
+                            <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
                         </div>
                         <div className="flex items-center gap-5">
                             {STATS.map((s) => (
@@ -422,7 +422,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                             <p data-hero-anim className="text-body leading-relaxed max-w-lg sm:text-lg">{variant.subtext}</p>
                             <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8">
                                 <Button variant="primary" link="/register">{variant.cta}</Button>
-                                <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>How it works</Button>
+                                <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
                             </div>
                             {/*<StatsRow />*/}
                         </div>
@@ -453,7 +453,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                 <p data-hero-anim className="text-body leading-relaxed max-w-xl sm:text-lg">{variant.subtext}</p>
                 <div data-hero-anim className="flex flex-wrap items-center justify-center gap-4 mt-8">
                     <Button variant="primary" link="/register">{variant.cta}</Button>
-                    <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>How it works</Button>
+                    <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
                 </div>
                 <MobileCards dests={variant.destinations} />
                 {/*<StatsRow className="justify-center" />*/}

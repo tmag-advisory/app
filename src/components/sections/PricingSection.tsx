@@ -116,7 +116,7 @@ const PricingSection = () => {
                     </h3>
                 </AnimateIn>
                 <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto" stagger={0.12}>
-                    {creditPlans.map((plan) => (
+                    {creditPlans.filter((plan) => plan.tier === "standard" || plan.tier === "premium").map((plan) => (
                         <motion.div
                             variants={staggerItem}
                             key={plan.tier}

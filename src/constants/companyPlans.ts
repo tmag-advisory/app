@@ -10,20 +10,20 @@ export interface CreditPlanDefinition {
 }
 
 export const creditPlans: CreditPlanDefinition[] = [
-  // {
-  //   tier: "essential",
-  //   code: "ESSENTIAL",
-  //   name: "Essential",
-  //   priceUsd: 0,
-  //   description: "Generic destination health education for casual travellers. No personal data required.",
-  //   features: [
-  //     "Destination health risk overview",
-  //     "General food & water safety guidance",
-  //     "Environmental considerations",
-  //     "Post-return awareness note",
-  //     "WHO & CDC validated guidance",
-  //   ],
-  // },
+  {
+    tier: "essential",
+    code: "ESSENTIAL",
+    name: "Essential",
+    priceUsd: 0,
+    description: "Generic destination health education for casual travellers. No personal data required.",
+    features: [
+      "Destination health risk overview",
+      "General food & water safety guidance",
+      "Environmental considerations",
+      "Post-return awareness note",
+      "WHO & CDC validated guidance",
+    ],
+  },
   {
     tier: "standard",
     code: "STANDARD",
