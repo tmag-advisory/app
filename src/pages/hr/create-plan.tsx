@@ -97,16 +97,14 @@ const HRCreatePlan = () => {
                                     key={emp.id}
                                     type="button"
                                     onClick={() => setEmployeeId(String(emp.id))}
-                                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer ${
-                                        employeeId === String(emp.id)
+                                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer ${employeeId === String(emp.id)
                                             ? "border-accent bg-accent/5"
                                             : "border-border-light bg-background-primary hover:border-border-light/80"
-                                    }`}
+                                        }`}
                                 >
                                     <div
-                                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                                            employeeId === String(emp.id) ? "bg-accent/10" : "bg-border-light/30"
-                                        }`}
+                                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${employeeId === String(emp.id) ? "bg-accent/10" : "bg-border-light/30"
+                                            }`}
                                     >
                                         <LucideUserCircle
                                             className={`w-5 h-5 ${employeeId === String(emp.id) ? "text-accent" : "text-muted"}`}
@@ -129,7 +127,7 @@ const HRCreatePlan = () => {
                     </div>
                 </div>
             ) : (
-                <div className="relative z-10 max-w-5xl mx-auto px-6 space-y-8">
+                <div className="relative z-10 max-w-5xl mx-auto space-y-8">
                     <div className={`${DASHBOARD_GLASS_SURFACE} p-8 md:p-10`}>
                         <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-accent mb-2">HR Advisory Builder</p>
                         <h2 className="text-3xl md:text-4xl font-serif text-heading leading-tight mb-3">
@@ -142,7 +140,7 @@ const HRCreatePlan = () => {
                     </div>
 
                     <div className={DASHBOARD_GLASS_SURFACE}>
-                        <div className="p-8 md:p-12 lg:p-14">
+                        <div className="p-4 md:p-12 lg:p-14">
                             <PlanQuestionnaireFlow
                                 credits={credits}
                                 verifyTopSlot={verifyTopSlot}

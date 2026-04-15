@@ -71,7 +71,7 @@ const CreatePlan = () => {
                 </div>
             )}
 
-            <div className="relative z-10 max-w-5xl mx-auto px-6 space-y-10">
+            <div className="relative z-10 max-w-5xl mx-auto space-y-10">
                 {/* Header Section */}
                 <div className="text-center md:text-left pt-4">
                     <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-accent mb-3">
@@ -88,7 +88,7 @@ const CreatePlan = () => {
 
                 {/* Questionnaire Flow */}
                 <div className={`${DASHBOARD_GLASS_SURFACE}`}>
-                    <div className="p-8 md:p-12 lg:p-14">
+                    <div className="p-4 md:p-12 lg:p-14">
                         <PlanQuestionnaireFlow
                             credits={credits}
                             isSubmitting={createPlan.isPending}
