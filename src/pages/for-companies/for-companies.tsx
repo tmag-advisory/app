@@ -31,7 +31,7 @@ const workflowSteps = [
         icon: <LucideBarChart3 className="w-5 h-5" />,
         title: "Track compliance",
         description:
-            "Your dashboard shows who has received their plan, who's reviewed it, and where gaps exist—giving HR full visibility.",
+            "Your dashboard shows who has received their plan, who's reviewed it, and where gaps exist giving HR full visibility.",
     },
     {
         icon: <LucideShieldCheck className="w-5 h-5" />,
@@ -281,7 +281,7 @@ const ForCompanies = () => {
                         <p className="text-sm text-muted leading-relaxed max-w-sm md:mt-10 font-medium">
                             Purchase credits centrally and distribute them across
                             departments, offices, or individual travelers.
-                            Admins control the budget—managers use the credits.
+                            Admins control the budget managers use the credits.
                         </p>
                     </AnimateIn>
                     <AnimateIn delay={0.15} className="bg-background-primary rounded-2xl p-8">

@@ -42,9 +42,9 @@ const channels = [
 ];
 
 const communityStats = [
-    { value: "12K+", label: "Community members" },
-    { value: "3K+", label: "Trip reports shared" },
-    { value: "85+", label: "Destination guides" },
+    // { value: "12K+", label: "Community members" },
+    // { value: "3K+", label: "Trip reports shared" },
+    // { value: "85+", label: "Destination guides" },
     { value: "24", label: "Countries represented" },
 ];
 

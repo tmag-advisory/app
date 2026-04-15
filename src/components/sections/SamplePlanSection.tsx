@@ -105,7 +105,7 @@ const SamplePlanSection = () => {
                 {/* CTA */}
                 <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <p className="text-sm text-muted font-medium">
-                        Type your destination below — get your personalized plan in under 2 minutes.
+                        Type your destination below get your personalized plan in under 2 minutes.
                     </p>
                     <div className="flex items-center gap-2 shrink-0">
                         <input
