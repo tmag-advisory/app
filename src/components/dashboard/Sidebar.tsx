@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { useAuthStore } from "../../stores/authStore";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { usePlanStore } from "../../stores/planStore";
 import { cn } from "../../lib/utils";
 import type { ReactNode } from "react";
@@ -17,6 +17,8 @@ import {
     LucideX,
     LucideChevronsUpDown,
     LucideBuilding2,
+    LucideReceipt,
+    LucideBookOpen,
 } from "lucide-react";
 
 interface NavItem {
@@ -29,6 +31,8 @@ const individualNav: NavItem[] = [
     { label: "Dashboard", href: "/dashboard", icon: <LucideLayoutDashboard className="w-4 h-4" /> },
     { label: "Create Plan", href: "/dashboard/create-plan", icon: <LucidePlusCircle className="w-4 h-4" /> },
     { label: "My Plans", href: "/dashboard/plans", icon: <LucideFileText className="w-4 h-4" /> },
+    { label: "Transactions", href: "/dashboard/transactions", icon: <LucideReceipt className="w-4 h-4" /> },
+    { label: "My Ebooks", href: "/dashboard/my-ebooks", icon: <LucideBookOpen className="w-4 h-4" /> },
     { label: "Settings", href: "/dashboard/settings", icon: <LucideSettings className="w-4 h-4" /> },
 ];
 
@@ -36,7 +40,7 @@ const hrNav: NavItem[] = [
     { label: "Dashboard", href: "/hr", icon: <LucideLayoutDashboard className="w-4 h-4" /> },
     { label: "Employees", href: "/hr/employees", icon: <LucideUsers className="w-4 h-4" /> },
     { label: "Create Plan", href: "/hr/create-plan", icon: <LucidePlusCircle className="w-4 h-4" /> },
-    { label: "Travel Requests", href: "/hr/travel-requests", icon: <LucideInbox className="w-4 h-4" /> },
+    { label: "Credit Requests", href: "/hr/credit-requests", icon: <LucideInbox className="w-4 h-4" /> },
     { label: "Reports", href: "/hr/reports", icon: <LucideBarChart3 className="w-4 h-4" /> },
     { label: "Billing", href: "/hr/billing", icon: <LucideCreditCard className="w-4 h-4" /> },
 ];
@@ -46,6 +50,8 @@ const hrNav: NavItem[] = [
 import type { Company } from "../../stores/planStore";
 import { useState } from "react";
 import { useSidebarStore } from "../../stores/sidebarStore";
+import { canAccessHR } from "../../lib/canAccessHr";
+import { useMyCompanies } from "../../api/hooks";
 
 const CompanySwitcher = ({
     companies,
@@ -120,19 +126,41 @@ const CompanySwitcher = ({
 };
 
 const Sidebar = () => {
-    const user = useAuthStore((s) => s.user);
-    const logout = useAuthStore((s) => s.logout);
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const location = useLocation();
     const { open, close } = useSidebarStore();
-    const { companies, selectedCompanyId, selectCompany } = usePlanStore();
+    const { companies, selectedCompanyId, selectCompany, setCompanies } = usePlanStore();
 
-    const navItems = user?.type === "company" ? hrNav : individualNav;
+    const isHR = canAccessHR(user);
+    const navItems = isHR ? hrNav : individualNav;
 
-    // Filter companies to those assigned to the current user
-    const userCompanies = user?.companyIds
-        ? companies.filter((c) => user.companyIds!.includes(c.id))
-        : [];
-    const currentCompany = companies.find((c) => c.id === selectedCompanyId);
+    const { data: myCompanies, isSuccess } = useMyCompanies({ enabled: isHR });
+
+    // Sync API companies into planStore and auto-select on load
+    useEffect(() => {
+        if (!isSuccess || !myCompanies || myCompanies.length === 0) return;
+        const mapped: Company[] = myCompanies.map((c) => ({
+            id: String(c.id),
+            name: c.name,
+            industry: c.industry ?? "",
+            totalCredits: c.total_credits ?? 0,
+            usedCredits: c.used_credits ?? 0,
+            employeeCount: c.employee_count ?? 0,
+            plan: (c.plan as Company["plan"]) ?? "starter",
+        }));
+        setCompanies(mapped);
+        if (!selectedCompanyId || !mapped.some((c) => c.id === selectedCompanyId)) {
+            selectCompany(mapped[0].id);
+        }
+    }, [isSuccess, myCompanies]);
+
+    const currentCompany = companies.find((c) => c.id === selectedCompanyId) ?? companies[0];
+
+    const handleLogout = async () => {
+        await logout();
+        navigate("/login");
+    };
 
     // Close sidebar on route change (mobile)
     useEffect(() => {
@@ -176,9 +204,9 @@ const Sidebar = () => {
                 </div>
 
                 {/* Company switcher (HR only) */}
-                {user?.type === "company" && userCompanies.length > 0 && (
+                {isHR && companies.length > 0 && (
                     <CompanySwitcher
-                        companies={userCompanies}
+                        companies={companies}
                         currentCompany={currentCompany}
                         onSelect={selectCompany}
                     />
@@ -207,11 +235,11 @@ const Sidebar = () => {
                 <div className="px-4 py-4 border-t border-white/6">
                     <div className="flex items-center gap-3 mb-3 px-2">
                         <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-semibold text-white/70">
-                            {user?.name?.charAt(0) ?? "?"}
+                            {user?.first_name?.charAt(0) ?? "?"}
                         </div>
                         <div className="min-w-0">
                             <p className="text-sm font-medium text-white truncate">
-                                {user?.name}
+                                {user ? `${user.first_name} ${user.last_name}` : ""}
                             </p>
                             <p className="text-xs text-white/30 truncate">
                                 {user?.email}
@@ -219,7 +247,7 @@ const Sidebar = () => {
                         </div>
                     </div>
                     <button
-                        onClick={logout}
+                        onClick={handleLogout}
                         className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm text-white/40 hover:text-white hover:bg-white/4 transition-colors duration-150 cursor-pointer"
                     >
                         <LucideLogOut className="w-4 h-4" />

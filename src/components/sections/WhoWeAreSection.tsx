@@ -1,6 +1,4 @@
-import { LucideArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import Button from "../ui/Button";
 import AnimateIn from "../animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
 
@@ -27,10 +25,9 @@ const WhoWeAreSection = () => {
                         </h2>
                     </div>
                     <p className="text-sm text-muted leading-relaxed max-w-sm md:mt-10 font-medium">
-                        We built this advisory to help travelers avoid health risks
-                        abroad. We listen first, recommend only what works, and build
-                        personalized plans you'll actually use—without the confusion
-                        or complexity.
+                        Founded by a travel medicine physician with 15 years of clinical experience,
+                        TMAG combines medical expertise with advanced technology to deliver evidence-based travel health guidance.
+                        We listen first, recommend only what works, and build personalized plans you'll actually use without the confusion or complexity.
                     </p>
                 </AnimateIn>
 
@@ -81,28 +78,6 @@ const WhoWeAreSection = () => {
                         </StaggerGroup>
                     </div>
                 </div>
-
-                {/* Recruitment banner */}
-                <AnimateIn delay={0.2} className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-button-secondary rounded-2xl px-6 md:px-8 py-5">
-                    <div>
-                        <div className="flex items-center gap-3 mb-1 flex-wrap">
-                            <h3 className="text-base font-semibold text-heading">
-                                Want to be part of the team?
-                            </h3>
-                            <span className="text-xs text-muted border border-border rounded-full px-3 py-0.5">
-                                3 vacancies available
-                            </span>
-                        </div>
-                        <p className="text-sm text-body max-w-2xl">
-                            We're always looking for talented people who want to help
-                            travelers cut through health confusion and build plans
-                            that work.
-                        </p>
-                    </div>
-                    <Button variant="primary" className="shrink-0 border" icon={<LucideArrowRight />}>
-                        Apply now
-                    </Button>
-                </AnimateIn>
             </section >
         </div >
     );

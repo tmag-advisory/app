@@ -18,9 +18,9 @@ const values = [
     },
     {
         icon: <LucideBrain className="w-6 h-6" />,
-        title: "Responsible AI",
+        title: "Responsible Technology",
         description:
-            "Our AI is a tool, not a doctor. We clearly label AI-generated content, disclose our data sources, and always recommend professional medical consultation.",
+            "Our platform is a tool, not a doctor. We clearly label system-generated content, disclose our data sources, and always recommend professional medical consultation.",
     },
     {
         icon: <LucideLock className="w-6 h-6" />,
@@ -32,7 +32,7 @@ const values = [
         icon: <LucideShieldCheck className="w-6 h-6" />,
         title: "Transparency",
         description:
-            "We tell you exactly where our data comes from, what our AI can and cannot do, and how we generate every recommendation in your plan.",
+            "We tell you exactly where our data comes from, what our platform can and cannot do, and how we generate every recommendation in your plan.",
     },
 ];
 
@@ -73,15 +73,15 @@ const About = () => {
                             <p className="text-sm text-body leading-relaxed mb-4">
                                 Millions of people travel internationally every
                                 year without adequate health preparation. The
-                                information exists—scattered across government
+                                information exists scattered across government
                                 databases, medical journals, and embassy
-                                websites—but it's fragmented, generic, and hard
+                                websites but it's fragmented, generic, and hard
                                 to act on.
                             </p>
                             <p className="text-sm text-body leading-relaxed">
-                                TMAG uses AI to consolidate that information into
+                                TMAG uses intelligent technology to consolidate that information into
                                 personalized, actionable health plans. We don't
-                                replace doctors—we help travelers arrive at their
+                                replace doctors we help travelers arrive at their
                                 appointments informed, and help those without
                                 easy access to travel medicine clinics get
                                 critical guidance they'd otherwise miss.
@@ -136,7 +136,7 @@ const About = () => {
                             </h2>
                         </div>
                         <p className="text-sm text-muted leading-relaxed max-w-sm md:mt-10 font-medium">
-                            Health data is sensitive. We treat it that way—not as
+                            Health data is sensitive. We treat it that way not as
                             an afterthought, but as a foundation of everything
                             we build.
                         </p>
@@ -147,7 +147,7 @@ const About = () => {
                             "Health profiles are encrypted at rest and in transit",
                             "You can delete all your data at any time",
                             "We don't train our models on your personal health data",
-                            "AI outputs are clearly labeled as AI-generated",
+                            "Advisory outputs are clearly labeled as system-generated",
                             "All data processing follows HIPAA-compliant practices",
                         ].map((item) => (
                             <motion.div
@@ -193,12 +193,12 @@ const About = () => {
                             <strong className="text-heading">Consult your doctor.</strong>{" "}
                             Always consult a qualified healthcare provider before
                             making decisions about vaccinations, medications, or
-                            health precautions—especially if you have
+                            health precautions especially if you have
                             pre-existing conditions.
                         </p>
                         <p className="text-sm text-body leading-relaxed">
-                            <strong className="text-heading">AI limitations.</strong>{" "}
-                            Our AI analyzes data from trusted sources but cannot
+                            <strong className="text-heading">System limitations.</strong>{" "}
+                            Our platform analyzes data from trusted sources but cannot
                             account for every individual health circumstance.
                             Recommendations should be verified with a medical
                             professional.

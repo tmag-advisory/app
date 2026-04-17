@@ -4,12 +4,12 @@ import AnimateIn from "../animations/AnimateIn";
 
 const faqs = [
     {
-        question: "Is the AI advice a substitute for a doctor?",
+        question: "Is the advisory guidance a substitute for a doctor?",
         answer: "No. TMAG provides informational guidance based on WHO, CDC, and local health authority data. We recommend sharing your plan with a healthcare provider before traveling, especially if you have pre-existing conditions.",
     },
     {
         question: "How current is the health data?",
-        answer: "Our AI pulls from continuously updated databases including real-time outbreak alerts, seasonal risk changes, and the latest vaccine recommendations. Plans are generated using the most recent data available at the time of creation.",
+        answer: "Our platform pulls from continuously updated databases including real-time outbreak alerts, seasonal risk changes, and the latest vaccine recommendations. Plans are generated using the most recent data available at the time of creation.",
     },
     {
         question: "Can I use this for multiple destinations in one trip?",
@@ -17,7 +17,7 @@ const faqs = [
     },
     {
         question: "What if I have a chronic condition or take medications?",
-        answer: "You can enter your health profile including chronic conditions, current medications, and allergies. The AI factors these into every recommendation—from drug interactions with prophylactics to altitude and climate considerations.",
+        answer: "You can enter your health profile including chronic conditions, current medications, and allergies. The system factors these into every recommendation—from drug interactions with prophylactics to altitude and climate considerations.",
     },
     {
         question: "How does the Enterprise plan work?",

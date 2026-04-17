@@ -9,7 +9,7 @@ const faqCategories = [
         questions: [
             {
                 q: "What is TMAG?",
-                a: "TMAG (Travel Medicine Advisory Global) is an AI-powered platform that generates personalized travel health plans. We analyze your destination, travel dates, and health profile against real-time data from WHO, CDC, and local health authorities to give you actionable medical guidance.",
+                a: "TMAG (Travel Medicine Advisory Global) is an intelligent platform that generates personalized travel health plans. We analyze your destination, travel dates, and health profile against real-time data from WHO, CDC, and local health authorities to give you actionable medical guidance.",
             },
             {
                 q: "Is this medical advice?",
@@ -71,8 +71,8 @@ const faqCategories = [
                 a: "Yes. We follow HIPAA-compliant data handling practices. Your health data is encrypted in transit and at rest, never sold to third parties, and can be fully deleted from your account settings at any time.",
             },
             {
-                q: "Do you train AI on my data?",
-                a: "No. We do not use your personal health data to train our AI models. Your data is used solely to generate your personalized plan.",
+                q: "Do you train your system on my data?",
+                a: "No. We do not use your personal health data to train our recommendation systems. Your data is used solely to generate your personalized plan.",
             },
             {
                 q: "Can I delete my account and data?",
@@ -150,7 +150,7 @@ const FAQPage = () => {
                 </h1>
                 <p className="sm:text-lg text-body mt-6 max-w-xl leading-relaxed">
                     Everything you need to know about TMAG, credits, data
-                    privacy, and how our AI works.
+                    privacy, and how our platform works.
                 </p>
             </AnimateIn>
 
@@ -194,7 +194,7 @@ const FAQPage = () => {
                             We're happy to help with anything not covered above.
                         </p>
                         <div className="flex items-center justify-center gap-4 flex-wrap">
-                            <Button variant="primary">Contact support</Button>
+                            <Button variant="primary" link="/contact?type=SUPPORT">Contact support</Button>
                             <Button variant="secondary" icon={<LucideArrowRight />}>
                                 hello@tmag.health
                             </Button>

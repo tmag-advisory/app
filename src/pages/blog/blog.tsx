@@ -1,13 +1,15 @@
+import { useState } from "react";
 import { LucideArrowRight, LucideClock } from "lucide-react";
 import { motion } from "framer-motion";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 import Button from "../../components/ui/Button";
+import { useNewsletterSubscribe } from "../../api/hooks";
 
 const featuredPost = {
-    title: "How AI Is Changing Travel Health Preparation",
+    title: "How Technology Is Changing Travel Health Preparation",
     excerpt:
-        "From outbreak tracking to personalized vaccination schedules, artificial intelligence is transforming how travelers prepare for trips abroad.",
+        "From outbreak tracking to personalized vaccination schedules, modern technology is transforming how travelers prepare for trips abroad.",
     category: "Product",
     date: "Feb 20, 2026",
     readTime: "6 min read",
@@ -33,7 +35,7 @@ const posts = [
         readTime: "7 min read",
     },
     {
-        title: "TMAG's Approach to Responsible AI in Healthcare",
+        title: "TMAG's Approach to Responsible Technology in Healthcare",
         category: "Engineering",
         date: "Jan 22, 2026",
         readTime: "8 min read",
@@ -53,6 +55,14 @@ const posts = [
 ];
 
 const Blog = () => {
+    const [newsletterEmail, setNewsletterEmail] = useState("");
+    const [destination, setDestination] = useState("");
+    const { mutate: subscribe, isPending: isSubscribing, isSuccess: isSubscribed, isError: isSubscribeError, error: subscribeError } = useNewsletterSubscribe();
+    const handleSubscribe = (e: React.FormEvent) => {
+        e.preventDefault();
+        subscribe({ email: newsletterEmail });
+    };
+
     return (
         <main>
             {/* Hero */}
@@ -133,13 +143,48 @@ const Blog = () => {
             <section className="px-8 lg:px-16 py-24 max-w-4xl mx-auto text-center">
                 <AnimateIn type="fade">
                     <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-4">
-                        Stay in the loop.
+                        Get the travel health alert for your next destination.
                     </h2>
                     <p className="text-sm text-body leading-relaxed max-w-md mx-auto mb-8">
-                        Get the latest travel health insights delivered to your
-                        inbox every week.
+                        Free in your inbox outbreak alerts, destination-specific guidance, and expert tips.
                     </p>
-                    <Button variant="primary">Subscribe to newsletter</Button>
+                    {isSubscribed ? (
+                        <p className="text-sm text-accent font-medium">
+                            You're subscribed! Look for updates in your inbox.
+                        </p>
+                    ) : (
+                        <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row items-stretch gap-3 max-w-md mx-auto">
+                            <input
+                                type="text"
+                                value={destination}
+                                onChange={(e) => setDestination(e.target.value)}
+                                placeholder="Your destination"
+                                className="flex-1 bg-button-secondary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border-light outline-none focus:border-accent transition-colors duration-200"
+                            />
+                            <input
+                                type="email"
+                                value={newsletterEmail}
+                                onChange={(e) => setNewsletterEmail(e.target.value)}
+                                placeholder="Enter your email"
+                                required
+                                className="flex-1 bg-button-secondary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border-light outline-none focus:border-accent transition-colors duration-200"
+                            />
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                disabled={isSubscribing}
+                            >
+                                {isSubscribing ? "…" : "Subscribe"}
+                            </Button>
+                        </form>
+                    )}
+                    {isSubscribeError && (
+                        <p className="text-xs text-red-500 mt-3">
+                            {(subscribeError as { response?: { data?: { message?: string } } })?.response?.data?.message === "Already subscribed"
+                                ? "You're already subscribed."
+                                : "Something went wrong. Please try again."}
+                        </p>
+                    )}
                 </AnimateIn>
             </section>
         </main>

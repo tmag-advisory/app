@@ -32,19 +32,21 @@ const FinalCTASection = () => {
                     </h2>
                     <p className="text-sm text-white/70 leading-relaxed max-w-md mx-auto mb-8">
                         Get your personalized travel health plan in under two
-                        minutes—free to start, no credit card required.
+                        minutes free to start, no credit card required.
                     </p>
                     <div className="flex items-center justify-center gap-4 flex-wrap">
                         <Button
                             variant="primary"
                             className="bg-white !text-dark hover:bg-white/90"
+                            link="/register"
                         >
-                            Get your free plan
+                            Get My Free Plan
                         </Button>
                         <Button
                             variant="secondary"
                             icon={<LucideArrowRight />}
                             className="!bg-white/15 !text-white hover:!bg-white/25 border-none"
+                            link="/contact?type=SALES"
                         >
                             Talk to sales
                         </Button>

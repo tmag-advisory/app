@@ -42,9 +42,9 @@ const channels = [
 ];
 
 const communityStats = [
-    { value: "12K+", label: "Community members" },
-    { value: "3K+", label: "Trip reports shared" },
-    { value: "85+", label: "Destination guides" },
+    // { value: "12K+", label: "Community members" },
+    // { value: "3K+", label: "Trip reports shared" },
+    // { value: "85+", label: "Destination guides" },
     { value: "24", label: "Countries represented" },
 ];
 
@@ -130,7 +130,7 @@ const Community = () => {
                         Free to join. Connect with travelers, share tips, and
                         stay informed about travel health worldwide.
                     </p>
-                    <Button variant="primary">Get started</Button>
+                    <Button variant="primary" link="/register">Get My Free Plan</Button>
                 </AnimateIn>
             </section>
         </main>

@@ -1,13 +1,26 @@
 import { Outlet } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import Sidebar from "../components/dashboard/Sidebar";
+import { usePaymentSuccessModal, PaymentSuccessModal } from "../components/payment/PaymentSuccessModal";
+import { AnimatePresence } from "framer-motion";
 
 const UserDashboardLayout = () => {
+    const { showModal, closeModal } = usePaymentSuccessModal();
+
     return (
-        <div className="min-h-screen bg-background-primary">
+        <div className="relative min-h-screen overflow-x-hidden bg-background-primary">
+            {/*<DashboardAmbientBackground />*/}
             <Sidebar />
-            <main className="lg:ml-64 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 max-w-6xl">
+            <main className="relative z-10 lg:ml-64 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 max-w-6xl">
                 <Outlet />
             </main>
+
+            {/* Payment success modal */}
+            <AnimatePresence>
+                {showModal && <PaymentSuccessModal onClose={closeModal} />}
+            </AnimatePresence>
+
+            <Toaster position="top-right" containerStyle={{ fontSize: "14px" }} />
         </div>
     );
 };

@@ -17,7 +17,7 @@ const services = [
     {
         name: "Plan Generation",
         status: "operational",
-        description: "AI-powered travel health plan engine",
+        description: "Intelligent travel health plan engine",
     },
     {
         name: "Health Data Pipeline",

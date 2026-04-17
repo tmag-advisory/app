@@ -61,7 +61,7 @@ const PrivacyPolicy = () => {
                             <p>
                                 We use your information to: generate
                                 personalized travel health plans; improve the
-                                accuracy and quality of our AI recommendations;
+                                accuracy and quality of our platform recommendations;
                                 communicate with you about your account, plans,
                                 and service updates; and comply with legal
                                 obligations.
@@ -75,7 +75,7 @@ const PrivacyPolicy = () => {
                             <p>
                                 We do not sell your personal or health data to
                                 third parties. We do not use your personal
-                                health data to train our AI models. We do not
+                                health data to train our recommendation systems. We do not
                                 share your data with advertisers. We do not
                                 retain data longer than necessary for the
                                 purposes described in this policy.

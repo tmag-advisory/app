@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "./dashboardChrome";
 
 interface StatCardProps {
     label: string;
@@ -10,7 +12,12 @@ interface StatCardProps {
 
 const StatCard = ({ label, value, icon, detail, accent }: StatCardProps) => {
     return (
-        <div className="bg-white rounded-2xl p-4 sm:p-6 flex flex-col gap-3 border border-border-light/50">
+        <div
+            className={cn(
+                DASHBOARD_GLASS_SURFACE,
+                "p-4 sm:p-6 flex flex-col gap-3",
+            )}
+        >
             <div className="flex items-center justify-between">
                 <span className="text-xs uppercase tracking-wider text-muted font-semibold">
                     {label}

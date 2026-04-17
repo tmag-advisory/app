@@ -1,186 +1,102 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../stores/authStore";
-import { usePlanStore } from "../../stores/planStore";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useCreateTravelPlan } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
-import { LucideLoader2 } from "lucide-react";
-import type { TravelPlan } from "../../stores/planStore";
+import { DASHBOARD_GLASS_SURFACE, DashboardAmbientBackground } from "../../components/dashboard/dashboardChrome";
+import toast from "react-hot-toast";
+import PlanQuestionnaireFlow, { type QuestionnairePlanPayload } from "../../components/plan/PlanQuestionnaireFlow";
 
 const CreatePlan = () => {
     const navigate = useNavigate();
-    const consumeCredit = useAuthStore((s) => s.consumeCredit);
-    const addPlan = usePlanStore((s) => s.addPlan);
-    const credits = useAuthStore((s) => s.user?.credits ?? 0);
+    const { user, refreshProfile } = useAuth();
+    const createPlan = useCreateTravelPlan();
+    const credits = user?.credits ?? 0;
 
-    const [form, setForm] = useState({
-        destination: "",
-        country: "",
-        duration: "",
-        purpose: "Leisure",
-        medicalConsiderations: "",
-    });
-    const [processing, setProcessing] = useState(false);
-
-    const update = (field: string, value: string) =>
-        setForm((f) => ({ ...f, [field]: value }));
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!consumeCredit()) return;
-
-        setProcessing(true);
-
-        // Simulate AI processing
-        setTimeout(() => {
-            const newPlan: TravelPlan = {
-                id: `p${Date.now()}`,
-                destination: form.destination,
-                country: form.country,
-                duration: form.duration,
-                purpose: form.purpose,
-                riskScore: "Moderate",
+    const handleSubmit = async (payload: QuestionnairePlanPayload) => {
+        if (credits <= 0) {
+            toast.error("You don't have enough credits.");
+            return;
+        }
+        try {
+            const result = await createPlan.mutateAsync({
+                destination: payload.destination,
+                country: payload.country,
+                duration: payload.duration,
+                purpose: payload.purpose,
+                tripType: payload.tripType,
+                tripDetailsJson: payload.tripDetailsJson,
+                medicalConsiderations: payload.medicalConsiderations,
+                questionnaireResponses: JSON.stringify(payload.questionnaireResponses),
+                userId: user?.id,
                 status: "completed",
-                createdAt: new Date().toISOString().slice(0, 10),
-                vaccinations: [
-                    { name: "Hepatitis A", status: "Recommended" },
-                    { name: "Typhoid", status: "Recommended" },
-                    { name: "Tdap", status: "Optional" },
-                ],
-                healthAlerts: ["Review local health advisories before departure"],
-                safetyAdvisories: ["Carry copies of prescriptions", "Register with your embassy"],
-                medications: ["Standard travel first-aid kit", "Oral rehydration salts"],
-                waterFood: ["Check local water safety", "Eat at reputable establishments"],
-                emergencyContacts: [{ label: "Local emergency", value: "Check destination" }],
-                medicalConsiderations: form.medicalConsiderations || undefined,
-            };
-            addPlan(newPlan);
-            setProcessing(false);
-            navigate(`/dashboard/plans/${newPlan.id}`);
-        }, 2500);
+                riskScore: 1,
+                vaccinations: "[]",
+                healthAlerts: "[]",
+                safetyAdvisories: "[]",
+                medications: "[]",
+                waterFood: "[]",
+                emergencyContacts: "[]",
+            });
+            navigate(`/dashboard/plans/${result.id}`);
+            await refreshProfile();
+        } catch {
+            toast.error("Failed to generate plan. Please try again.");
+        }
     };
 
-    if (processing) {
-        return (
-            <div>
-                <DashboardHeader title="Generating your plan" />
-                <div className="flex flex-col items-center justify-center py-32">
-                    <LucideLoader2 className="w-10 h-10 text-accent animate-spin mb-6" />
-                    <h2 className="text-xl font-serif text-heading mb-2">
-                        AI is analyzing your trip…
-                    </h2>
-                    <p className="text-sm text-body max-w-sm text-center">
-                        Cross-referencing WHO, CDC, and local health data for{" "}
-                        <strong className="text-heading">{form.destination}</strong>.
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div>
+        <div className="relative">
+            <DashboardAmbientBackground />
             <DashboardHeader title="Create travel plan" />
-
             {credits === 0 && (
-                <div className="bg-gold/10 border border-gold/20 rounded-2xl p-4 mb-6">
-                    <p className="text-sm text-heading font-medium">
-                        You have no credits remaining.{" "}
-                        <span className="text-accent cursor-pointer hover:underline">
-                            Purchase more credits
-                        </span>{" "}
-                        to generate a new plan.
-                    </p>
+                <div className="relative z-10 max-w-5xl mb-8">
+                    <div className="bg-gold/10 border border-gold/20 rounded-2xl p-5 md:p-6">
+                        <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-gold/20 flex items-center justify-center shrink-0 mt-0.5">
+                                <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-semibold text-heading mb-1">No credits remaining</p>
+                                <p className="text-sm text-muted">
+                                    <Link to="/dashboard/settings" className="text-accent font-medium cursor-pointer hover:underline decoration-2 underline-offset-2">
+                                        Purchase more credits
+                                    </Link>{" "}
+                                    to generate a new plan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-border-light/50 p-6 md:p-8 max-w-2xl">
-                <div className="space-y-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div>
-                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                Destination
-                            </label>
-                            <input
-                                type="text"
-                                value={form.destination}
-                                onChange={(e) => update("destination", e.target.value)}
-                                placeholder="e.g. Bogotá & Cartagena"
-                                className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                Country
-                            </label>
-                            <input
-                                type="text"
-                                value={form.country}
-                                onChange={(e) => update("country", e.target.value)}
-                                placeholder="e.g. Colombia"
-                                className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
-                                required
-                            />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div>
-                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                Duration
-                            </label>
-                            <input
-                                type="text"
-                                value={form.duration}
-                                onChange={(e) => update("duration", e.target.value)}
-                                placeholder="e.g. 10 days"
-                                className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                Purpose
-                            </label>
-                            <select
-                                value={form.purpose}
-                                onChange={(e) => update("purpose", e.target.value)}
-                                className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
-                            >
-                                <option>Leisure</option>
-                                <option>Business</option>
-                                <option>Volunteer</option>
-                                <option>Study</option>
-                                <option>Other</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                            Medical considerations <span className="text-muted font-normal normal-case">(optional)</span>
-                        </label>
-                        <textarea
-                            value={form.medicalConsiderations}
-                            onChange={(e) => update("medicalConsiderations", e.target.value)}
-                            placeholder="e.g. I take blood thinners, have asthma, or am pregnant"
-                            rows={3}
-                            className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200 resize-none"
+            <div className="relative z-10 max-w-5xl mx-auto space-y-10">
+                {/* Header Section */}
+                <div className="text-center md:text-left pt-4">
+                    <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-accent mb-3">
+                        Travel Advisory Builder
+                    </p>
+                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif text-heading leading-tight mb-4 tracking-tight">
+                        Build your traveller profile
+                    </h2>
+                    <p className="text-sm md:text-base text-muted leading-relaxed max-w-2xl">
+                        Work through each section carefully. The more detail you provide, the higher quality your plan will be.
+                        Review all answers before spending a credit.
+                    </p>
+                </div>
+
+                {/* Questionnaire Flow */}
+                <div className={`${DASHBOARD_GLASS_SURFACE}`}>
+                    <div className="p-4 md:p-12 lg:p-14">
+                        <PlanQuestionnaireFlow
+                            credits={credits}
+                            isSubmitting={createPlan.isPending}
+                            onSubmitPlan={handleSubmit}
                         />
                     </div>
                 </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-8 pt-6 border-t border-border-light/50">
-                    <p className="text-xs text-muted">
-                        This will use <strong className="text-heading">1 credit</strong>. You have {credits} remaining.
-                    </p>
-                    <button
-                        type="submit"
-                        disabled={credits === 0}
-                        className="py-3 px-6 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                    >
-                        Generate plan
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     );
 };

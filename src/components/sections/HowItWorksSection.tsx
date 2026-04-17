@@ -17,7 +17,7 @@ const steps: { number: string; icon: ReactNode; title: string; description: stri
         icon: <LucideBriefcaseMedical className="w-6 h-6" />,
         title: "Get your personalized plan",
         description:
-            "Our AI cross-references WHO, CDC, and local health data to generate a medical advisory tailored to you.",
+            "Our platform cross-references WHO, CDC, and local health data to generate a medical advisory tailored to you.",
     },
     {
         number: "03",
@@ -33,7 +33,7 @@ const HowItWorksSection = () => {
         <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
             <AnimateIn className="text-center mb-16">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    How it works
+                    Learn More
                 </span>
                 <h2 className="text-4xl md:text-5xl lg:text-6xl text-heading leading-[1.1] font-serif">
                     Three steps to a <span className="italic">safer</span> trip.

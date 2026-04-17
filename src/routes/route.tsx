@@ -1,4 +1,4 @@
-import {lazy} from "react";
+import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import HomeLayout from "../layouts/homelayouts";
 import AuthLayout from "../layouts/authlayouts";
@@ -25,13 +25,26 @@ const HelpCenter = lazy(() => import("../pages/help/help"));
 const Documentation = lazy(() => import("../pages/docs/docs"));
 const Status = lazy(() => import("../pages/status/status"));
 const Community = lazy(() => import("../pages/community/community"));
+const ContactPage = lazy(() => import("../pages/contact/contact"));
+
+// Shop pages (lazy-loaded)
+const ShopPage = lazy(() => import("../pages/shop/shop"));
+const EbookDetailPage = lazy(() => import("../pages/shop/ebook-detail"));
+const CartPage = lazy(() => import("../pages/shop/cart"));
+const CheckoutPage = lazy(() => import("../pages/shop/checkout"));
+const EbookOrderConfirmation = lazy(() => import("../pages/shop/order-confirmation"));
 
 // Auth pages (lazy-loaded)
 const Login = lazy(() => import("../pages/auth/login"));
 const Register = lazy(() => import("../pages/auth/register"));
 const ForgotPassword = lazy(() => import("../pages/auth/forgot-password"));
+const ResetPassword = lazy(() => import("../pages/auth/reset-password"));
+const AcceptInvitation = lazy(() => import("../pages/auth/accept-invitation"));
 const EmailVerification = lazy(() => import("../pages/auth/email-verification"));
+const VerifyEmailCallback = lazy(() => import("../pages/auth/verify-email-callback"));
+const GoogleCallback = lazy(() => import("../pages/auth/google-callback"));
 const Onboarding = lazy(() => import("../pages/auth/onboarding"));
+const TravelHealthQuestionnaire = lazy(() => import("../pages/auth/travel-health-questionnaire"));
 
 // Individual dashboard (lazy-loaded)
 const DashboardOverview = lazy(() => import("../pages/dashboard/overview"));
@@ -39,14 +52,25 @@ const CreatePlan = lazy(() => import("../pages/dashboard/create-plan"));
 const PlanHistory = lazy(() => import("../pages/dashboard/plan-history"));
 const PlanDetails = lazy(() => import("../pages/dashboard/plan-details"));
 const Settings = lazy(() => import("../pages/dashboard/settings"));
+const Transactions = lazy(() => import("../pages/dashboard/transactions"));
+const MyEbooks = lazy(() => import("../pages/dashboard/my-ebooks"));
 
 // HR dashboard (lazy-loaded)
 const HROverview = lazy(() => import("../pages/hr/overview"));
 const Employees = lazy(() => import("../pages/hr/employees"));
+const EmployeeDetail = lazy(() => import("../pages/hr/employee-detail"));
 const HRCreatePlan = lazy(() => import("../pages/hr/create-plan"));
-const TravelRequests = lazy(() => import("../pages/hr/travel-requests"));
+const CreditRequests = lazy(() => import("../pages/hr/credit-requests"));
 const Reports = lazy(() => import("../pages/hr/reports"));
 const Billing = lazy(() => import("../pages/hr/billing"));
+const HRBillingCallback = lazy(() => import("../pages/hr/billing-callback"));
+
+// Payment pages
+const PaymentCallback = lazy(() => import("../pages/payment/callback"));
+
+// Company onboarding pages
+const CompanyOnboarding = lazy(() => import("../pages/company-onboarding/company-onboarding"));
+const CompanyOnboardingCallback = lazy(() => import("../pages/company-onboarding/callback"));
 
 // Error pages (lazy-loaded)
 const NotFound = lazy(() => import("../pages/not-found/not-found"));
@@ -77,8 +101,20 @@ const router = createBrowserRouter([
             { path: "docs", element: <Documentation /> },
             { path: "status", element: <Status /> },
             { path: "community", element: <Community /> },
+            { path: "contact", element: <ContactPage /> },
+            { path: "shop", element: <ShopPage /> },
+            { path: "shop/:slug", element: <EbookDetailPage /> },
+            { path: "shop/cart", element: <CartPage /> },
         ],
     },
+
+    // Shop checkout (standalone, no nav)
+    { path: "shop/checkout", element: <CheckoutPage /> },
+    { path: "shop/order-confirmation", element: <EbookOrderConfirmation /> },
+
+    // Company onboarding (standalone, no nav)
+    { path: "company-onboarding", element: <CompanyOnboarding /> },
+    { path: "company-onboarding/callback", element: <CompanyOnboardingCallback /> },
 
     // Auth
     {
@@ -87,9 +123,41 @@ const router = createBrowserRouter([
             { path: "login", element: <Login /> },
             { path: "register", element: <Register /> },
             { path: "forgot-password", element: <ForgotPassword /> },
+            { path: "reset-password", element: <ResetPassword /> },
+            { path: "accept-invitation", element: <AcceptInvitation /> },
             { path: "verify-email", element: <EmailVerification /> },
-            { path: "onboarding", element: <Onboarding /> },
         ],
+    },
+
+    {
+        path: "onboarding", element: <ProtectedRoute><Onboarding /></ProtectedRoute>
+    },
+
+    {
+        path: "onboarding/questionnaire", element: <ProtectedRoute><TravelHealthQuestionnaire /></ProtectedRoute>
+    },
+
+    // Email verification callback (from email link: /auth/verify-email?token=...)
+    // Google OAuth callback (from Google redirect: /auth/google/callback?code=...)
+    {
+        path: "auth",
+        element: <AuthLayout />,
+        children: [
+            { path: "verify-email", element: <VerifyEmailCallback /> },
+            { path: "google/callback", element: <GoogleCallback /> },
+        ],
+    },
+
+    // Payment callback (needs to be accessible after payment)
+    {
+        path: "payment/callback",
+        element: <PaymentCallback />,
+    },
+
+    // HR billing payment callback
+    {
+        path: "hr/billing/callback",
+        element: <HRBillingCallback />,
     },
 
     // Individual dashboard
@@ -97,7 +165,7 @@ const router = createBrowserRouter([
         path: "dashboard",
         element: (
             <ProtectedRoute>
-                <RoleGuard allowedType="individual">
+                <RoleGuard section="dashboard">
                     <UserDashboardLayout />
                 </RoleGuard>
             </ProtectedRoute>
@@ -108,6 +176,8 @@ const router = createBrowserRouter([
             { path: "plans", element: <PlanHistory /> },
             { path: "plans/:id", element: <PlanDetails /> },
             { path: "settings", element: <Settings /> },
+            { path: "transactions", element: <Transactions /> },
+            { path: "my-ebooks", element: <MyEbooks /> },
         ],
     },
 
@@ -116,7 +186,7 @@ const router = createBrowserRouter([
         path: "hr",
         element: (
             <ProtectedRoute>
-                <RoleGuard allowedType="company">
+                <RoleGuard section="hr">
                     <HRDashboardLayout />
                 </RoleGuard>
             </ProtectedRoute>
@@ -124,8 +194,9 @@ const router = createBrowserRouter([
         children: [
             { index: true, element: <HROverview /> },
             { path: "employees", element: <Employees /> },
+            { path: "employees/:id", element: <EmployeeDetail /> },
             { path: "create-plan", element: <HRCreatePlan /> },
-            { path: "travel-requests", element: <TravelRequests /> },
+            { path: "credit-requests", element: <CreditRequests /> },
             { path: "reports", element: <Reports /> },
             { path: "billing", element: <Billing /> },
         ],

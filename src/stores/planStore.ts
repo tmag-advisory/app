@@ -59,38 +59,6 @@ export interface Employee {
   plansGenerated: number;
 }
 
-// ─── Mock companies ──────────────────────────────────────────
-
-const MOCK_COMPANIES: Company[] = [
-  {
-    id: "c1",
-    name: "TechCorp",
-    industry: "Technology",
-    totalCredits: 200,
-    usedCredits: 15,
-    employeeCount: 5,
-    plan: "professional",
-  },
-  {
-    id: "c2",
-    name: "GlobalHealth Inc.",
-    industry: "Healthcare",
-    totalCredits: 500,
-    usedCredits: 48,
-    employeeCount: 8,
-    plan: "enterprise",
-  },
-  {
-    id: "c3",
-    name: "Meridian Consulting",
-    industry: "Consulting",
-    totalCredits: 100,
-    usedCredits: 7,
-    employeeCount: 3,
-    plan: "starter",
-  },
-];
-
 // ─── Mock plans ──────────────────────────────────────────────
 
 const MOCK_PLANS: TravelPlan[] = [
@@ -118,7 +86,7 @@ const MOCK_PLANS: TravelPlan[] = [
       "Altitude sickness risk above 2,500m in Bogotá",
     ],
     safetyAdvisories: [
-      "Avoid tap water — use bottled or purified",
+      "Avoid tap water use bottled or purified",
       "Carry antimalarial medication in rural areas",
       "Register with your embassy before departure",
     ],
@@ -303,6 +271,7 @@ interface PlanState {
   travelRequests: TravelRequest[];
 
   // Company actions
+  setCompanies: (companies: Company[]) => void;
   selectCompany: (companyId: string) => void;
   getCompany: (id: string) => Company | undefined;
   selectedCompany: () => Company | undefined;
@@ -319,51 +288,65 @@ interface PlanState {
 }
 
 export const usePlanStore = create<PlanState>()(
-  persist((set, get) => ({
-    companies: MOCK_COMPANIES,
-    selectedCompanyId: MOCK_COMPANIES[0].id,
-    plans: MOCK_PLANS,
-    employees: MOCK_EMPLOYEES,
-    travelRequests: MOCK_REQUESTS,
+    persist(
+        (set, get) => ({
+            companies: [],
+            selectedCompanyId: null,
+            plans: MOCK_PLANS,
+            employees: MOCK_EMPLOYEES,
+            travelRequests: MOCK_REQUESTS,
 
-    // Company actions
-    selectCompany: (companyId) => set({ selectedCompanyId: companyId }),
+            // Company actions
+            setCompanies: (companies) => set({ companies }),
+            selectCompany: (companyId) => set({ selectedCompanyId: companyId }),
 
-    getCompany: (id) => get().companies.find((c) => c.id === id),
+            getCompany: (id) => get().companies.find((c) => c.id === id),
 
-    selectedCompany: () => {
-      const { companies, selectedCompanyId } = get();
-      return companies.find((c) => c.id === selectedCompanyId);
-    },
+            selectedCompany: () => {
+                const { companies, selectedCompanyId } = get();
+                if (companies.length === 0) return undefined;
+                return (
+                    companies.find((c) => c.id === selectedCompanyId) ??
+                    companies[0]
+                );
+            },
 
-    // Filtered selectors
-    companyPlans: () => {
-      const { plans, selectedCompanyId } = get();
-      return plans.filter((p) => p.companyId === selectedCompanyId);
-    },
+            // Filtered selectors
+            companyPlans: () => {
+                const { plans, selectedCompanyId } = get();
+                return plans.filter((p) => p.companyId === selectedCompanyId);
+            },
 
-    companyEmployees: () => {
-      const { employees, selectedCompanyId } = get();
-      return employees.filter((e) => e.companyId === selectedCompanyId);
-    },
+            companyEmployees: () => {
+                const { employees, selectedCompanyId } = get();
+                return employees.filter(
+                    (e) => e.companyId === selectedCompanyId,
+                );
+            },
 
-    companyRequests: () => {
-      const { travelRequests, selectedCompanyId } = get();
-      return travelRequests.filter((r) => r.companyId === selectedCompanyId);
-    },
+            companyRequests: () => {
+                const { travelRequests, selectedCompanyId } = get();
+                return travelRequests.filter(
+                    (r) => r.companyId === selectedCompanyId,
+                );
+            },
 
-    // Plan actions
-    getPlan: (id) => get().plans.find((p) => p.id === id),
+            // Plan actions
+            getPlan: (id) => get().plans.find((p) => p.id === id),
 
-    addPlan: (plan) => set((state) => ({ plans: [plan, ...state.plans] })),
+            addPlan: (plan) =>
+                set((state) => ({ plans: [plan, ...state.plans] })),
 
-    updateRequestStatus: (id, status) =>
-      set((state) => ({
-        travelRequests: state.travelRequests.map((r) =>
-          r.id === id ? { ...r, status } : r,
-        ),
-      })),
-  }), {
-    name: 'PlanStore',
-    storage: createJSONStorage(() => localStorage)
-  }))
+            updateRequestStatus: (id, status) =>
+                set((state) => ({
+                    travelRequests: state.travelRequests.map((r) =>
+                        r.id === id ? { ...r, status } : r,
+                    ),
+                })),
+        }),
+        {
+            name: "PlanStore",
+            storage: createJSONStorage(() => sessionStorage),
+        },
+    ),
+);

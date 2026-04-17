@@ -147,7 +147,7 @@ const HelpCenter = () => {
                         </Link>{" "}
                         for quick answers.
                     </p>
-                    <Button variant="primary">Contact support</Button>
+                    <Button variant="primary" link="/contact?type=SUPPORT">Contact support</Button>
                 </AnimateIn>
             </section>
         </main>

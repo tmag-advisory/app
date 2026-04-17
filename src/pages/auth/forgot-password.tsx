@@ -2,17 +2,18 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LucideArrowLeft } from "lucide-react";
 import AnimateIn from "../../components/animations/AnimateIn";
+import { useForgotPassword } from "../../api/hooks";
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState("");
-    const [sent, setSent] = useState(false);
+    const { mutate: forgotPassword, isPending, isSuccess, isError, error } = useForgotPassword();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setSent(true);
+        forgotPassword({ email });
     };
 
-    if (sent) {
+    if (isSuccess) {
         return (
             <AnimateIn type="fade" className="text-center">
                 <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
@@ -22,7 +23,7 @@ const ForgotPassword = () => {
                     Check your email.
                 </h1>
                 <p className="text-sm text-body mb-8">
-                    We sent a password reset link to <strong className="text-heading">{email}</strong>. It expires in 1 hour.
+                    We sent a password reset link to <strong className="text-heading">{email}</strong>. It expires in 15 minutes.
                 </p>
                 <Link to="/login" className="text-sm text-accent font-medium hover:underline">
                     Back to sign in
@@ -43,6 +44,12 @@ const ForgotPassword = () => {
                 Enter your email and we'll send you a link to reset it.
             </p>
 
+            {isError && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                    {(error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Something went wrong. Please try again."}
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
@@ -59,9 +66,10 @@ const ForgotPassword = () => {
                 </div>
                 <button
                     type="submit"
-                    className="w-full py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200"
+                    disabled={isPending}
+                    className="w-full py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    Send reset link
+                    {isPending ? "Sending…" : "Send reset link"}
                 </button>
             </form>
         </AnimateIn>
