@@ -5,6 +5,7 @@ import {
   companiesApi,
   employeesApi,
   travelPlansApi,
+  draftPlansApi,
   creditRequestsApi,
   healthProfilesApi,
   countriesApi,
@@ -65,6 +66,7 @@ import type {
   AdvanceStageRequest,
   SubmitQuestionnaireRequest,
   QuestionnaireProgressRequest,
+  SaveDraftPlanRequest,
   CreditPricingResponse,
   CreditPurchaseRequest,
   GoogleCallbackRequest,
@@ -982,6 +984,47 @@ export function useGetQuestionnaireProgress() {
     retry: false,
     staleTime: 0,
     gcTime: 0,
+  });
+}
+
+// ─── Draft Plan Hooks ─────────────────────────────────────────
+
+export function useDraftPlans() {
+  return useQuery({
+    queryKey: ["draft-plans"],
+    queryFn: () => draftPlansApi.list(),
+  });
+}
+
+export function useDraftPlan(id: number) {
+  return useQuery({
+    queryKey: ["draft-plans", id],
+    queryFn: () => draftPlansApi.get(id),
+    enabled: id > 0,
+  });
+}
+
+export function useCreateDraftPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SaveDraftPlanRequest) => draftPlansApi.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["draft-plans"] }),
+  });
+}
+
+export function useUpdateDraftPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: SaveDraftPlanRequest }) => draftPlansApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["draft-plans"] }),
+  });
+}
+
+export function useDeleteDraftPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => draftPlansApi.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["draft-plans"] }),
   });
 }
 

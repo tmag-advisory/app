@@ -1,20 +1,20 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
-    LucideArrowLeft,
     LucideCheck,
     LucideGlobe,
     LucideMapPin,
-    LucidePlaneTakeoff,
-    LucidePlaneLanding,
-    LucideCalendarDays,
     LucidePlus,
     LucideX,
     LucideClock,
-    LucideBriefcase,
     LucideNavigation,
+    LucidePlaneTakeoff,
+    LucidePlaneLanding,
 } from "lucide-react";
 import CountryPicker from "../CountryPicker";
+import { mergeCityCountry, splitLegacyDeparting } from "./tripItineraryMerge";
+import { maxIsoDate, validateTripItineraryDates } from "./tripItineraryValidation";
+import { todayIsoDateLocal } from "../../lib/questionnaireFieldValidation";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -28,9 +28,12 @@ export interface MultiStopLeg {
 export interface TripItineraryData {
     tripType: "one" | "return" | "multi" | "transit";
 
-    // One-Way
+    // One-Way (oneTo = destination country name for APIs; oneToCity = city)
     oneFrom?: string;
+    oneFromCity?: string;
+    oneFromCountry?: string;
     oneTo?: string;
+    oneToCity?: string;
     oneDepartureDate?: string;
     oneLengthOfStay?: string;
     onePurpose?: string;
@@ -38,7 +41,10 @@ export interface TripItineraryData {
 
     // Return
     returnFrom?: string;
+    returnFromCity?: string;
+    returnFromCountry?: string;
     returnTo?: string;
+    returnToCity?: string;
     returnDepartureDate?: string;
     returnReturnDate?: string;
     outboundFlightNumber?: string;
@@ -46,13 +52,18 @@ export interface TripItineraryData {
 
     // Multi-Destination
     multiDepartingFrom?: string;
+    multiDepartingFromCity?: string;
+    multiDepartingFromCountry?: string;
     multiFinalReturnDestination?: string;
     multiLegs?: MultiStopLeg[];
     multiOverallReturnDate?: string;
 
-    // Transit
+    // Transit (transitFinalDestination = country)
     transitFrom?: string;
+    transitFromCity?: string;
+    transitFromCountry?: string;
     transitFinalDestination?: string;
+    transitFinalDestinationCity?: string;
     transitLocation?: string;
     transitDuration?: string;
     transitDepartureDate?: string;
@@ -67,65 +78,89 @@ interface TripItineraryFlowProps {
 // ── Constants ──────────────────────────────────────────────────
 
 const LENGTH_OF_STAY_OPTIONS = [
-    { value: "<1m", label: "Less than 1 month" },
+    { value: "<1m", label: "< 1 month" },
     { value: "1-3m", label: "1 – 3 months" },
     { value: "3-6m", label: "3 – 6 months" },
     { value: "6-12m", label: "6 – 12 months" },
-    { value: "12m+", label: "More than 12 months" },
-    { value: "open", label: "Open-ended / unknown" },
-];
-
-const ONE_WAY_PURPOSE_OPTIONS = [
-    { value: "relocation", label: "Relocation / immigration" },
-    { value: "work", label: "Long-term work assignment" },
-    { value: "study", label: "Study / academic" },
-    { value: "volunteering", label: "Volunteering / mission" },
-    { value: "return_origin", label: "Return to country of origin" },
-    { value: "other", label: "Other" },
+    { value: "12m+", label: "> 12 months" },
+    { value: "open", label: "Open-ended" },
 ];
 
 const TRANSIT_DURATION_OPTIONS = [
-    { value: "<12h", label: "Under 12 hours (airside only)" },
+    { value: "<12h", label: "< 12 hours (airside only)" },
     { value: "12-24h", label: "12 – 24 hours" },
-    { value: ">24h", label: "Over 24 hours (leaving airport)" },
+    { value: ">24h", label: "> 24 hours (leaving airport)" },
 ];
 
 // ── Helpers ────────────────────────────────────────────────────
 
+/** Hydrate split city/country from legacy single-line fields when loading saved drafts. */
+export function hydrateLegacyTripItinerary(value: TripItineraryData | undefined): TripItineraryData {
+    const v: TripItineraryData = value ?? { tripType: "one" };
+    const out: TripItineraryData = { ...v, tripType: v.tripType ?? "one", multiLegs: v.multiLegs ?? [] };
+
+    if (!out.oneFromCity?.trim() && !out.oneFromCountry?.trim() && out.oneFrom?.trim()) {
+        const { city, country } = splitLegacyDeparting(out.oneFrom);
+        out.oneFromCity = city;
+        out.oneFromCountry = country;
+    }
+    if (!out.returnFromCity?.trim() && !out.returnFromCountry?.trim() && out.returnFrom?.trim()) {
+        const { city, country } = splitLegacyDeparting(out.returnFrom);
+        out.returnFromCity = city;
+        out.returnFromCountry = country;
+    }
+    if (!out.multiDepartingFromCity?.trim() && !out.multiDepartingFromCountry?.trim() && out.multiDepartingFrom?.trim()) {
+        const { city, country } = splitLegacyDeparting(out.multiDepartingFrom);
+        out.multiDepartingFromCity = city;
+        out.multiDepartingFromCountry = country;
+    }
+    if (!out.transitFromCity?.trim() && !out.transitFromCountry?.trim() && out.transitFrom?.trim()) {
+        const { city, country } = splitLegacyDeparting(out.transitFrom);
+        out.transitFromCity = city;
+        out.transitFromCountry = country;
+    }
+    return out;
+}
+
 function stepComplete(data: TripItineraryData): boolean {
+    let filled = false;
     if (data.tripType === "one") {
-        return Boolean(
-            data.oneTo?.trim() &&
-            data.oneDepartureDate?.trim() &&
-            data.oneLengthOfStay?.trim() &&
-            data.onePurpose?.trim()
+        filled = Boolean(
+            data.oneFromCity?.trim() &&
+                data.oneFromCountry?.trim() &&
+                data.oneToCity?.trim() &&
+                data.oneTo?.trim() &&
+                data.oneDepartureDate?.trim() &&
+                data.oneLengthOfStay?.trim()
         );
-    }
-    if (data.tripType === "return") {
-        return Boolean(
-            data.returnFrom?.trim() &&
-            data.returnTo?.trim() &&
-            data.returnDepartureDate?.trim() &&
-            data.returnReturnDate?.trim()
+    } else if (data.tripType === "return") {
+        filled = Boolean(
+            data.returnFromCity?.trim() &&
+                data.returnFromCountry?.trim() &&
+                data.returnToCity?.trim() &&
+                data.returnTo?.trim() &&
+                data.returnDepartureDate?.trim() &&
+                data.returnReturnDate?.trim()
         );
-    }
-    if (data.tripType === "multi") {
+    } else if (data.tripType === "multi") {
         const legs = data.multiLegs || [];
         if (legs.length < 1) return false;
-        return legs.every(
+        if (!data.multiDepartingFromCity?.trim() || !data.multiDepartingFromCountry?.trim()) return false;
+        filled = legs.every(
             (leg) => leg.country?.trim() && leg.arrivalDate?.trim() && leg.nights?.trim()
         );
-    }
-    if (data.tripType === "transit") {
-        return Boolean(
-            data.transitFrom?.trim() &&
-            data.transitFinalDestination?.trim() &&
-            data.transitLocation?.trim() &&
-            data.transitDuration?.trim() &&
-            data.transitDepartureDate?.trim()
+    } else if (data.tripType === "transit") {
+        filled = Boolean(
+            data.transitFromCity?.trim() &&
+                data.transitFromCountry?.trim() &&
+                data.transitFinalDestinationCity?.trim() &&
+                data.transitFinalDestination?.trim() &&
+                data.transitLocation?.trim() &&
+                data.transitDuration?.trim() &&
+                data.transitDepartureDate?.trim()
         );
     }
-    return false;
+    return filled && validateTripItineraryDates(data) === null;
 }
 
 // ── Shared styles ──────────────────────────────────────────────
@@ -146,13 +181,13 @@ function SelectPill({
     onChange: (v: string) => void;
 }) {
     return (
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {options.map((opt) => (
                 <button
                     key={opt.value}
                     type="button"
                     onClick={() => onChange(opt.value)}
-                    className={`w-full text-left p-3.5 rounded-xl border text-sm font-semibold transition-colors ${
+                    className={`text-center p-3 rounded-xl border text-sm font-semibold transition-colors cursor-pointer ${
                         value === opt.value
                             ? "border-accent bg-accent/10 text-heading"
                             : "border-border-light/70 bg-white text-body hover:border-border"
@@ -165,44 +200,43 @@ function SelectPill({
     );
 }
 
-function SectionCard({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
-    return (
-        <div className="rounded-xl border border-border-light/60 bg-background-primary/50 p-5 space-y-4">
-            <div className="flex items-center gap-2 mb-1">
-                {icon}
-                <h4 className="text-sm font-bold text-heading">{title}</h4>
-            </div>
-            {children}
-        </div>
-    );
-}
-
 // ── Component ──────────────────────────────────────────────────
 
 const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
-    const [step, setStep] = useState(0); // 0 = type chooser, 1 = form
+    const hydrated = useMemo(() => hydrateLegacyTripItinerary(value), [value]);
+    const minDate = useMemo(() => todayIsoDateLocal(), []);
 
     const data: TripItineraryData = {
-        ...value,
-        tripType: value?.tripType ?? "one",
-        multiLegs: value?.multiLegs ?? [],
+        ...hydrated,
+        tripType: hydrated.tripType ?? "one",
+        multiLegs: hydrated.multiLegs ?? [],
     };
 
-    const update = (patch: Partial<TripItineraryData>) =>
-        onChange({ ...data, ...patch });
-
-    const selectType = (tripType: TripItineraryData["tripType"]) => {
-        update({ tripType });
-        if (tripType === "multi" && (!data.multiLegs || data.multiLegs.length === 0)) {
-            update({
-                tripType,
-                multiLegs: [{ country: "", city: "", arrivalDate: "", nights: "" }],
-            });
+    const update = (patch: Partial<TripItineraryData>) => {
+        const next: TripItineraryData = { ...data, ...patch };
+        if ("oneFromCity" in patch || "oneFromCountry" in patch) {
+            next.oneFrom = mergeCityCountry(next.oneFromCity, next.oneFromCountry) || undefined;
         }
-        setStep(1);
+        if ("returnFromCity" in patch || "returnFromCountry" in patch) {
+            next.returnFrom = mergeCityCountry(next.returnFromCity, next.returnFromCountry) || undefined;
+        }
+        if ("multiDepartingFromCity" in patch || "multiDepartingFromCountry" in patch) {
+            next.multiDepartingFrom =
+                mergeCityCountry(next.multiDepartingFromCity, next.multiDepartingFromCountry) || undefined;
+        }
+        if ("transitFromCity" in patch || "transitFromCountry" in patch) {
+            next.transitFrom = mergeCityCountry(next.transitFromCity, next.transitFromCountry) || undefined;
+        }
+        onChange(next);
     };
 
-    const goBack = () => setStep(0);
+    const setTripType = (tripType: TripItineraryData["tripType"]) => {
+        if (tripType === "multi" && (!data.multiLegs || data.multiLegs.length === 0)) {
+            update({ tripType, multiLegs: [{ country: "", city: "", arrivalDate: "", nights: "" }] });
+        } else {
+            update({ tripType });
+        }
+    };
 
     const addLeg = () =>
         update({
@@ -221,404 +255,517 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
         update({ multiLegs: legs });
     };
 
-    const tripTypes = [
-        { value: "one" as const, label: "One-way journey", icon: <LucidePlaneTakeoff className="w-5 h-5" /> },
-        { value: "return" as const, label: "Return journey", icon: <LucideNavigation className="w-5 h-5" /> },
-        { value: "multi" as const, label: "Multi-destination", icon: <LucideGlobe className="w-5 h-5" /> },
-        { value: "transit" as const, label: "Transit only", icon: <LucideClock className="w-5 h-5" /> },
-    ];
-
     return (
         <div className="space-y-5">
-            {/* Step 0 — Trip Type Chooser */}
-            {step === 0 && (
-                <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
-                    <p className="text-sm text-muted mb-4">Select your trip type to get started:</p>
+            {/* ── Trip type toggle (like flight booking sites) ────── */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {[
+                    { value: "one" as const, label: "One Way", icon: <LucidePlaneTakeoff className="w-4 h-4" /> },
+                    { value: "return" as const, label: "Return", icon: <LucideNavigation className="w-4 h-4" /> },
+                    { value: "multi" as const, label: "Multi-stop", icon: <LucideGlobe className="w-4 h-4" /> },
+                    { value: "transit" as const, label: "Transit", icon: <LucideClock className="w-4 h-4" /> },
+                ].map((t) => (
+                    <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => setTripType(t.value)}
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all cursor-pointer ${
+                            data.tripType === t.value
+                                ? "border-accent bg-accent text-white"
+                                : "border-border-light/60 bg-white text-muted hover:border-border hover:text-heading"
+                        }`}
+                    >
+                        {t.icon}
+                        {t.label}
+                    </button>
+                ))}
+            </div>
+
+            {stepComplete(data) && (
+                <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+                    <LucideCheck className="w-4 h-4" /> Trip details complete
+                </div>
+            )}
+
+            {/* ── One-Way ── */}
+            {data.tripType === "one" && (
+                <motion.div key="one" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-3 lg:gap-4 lg:items-start">
+                        <div className="space-y-3 rounded-xl border border-border-light/50 bg-white/50 p-3">
+                            <p className={`${fieldLabelCls} mb-0`}>
+                                Departing from <span className="text-muted">(city/airport)</span>{" "}
+                                <span className="text-red-400">*</span>
+                            </p>
+                            <div>
+                                <label className={fieldLabelCls}>City</label>
+                                <div className="relative">
+                                    <LucideMapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                    <input
+                                        type="text"
+                                        value={data.oneFromCity ?? ""}
+                                        onChange={(e) => update({ oneFromCity: e.target.value })}
+                                        placeholder="e.g. London Heathrow"
+                                        className={`${inputCls} pl-10`}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className={fieldLabelCls}>Country</label>
+                                <CountryPicker
+                                    value={data.oneFromCountry ?? ""}
+                                    onChange={(name) => update({ oneFromCountry: name })}
+                                    placeholder="Country"
+                                    inputClassName={`${inputCls} pr-10`}
+                                />
+                            </div>
+                        </div>
+                        <div className="flex justify-center items-center text-muted/40 text-2xl py-1 lg:py-0 lg:pt-10 shrink-0">
+                            <span className="lg:hidden" aria-hidden>
+                                ↓
+                            </span>
+                            <span className="hidden lg:inline" aria-hidden>
+                                →
+                            </span>
+                        </div>
+                        <div className="space-y-3 rounded-xl border border-border-light/50 bg-white/50 p-3">
+                            <p className={`${fieldLabelCls} mb-0`}>
+                                To <span className="text-red-400">*</span>
+                            </p>
+                            <div>
+                                <label className={fieldLabelCls}>City</label>
+                                <input
+                                    type="text"
+                                    value={data.oneToCity ?? ""}
+                                    onChange={(e) => update({ oneToCity: e.target.value })}
+                                    placeholder="e.g. Paris"
+                                    className={inputCls}
+                                />
+                            </div>
+                            <div>
+                                <label className={fieldLabelCls}>Country</label>
+                                <CountryPicker
+                                    value={data.oneTo ?? ""}
+                                    onChange={(name) => update({ oneTo: name })}
+                                    placeholder="Destination country"
+                                    inputClassName={`${inputCls} pr-10`}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-3">
-                        {tripTypes.map((t) => (
-                            <button
-                                key={t.value}
-                                type="button"
-                                onClick={() => selectType(t.value)}
-                                className={`flex flex-col items-center gap-2 p-5 rounded-2xl border-2 transition-all cursor-pointer ${
-                                    data.tripType === t.value
-                                        ? "border-accent bg-accent/5"
-                                        : "border-border-light/60 bg-white hover:border-border"
-                                }`}
-                            >
-                                <span className="text-accent">{t.icon}</span>
-                                <span className="text-sm font-semibold text-heading text-center">{t.label}</span>
-                            </button>
-                        ))}
+                        <div>
+                            <label className={fieldLabelCls}>Departure date <span className="text-red-400">*</span></label>
+                            <input
+                                type="date"
+                                min={minDate}
+                                value={data.oneDepartureDate ?? ""}
+                                onChange={(e) => update({ oneDepartureDate: e.target.value })}
+                                className={inputCls}
+                            />
+                        </div>
+                        <div>
+                            <label className={fieldLabelCls}>Flight number</label>
+                            <input
+                                type="text"
+                                value={data.oneFlightNumber ?? ""}
+                                onChange={(e) => update({ oneFlightNumber: e.target.value })}
+                                placeholder="e.g. BA2047"
+                                className={inputCls}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className={fieldLabelCls}>Length of stay <span className="text-red-400">*</span></label>
+                        <SelectPill
+                            options={LENGTH_OF_STAY_OPTIONS}
+                            value={data.oneLengthOfStay}
+                            onChange={(v) => update({ oneLengthOfStay: v })}
+                        />
                     </div>
                 </motion.div>
             )}
 
-            {/* Step 1 — Trip Details Form */}
-            {step === 1 && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                    <div className="flex items-center justify-between mb-5">
-                        <button
-                            type="button"
-                            onClick={goBack}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-accent hover:underline cursor-pointer"
-                        >
-                            <LucideArrowLeft className="w-3.5 h-3.5" /> Change type
-                        </button>
-                        <span className="text-[11px] uppercase tracking-[0.1em] font-semibold text-accent bg-accent/10 px-3 py-1 rounded-full">
-                            {tripTypes.find((t) => t.value === data.tripType)?.label}
-                        </span>
-                    </div>
-
-                    {/* ── One-Way Journey ── */}
-                    {data.tripType === "one" && (
-                        <div className="space-y-5">
-                            <SectionCard title="Route" icon={<LucideNavigation className="w-4 h-4 text-accent" />}>
+            {/* ── Return ── */}
+            {data.tripType === "return" && (
+                <motion.div key="return" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                    {/* Outbound */}
+                    <div className="p-4 rounded-xl border border-border-light/60 bg-white space-y-4">
+                        <div className="flex items-center gap-2">
+                            <LucidePlaneTakeoff className="w-4 h-4 text-accent" />
+                            <h4 className="text-sm font-bold text-heading">Outbound</h4>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-3 lg:gap-4 lg:items-start">
+                            <div className="space-y-3 rounded-xl border border-border-light/40 bg-white/50 p-3">
+                                <p className={`${fieldLabelCls} mb-0`}>
+                                    From <span className="text-red-400">*</span>
+                                </p>
                                 <div>
-                                    <label className={fieldLabelCls}>Departing from — City or airport</label>
-                                    <input
-                                        type="text"
-                                        value={data.oneFrom ?? ""}
-                                        onChange={(e) => update({ oneFrom: e.target.value })}
-                                        placeholder="e.g. London Heathrow"
-                                        className={inputCls}
-                                    />
-                                </div>
-                                <div>
-                                    <label className={fieldLabelCls}>Destination — City or country <span className="text-red-400">*</span></label>
+                                    <label className={fieldLabelCls}>City</label>
                                     <div className="relative">
                                         <LucideMapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                                        <CountryPicker
-                                            value={data.oneTo ?? ""}
-                                            onChange={(name) => update({ oneTo: name })}
-                                            placeholder="Select destination country"
-                                            inputClassName={`${inputCls} pl-10 pr-10`}
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className={fieldLabelCls}>Flight number (optional)</label>
-                                    <input
-                                        type="text"
-                                        value={data.oneFlightNumber ?? ""}
-                                        onChange={(e) => update({ oneFlightNumber: e.target.value })}
-                                        placeholder="e.g. BA2047"
-                                        className={inputCls}
-                                    />
-                                </div>
-                            </SectionCard>
-
-                            <SectionCard title="Dates" icon={<LucideCalendarDays className="w-4 h-4 text-accent" />}>
-                                <div>
-                                    <label className={fieldLabelCls}>Departure date — When do you leave? <span className="text-red-400">*</span></label>
-                                    <input
-                                        type="date"
-                                        value={data.oneDepartureDate ?? ""}
-                                        onChange={(e) => update({ oneDepartureDate: e.target.value })}
-                                        className={inputCls}
-                                    />
-                                </div>
-                                <div>
-                                    <label className={fieldLabelCls}>Planned length of stay <span className="text-red-400">*</span></label>
-                                    <SelectPill
-                                        options={LENGTH_OF_STAY_OPTIONS}
-                                        value={data.oneLengthOfStay}
-                                        onChange={(v) => update({ oneLengthOfStay: v })}
-                                    />
-                                </div>
-                            </SectionCard>
-
-                            <SectionCard title="Purpose" icon={<LucideBriefcase className="w-4 h-4 text-accent" />}>
-                                <div>
-                                    <label className={fieldLabelCls}>Purpose of travel <span className="text-red-400">*</span></label>
-                                    <SelectPill
-                                        options={ONE_WAY_PURPOSE_OPTIONS}
-                                        value={data.onePurpose}
-                                        onChange={(v) => update({ onePurpose: v })}
-                                    />
-                                </div>
-                            </SectionCard>
-
-                        </div>
-                    )}
-
-                    {/* ── Return Journey ── */}
-                    {data.tripType === "return" && (
-                        <div className="space-y-5">
-                            <SectionCard title="Outbound" icon={<LucidePlaneTakeoff className="w-4 h-4 text-accent" />}>
-                                <div className="grid grid-cols-[1fr,auto,1fr] gap-3 items-end">
-                                    <div>
-                                        <label className={fieldLabelCls}>Departing from <span className="text-red-400">*</span></label>
-                                        <div className="relative">
-                                            <LucideMapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                                            <input
-                                                type="text"
-                                                value={data.returnFrom ?? ""}
-                                                onChange={(e) => update({ returnFrom: e.target.value })}
-                                                placeholder="e.g. London Heathrow"
-                                                className={`${inputCls} pl-10`}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="text-muted/40 text-lg pb-3 text-center">→</div>
-                                    <div>
-                                        <label className={fieldLabelCls}>Destination <span className="text-red-400">*</span></label>
-                                        <div className="relative">
-                                            <LucideGlobe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                                            <CountryPicker
-                                                value={data.returnTo ?? ""}
-                                                onChange={(name) => update({ returnTo: name })}
-                                                placeholder="e.g. Kingston, Jamaica"
-                                                inputClassName={`${inputCls} pl-10 pr-10`}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className={fieldLabelCls}>Departure date <span className="text-red-400">*</span></label>
-                                        <input
-                                            type="date"
-                                            value={data.returnDepartureDate ?? ""}
-                                            onChange={(e) => update({ returnDepartureDate: e.target.value })}
-                                            className={inputCls}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className={fieldLabelCls}>Outbound flight number (optional)</label>
                                         <input
                                             type="text"
-                                            value={data.outboundFlightNumber ?? ""}
-                                            onChange={(e) => update({ outboundFlightNumber: e.target.value })}
-                                            placeholder="e.g. VS015"
-                                            className={inputCls}
+                                            value={data.returnFromCity ?? ""}
+                                            onChange={(e) => update({ returnFromCity: e.target.value })}
+                                            placeholder="e.g. London Heathrow"
+                                            className={`${inputCls} pl-10`}
                                         />
                                     </div>
                                 </div>
-                            </SectionCard>
-
-                            <SectionCard title="Return" icon={<LucidePlaneLanding className="w-4 h-4 text-accent" />}>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className={fieldLabelCls}>Return date — When do you come back? <span className="text-red-400">*</span></label>
-                                        <input
-                                            type="date"
-                                            value={data.returnReturnDate ?? ""}
-                                            onChange={(e) => update({ returnReturnDate: e.target.value })}
-                                            className={inputCls}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className={fieldLabelCls}>Return flight number (optional)</label>
-                                        <input
-                                            type="text"
-                                            value={data.returnFlightNumber ?? ""}
-                                            onChange={(e) => update({ returnFlightNumber: e.target.value })}
-                                            placeholder="e.g. VS016"
-                                            className={inputCls}
-                                        />
-                                    </div>
-                                </div>
-                            </SectionCard>
-
-                        </div>
-                    )}
-
-                    {/* ── Multi-Destination Journey ── */}
-                    {data.tripType === "multi" && (
-                        <div className="space-y-5">
-                            <SectionCard title="Overall Route" icon={<LucideNavigation className="w-4 h-4 text-accent" />}>
                                 <div>
-                                    <label className={fieldLabelCls}>Departing from — City or airport</label>
+                                    <label className={fieldLabelCls}>Country</label>
+                                    <CountryPicker
+                                        value={data.returnFromCountry ?? ""}
+                                        onChange={(name) => update({ returnFromCountry: name })}
+                                        placeholder="Country"
+                                        inputClassName={`${inputCls} pr-10`}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-center items-center text-muted/40 text-2xl py-1 lg:py-0 lg:pt-10 shrink-0">
+                                <span className="lg:hidden" aria-hidden>
+                                    ↓
+                                </span>
+                                <span className="hidden lg:inline" aria-hidden>
+                                    →
+                                </span>
+                            </div>
+                            <div className="space-y-3 rounded-xl border border-border-light/40 bg-white/50 p-3">
+                                <p className={`${fieldLabelCls} mb-0`}>
+                                    To <span className="text-red-400">*</span>
+                                </p>
+                                <div>
+                                    <label className={fieldLabelCls}>City</label>
                                     <input
                                         type="text"
-                                        value={data.multiDepartingFrom ?? ""}
-                                        onChange={(e) => update({ multiDepartingFrom: e.target.value })}
-                                        placeholder="e.g. London Heathrow"
+                                        value={data.returnToCity ?? ""}
+                                        onChange={(e) => update({ returnToCity: e.target.value })}
+                                        placeholder="e.g. Paris"
                                         className={inputCls}
                                     />
                                 </div>
                                 <div>
-                                    <label className={fieldLabelCls}>Final return destination (if applicable)</label>
-                                    <input
-                                        type="text"
-                                        value={data.multiFinalReturnDestination ?? ""}
-                                        onChange={(e) => update({ multiFinalReturnDestination: e.target.value })}
-                                        placeholder="e.g. same as departure"
-                                        className={inputCls}
+                                    <label className={fieldLabelCls}>Country</label>
+                                    <CountryPicker
+                                        value={data.returnTo ?? ""}
+                                        onChange={(name) => update({ returnTo: name })}
+                                        placeholder="Destination country"
+                                        inputClassName={`${inputCls} pr-10`}
                                     />
                                 </div>
-                                <div>
-                                    <label className={fieldLabelCls}>Overall return date (if returning home)</label>
-                                    <input
-                                        type="date"
-                                        value={data.multiOverallReturnDate ?? ""}
-                                        onChange={(e) => update({ multiOverallReturnDate: e.target.value })}
-                                        className={inputCls}
-                                    />
-                                </div>
-                            </SectionCard>
-
-                            {/* Legs */}
-                            <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-heading">Itinerary legs</h4>
-                                {(data.multiLegs ?? []).map((leg, i) => (
-                                    <div
-                                        key={i}
-                                        className="rounded-xl border border-border-light/60 bg-background-primary/50 p-4 space-y-3"
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[11px] uppercase tracking-[0.08em] font-semibold text-accent bg-accent/10 px-2.5 py-1 rounded-full">
-                                                Stop {i + 1}
-                                            </span>
-                                            {(data.multiLegs ?? []).length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeLeg(i)}
-                                                    className="text-muted hover:text-red-500 cursor-pointer"
-                                                >
-                                                    <LucideX className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className={fieldLabelCls}>Country <span className="text-red-400">*</span></label>
-                                                <div className="relative">
-                                                    <LucideGlobe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                                                    <CountryPicker
-                                                        value={leg.country}
-                                                        onChange={(name) => updateLeg(i, { country: name })}
-                                                        placeholder="Select country"
-                                                        inputClassName={`${inputCls} pl-10 pr-10 text-sm`}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className={fieldLabelCls}>City</label>
-                                                <input
-                                                    type="text"
-                                                    value={leg.city}
-                                                    onChange={(e) => updateLeg(i, { city: e.target.value })}
-                                                    placeholder="City name"
-                                                    className={`${inputCls} text-sm`}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className={fieldLabelCls}>Arrival date <span className="text-red-400">*</span></label>
-                                                <input
-                                                    type="date"
-                                                    value={leg.arrivalDate}
-                                                    onChange={(e) => updateLeg(i, { arrivalDate: e.target.value })}
-                                                    className={`${inputCls} text-sm`}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className={fieldLabelCls}>Number of nights <span className="text-red-400">*</span></label>
-                                                <input
-                                                    type="text"
-                                                    value={leg.nights}
-                                                    onChange={(e) => updateLeg(i, { nights: e.target.value })}
-                                                    placeholder="e.g. 5"
-                                                    className={`${inputCls} text-sm`}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={addLeg}
-                                    className="w-full py-3.5 rounded-xl border-2 border-dashed border-border-light text-sm font-semibold text-muted/60 hover:border-accent hover:text-accent hover:bg-accent/5 transition-all cursor-pointer flex items-center justify-center gap-2"
-                                >
-                                    <LucidePlus className="w-4 h-4" /> Add another stop
-                                </button>
                             </div>
                         </div>
-                    )}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className={fieldLabelCls}>Departure date <span className="text-red-400">*</span></label>
+                                <input
+                                    type="date"
+                                    min={minDate}
+                                    value={data.returnDepartureDate ?? ""}
+                                    onChange={(e) => update({ returnDepartureDate: e.target.value })}
+                                    className={inputCls}
+                                />
+                            </div>
+                            <div>
+                                <label className={fieldLabelCls}>Outbound flight number</label>
+                                <input
+                                    type="text"
+                                    value={data.outboundFlightNumber ?? ""}
+                                    onChange={(e) => update({ outboundFlightNumber: e.target.value })}
+                                    placeholder="e.g. VS015"
+                                    className={inputCls}
+                                />
+                            </div>
+                        </div>
+                    </div>
 
-                    {/* ── Transit Only ── */}
-                    {data.tripType === "transit" && (
-                        <div className="space-y-5">
-                            <SectionCard title="Route" icon={<LucideNavigation className="w-4 h-4 text-accent" />}>
-                                <div>
-                                    <label className={fieldLabelCls}>Departing from — City or airport</label>
+                    {/* Return */}
+                    <div className="p-4 rounded-xl border border-border-light/60 bg-white space-y-4">
+                        <div className="flex items-center gap-2">
+                            <LucidePlaneLanding className="w-4 h-4 text-accent" />
+                            <h4 className="text-sm font-bold text-heading">Return</h4>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className={fieldLabelCls}>Return date <span className="text-red-400">*</span></label>
+                                <input
+                                    type="date"
+                                    min={maxIsoDate(minDate, (data.returnDepartureDate ?? "").trim() || minDate)}
+                                    value={data.returnReturnDate ?? ""}
+                                    onChange={(e) => update({ returnReturnDate: e.target.value })}
+                                    className={inputCls}
+                                />
+                            </div>
+                            <div>
+                                <label className={fieldLabelCls}>Return flight number</label>
+                                <input
+                                    type="text"
+                                    value={data.returnFlightNumber ?? ""}
+                                    onChange={(e) => update({ returnFlightNumber: e.target.value })}
+                                    placeholder="e.g. VS016"
+                                    className={inputCls}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* ── Multi-stop ── */}
+            {data.tripType === "multi" && (
+                <motion.div key="multi" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                    <div className="p-4 rounded-xl border border-border-light/60 bg-white space-y-3">
+                        <p className={`${fieldLabelCls} mb-0`}>
+                            Departing from <span className="text-muted">(city/airport)</span>{" "}
+                            <span className="text-red-400">*</span>
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className={fieldLabelCls}>City</label>
+                                <div className="relative">
+                                    <LucideMapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
                                     <input
                                         type="text"
-                                        value={data.transitFrom ?? ""}
-                                        onChange={(e) => update({ transitFrom: e.target.value })}
+                                        value={data.multiDepartingFromCity ?? ""}
+                                        onChange={(e) => update({ multiDepartingFromCity: e.target.value })}
                                         placeholder="e.g. London Heathrow"
-                                        className={inputCls}
+                                        className={`${inputCls} pl-10`}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className={fieldLabelCls}>Country</label>
+                                <CountryPicker
+                                    value={data.multiDepartingFromCountry ?? ""}
+                                    onChange={(name) => update({ multiDepartingFromCountry: name })}
+                                    placeholder="Country"
+                                    inputClassName={`${inputCls} pr-10`}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {(data.multiLegs ?? []).map((leg, i) => (
+                        <div key={i} className="p-4 rounded-xl border border-border-light/60 bg-white space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[11px] uppercase tracking-[0.08em] font-semibold text-accent bg-accent/10 px-2.5 py-1 rounded-full">
+                                    Stop {i + 1}
+                                </span>
+                                {(data.multiLegs ?? []).length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeLeg(i)}
+                                        className="text-muted hover:text-red-500 cursor-pointer p-1"
+                                    >
+                                        <LucideX className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className={fieldLabelCls}>Country <span className="text-red-400">*</span></label>
+                                    <CountryPicker
+                                        value={leg.country}
+                                        onChange={(name) => updateLeg(i, { country: name })}
+                                        placeholder="Select country"
+                                        inputClassName={`${inputCls} pr-10`}
                                     />
                                 </div>
                                 <div>
-                                    <label className={fieldLabelCls}>Final destination — City or country</label>
-                                    <div className="relative">
-                                        <LucideGlobe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                                        <CountryPicker
-                                            value={data.transitFinalDestination ?? ""}
-                                            onChange={(name) => update({ transitFinalDestination: name })}
-                                            placeholder="Select final destination country"
-                                            inputClassName={`${inputCls} pl-10 pr-10`}
-                                        />
-                                    </div>
-                                </div>
-                            </SectionCard>
-
-                            <SectionCard title="Transit Details" icon={<LucideClock className="w-4 h-4 text-accent" />}>
-                                <div>
-                                    <label className={fieldLabelCls}>Transit country / airport <span className="text-red-400">*</span></label>
+                                    <label className={fieldLabelCls}>City</label>
                                     <input
                                         type="text"
-                                        value={data.transitLocation ?? ""}
-                                        onChange={(e) => update({ transitLocation: e.target.value })}
-                                        placeholder="e.g. Nairobi (NBO), Dubai (DXB)"
+                                        value={leg.city}
+                                        onChange={(e) => updateLeg(i, { city: e.target.value })}
+                                        placeholder="City name"
+                                        className={inputCls}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className={fieldLabelCls}>Arrival date <span className="text-red-400">*</span></label>
+                                    <input
+                                        type="date"
+                                        min={maxIsoDate(
+                                            minDate,
+                                            i > 0
+                                                ? (data.multiLegs?.[i - 1]?.arrivalDate ?? "").trim() || minDate
+                                                : minDate
+                                        )}
+                                        value={leg.arrivalDate}
+                                        onChange={(e) => updateLeg(i, { arrivalDate: e.target.value })}
                                         className={inputCls}
                                     />
                                 </div>
                                 <div>
-                                    <label className={fieldLabelCls}>Transit duration <span className="text-red-400">*</span></label>
-                                    <SelectPill
-                                        options={TRANSIT_DURATION_OPTIONS}
-                                        value={data.transitDuration}
-                                        onChange={(v) => update({ transitDuration: v })}
+                                    <label className={fieldLabelCls}>Nights <span className="text-red-400">*</span></label>
+                                    <input
+                                        type="text"
+                                        value={leg.nights}
+                                        onChange={(e) => updateLeg(i, { nights: e.target.value })}
+                                        placeholder="e.g. 5"
+                                        className={inputCls}
                                     />
                                 </div>
-                            </SectionCard>
+                            </div>
+                        </div>
+                    ))}
 
-                            <SectionCard title="Dates" icon={<LucideCalendarDays className="w-4 h-4 text-accent" />}>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className={fieldLabelCls}>Departure date <span className="text-red-400">*</span></label>
-                                        <input
-                                            type="date"
-                                            value={data.transitDepartureDate ?? ""}
-                                            onChange={(e) => update({ transitDepartureDate: e.target.value })}
-                                            className={inputCls}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className={fieldLabelCls}>Return date (if applicable)</label>
-                                        <input
-                                            type="date"
-                                            value={data.transitReturnDate ?? ""}
-                                            onChange={(e) => update({ transitReturnDate: e.target.value })}
-                                            className={inputCls}
-                                        />
-                                    </div>
+                    <button
+                        type="button"
+                        onClick={addLeg}
+                        className="w-full py-3.5 rounded-xl border-2 border-dashed border-border-light text-sm font-semibold text-muted/60 hover:border-accent hover:text-accent hover:bg-accent/5 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                        <LucidePlus className="w-4 h-4" /> Add another stop
+                    </button>
+
+                    <div className="p-4 rounded-xl border border-border-light/60 bg-white space-y-3">
+                        <div>
+                            <label className={fieldLabelCls}>Final return destination</label>
+                            <input
+                                type="text"
+                                value={data.multiFinalReturnDestination ?? ""}
+                                onChange={(e) => update({ multiFinalReturnDestination: e.target.value })}
+                                placeholder="e.g. same as departure"
+                                className={inputCls}
+                            />
+                        </div>
+                        <div>
+                            <label className={fieldLabelCls}>Overall return date</label>
+                            <input
+                                type="date"
+                                min={maxIsoDate(
+                                    minDate,
+                                    (() => {
+                                        const legs = data.multiLegs ?? [];
+                                        const last = legs.length > 0 ? (legs[legs.length - 1]?.arrivalDate ?? "").trim() : "";
+                                        return last || minDate;
+                                    })()
+                                )}
+                                value={data.multiOverallReturnDate ?? ""}
+                                onChange={(e) => update({ multiOverallReturnDate: e.target.value })}
+                                className={inputCls}
+                            />
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* ── Transit ── */}
+            {data.tripType === "transit" && (
+                <motion.div key="transit" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-3 lg:gap-4 lg:items-start">
+                        <div className="space-y-3 rounded-xl border border-border-light/50 bg-white/50 p-3">
+                            <p className={`${fieldLabelCls} mb-0`}>
+                                Departing from <span className="text-muted">(city/airport)</span>{" "}
+                                <span className="text-red-400">*</span>
+                            </p>
+                            <div>
+                                <label className={fieldLabelCls}>City</label>
+                                <div className="relative">
+                                    <LucideMapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                                    <input
+                                        type="text"
+                                        value={data.transitFromCity ?? ""}
+                                        onChange={(e) => update({ transitFromCity: e.target.value })}
+                                        placeholder="e.g. London Heathrow"
+                                        className={`${inputCls} pl-10`}
+                                    />
                                 </div>
-                            </SectionCard>
+                            </div>
+                            <div>
+                                <label className={fieldLabelCls}>Country</label>
+                                <CountryPicker
+                                    value={data.transitFromCountry ?? ""}
+                                    onChange={(name) => update({ transitFromCountry: name })}
+                                    placeholder="Country"
+                                    inputClassName={`${inputCls} pr-10`}
+                                />
+                            </div>
                         </div>
-                    )}
+                        <div className="flex justify-center items-center text-muted/40 text-2xl py-1 lg:py-0 lg:pt-10 shrink-0">
+                            <span className="lg:hidden" aria-hidden>
+                                ↓
+                            </span>
+                            <span className="hidden lg:inline" aria-hidden>
+                                →
+                            </span>
+                        </div>
+                        <div className="space-y-3 rounded-xl border border-border-light/50 bg-white/50 p-3">
+                            <p className={`${fieldLabelCls} mb-0`}>
+                                Final destination <span className="text-red-400">*</span>
+                            </p>
+                            <div>
+                                <label className={fieldLabelCls}>City</label>
+                                <input
+                                    type="text"
+                                    value={data.transitFinalDestinationCity ?? ""}
+                                    onChange={(e) => update({ transitFinalDestinationCity: e.target.value })}
+                                    placeholder="e.g. Nairobi"
+                                    className={inputCls}
+                                />
+                            </div>
+                            <div>
+                                <label className={fieldLabelCls}>Country</label>
+                                <CountryPicker
+                                    value={data.transitFinalDestination ?? ""}
+                                    onChange={(name) => update({ transitFinalDestination: name })}
+                                    placeholder="Destination country"
+                                    inputClassName={`${inputCls} pr-10`}
+                                />
+                            </div>
+                        </div>
+                    </div>
 
-                    {/* Completion indicator */}
-                    {stepComplete(data) && (
-                        <div className="flex items-center gap-2 text-sm text-green-600 font-medium mt-2">
-                            <LucideCheck className="w-4 h-4" /> Trip details complete
+                    <div className="p-4 rounded-xl border border-border-light/60 bg-white space-y-4">
+                        <div className="flex items-center gap-2">
+                            <LucideClock className="w-4 h-4 text-accent" />
+                            <h4 className="text-sm font-bold text-heading">Transit</h4>
                         </div>
-                    )}
+                        <div>
+                            <label className={fieldLabelCls}>Transit country / airport <span className="text-red-400">*</span></label>
+                            <input
+                                type="text"
+                                value={data.transitLocation ?? ""}
+                                onChange={(e) => update({ transitLocation: e.target.value })}
+                                placeholder="e.g. Nairobi (NBO), Dubai (DXB)"
+                                className={inputCls}
+                            />
+                        </div>
+                        <div>
+                            <label className={fieldLabelCls}>Transit duration <span className="text-red-400">*</span></label>
+                            <SelectPill
+                                options={TRANSIT_DURATION_OPTIONS}
+                                value={data.transitDuration}
+                                onChange={(v) => update({ transitDuration: v })}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className={fieldLabelCls}>Departure date <span className="text-red-400">*</span></label>
+                                <input
+                                    type="date"
+                                    min={minDate}
+                                    value={data.transitDepartureDate ?? ""}
+                                    onChange={(e) => update({ transitDepartureDate: e.target.value })}
+                                    className={inputCls}
+                                />
+                            </div>
+                            <div>
+                                <label className={fieldLabelCls}>Return date</label>
+                                <input
+                                    type="date"
+                                    min={maxIsoDate(minDate, (data.transitDepartureDate ?? "").trim() || minDate)}
+                                    value={data.transitReturnDate ?? ""}
+                                    onChange={(e) => update({ transitReturnDate: e.target.value })}
+                                    className={inputCls}
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </motion.div>
             )}
         </div>

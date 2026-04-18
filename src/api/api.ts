@@ -33,6 +33,9 @@ import type {
   TravelPlanResponse,
   CreateTravelPlanRequest,
   UpdateTravelPlanRequest,
+  // Draft Plan
+  DraftPlanResponse,
+  SaveDraftPlanRequest,
   // Travel Request
   CreditRequestResponse,
   CreateCreditRequestRequest,
@@ -512,6 +515,25 @@ export const onboardingApi = {
 
   getProgress: () =>
     api.get<ApiResponse<any>>("/onboarding/progress").then((r) => r.data.data),
+};
+
+// ─── Draft Plans ──────────────────────────────────────────────
+
+export const draftPlansApi = {
+  list: () =>
+    api.get<ApiResponse<DraftPlanResponse[]>>("/draft-plans").then((r) => r.data.data),
+
+  get: (id: number) =>
+    api.get<ApiResponse<DraftPlanResponse>>(`/draft-plans/${id}`).then((r) => r.data.data),
+
+  create: (data: SaveDraftPlanRequest) =>
+    api.post<ApiResponse<DraftPlanResponse>>("/draft-plans", data).then((r) => r.data.data),
+
+  update: (id: number, data: SaveDraftPlanRequest) =>
+    api.put<ApiResponse<DraftPlanResponse>>(`/draft-plans/${id}`, data).then((r) => r.data.data),
+
+  delete: (id: number) =>
+    api.delete<ApiResponse<null>>(`/draft-plans/${id}`).then((r) => r.data.data),
 };
 
 // ─── Credit Pricing ────────────────────────────────────────────

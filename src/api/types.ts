@@ -372,6 +372,32 @@ export interface CreateTravelPlanRequest {
 
 export interface UpdateTravelPlanRequest extends Partial<CreateTravelPlanRequest> { }
 
+// ─── Draft Plan ──────────────────────────────────────────────
+
+export interface DraftPlanResponse {
+  id: number;
+  title: string;
+  country: string;
+  answersJson: string;
+  categoryIndex: number;
+  showVerify: boolean;
+  showIntro: boolean;
+  riskConsentGiven: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SaveDraftPlanRequest {
+  country?: string;
+  answersJson: string;
+  categoryIndex: number;
+  showVerify?: boolean;
+  showIntro?: boolean;
+  riskConsentGiven?: boolean;
+}
+
+export interface UpdateDraftPlanRequest extends SaveDraftPlanRequest { }
+
 // ─── Credit Request ──────────────────────────────────────────
 
 export interface CreditRequestResponse {
