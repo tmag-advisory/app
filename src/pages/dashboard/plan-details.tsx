@@ -88,13 +88,13 @@ const WORKSPACE_SOURCES: {
     label: string;
     Icon: typeof LucideSyringe;
 }[] = [
-    { id: "f1", label: "WHO & international vaccine schedules", Icon: LucideSyringe },
-    { id: "f2", label: "Government travel advisories & notices", Icon: LucideShieldCheck },
-    { id: "f3", label: "Weather, climate & air quality snapshot", Icon: LucideCloudSun },
-    { id: "f4", label: "Local health risks & disease activity", Icon: LucideHeartPulse },
-    { id: "f5", label: "Your health profile & trip notes", Icon: LucideClipboardList },
-    { id: "f6", label: "Your personalized advisory sections", Icon: LucideSparkles },
-];
+        { id: "f1", label: "WHO & international vaccine schedules", Icon: LucideSyringe },
+        { id: "f2", label: "Government travel advisories & notices", Icon: LucideShieldCheck },
+        { id: "f3", label: "Weather, climate & air quality snapshot", Icon: LucideCloudSun },
+        { id: "f4", label: "Local health risks & disease activity", Icon: LucideHeartPulse },
+        { id: "f5", label: "Your health profile & trip notes", Icon: LucideClipboardList },
+        { id: "f6", label: "Your personalized advisory sections", Icon: LucideSparkles },
+    ];
 
 function indexedSourceCount(phaseIndex: number, phaseTotal: number, sourceCount: number): number {
     if (phaseTotal <= 1) return 0;
@@ -179,12 +179,12 @@ function WorkspaceSourceRail({
 
     useEffect(() => {
         const rest = WORKSPACE_SOURCES.slice(done).map((f) => f.id);
-        setRestOrder((prev) => {
-            const valid = prev.filter((id) => rest.includes(id));
-            const missing = rest.filter((id) => !valid.includes(id));
-            return [...missing, ...valid];
-        });
-    }, [done]);
+        const valid = restOrder.filter((id) => rest.includes(id));
+        const missing = rest.filter((id) => !valid.includes(id));
+        if (JSON.stringify(restOrder) !== JSON.stringify([...missing, ...valid])) {
+            setRestOrder([...missing, ...valid]);
+        }
+    }, [done, restOrder]);
 
     useEffect(() => {
         if (reduceMotion || done >= WORKSPACE_SOURCES.length) return;
@@ -208,7 +208,7 @@ function WorkspaceSourceRail({
 
     return (
         <motion.div
-            className="w-full overflow-hidden rounded-2xl border border-border-light/70 bg-linear-to-b from-accent/[0.06] to-background-secondary/80 p-4 shadow-inner"
+            className="w-full overflow-hidden rounded-2xl border border-border-light/70 bg-linear-to-b from-accent/6 to-background-secondary/80 p-4 shadow-inner"
             animate={reduceMotion ? {} : { y: [0, -4, 0] }}
             transition={
                 reduceMotion
@@ -227,47 +227,46 @@ function WorkspaceSourceRail({
                 </span>
             </div>
             <LayoutGroup id="workspace-sources">
-            <ul className="space-y-1.5">
-                {orderedIds.map((id) => {
-                    const src = WORKSPACE_SOURCES.find((f) => f.id === id);
-                    if (!src) return null;
-                    const idx = indexedIds.indexOf(id);
-                    const isReady = idx >= 0;
-                    const isActive = !isReady && id === restOrder[0];
-                    const SrcIcon = src.Icon;
-                    return (
-                        <motion.li
-                            key={id}
-                            layout={!reduceMotion}
-                            transition={layoutSpring}
-                            style={reduceMotion ? undefined : { willChange: "transform" }}
-                            className="flex items-center gap-2 rounded-lg border border-border-light/40 bg-white/80 px-2.5 py-2 text-left shadow-sm"
-                        >
-                            <SrcIcon
-                                className={`h-3.5 w-3.5 shrink-0 ${
-                                    isReady ? "text-accent" : isActive ? "text-gold" : "text-muted/60"
-                                }`}
-                                aria-hidden
-                            />
-                            <span className="min-w-0 flex-1 truncate text-[10px] font-medium leading-snug text-heading sm:text-[11px]">
-                                {src.label}
-                            </span>
-                            <span className="shrink-0 text-[9px] font-semibold tracking-wide">
-                                {isReady ? (
-                                    <span className="flex items-center gap-0.5 text-accent">
-                                        <LucideCheck className="h-3 w-3" aria-hidden />
-                                        ready
-                                    </span>
-                                ) : isActive ? (
-                                    <span className="animate-pulse text-gold">on it</span>
-                                ) : (
-                                    <span className="text-muted/50">up next</span>
-                                )}
-                            </span>
-                        </motion.li>
-                    );
-                })}
-            </ul>
+                <ul className="space-y-1.5">
+                    {orderedIds.map((id) => {
+                        const src = WORKSPACE_SOURCES.find((f) => f.id === id);
+                        if (!src) return null;
+                        const idx = indexedIds.indexOf(id);
+                        const isReady = idx >= 0;
+                        const isActive = !isReady && id === restOrder[0];
+                        const SrcIcon = src.Icon;
+                        return (
+                            <motion.li
+                                key={id}
+                                layout={!reduceMotion}
+                                transition={layoutSpring}
+                                style={reduceMotion ? undefined : { willChange: "transform" }}
+                                className="flex items-center gap-2 rounded-lg border border-border-light/40 bg-white/80 px-2.5 py-2 text-left shadow-sm"
+                            >
+                                <SrcIcon
+                                    className={`h-3.5 w-3.5 shrink-0 ${isReady ? "text-accent" : isActive ? "text-gold" : "text-muted/60"
+                                        }`}
+                                    aria-hidden
+                                />
+                                <span className="min-w-0 flex-1 truncate text-[10px] font-medium leading-snug text-heading sm:text-[11px]">
+                                    {src.label}
+                                </span>
+                                <span className="shrink-0 text-[9px] font-semibold tracking-wide">
+                                    {isReady ? (
+                                        <span className="flex items-center gap-0.5 text-accent">
+                                            <LucideCheck className="h-3 w-3" aria-hidden />
+                                            ready
+                                        </span>
+                                    ) : isActive ? (
+                                        <span className="animate-pulse text-gold">on it</span>
+                                    ) : (
+                                        <span className="text-muted/50">up next</span>
+                                    )}
+                                </span>
+                            </motion.li>
+                        );
+                    })}
+                </ul>
             </LayoutGroup>
         </motion.div>
     );
@@ -323,7 +322,7 @@ function WhatsHappeningPanel({
             />
             {!reduceMotion && (
                 <motion.div
-                    className="pointer-events-none absolute inset-0 bg-linear-to-b from-emerald-400/[0.05] via-transparent to-transparent"
+                    className="pointer-events-none absolute inset-0 bg-linear-to-b from-emerald-400/5 via-transparent to-transparent"
                     style={{ willChange: "transform" }}
                     animate={{ y: ["-100%", "100%"] }}
                     transition={{ duration: 5.5, repeat: Infinity, ease: "linear" }}
@@ -448,19 +447,23 @@ function FlyingAcrossLayer({ reduceMotion }: { reduceMotion: boolean }) {
     if (reduceMotion) return null;
     const flights = [
         { id: "p1", top: "8%", dur: 14, delay: 0, flip: false, node: <LucidePlane className="h-7 w-7 text-accent/50 drop-shadow-sm" strokeWidth={1.75} aria-hidden /> },
-        { id: "pdf1", top: "22%", dur: 18, delay: 4, flip: false, node: (
-            <div className="flex items-center gap-1 rounded-lg border border-red-500/25 bg-white/90 px-2 py-1 shadow-sm">
-                <LucideFileText className="h-5 w-5 text-red-600/70" strokeWidth={1.75} aria-hidden />
-                <span className="font-mono text-[9px] font-bold uppercase tracking-tight text-red-700/80">pdf</span>
-            </div>
-        ) },
+        {
+            id: "pdf1", top: "22%", dur: 18, delay: 4, flip: false, node: (
+                <div className="flex items-center gap-1 rounded-lg border border-red-500/25 bg-white/90 px-2 py-1 shadow-sm">
+                    <LucideFileText className="h-5 w-5 text-red-600/70" strokeWidth={1.75} aria-hidden />
+                    <span className="font-mono text-[9px] font-bold uppercase tracking-tight text-red-700/80">pdf</span>
+                </div>
+            )
+        },
         { id: "p2", top: "38%", dur: 12, delay: 2, flip: true, node: <LucidePlane className="h-6 w-6 text-accent/40 drop-shadow-sm" strokeWidth={1.75} aria-hidden /> },
-        { id: "pdf2", top: "52%", dur: 20, delay: 7, flip: false, node: (
-            <div className="flex items-center gap-1 rounded-lg border border-red-500/20 bg-white/85 px-1.5 py-0.5 shadow-sm">
-                <LucideFileText className="h-4 w-4 text-red-600/65" strokeWidth={1.75} aria-hidden />
-                <span className="font-mono text-[8px] font-bold text-red-700/75">PDF</span>
-            </div>
-        ) },
+        {
+            id: "pdf2", top: "52%", dur: 20, delay: 7, flip: false, node: (
+                <div className="flex items-center gap-1 rounded-lg border border-red-500/20 bg-white/85 px-1.5 py-0.5 shadow-sm">
+                    <LucideFileText className="h-4 w-4 text-red-600/65" strokeWidth={1.75} aria-hidden />
+                    <span className="font-mono text-[8px] font-bold text-red-700/75">PDF</span>
+                </div>
+            )
+        },
         { id: "p3", top: "68%", dur: 15, delay: 8, flip: false, node: <LucidePlane className="h-5 w-5 text-gold/55" strokeWidth={1.75} aria-hidden /> },
     ] as const;
     return (
@@ -509,19 +512,23 @@ function OrbitGlyphs({ reduceMotion }: { reduceMotion: boolean }) {
     const orbitDuration = 52;
     const slots = [
         { angle: 0, node: <LucidePlane className="h-5 w-5 text-accent/55" strokeWidth={1.85} /> },
-        { angle: 72, node: (
-            <div className="flex items-center gap-0.5 rounded border border-red-500/30 bg-white/90 px-1 py-0.5 shadow-sm">
-                <LucideFileText className="h-3.5 w-3.5 text-red-600/75" strokeWidth={2} />
-                <span className="text-[7px] font-bold uppercase text-red-700/80">pdf</span>
-            </div>
-        ) },
+        {
+            angle: 72, node: (
+                <div className="flex items-center gap-0.5 rounded border border-red-500/30 bg-white/90 px-1 py-0.5 shadow-sm">
+                    <LucideFileText className="h-3.5 w-3.5 text-red-600/75" strokeWidth={2} />
+                    <span className="text-[7px] font-bold uppercase text-red-700/80">pdf</span>
+                </div>
+            )
+        },
         { angle: 144, node: <LucidePlane className="h-4 w-4 scale-x-[-1] text-accent/40" strokeWidth={1.85} /> },
         { angle: 216, node: <LucideSparkles className="h-4 w-4 text-gold/60" strokeWidth={1.85} /> },
-        { angle: 288, node: (
-            <div className="flex items-center gap-0.5 rounded border border-red-500/25 bg-white/90 px-1 py-0.5 shadow-sm">
-                <LucideFileText className="h-3.5 w-3.5 text-red-600/70" strokeWidth={2} />
-            </div>
-        ) },
+        {
+            angle: 288, node: (
+                <div className="flex items-center gap-0.5 rounded border border-red-500/25 bg-white/90 px-1 py-0.5 shadow-sm">
+                    <LucideFileText className="h-3.5 w-3.5 text-red-600/70" strokeWidth={2} />
+                </div>
+            )
+        },
     ];
     return (
         <motion.div
@@ -567,7 +574,7 @@ function PulsingPhaseCore({
 }) {
     return (
         <div
-            className="relative flex h-[92px] w-[92px] items-center justify-center"
+            className="relative flex h-23 w-23 items-center justify-center"
             style={reduceMotion ? undefined : { willChange: "transform" }}
             aria-hidden
         >
@@ -591,7 +598,7 @@ function PulsingPhaseCore({
                         }}
                     />
                     <motion.div
-                        className="absolute h-[106px] w-[106px] rounded-full border border-gold/30"
+                        className="absolute h-26.5 w-26.5 rounded-full border border-gold/30"
                         style={{ willChange: "transform, opacity" }}
                         animate={{ scale: [1, 1.05, 1], opacity: [0.18, 0.42, 0.18] }}
                         transition={{ duration: 2.6, repeat: Infinity, ease: EASE_IN_OUT_SMOOTH }}
@@ -612,8 +619,8 @@ function PulsingPhaseCore({
                             reduceMotion
                                 ? {}
                                 : {
-                                      scale: [1, 1.08, 1],
-                                  }
+                                    scale: [1, 1.08, 1],
+                                }
                         }
                         transition={{
                             duration: 2.5,
@@ -785,7 +792,7 @@ const PlanProcessing = ({ destination, country }: { destination?: string; countr
             });
         }, 650);
         return () => clearInterval(interval);
-    }, [reduceMotion]);
+    }, [reduceMotion, setProgress]);
 
     const phase = processingPhases[phaseIndex];
     const place = destination || country || "your destination";
@@ -812,93 +819,93 @@ const PlanProcessing = ({ destination, country }: { destination?: string; countr
             <div className="relative z-2 grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(260px,1fr)] lg:items-start lg:gap-12">
                 {/* Left: hero */}
                 <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-            {/* Ring + orbit + orb + phase icon */}
-            <div className="relative mb-8 flex h-[min(220px,42vw)] w-[min(220px,42vw)] max-h-[220px] max-w-[220px] shrink-0 items-center justify-center lg:mx-0">
-                <OrbitGlyphs reduceMotion={!!reduceMotion} />
-            <div className="relative z-10 flex items-center justify-center" style={{ width: RING_SIZE, height: RING_SIZE }}>
-                <svg
-                    width={RING_SIZE}
-                    height={RING_SIZE}
-                    className="absolute -rotate-90"
-                    aria-hidden
-                >
-                    <circle
-                        cx={RING_SIZE / 2}
-                        cy={RING_SIZE / 2}
-                        r={RING_RADIUS}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={RING_STROKE}
-                        className="text-border-light/50"
-                    />
-                    <motion.circle
-                        cx={RING_SIZE / 2}
-                        cy={RING_SIZE / 2}
-                        r={RING_RADIUS}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={RING_STROKE}
-                        strokeLinecap="round"
-                        className="text-accent"
-                        strokeDasharray={RING_CIRC}
-                        initial={false}
-                        animate={{ strokeDashoffset }}
-                        transition={{
-                            duration: reduceMotion ? 0 : 0.9,
-                            ease: reduceMotion ? "linear" : EASE_SMOOTH,
-                        }}
-                    />
-                </svg>
+                    {/* Ring + orbit + orb + phase icon */}
+                    <div className="relative mb-8 flex h-[min(220px,42vw)] w-[min(220px,42vw)] max-h-[220px] max-w-[220px] shrink-0 items-center justify-center lg:mx-0">
+                        <OrbitGlyphs reduceMotion={!!reduceMotion} />
+                        <div className="relative z-10 flex items-center justify-center" style={{ width: RING_SIZE, height: RING_SIZE }}>
+                            <svg
+                                width={RING_SIZE}
+                                height={RING_SIZE}
+                                className="absolute -rotate-90"
+                                aria-hidden
+                            >
+                                <circle
+                                    cx={RING_SIZE / 2}
+                                    cy={RING_SIZE / 2}
+                                    r={RING_RADIUS}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={RING_STROKE}
+                                    className="text-border-light/50"
+                                />
+                                <motion.circle
+                                    cx={RING_SIZE / 2}
+                                    cy={RING_SIZE / 2}
+                                    r={RING_RADIUS}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={RING_STROKE}
+                                    strokeLinecap="round"
+                                    className="text-accent"
+                                    strokeDasharray={RING_CIRC}
+                                    initial={false}
+                                    animate={{ strokeDashoffset }}
+                                    transition={{
+                                        duration: reduceMotion ? 0 : 0.9,
+                                        ease: reduceMotion ? "linear" : EASE_SMOOTH,
+                                    }}
+                                />
+                            </svg>
 
-                <div className="relative flex h-[92px] w-[92px] items-center justify-center rounded-full bg-linear-to-br from-white/95 to-accent/[0.08] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] ring-1 ring-gold/25">
-                    <PulsingPhaseCore
-                        phaseKey={`${phase.icon}-${phaseIndex}`}
-                        Icon={PhaseIcon}
-                        reduceMotion={!!reduceMotion}
-                    />
-                </div>
-            </div>
-            </div>
+                            <div className="relative flex h-23 w-23 items-center justify-center rounded-full bg-linear-to-br from-white/95 to-accent/8 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.95)] ring-1 ring-gold/25">
+                                <PulsingPhaseCore
+                                    phaseKey={`${phase.icon}-${phaseIndex}`}
+                                    Icon={PhaseIcon}
+                                    reduceMotion={!!reduceMotion}
+                                />
+                            </div>
+                        </div>
+                    </div>
 
-            {/* Phase copy */}
-            <div className="relative min-h-[5.5rem] w-full max-w-md px-1 lg:max-w-none">
-                <AnimatePresence mode="wait">
+                    {/* Phase copy */}
+                    <div className="relative min-h-22 w-full max-w-md px-1 lg:max-w-none">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={phaseIndex}
+                                initial={{ opacity: 0, y: reduceMotion ? 0 : 14 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: reduceMotion ? 0 : -10 }}
+                                transition={textTransition}
+                                aria-live="polite"
+                            >
+                                <h2 className="text-2xl sm:text-3xl font-serif text-heading mb-2 tracking-tight lg:mx-0 mx-auto max-w-md">
+                                    {phase.title}
+                                </h2>
+                                <p className="text-sm text-muted leading-relaxed max-w-md lg:mx-0 mx-auto lg:max-w-lg">
+                                    {phase.subtitle}
+                                </p>
+                            </motion.div>
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Destination chip */}
                     <motion.div
-                        key={phaseIndex}
-                        initial={{ opacity: 0, y: reduceMotion ? 0 : 14 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: reduceMotion ? 0 : -10 }}
-                        transition={textTransition}
-                        aria-live="polite"
+                        className="mt-6 flex items-center gap-2 rounded-full border border-accent/20 bg-accent/8 px-4 py-2.5 shadow-sm"
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: reduceMotion ? 0 : 0.2, duration: 0.4 }}
                     >
-                        <h2 className="text-2xl sm:text-3xl font-serif text-heading mb-2 tracking-tight lg:mx-0 mx-auto max-w-md">
-                            {phase.title}
-                        </h2>
-                        <p className="text-sm text-muted leading-relaxed max-w-md lg:mx-0 mx-auto lg:max-w-lg">
-                            {phase.subtitle}
-                        </p>
+                        <LucideMapPin className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
+                        <span className="max-w-60 truncate text-xs font-semibold text-accent sm:max-w-xs">
+                            {place}
+                        </span>
+                        {!reduceMotion && (
+                            <span className="relative flex h-2 w-2 shrink-0">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/50 opacity-60" />
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+                            </span>
+                        )}
                     </motion.div>
-                </AnimatePresence>
-            </div>
-
-            {/* Destination chip */}
-            <motion.div
-                className="mt-6 flex items-center gap-2 rounded-full border border-accent/20 bg-accent/8 px-4 py-2.5 shadow-sm"
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: reduceMotion ? 0 : 0.2, duration: 0.4 }}
-            >
-                <LucideMapPin className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
-                <span className="max-w-[240px] truncate text-xs font-semibold text-accent sm:max-w-xs">
-                    {place}
-                </span>
-                {!reduceMotion && (
-                    <span className="relative flex h-2 w-2 shrink-0">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/50 opacity-60" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-                    </span>
-                )}
-            </motion.div>
                 </div>
 
                 {/* Right: sorting file stack */}
@@ -922,9 +929,8 @@ const PlanProcessing = ({ destination, country }: { destination?: string; countr
                     return (
                         <motion.div
                             key={i}
-                            className={`h-2 rounded-full ${
-                                done || active ? "bg-accent" : "bg-border-light/70"
-                            }`}
+                            className={`h-2 rounded-full ${done || active ? "bg-accent" : "bg-border-light/70"
+                                }`}
                             initial={false}
                             animate={{
                                 width: active ? 20 : 6,
@@ -1214,13 +1220,12 @@ const PlanDetails = () => {
                             <div key={i} className="flex items-center justify-between gap-2">
                                 <span className="text-sm text-heading">{v.name ?? v.vaccine ?? ""}</span>
                                 <span
-                                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                        v.status === "Required"
-                                            ? "bg-red-50 text-red-600"
-                                            : v.status === "Recommended"
-                                              ? "bg-gold/10 text-gold"
-                                              : "bg-button-secondary text-muted"
-                                    }`}
+                                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${v.status === "Required"
+                                        ? "bg-red-50 text-red-600"
+                                        : v.status === "Recommended"
+                                            ? "bg-gold/10 text-gold"
+                                            : "bg-button-secondary text-muted"
+                                        }`}
                                 >
                                     {v.status}
                                 </span>
