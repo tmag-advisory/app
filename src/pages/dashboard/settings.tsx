@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import {
-    useOnboarding,
     useUpdateProfile,
     useUpdateProfilePassword,
     useMyCompanies,

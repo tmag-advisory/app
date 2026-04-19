@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { usePlanStore } from "../../stores/planStore";
-import { useOnboarding, useTravelPlans, useEmployees, useCreditRequests, useDashboardAnalytics } from "../../api/hooks";
+import { useTravelPlans, useEmployees, useCreditRequests, useDashboardAnalytics } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import {
@@ -34,7 +34,6 @@ const HROverview = () => {
     const company = selectedCompany();
     const companyIdNum = selectedCompanyId ? parseInt(selectedCompanyId) : undefined;
 
-    const { data: onboardingData } = useOnboarding();
     const { data: plansData, isLoading: plansLoading } = useTravelPlans({ companyId: companyIdNum, per_page: 4 });
     const { data: employeesData, isLoading: employeesLoading } = useEmployees({ companyId: companyIdNum });
     const { data: requestsData, isLoading: requestsLoading } = useCreditRequests({ companyId: companyIdNum, per_page: 4 });
