@@ -91,7 +91,7 @@ const PricingSection = () => {
                                 <Button
                                     variant="primary"
                                     link="/register"
-                                    className="relative z-10 self-stretch bg-white !text-dark hover:bg-white/90 text-center justify-center flex"
+                                    className="relative z-10 self-stretch bg-white text-dark! hover:bg-white/90 text-center justify-center flex"
                                 >
                                     Get started
                                 </Button>
@@ -176,7 +176,7 @@ const PricingSection = () => {
                                 <Button
                                     variant="primary"
                                     link="/company-onboarding"
-                                    className="relative z-10 self-stretch bg-white !text-dark hover:bg-white/90 text-center justify-center flex"
+                                    className="relative z-10 self-stretch bg-white text-dark! hover:bg-white/90 text-center justify-center flex"
                                 >
                                     Get started
                                 </Button>
