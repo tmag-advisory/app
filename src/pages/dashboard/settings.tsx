@@ -1,6 +1,5 @@
-import {useState} from "react";
-import {Link} from "react-router-dom";
-import {useAuth} from "../../context/AuthContext";
+import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import {
     useOnboarding,
     useUpdateProfile,
@@ -14,21 +13,18 @@ import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import {
     LucideUser,
     LucideLock,
-    LucideCreditCard,
-    LucideClipboardList,
-    LucideArrowRight,
-    LucideLoader2,
+    LucideCreditCard, LucideLoader2,
     LucideX,
     LucideCheck,
     LucideTag,
     LucideSend
 } from "lucide-react";
 import toast from "react-hot-toast";
-import type {BillingCurrency, CreditPricingResponse} from "../../api/types";
+import type { BillingCurrency, CreditPricingResponse } from "../../api/types";
 import * as React from "react";
-import {AxiosError} from "axios";
-import {cn} from "../../lib/utils";
-import {DASHBOARD_GLASS_SURFACE} from "../../components/dashboard/dashboardChrome";
+import { AxiosError } from "axios";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 const CURRENCY_SYMBOLS: Record<BillingCurrency, string> = {
     USD: "$",
@@ -78,7 +74,7 @@ type Tab = "profile" | "password" | "billing";
 
 const Settings = () => {
     const {user, refreshProfile} = useAuth();
-    const {data: onboardingData} = useOnboarding();
+    // const {data: onboardingData} = useOnboarding();
     const {data: creditPricing} = useCreditPricing();
     const initiatePurchase = useInitiateCreditPurchase();
     const [tab, setTab] = useState<Tab>("profile");
@@ -235,7 +231,7 @@ const Settings = () => {
         return {basePrice, discount, total: basePrice - discount};
     };
 
-    const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
+    // const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
 
     const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
         {id: "profile", label: "Profile", icon: <LucideUser className="w-4 h-4"/>},
@@ -416,27 +412,6 @@ const Settings = () => {
                         </div>
                     </form>
 
-                    {/* Questionnaire card */}
-                    {showQuestionnaireBanner && (
-                        <Link
-                            to="/onboarding/questionnaire"
-                            className="mt-6 max-w-2xl flex items-center gap-4 p-5 rounded-2xl bg-accent/5 border border-accent/20 hover:bg-accent/10 transition-colors duration-200 group"
-                        >
-                            <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
-                                <LucideClipboardList className="w-5 h-5 text-accent" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-heading">
-                                    Health questionnaire
-                                </p>
-                                <p className="text-xs text-muted">
-                                    Complete your travel health questionnaire
-                                    for personalised recommendations.
-                                </p>
-                            </div>
-                            <LucideArrowRight className="w-4 h-4 text-accent shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                        </Link>
-                    )}
                 </>
             )}
 

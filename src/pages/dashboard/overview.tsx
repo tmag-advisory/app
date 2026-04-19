@@ -30,26 +30,6 @@ const DashboardOverview = () => {
         <div>
             <DashboardHeader title={`Welcome back, ${user?.first_name ?? ""}.`} />
 
-            {/* Questionnaire banner */}
-            {/*{showQuestionnaireBanner && (
-                <Link
-                    to="/onboarding/questionnaire"
-                    className={cn(
-                        DASHBOARD_GLASS_SURFACE,
-                        "mb-6 flex items-center gap-4 p-5 border-accent/25 bg-white/80 hover:border-accent/35 transition-colors duration-200 group",
-                    )}
-                >
-                    <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center flex-shrink-0">
-                        <LucideClipboardList className="w-5 h-5 text-accent" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-heading">Complete your health questionnaire</p>
-                        <p className="text-xs text-muted">Help us provide personalised travel health recommendations.</p>
-                    </div>
-                    <LucideArrowRight className="w-4 h-4 text-accent flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-            )}*/}
-
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <StatCard
