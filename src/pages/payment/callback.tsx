@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import api from "../../api/axios";
 import { creditPurchaseApi } from "../../api/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../api/hooks";
@@ -8,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 type PaymentStatus = "verifying" | "success" | "failed";
 
-const ease: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
+const ease: number[] = [0.25, 0.1, 0.25, 1];
 
 const PaymentCallback = () => {
     const [searchParams] = useSearchParams();
@@ -58,8 +59,11 @@ const PaymentCallback = () => {
                     queryClient.removeQueries({ queryKey: queryKeys.profile.all });
                     queryClient.invalidateQueries({ queryKey: queryKeys.creditPurchases.all });
 
+                    await api.put("/onboarding/stage", { stage: 5 });
+                    await queryClient.invalidateQueries({ queryKey: queryKeys.profile.all });
+
                     setTimeout(() => {
-                        navigate("/dashboard");
+                        navigate("/onboarding?step=welcome", { replace: true });
                     }, 3000);
                 } else {
                     setStatus("failed");

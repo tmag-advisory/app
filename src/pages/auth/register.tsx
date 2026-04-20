@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useOnboardingStore } from "../../context/OnboardingContext";
+import { useCurrencyStore } from "../../stores/currencyStore";
 import { useVerifyEmail, useResendVerificationEmail } from "../../api/hooks";
 import { toast } from "react-hot-toast";
 import { AxiosError } from "axios";
@@ -16,9 +17,10 @@ const planLabels: Record<string, { name: string; color: string }> = {
 
 const Register = () => {
     const navigate = useNavigate();
-    const { register } = useAuth();
+    const { register, refreshProfile } = useAuth();
     const [loading, setLoading] = useState(false);
     const { setStage } = useOnboardingStore();
+    const { selectedCurrency } = useCurrencyStore();
     const [searchParams] = useSearchParams();
     const selectedPlan = searchParams.get("plan");
     const planInfo = selectedPlan && planLabels[selectedPlan] ? planLabels[selectedPlan] : null;
@@ -60,6 +62,7 @@ const Register = () => {
                     form.email.split("@")[0] + form.name.split(" ")[0]
                 ).toLowerCase(),
                 planCode: selectedPlan ?? undefined,
+                billing_currency: selectedCurrency,
             });
             setRegisteredEmail(form.email);
             toast.success("Check your email for a verification code!", { id: toastkey });
@@ -118,6 +121,7 @@ const Register = () => {
         try {
             await verifyEmail.mutateAsync({ email: registeredEmail, code });
             setStage(2);
+            await refreshProfile();
             toast.success("Email verified!");
             navigate("/onboarding");
         } catch (err) {

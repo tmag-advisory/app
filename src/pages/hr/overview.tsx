@@ -1,15 +1,13 @@
 import { Link } from "react-router-dom";
 import { usePlanStore } from "../../stores/planStore";
-import { useOnboarding, useTravelPlans, useEmployees, useCreditRequests, useDashboardAnalytics } from "../../api/hooks";
+import { useTravelPlans, useEmployees, useCreditRequests, useDashboardAnalytics } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import {
     LucideCoins,
     LucideUsers,
     LucidePlane,
-    LucideArrowRight,
-    LucideClipboardList,
-    LucideLoader2,
+    LucideArrowRight, LucideLoader2
 } from "lucide-react";
 import DashboardAnalyticsCharts from "../../components/dashboard/DashboardAnalyticsCharts";
 import { cn } from "../../lib/utils";
@@ -36,7 +34,6 @@ const HROverview = () => {
     const company = selectedCompany();
     const companyIdNum = selectedCompanyId ? parseInt(selectedCompanyId) : undefined;
 
-    const { data: onboardingData } = useOnboarding();
     const { data: plansData, isLoading: plansLoading } = useTravelPlans({ companyId: companyIdNum, per_page: 4 });
     const { data: employeesData, isLoading: employeesLoading } = useEmployees({ companyId: companyIdNum });
     const { data: requestsData, isLoading: requestsLoading } = useCreditRequests({ companyId: companyIdNum, per_page: 4 });
@@ -48,7 +45,7 @@ const HROverview = () => {
     const employees = employeesData?.data || [];
     const creditRequests = requestsData?.data || [];
 
-    const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
+    // const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
 
     const totalCredits = company?.totalCredits ?? 0;
     const usedCredits = company?.usedCredits ?? 0;
@@ -60,27 +57,6 @@ const HROverview = () => {
     return (
         <div>
             <DashboardHeader title={`${company?.name ?? "Company"} Dashboard`} />
-
-            {/* Questionnaire banner */}
-            {showQuestionnaireBanner && (
-                <Link
-                    to="/onboarding/questionnaire"
-                    className={cn(
-                        DASHBOARD_GLASS_SURFACE,
-                        "mb-6 flex items-center gap-4 p-5 border-accent/25 bg-white/80 hover:border-accent/35 transition-colors duration-200 group",
-                    )}
-                >
-                    <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
-                        <LucideClipboardList className="w-5 h-5 text-accent" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-heading">Complete your health questionnaire</p>
-                        <p className="text-xs text-muted">Help us provide personalised travel health recommendations.</p>
-                    </div>
-                    <LucideArrowRight className="w-4 h-4 text-accent shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-            )}
-
             {/* Stats grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <StatCard label="Total credits" value={totalCredits} icon={<LucideCoins className="w-4 h-4" />} />

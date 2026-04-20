@@ -40,7 +40,7 @@ const FinalCTASection = () => {
                             className="bg-white !text-dark hover:bg-white/90"
                             link="/register"
                         >
-                            Get My Free Plan
+                            Get started
                         </Button>
                         <Button
                             variant="secondary"

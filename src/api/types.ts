@@ -4,15 +4,28 @@ export type BillingCurrency = "USD" | "NGN" | "EUR" | "GBP";
 
 // ─── User Credit Plans ────────────────────────────────────────
 
-export type CreditPlanCode = "ESSENTIAL" | "STANDARD" | "PREMIUM";
+export type CreditPlanCode =
+  | "ESSENTIAL"
+  | "STANDARD"
+  | "PREMIUM"
+  | "ENTERPRISE_SILVER"
+  | "ENTERPRISE_PLUS"
+  | "ENTERPRISE_GOLD"
+  | "ENTERPRISE_ELITE"
+  | "ENTERPRISE_PLATINUM"
+  | "ENTERPRISE_SIGNATURE";
 
 export interface CreditPlan {
   id: number;
   code: CreditPlanCode;
   displayName: string;
   basePriceUsd: number;
+  basePriceNgn: number | null;
   description: string;
   isDefault: boolean;
+  isCompanyPlan: boolean;
+  signupRangeLabel: string | null;
+  serviceLevel: "STANDARD" | "PREMIUM" | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -66,6 +79,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   planCode?: string;
+  billing_currency?: BillingCurrency;
 }
 
 export interface ForgotPasswordRequest {
@@ -372,6 +386,32 @@ export interface CreateTravelPlanRequest {
 
 export interface UpdateTravelPlanRequest extends Partial<CreateTravelPlanRequest> { }
 
+// ─── Draft Plan ──────────────────────────────────────────────
+
+export interface DraftPlanResponse {
+  id: number;
+  title: string;
+  country: string;
+  answersJson: string;
+  categoryIndex: number;
+  showVerify: boolean;
+  showIntro: boolean;
+  riskConsentGiven: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SaveDraftPlanRequest {
+  country?: string;
+  answersJson: string;
+  categoryIndex: number;
+  showVerify?: boolean;
+  showIntro?: boolean;
+  riskConsentGiven?: boolean;
+}
+
+export interface UpdateDraftPlanRequest extends SaveDraftPlanRequest { }
+
 // ─── Credit Request ──────────────────────────────────────────
 
 export interface CreditRequestResponse {
@@ -657,113 +697,6 @@ export interface CompanyUserResponse {
   updatedAt: string;
 }
 
-export interface MyCompanyMembership {
-  id: number;
-  name: string;
-  industry: string;
-  plan: string;
-  company_code: string;
-  total_credits: number;
-  used_credits: number;
-  employee_count: number;
-  billing_currency: BillingCurrency;
-  role: string;
-  credits_allocated: number;
-  credits_used: number;
-  credit_plan?: CreditPlan | null;
-}
-
-export interface CreateCompanyUserRequest {
-  companyId: number;
-  userId: number;
-  role: string;
-}
-
-// ─── Onboarding ──────────────────────────────────────────────
-
-export interface UserOnboardingResponse {
-  id: number;
-  userId: number;
-  userType: "individual" | "company" | "";
-  nationality: string;
-  companyCode: string;
-  completedAt?: string;
-  questionnaireCompleted?: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface UpsertOnboardingRequest {
-  userType?: "individual" | "company";
-  nationality?: string;
-  companyCode?: string;
-  complete?: boolean;
-}
-
-export interface AdvanceStageRequest {
-  stage: number;
-}
-
-// ─── Onboarding Questionnaire ───────────────────────────────
-
-export interface OnboardingQuestionCategoryResponse {
-  id: number;
-  category_key: string;
-  category_name: string;
-  category_icon: string;
-  category_description: string;
-  display_order: number;
-  is_optional: boolean;
-  questions: string; // JSON string of Question[]
-}
-
-export interface SubmitQuestionnaireRequest {
-  responses: string;
-  complete: boolean;
-}
-
-export interface QuestionnaireProgressRequest {
-  answers: Record<string, unknown>;
-  categoryIndex: number;
-  questionIndex: number;
-}
-
-// ─── Plan Usage Ledger ─────────────────────────────────────────
-
-export interface PlanUsageLedgerResponse {
-  id: number;
-  action: string;
-  ipAddress: string | null;
-  userAgent: string | null;
-  travelPlanId: number | null;
-  travelPlanDestination: string | null;
-  travelPlanCountry: string | null;
-  userId: number | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// ─── Credit Pricing ────────────────────────────────────────────
-
-export interface CreditPricingResponse {
-  id: number;
-  currency: BillingCurrency;
-  currencySymbol: string;
-  pricePerCredit: number;
-  minCredits: number;
-  maxCredits: number;
-  discountTier1Threshold: number | null;
-  discountTier1Amount: number | null;
-  discountTier2Threshold: number | null;
-  discountTier2Amount: number | null;
-  discountTier3Threshold: number | null;
-  discountTier3Amount: number | null;
-  isActive: boolean;
-  displayOrder: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface CreditPurchaseRequest {
   credits: number;
   currency: BillingCurrency;
@@ -775,7 +708,6 @@ export interface CreditPurchaseInitiateResponse {
   paymentLink: string;
   credits: number;
   basePrice: number;
-  discountAmount: number;
   amount: number;
   currency: BillingCurrency;
   currencySymbol: string;
@@ -805,23 +737,6 @@ export interface CreditPurchaseResponse {
   updatedAt: string;
 }
 
-export interface PriceCalculationResponse {
-  currency: BillingCurrency;
-  currencySymbol: string;
-  credits: number;
-  pricePerCredit: number;
-  basePrice: number;
-  discountAmount: number;
-  totalPrice: number;
-  appliedDiscountTier: string;
-  discountTier1Threshold: number | null;
-  discountTier1Amount: number | null;
-  discountTier2Threshold: number | null;
-  discountTier2Amount: number | null;
-  discountTier3Threshold: number | null;
-  discountTier3Amount: number | null;
-}
-
 // ─── Company Admin Credits (HR) ───────────────────────────────────────────
 
 export interface CompanyAdminCreditQuoteResponse {
@@ -829,12 +744,12 @@ export interface CompanyAdminCreditQuoteResponse {
   companyName: string;
   credits: number;
   basePrice: number;
-  discountAmount: number;
   totalAmount: number;
   currency: BillingCurrency;
   currencySymbol: string;
   pricePerCredit: number;
-  appliedDiscountTier: string | null;
+  appliedTier: string | null;
+  qualifiesForContactSales: boolean;
 }
 
 export interface CompanyAdminPurchaseInitiateResponse {
@@ -853,16 +768,15 @@ export interface CompanyAdminPricingResponse {
   currency: BillingCurrency;
   currencySymbol: string;
   pricePerCredit: number;
-  minCredits: number;
-  maxCredits: number;
-  discountTier1Threshold: number | null;
-  discountTier1Amount: number | null;
-  discountTier2Threshold: number | null;
-  discountTier2Amount: number | null;
-  discountTier3Threshold: number | null;
-  discountTier3Amount: number | null;
-  totalCredits: number;
-  usedCredits: number;
+  appliedTier: string;
+  qualifiesForContactSales: boolean;
+  historicalCreditsPurchased: number;
+  pricePerCreditTier1: number;
+  pricePerCreditTier2: number;
+  pricePerCreditTier3: number;
+  tier1MaxCredits: number;
+  tier2MaxCredits: number;
+  tier3MaxCredits: number;
 }
 
 // ─── Reports ────────────────────────────────────────────────

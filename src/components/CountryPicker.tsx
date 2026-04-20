@@ -26,7 +26,7 @@ const CountryPicker = ({
 
     const filtered = countries
         .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, 10);
+        .sort((a, b) => a.name.localeCompare(b.name));
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {

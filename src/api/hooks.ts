@@ -5,6 +5,7 @@ import {
   companiesApi,
   employeesApi,
   travelPlansApi,
+  draftPlansApi,
   creditRequestsApi,
   healthProfilesApi,
   countriesApi,
@@ -18,7 +19,6 @@ import {
   companyUsersApi,
   profileApi,
   onboardingApi,
-  creditPricingApi,
   creditPlansApi,
   creditPurchaseApi,
   companyAdminCreditsApi,
@@ -65,7 +65,7 @@ import type {
   AdvanceStageRequest,
   SubmitQuestionnaireRequest,
   QuestionnaireProgressRequest,
-  CreditPricingResponse,
+  SaveDraftPlanRequest,
   CreditPurchaseRequest,
   GoogleCallbackRequest,
   PlanUsageLedgerResponse,
@@ -198,11 +198,6 @@ export const queryKeys = {
   onboarding: {
     all: ["onboarding"] as const,
     detail: () => [...["onboarding"], "detail"] as const,
-  },
-  creditPricing: {
-    all: ["credit-pricing"] as const,
-    list: () => [...["credit-pricing"], "list"] as const,
-    byCurrency: (currency: string) => [...["credit-pricing"], "currency", currency] as const,
   },
   creditPlans: {
     all: ["user-credit-plans"] as const,
@@ -985,21 +980,44 @@ export function useGetQuestionnaireProgress() {
   });
 }
 
-// ─── Credit Pricing Hooks ───────────────────────────────────────
+// ─── Draft Plan Hooks ─────────────────────────────────────────
 
-export function useCreditPricing() {
-  return useQuery<CreditPricingResponse[]>({
-    queryKey: queryKeys.creditPricing.list(),
-    queryFn: () => creditPricingApi.list(),
-    staleTime: 5 * 60 * 1000,
+export function useDraftPlans() {
+  return useQuery({
+    queryKey: ["draft-plans"],
+    queryFn: () => draftPlansApi.list(),
   });
 }
 
-export function useCreditPricingByCurrency(currency: string) {
-  return useQuery<CreditPricingResponse>({
-    queryKey: queryKeys.creditPricing.byCurrency(currency),
-    queryFn: () => creditPricingApi.getByCurrency(currency),
-    enabled: !!currency,
+export function useDraftPlan(id: number) {
+  return useQuery({
+    queryKey: ["draft-plans", id],
+    queryFn: () => draftPlansApi.get(id),
+    enabled: id > 0,
+  });
+}
+
+export function useCreateDraftPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SaveDraftPlanRequest) => draftPlansApi.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["draft-plans"] }),
+  });
+}
+
+export function useUpdateDraftPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: SaveDraftPlanRequest }) => draftPlansApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["draft-plans"] }),
+  });
+}
+
+export function useDeleteDraftPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => draftPlansApi.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["draft-plans"] }),
   });
 }
 

@@ -114,8 +114,8 @@ const Login = () => {
 
             <p className="text-sm text-body text-center mt-6">
                 Don't have an account?{" "}
-                <Link to="/register" className="text-accent font-medium hover:underline">
-                    Start free — your first plan costs nothing.
+                <Link to="/pricing" className="text-accent font-medium hover:underline">
+                    Get Started now!
                 </Link>
             </p>
 

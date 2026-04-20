@@ -33,6 +33,9 @@ import type {
   TravelPlanResponse,
   CreateTravelPlanRequest,
   UpdateTravelPlanRequest,
+  // Draft Plan
+  DraftPlanResponse,
+  SaveDraftPlanRequest,
   // Travel Request
   CreditRequestResponse,
   CreateCreditRequestRequest,
@@ -78,12 +81,9 @@ import type {
   OnboardingQuestionCategoryResponse,
   SubmitQuestionnaireRequest,
   QuestionnaireProgressRequest,
-  // Credit Pricing
-  CreditPricingResponse,
   CreditPurchaseRequest,
   CreditPurchaseInitiateResponse,
   CreditPurchaseResponse,
-  PriceCalculationResponse,
   CompanyAdminCreditQuoteResponse,
   CompanyAdminPurchaseInitiateResponse,
   CompanyAdminPricingResponse,
@@ -514,18 +514,23 @@ export const onboardingApi = {
     api.get<ApiResponse<any>>("/onboarding/progress").then((r) => r.data.data),
 };
 
-// ─── Credit Pricing ────────────────────────────────────────────
-export const creditPricingApi = {
+// ─── Draft Plans ──────────────────────────────────────────────
+
+export const draftPlansApi = {
   list: () =>
-    api.get<ApiResponse<CreditPricingResponse[]>>("/credit-pricing").then((r) => r.data.data),
+    api.get<ApiResponse<DraftPlanResponse[]>>("/draft-plans").then((r) => r.data.data),
 
-  getByCurrency: (currency: string) =>
-    api.get<ApiResponse<CreditPricingResponse>>(`/credit-pricing/currency/${currency}`).then((r) => r.data.data),
+  get: (id: number) =>
+    api.get<ApiResponse<DraftPlanResponse>>(`/draft-plans/${id}`).then((r) => r.data.data),
 
-  calculatePrice: (currency: string, credits: number) =>
-    api.get<ApiResponse<PriceCalculationResponse>>("/credit-pricing/calculate", {
-      params: { currency, credits },
-    }).then((r) => r.data.data),
+  create: (data: SaveDraftPlanRequest) =>
+    api.post<ApiResponse<DraftPlanResponse>>("/draft-plans", data).then((r) => r.data.data),
+
+  update: (id: number, data: SaveDraftPlanRequest) =>
+    api.put<ApiResponse<DraftPlanResponse>>(`/draft-plans/${id}`, data).then((r) => r.data.data),
+
+  delete: (id: number) =>
+    api.delete<ApiResponse<null>>(`/draft-plans/${id}`).then((r) => r.data.data),
 };
 
 // ─── User Credit Plans ────────────────────────────────────────────

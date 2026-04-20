@@ -30,7 +30,18 @@ import {
 } from "../../api/hooks";
 import toast from "react-hot-toast";
 import { getAuthCookie } from "../../api/axios";
-import TripItineraryFlow from "../../components/plan/TripItineraryFlow";
+import TripItineraryFlow, {
+    hydrateLegacyTripItinerary,
+    type TripItineraryData,
+} from "../../components/plan/TripItineraryFlow";
+import { mergeCityCountry } from "../../components/plan/tripItineraryMerge";
+import { validateTripItineraryDates } from "../../components/plan/tripItineraryValidation";
+import {
+    isDateOfBirthPlausible,
+    isPlausibleEmail,
+    isValidOptionalNonNegativeNumber,
+    todayIsoDateLocal,
+} from "../../lib/questionnaireFieldValidation";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -68,65 +79,45 @@ interface QuestionCategory {
     questions: string;
 }
 
-interface TripItineraryData {
-    tripType: "one" | "return" | "multi" | "transit";
-    oneFrom?: string;
-    oneTo?: string;
-    oneDepartureDate?: string;
-    oneLengthOfStay?: string;
-    onePurpose?: string;
-    oneFlightNumber?: string;
-    returnFrom?: string;
-    returnTo?: string;
-    returnDepartureDate?: string;
-    returnReturnDate?: string;
-    outboundFlightNumber?: string;
-    returnFlightNumber?: string;
-    multiDepartingFrom?: string;
-    multiFinalReturnDestination?: string;
-    multiLegs?: { country: string; city: string; arrivalDate: string; nights: string }[];
-    multiOverallReturnDate?: string;
-    transitFrom?: string;
-    transitFinalDestination?: string;
-    transitLocation?: string;
-    transitDuration?: string;
-    transitDepartureDate?: string;
-    transitReturnDate?: string;
-}
-
 function isTripItineraryComplete(data: TripItineraryData | undefined): boolean {
     if (!data) return false;
-    if (data.tripType === "one") {
-        return Boolean(
-            data.oneTo?.trim() &&
-            data.oneDepartureDate?.trim() &&
-            data.oneLengthOfStay?.trim() &&
-            data.onePurpose?.trim()
+    const d = hydrateLegacyTripItinerary(data);
+    let filled = false;
+    if (d.tripType === "one") {
+        filled = Boolean(
+            d.oneFromCity?.trim() &&
+                d.oneFromCountry?.trim() &&
+                d.oneToCity?.trim() &&
+                d.oneTo?.trim() &&
+                d.oneDepartureDate?.trim() &&
+                d.oneLengthOfStay?.trim()
         );
-    }
-    if (data.tripType === "return") {
-        return Boolean(
-            data.returnFrom?.trim() &&
-            data.returnTo?.trim() &&
-            data.returnDepartureDate?.trim() &&
-            data.returnReturnDate?.trim()
+    } else if (d.tripType === "return") {
+        filled = Boolean(
+            d.returnFromCity?.trim() &&
+                d.returnFromCountry?.trim() &&
+                d.returnToCity?.trim() &&
+                d.returnTo?.trim() &&
+                d.returnDepartureDate?.trim() &&
+                d.returnReturnDate?.trim()
         );
-    }
-    if (data.tripType === "multi") {
-        const legs = data.multiLegs || [];
+    } else if (d.tripType === "multi") {
+        const legs = d.multiLegs || [];
         if (legs.length < 1) return false;
-        return legs.every((leg) => leg.country?.trim() && leg.arrivalDate?.trim() && leg.nights?.trim());
-    }
-    if (data.tripType === "transit") {
-        return Boolean(
-            data.transitFrom?.trim() &&
-            data.transitFinalDestination?.trim() &&
-            data.transitLocation?.trim() &&
-            data.transitDuration?.trim() &&
-            data.transitDepartureDate?.trim()
+        if (!d.multiDepartingFromCity?.trim() || !d.multiDepartingFromCountry?.trim()) return false;
+        filled = legs.every((leg) => leg.country?.trim() && leg.arrivalDate?.trim() && leg.nights?.trim());
+    } else if (d.tripType === "transit") {
+        filled = Boolean(
+            d.transitFromCity?.trim() &&
+                d.transitFromCountry?.trim() &&
+                d.transitFinalDestinationCity?.trim() &&
+                d.transitFinalDestination?.trim() &&
+                d.transitLocation?.trim() &&
+                d.transitDuration?.trim() &&
+                d.transitDepartureDate?.trim()
         );
     }
-    return false;
+    return filled && validateTripItineraryDates(d) === null;
 }
 
 function daysInclusiveBetween(start?: string, end?: string): number {
@@ -154,6 +145,8 @@ const TRAVEL_PURPOSE_TO_PLAN: Record<string, string> = {
     pilgrimage: "Other",
 };
 
+const PREFILLED_KEYS = new Set(["full_name_passport", "email_address"]);
+
 /** Build create-plan payload from questionnaire answers (travel section). */
 function derivePlanFromQuestionnaireAnswers(
     answers: Record<string, unknown>
@@ -179,22 +172,25 @@ function derivePlanFromQuestionnaireAnswers(
     let duration = 0;
 
     if (itinerary) {
-        const tripType = itinerary.tripType || "one";
+        const it = hydrateLegacyTripItinerary(itinerary);
+        const tripType = it.tripType || "one";
 
         if (tripType === "one") {
-            country = (itinerary.oneTo || "").trim();
-            const fromCity = (itinerary.oneFrom || "").trim();
-            destination = country;
-            if (fromCity) destination = `${fromCity} → ${destination}`;
+            country = (it.oneTo || "").trim();
+            const fromMerged = mergeCityCountry(it.oneFromCity, it.oneFromCountry) || (it.oneFrom || "").trim();
+            const toMerged = mergeCityCountry(it.oneToCity, it.oneTo) || country;
+            destination = toMerged;
+            if (fromMerged) destination = `${fromMerged} → ${toMerged}`;
             duration = 7;
         } else if (tripType === "return") {
-            country = (itinerary.returnTo || "").trim();
-            const from = (itinerary.returnFrom || "").trim();
-            destination = country;
-            if (from) destination = `${from} → ${destination}`;
+            country = (it.returnTo || "").trim();
+            const fromMerged = mergeCityCountry(it.returnFromCity, it.returnFromCountry) || (it.returnFrom || "").trim();
+            const toMerged = mergeCityCountry(it.returnToCity, it.returnTo) || country;
+            destination = toMerged;
+            if (fromMerged) destination = `${fromMerged} → ${toMerged}`;
             duration = 7;
         } else if (tripType === "multi") {
-            const legs = itinerary.multiLegs || [];
+            const legs = it.multiLegs || [];
             const parts = legs
                 .map((leg) => [leg.city, leg.country].filter(Boolean).join(", ").trim())
                 .filter(Boolean);
@@ -202,8 +198,11 @@ function derivePlanFromQuestionnaireAnswers(
             country = (legs[0]?.country || "").trim();
             duration = 7;
         } else if (tripType === "transit") {
-            country = (itinerary.transitFinalDestination || "").trim();
-            destination = `${(itinerary.transitFrom || "").trim()} via ${(itinerary.transitLocation || "").trim()} → ${country}`;
+            country = (it.transitFinalDestination || "").trim();
+            const depMerged = mergeCityCountry(it.transitFromCity, it.transitFromCountry) || (it.transitFrom || "").trim();
+            const finMerged =
+                mergeCityCountry(it.transitFinalDestinationCity, it.transitFinalDestination) || country;
+            destination = `${depMerged} via ${(it.transitLocation || "").trim()} → ${finMerged}`;
             duration = 7;
         }
     } else if (newCountries.length > 0) {
@@ -356,7 +355,6 @@ const TravelHealthQuestionnaire = () => {
 
     const [answers, setAnswers] = useState<Record<string, unknown>>({});
     const [categoryIndex, setCategoryIndex] = useState(0);
-    const [questionIndex, setQuestionIndex] = useState(-1);
     const [direction, setDirection] = useState(1);
     const [showIntro, setShowIntro] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -375,28 +373,28 @@ const TravelHealthQuestionnaire = () => {
 
     const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const pendingSaveRef = useRef(false);
-    const latestStateRef = useRef({ answers: {} as Record<string, unknown>, categoryIndex: 0, questionIndex: -1 });
+    const latestStateRef = useRef({ answers: {} as Record<string, unknown>, categoryIndex: 0, questionIndex: -1 as number });
     const restoredRef = useRef(false);
     const generatingPlanLabelRef = useRef({ destination: "", country: "" });
 
     const categories: (QuestionCategory & { parsedQuestions: Question[] })[] =
-        (categoriesRaw || []).map((cat: QuestionCategory) => ({
-            ...cat,
-            parsedQuestions: (
-                typeof cat.questions === "string"
+        (categoriesRaw || []).map((cat: QuestionCategory) => {
+            let parsed: Question[] = [];
+            try {
+                parsed = typeof cat.questions === "string"
                     ? JSON.parse(cat.questions)
-                    : cat.questions
-            ) as Question[],
-        }));
+                    : (cat.questions as Question[]) ?? [];
+            } catch {
+                parsed = [];
+            }
+            return { ...cat, parsedQuestions: Array.isArray(parsed) ? parsed : [] };
+        });
 
     const currentCategory = categories[categoryIndex];
     const visibleQuestions =
         currentCategory?.parsedQuestions.filter(
             (q) => shouldShowQuestion(q, answers)
         ) || [];
-    const currentQuestion =
-        questionIndex >= 0 ? visibleQuestions[questionIndex] : null;
-
     // Restore progress (only once per mount, only if server returned valid progress)
     useEffect(() => {
         if (restoredRef.current) return;
@@ -416,17 +414,28 @@ const TravelHealthQuestionnaire = () => {
                 const catIdx = Math.max(0, p.categoryIndex || 0);
                 const qIdx = p.questionIndex ?? -1;
                 setCategoryIndex(catIdx);
-                setQuestionIndex(qIdx);
-                if (qIdx >= 0) setShowIntro(false);
+                // Grouped flow: -1 or missing means section intro; legacy per-question saves used qIdx >= 0 for in-section — open questions view.
+                setShowIntro(qIdx < 0);
             }
         }
     }, [savedProgress]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Pre-fill profile fields (same behaviour as PlanQuestionnaireFlow / create-plan)
+    useEffect(() => {
+        if (!user) return;
+        const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ").trim();
+        setAnswers((prev) => ({
+            ...prev,
+            ...(fullName && !prev.full_name_passport ? { full_name_passport: fullName } : {}),
+            ...(user.email && !prev.email_address ? { email_address: user.email } : {}),
+        }));
+    }, [user]);
+
     // Keep refs in sync with latest state and mark dirty
     useEffect(() => {
-        latestStateRef.current = { answers, categoryIndex, questionIndex };
+        latestStateRef.current = { answers, categoryIndex, questionIndex: -1 };
         if (Object.keys(answers).length > 0) pendingSaveRef.current = true;
-    }, [answers, categoryIndex, questionIndex]);
+    }, [answers, categoryIndex, showIntro]);
 
     // Save progress every 2 minutes if dirty
     useEffect(() => {
@@ -502,63 +511,82 @@ const TravelHealthQuestionnaire = () => {
     // ─── Navigation ──────────────────────────────────────────
 
     const goNext = () => {
-        if (currentQuestion && !isQuestionAnswered(currentQuestion, answers)) {
-            toast.error("Please answer this required question before continuing.");
-            return;
-        }
-        setDirection(1);
-        const next = questionIndex + 1;
-        if (next >= visibleQuestions.length) {
-            const nextCat = categoryIndex + 1;
-            if (nextCat >= categories.length) {
-                handleSubmit();
+        if (showIntro) return;
+        for (const q of visibleQuestions) {
+            if (!isQuestionAnswered(q, answers)) {
+                if (q.type === "trip_itinerary") {
+                    const d = hydrateLegacyTripItinerary(answers[q.key] as TripItineraryData);
+                    const tripErr = validateTripItineraryDates(d);
+                    if (tripErr) {
+                        toast.error(tripErr);
+                        return;
+                    }
+                }
+                toast.error(`Please answer: "${q.text}"`);
                 return;
             }
-            setCategoryIndex(nextCat);
-            setQuestionIndex(-1);
-            setShowIntro(true);
-        } else {
-            setQuestionIndex(next);
         }
+        for (const q of visibleQuestions) {
+            if (q.key === "date_of_birth" && q.required) {
+                const v = String(answers[q.key] ?? "").trim();
+                if (v && !isDateOfBirthPlausible(v)) {
+                    toast.error("Date of birth cannot be in the future.");
+                    return;
+                }
+            }
+            if (q.key === "email_address" && q.required) {
+                const v = String(answers[q.key] ?? "").trim();
+                if (v && !isPlausibleEmail(v)) {
+                    toast.error("Please enter a valid email address.");
+                    return;
+                }
+            }
+            if (
+                q.key === "longest_flight_leg_hours" ||
+                q.key === "total_flying_hours" ||
+                q.key === "number_of_flight_legs"
+            ) {
+                const v = String(answers[q.key] ?? "").trim();
+                if (v && !isValidOptionalNonNegativeNumber(v)) {
+                    toast.error(`Please enter a valid non-negative number for "${q.text}"`);
+                    return;
+                }
+            }
+        }
+        setDirection(1);
+        const nextCat = categoryIndex + 1;
+        if (nextCat >= categories.length) {
+            void handleSubmit();
+            return;
+        }
+        setCategoryIndex(nextCat);
+        setShowIntro(true);
     };
 
     const goPrev = () => {
         setDirection(-1);
-        if (questionIndex <= 0) {
-            if (questionIndex === 0) {
-                setQuestionIndex(-1);
-                setShowIntro(true);
-                return;
-            }
-            if (categoryIndex > 0) {
-                const prevCat = categoryIndex - 1;
-                const prevVisible = categories[prevCat].parsedQuestions.filter(
-                    (q) => shouldShowQuestion(q, answers)
-                );
-                setCategoryIndex(prevCat);
-                setQuestionIndex(prevVisible.length - 1);
-                setShowIntro(false);
-            }
-        } else {
-            setQuestionIndex(questionIndex - 1);
+        if (showIntro) {
+            if (categoryIndex === 0) return;
+            setCategoryIndex((i) => i - 1);
+            setShowIntro(false);
+            return;
         }
+        setShowIntro(true);
     };
 
     const startCategory = () => {
         setShowIntro(false);
         setDirection(1);
-        setQuestionIndex(0);
     };
 
     const skipCategory = () => {
         setDirection(1);
         const nextCat = categoryIndex + 1;
         if (nextCat >= categories.length) {
-            handleSubmit();
+            void handleSubmit();
             return;
         }
         setCategoryIndex(nextCat);
-        setQuestionIndex(-1);
         setShowIntro(true);
     };
 
@@ -582,21 +610,10 @@ const TravelHealthQuestionnaire = () => {
     // Calculate progress based on sections completed + current section progress
     // This makes early progress more rewarding and feels less overwhelming
     const totalSections = categories.length;
-    const completedSections = categoryIndex;
-    const currentSectionProgress = visibleQuestions.length > 0
-        ? (questionIndex + 1) / visibleQuestions.length
-        : 0;
+    const progressPercent =
+        totalSections > 0 ? Math.min(Math.round((categoryIndex / totalSections) * 100), 100) : 0;
 
-    const progressPercent = totalSections > 0
-        ? Math.min(
-            Math.round(((completedSections + currentSectionProgress) / totalSections) * 100),
-            100
-        )
-        : 0;
-
-    const isLastQuestion =
-        categoryIndex === categories.length - 1 &&
-        questionIndex >= visibleQuestions.length - 1;
+    const isLastSection = categoryIndex === categories.length - 1 && !showIntro;
 
     // ─── Loading ─────────────────────────────────────────────
 
@@ -679,6 +696,14 @@ const TravelHealthQuestionnaire = () => {
     };
 
     const handlePlanFirstTrip = async () => {
+        const tripRaw = answers.trip_itinerary as TripItineraryData | undefined;
+        if (tripRaw) {
+            const tripErr = validateTripItineraryDates(hydrateLegacyTripItinerary(tripRaw));
+            if (tripErr) {
+                toast.error(tripErr);
+                return;
+            }
+        }
         const derived = derivePlanFromQuestionnaireAnswers(answers);
         if (!derived) {
             toast.error(
@@ -1112,7 +1137,7 @@ const TravelHealthQuestionnaire = () => {
                                     </p>
                                     {i === categoryIndex && (
                                         <p className="text-xs text-muted mt-0.5">
-                                            {questionIndex >= 0 ? `Question ${questionIndex + 1} of ${visibleQuestions.length}` : "Introduction"}
+                                            {showIntro ? "Introduction" : "In progress"}
                                         </p>
                                     )}
                                 </div>
@@ -1171,7 +1196,6 @@ const TravelHealthQuestionnaire = () => {
                                             if (i !== categoryIndex) {
                                                 setDirection(i > categoryIndex ? 1 : -1);
                                                 setCategoryIndex(i);
-                                                setQuestionIndex(-1);
                                                 setShowIntro(true);
                                             }
                                             setMobileAccordionOpen(false);
@@ -1216,9 +1240,9 @@ const TravelHealthQuestionnaire = () => {
             </div>
 
             {/* ── Main Content ─────────────────────────────── */}
-            <div className="flex-1 flex items-start sm:items-center justify-center px-5 sm:px-8 pt-6 pb-32 lg:pt-24">
+            <div className="flex-1 flex items-start sm:items-center justify-center px-3 sm:px-8 pt-6 pb-32 lg:pt-24">
                 <div className="w-full max-w-5xl flex justify-center">
-                    <div className="w-full max-w-lg">
+                    <div className="w-full max-w-3xl">
                         <AnimatePresence mode="wait" custom={direction}>
                             {showIntro ? (
                                 <motion.div
@@ -1300,62 +1324,66 @@ const TravelHealthQuestionnaire = () => {
                                         )}
                                     </motion.div>
                                 </motion.div>
-                            ) : currentQuestion ? (
+                            ) : (
                                 <motion.div
-                                    key={`q-${currentCategory.category_key}-${currentQuestion.key}`}
+                                    key={`section-${currentCategory.category_key}`}
                                     custom={direction}
                                     variants={questionVariants}
                                     initial="enter"
                                     animate="center"
                                     exit="exit"
+                                    className="rounded-3xl border border-border-light/70 bg-white/80 p-5 md:p-9 space-y-8"
                                 >
-                                    {/* Question counter */}
-                                    <div className="flex items-center gap-2 mb-5">
-                                        <span className="text-sm font-bold tracking-wider text-accent uppercase">
-                                            {currentCategory.category_name}
-                                        </span>
-                                        <span className="text-sm text-muted/60">
-                                            {questionIndex + 1} / {visibleQuestions.length}
-                                        </span>
-                                    </div>
-
-                                    {/* Question text */}
-                                    <h3 className="text-3xl sm:text-4xl font-serif text-heading mb-2 leading-snug">
-                                        {currentQuestion.text}
-                                        {currentQuestion.required && (
-                                            <span className="text-red-400 ml-1 text-lg">*</span>
-                                        )}
-                                    </h3>
-
-                                    {/* Question description */}
-                                    {currentQuestion.description && (
-                                        <p className="text-base text-muted mb-8 leading-relaxed">
-                                            {currentQuestion.description}
+                                    <div>
+                                        <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-accent mb-1">
+                                            Section {categoryIndex + 1} of {categories.length}
                                         </p>
-                                    )}
-
-                                    {/* Input */}
-                                    <div className={currentQuestion.description ? "" : "mt-7"}>
-                                        <QuestionInput
-                                            question={currentQuestion}
-                                            value={answers[currentQuestion.key]}
-                                            onChange={(val) =>
-                                                setAnswer(currentQuestion.key, val)
-                                            }
-                                            onToggleCheckbox={(val) =>
-                                                toggleCheckbox(currentQuestion.key, val)
-                                            }
-                                            onSetVaccineStatus={setVaccineStatus}
-                                            vaccineStatuses={
-                                                (answers.vaccine_status as Record<
-                                                    string,
-                                                    Record<string, string>
-                                                >) || {}
-                                            }
-                                        />
+                                        <h3 className="text-2xl md:text-3xl font-serif text-heading leading-snug">
+                                            {currentCategory.category_name}
+                                        </h3>
                                     </div>
+
+                                    {visibleQuestions.map((question) => {
+                                        const prefilled = PREFILLED_KEYS.has(question.key);
+                                        return (
+                                            <div key={question.key} className="space-y-3">
+                                                <div>
+                                                    <p className="text-base md:text-lg font-semibold text-heading leading-snug">
+                                                        {question.text}
+                                                        {question.required && (
+                                                            <span className="text-red-500 ml-1">*</span>
+                                                        )}
+                                                    </p>
+                                                    {question.description && (
+                                                        <p className="text-sm text-muted mt-1 leading-relaxed">
+                                                            {question.description}
+                                                        </p>
+                                                    )}
+                                                    {prefilled && (
+                                                        <p className="text-xs text-accent mt-1">
+                                                            Pre-filled from your profile
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <QuestionInput
+                                                    question={question}
+                                                    value={answers[question.key]}
+                                                    prefilled={prefilled}
+                                                    onChange={(val) => setAnswer(question.key, val)}
+                                                    onToggleCheckbox={(val) => toggleCheckbox(question.key, val)}
+                                                    onSetVaccineStatus={setVaccineStatus}
+                                                    vaccineStatuses={
+                                                        (answers.vaccine_status as Record<
+                                                            string,
+                                                            Record<string, string>
+                                                        >) || {}
+                                                    }
+                                                />
+                                            </div>
+                                        );
+                                    })}
                                 </motion.div>
-                            ) : null}
+                            )}
                         </AnimatePresence>
                     </div>
                 </div>
@@ -1367,8 +1395,7 @@ const TravelHealthQuestionnaire = () => {
                     <div className="max-w-lg mx-auto flex items-center justify-between">
                         <button
                             onClick={goPrev}
-                            disabled={categoryIndex === 0 && questionIndex <= 0}
-                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-muted hover:text-heading disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer transition-colors duration-150"
+                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-muted hover:text-heading cursor-pointer transition-colors duration-150"
                         >
                             <LucideArrowLeft className="w-4 h-4" /> Back
                         </button>
@@ -1383,13 +1410,13 @@ const TravelHealthQuestionnaire = () => {
                                 </button>
                             )}
                             <button
-                                onClick={goNext}
+                                onClick={() => void goNext()}
                                 disabled={submitting}
                                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-dark text-white text-sm font-semibold cursor-pointer hover:bg-darkest disabled:opacity-50 transition-all duration-200"
                             >
                                 {submitting ? (
                                     "Saving…"
-                                ) : isLastQuestion ? (
+                                ) : isLastSection ? (
                                     "Complete"
                                 ) : (
                                     <>
@@ -1471,6 +1498,7 @@ const MultiCountryInput = ({
 interface QuestionInputProps {
     question: Question;
     value: unknown;
+    prefilled?: boolean;
     onChange: (val: unknown) => void;
     onToggleCheckbox: (val: string) => void;
     onSetVaccineStatus: (
@@ -1484,11 +1512,13 @@ interface QuestionInputProps {
 const QuestionInput = ({
     question,
     value,
+    prefilled = false,
     onChange,
     onToggleCheckbox,
     onSetVaccineStatus,
     vaccineStatuses,
 }: QuestionInputProps) => {
+    const todayLocal = todayIsoDateLocal();
     switch (question.type) {
         case "radio":
             return (
@@ -1594,7 +1624,10 @@ const QuestionInput = ({
                     value={(value as string) || ""}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={question.placeholder}
-                    className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium"
+                    readOnly={prefilled}
+                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium ${
+                        prefilled ? "bg-background-primary/50 cursor-default" : "bg-white"
+                    }`}
                 />
             );
 
@@ -1607,7 +1640,10 @@ const QuestionInput = ({
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={question.placeholder}
                     rows={4}
-                    className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 resize-none font-medium"
+                    readOnly={prefilled}
+                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 resize-none font-medium ${
+                        prefilled ? "bg-background-primary/50 cursor-default" : "bg-white"
+                    }`}
                 />
             );
 
@@ -1618,8 +1654,12 @@ const QuestionInput = ({
                     animate={{ opacity: 1, y: 0 }}
                     type="date"
                     value={(value as string) || ""}
+                    max={question.key === "date_of_birth" ? todayLocal : undefined}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading outline-none focus:border-accent transition-all duration-200 font-medium"
+                    readOnly={prefilled}
+                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading outline-none focus:border-accent transition-all duration-200 font-medium ${
+                        prefilled ? "bg-background-primary/50 cursor-default" : "bg-white"
+                    }`}
                 />
             );
 
