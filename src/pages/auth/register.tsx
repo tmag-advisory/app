@@ -16,7 +16,7 @@ const planLabels: Record<string, { name: string; color: string }> = {
 
 const Register = () => {
     const navigate = useNavigate();
-    const { register } = useAuth();
+    const { register, refreshProfile } = useAuth();
     const [loading, setLoading] = useState(false);
     const { setStage } = useOnboardingStore();
     const [searchParams] = useSearchParams();
@@ -118,6 +118,7 @@ const Register = () => {
         try {
             await verifyEmail.mutateAsync({ email: registeredEmail, code });
             setStage(2);
+            await refreshProfile();
             toast.success("Email verified!");
             navigate("/onboarding");
         } catch (err) {

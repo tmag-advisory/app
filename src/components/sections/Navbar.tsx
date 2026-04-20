@@ -35,7 +35,7 @@ const Navbar = () => {
                         >
                             <LucideShoppingCart className="w-5 h-5 text-heading" />
                             {count > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 bg-accent text-white text-[10px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center min-w-[18px] min-h-[18px]">
+                                <span className="absolute -top-0.5 -right-0.5 bg-accent text-white text-[10px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center min-w-4.5 min-h-4.5">
                                     {count}
                                 </span>
                             )}
@@ -43,6 +43,7 @@ const Navbar = () => {
                     )}
 
                     <div className="hidden md:flex items-center gap-3">
+                        <NavLink href="/shop">Shop</NavLink>
                         <NavLink href="/login">Sign In</NavLink>
                     </div>
                     <button
@@ -70,6 +71,7 @@ const Navbar = () => {
                 <div className="flex flex-col gap-4 pb-4 font-medium border-t border-border-light pt-4">
                     <NavLink href="/pricing">Pricing</NavLink>
                     <NavLink href="/about">About</NavLink>
+                    <NavLink href="/shop">Shop</NavLink>
                     <NavLink href="/login">Sign In</NavLink>
                 </div>
             </div>

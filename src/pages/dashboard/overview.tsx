@@ -7,6 +7,7 @@ import DashboardAnalyticsCharts from "../../components/dashboard/DashboardAnalyt
 import { LucideCoins, LucideFileText, LucidePlusCircle, LucideArrowRight, LucideLoader2 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
+import { useEffect } from "react";
 
 const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
 const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
@@ -18,13 +19,20 @@ const getRiskLabel = (score: number) => {
 };
 
 const DashboardOverview = () => {
-    const { user } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const { data: plansData, isLoading: plansLoading } = useTravelPlans({ per_page: 5 });
     // const { data: onboardingData } = useOnboarding();
     const { data: dashboardAnalytics, isLoading: analyticsLoading } = useDashboardAnalytics(undefined);
 
     const plans = plansData?.data || [];
     // const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
+
+    useEffect(() => {
+        async function checkAndRefreshProfile() {
+            await refreshProfile()
+        }
+        void checkAndRefreshProfile();
+    }, [refreshProfile])
 
     return (
         <div>

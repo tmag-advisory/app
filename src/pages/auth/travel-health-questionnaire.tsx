@@ -378,14 +378,17 @@ const TravelHealthQuestionnaire = () => {
     const generatingPlanLabelRef = useRef({ destination: "", country: "" });
 
     const categories: (QuestionCategory & { parsedQuestions: Question[] })[] =
-        (categoriesRaw || []).map((cat: QuestionCategory) => ({
-            ...cat,
-            parsedQuestions: (
-                typeof cat.questions === "string"
+        (categoriesRaw || []).map((cat: QuestionCategory) => {
+            let parsed: Question[] = [];
+            try {
+                parsed = typeof cat.questions === "string"
                     ? JSON.parse(cat.questions)
-                    : cat.questions
-            ) as Question[],
-        }));
+                    : (cat.questions as Question[]) ?? [];
+            } catch {
+                parsed = [];
+            }
+            return { ...cat, parsedQuestions: Array.isArray(parsed) ? parsed : [] };
+        });
 
     const currentCategory = categories[categoryIndex];
     const visibleQuestions =

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AnimateIn from "../../components/animations/AnimateIn";
 import { useVerifyEmail, useResendVerificationEmail } from "../../api/hooks";
+import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-hot-toast";
 import { AxiosError } from "axios";
 import { LucideLoader } from "lucide-react";
@@ -10,6 +11,7 @@ const EmailVerification = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const email = searchParams.get("email") ?? "";
+    const { refreshProfile } = useAuth();
 
     const [digits, setDigits] = useState(["", "", "", "", "", ""]);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -53,6 +55,7 @@ const EmailVerification = () => {
 
         try {
             await verifyEmail.mutateAsync({ email, code });
+            await refreshProfile();
             toast.success("Email verified!");
             navigate("/onboarding");
         } catch (err) {
