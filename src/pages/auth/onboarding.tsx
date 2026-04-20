@@ -58,23 +58,24 @@ const Onboarding = () => {
     const planCode = user?.user_credit_plan?.code;
     const isPaidIndividualPlan = (planCode === "STANDARD" || planCode === "PREMIUM") && !isInvitedUser;
 
-    // Get Credits is step 0 for paid users — shown immediately after email verification,
-    // before the user picks individual/company. Skip goes to User Type selection.
+    // Get Credits is step 2 for paid individual users — shown after profile (name, phone, country),
+    // before Welcome. Skip goes directly to Welcome.
     const steps = isPaidIndividualPlan
-        ? ["Get Credits", "User Type", "Profile", "Welcome"]
+        ? ["User Type", "Profile", "Get Credits", "Welcome"]
         : ["User Type", "Profile", "Welcome"];
 
-    const S_CREDITS  = isPaidIndividualPlan ? 0 : -1;
-    const S_USERTYPE = isPaidIndividualPlan ? 1 : 0;
-    const S_PROFILE  = isPaidIndividualPlan ? 2 : 1;
+    const S_USERTYPE = 0;
+    const S_PROFILE  = 1;
+    const S_CREDITS  = isPaidIndividualPlan ? 2 : -1;
     const S_WELCOME  = isPaidIndividualPlan ? 3 : 2;
 
-    const stage = user?.onboarding_stage ?? 2;
+    const stage = user?.onboarding_stage ?? 0;
     const getInitialStep = () => {
         if (isPaidIndividualPlan) {
-            if (stage >= 5 || stage >= 4) return S_WELCOME;
+            if (stage >= 5) return S_WELCOME;
+            if (stage >= 4) return S_CREDITS;
             if (stage >= 3) return S_PROFILE;
-            return S_CREDITS;
+            return S_USERTYPE;
         }
         if (stage >= 5) return S_WELCOME;
         return Math.min(Math.max(stage - 2, 0), S_WELCOME);
@@ -203,7 +204,7 @@ const Onboarding = () => {
             });
             await advanceStage.mutateAsync({ stage: 4 });
             await refreshProfile();
-            goTo(S_WELCOME);
+            goTo(S_CREDITS);
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
             setError(msg || "Failed to save profile. Please try again.");
@@ -249,7 +250,7 @@ const Onboarding = () => {
     };
 
     const handleSkipCredits = () => {
-        goTo(S_USERTYPE);
+        goTo(S_WELCOME);
     };
 
     const isLoading =

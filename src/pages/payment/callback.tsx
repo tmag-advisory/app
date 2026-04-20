@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { creditPurchaseApi } from "../../api/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "../../api/hooks";
+import { queryKeys, useAdvanceOnboardingStage } from "../../api/hooks";
 import { LucideCheckCircle, LucideXCircle, LucideLoader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,6 +14,7 @@ const PaymentCallback = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const advanceStage = useAdvanceOnboardingStage();
     const [status, setStatus] = useState<PaymentStatus>("verifying");
     const [creditsPurchased, setCreditsPurchased] = useState(0);
     const [errorMessage, setErrorMessage] = useState("");
@@ -57,9 +58,10 @@ const PaymentCallback = () => {
 
                     queryClient.removeQueries({ queryKey: queryKeys.profile.all });
                     queryClient.invalidateQueries({ queryKey: queryKeys.creditPurchases.all });
+                    await advanceStage.mutateAsync({ stage: 5 });
 
                     setTimeout(() => {
-                        navigate("/dashboard");
+                        navigate("/onboarding");
                     }, 3000);
                 } else {
                     setStatus("failed");

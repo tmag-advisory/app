@@ -79,6 +79,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   planCode?: string;
+  billing_currency?: BillingCurrency;
 }
 
 export interface ForgotPasswordRequest {
