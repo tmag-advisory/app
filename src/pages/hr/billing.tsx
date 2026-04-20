@@ -136,11 +136,6 @@ const Billing = () => {
                                         <span className="text-base font-semibold text-heading block">
                                             {quote.currencySymbol}{quote.totalAmount}
                                         </span>
-                                        {quote.discountAmount > 0 && (
-                                            <span className="text-xs text-muted line-through block">
-                                                {quote.currencySymbol}{quote.basePrice}
-                                            </span>
-                                        )}
                                         <span className="text-xs text-accent">
                                             {quote.currencySymbol}{quote.pricePerCredit}/credit
                                         </span>
@@ -150,23 +145,32 @@ const Billing = () => {
                                         <LucideLoader2 className="w-4 h-4 text-muted animate-spin" />
                                     </div>
                                 )}
-                                <button
-                                    onClick={() => handlePurchase(credits)}
-                                    disabled={purchaseCredits.isPending || !quote || !companyId}
-                                    className="mt-3 w-full py-2.5 rounded-xl bg-accent text-white font-semibold text-sm hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {purchaseCredits.isPending ? (
-                                        <LucideLoader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                        <LucideExternalLink className="w-4 h-4" />
-                                    )}
-                                    Pay Now
-                                </button>
+                                {quote?.qualifiesForContactSales ? (
+                                    <a
+                                        href="/contact"
+                                        className="mt-3 w-full py-2.5 rounded-xl bg-accent/10 text-accent font-semibold text-sm hover:bg-accent/20 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        Contact Sales
+                                    </a>
+                                ) : (
+                                    <button
+                                        onClick={() => handlePurchase(credits)}
+                                        disabled={purchaseCredits.isPending || !quote || !companyId}
+                                        className="mt-3 w-full py-2.5 rounded-xl bg-accent text-white font-semibold text-sm hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {purchaseCredits.isPending ? (
+                                            <LucideLoader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <LucideExternalLink className="w-4 h-4" />
+                                        )}
+                                        Pay Now
+                                    </button>
+                                )}
                             </div>
                         );
                     })}
                 </div>
-                <p className="text-xs text-muted">Need a custom volume? <span className="text-accent cursor-pointer hover:underline">Contact sales</span></p>
+                <p className="text-xs text-muted">Need a custom volume? <a href="/contact" className="text-accent cursor-pointer hover:underline">Contact sales</a></p>
             </div>
 
             {/* Credit history */}

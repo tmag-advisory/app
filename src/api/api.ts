@@ -81,12 +81,9 @@ import type {
   OnboardingQuestionCategoryResponse,
   SubmitQuestionnaireRequest,
   QuestionnaireProgressRequest,
-  // Credit Pricing
-  CreditPricingResponse,
   CreditPurchaseRequest,
   CreditPurchaseInitiateResponse,
   CreditPurchaseResponse,
-  PriceCalculationResponse,
   CompanyAdminCreditQuoteResponse,
   CompanyAdminPurchaseInitiateResponse,
   CompanyAdminPricingResponse,
@@ -534,20 +531,6 @@ export const draftPlansApi = {
 
   delete: (id: number) =>
     api.delete<ApiResponse<null>>(`/draft-plans/${id}`).then((r) => r.data.data),
-};
-
-// ─── Credit Pricing ────────────────────────────────────────────
-export const creditPricingApi = {
-  list: () =>
-    api.get<ApiResponse<CreditPricingResponse[]>>("/credit-pricing").then((r) => r.data.data),
-
-  getByCurrency: (currency: string) =>
-    api.get<ApiResponse<CreditPricingResponse>>(`/credit-pricing/currency/${currency}`).then((r) => r.data.data),
-
-  calculatePrice: (currency: string, credits: number) =>
-    api.get<ApiResponse<PriceCalculationResponse>>("/credit-pricing/calculate", {
-      params: { currency, credits },
-    }).then((r) => r.data.data),
 };
 
 // ─── User Credit Plans ────────────────────────────────────────────

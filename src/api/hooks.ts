@@ -19,7 +19,6 @@ import {
   companyUsersApi,
   profileApi,
   onboardingApi,
-  creditPricingApi,
   creditPlansApi,
   creditPurchaseApi,
   companyAdminCreditsApi,
@@ -67,7 +66,6 @@ import type {
   SubmitQuestionnaireRequest,
   QuestionnaireProgressRequest,
   SaveDraftPlanRequest,
-  CreditPricingResponse,
   CreditPurchaseRequest,
   GoogleCallbackRequest,
   PlanUsageLedgerResponse,
@@ -200,11 +198,6 @@ export const queryKeys = {
   onboarding: {
     all: ["onboarding"] as const,
     detail: () => [...["onboarding"], "detail"] as const,
-  },
-  creditPricing: {
-    all: ["credit-pricing"] as const,
-    list: () => [...["credit-pricing"], "list"] as const,
-    byCurrency: (currency: string) => [...["credit-pricing"], "currency", currency] as const,
   },
   creditPlans: {
     all: ["user-credit-plans"] as const,
@@ -1025,24 +1018,6 @@ export function useDeleteDraftPlan() {
   return useMutation({
     mutationFn: (id: number) => draftPlansApi.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["draft-plans"] }),
-  });
-}
-
-// ─── Credit Pricing Hooks ───────────────────────────────────────
-
-export function useCreditPricing() {
-  return useQuery<CreditPricingResponse[]>({
-    queryKey: queryKeys.creditPricing.list(),
-    queryFn: () => creditPricingApi.list(),
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-export function useCreditPricingByCurrency(currency: string) {
-  return useQuery<CreditPricingResponse>({
-    queryKey: queryKeys.creditPricing.byCurrency(currency),
-    queryFn: () => creditPricingApi.getByCurrency(currency),
-    enabled: !!currency,
   });
 }
 

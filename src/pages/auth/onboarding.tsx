@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LucideUser, LucideBuilding2, LucideArrowRight, LucideArrowLeft, LucideCheck, LucideGift, LucideZap, LucideShield, LucideActivity, LucideMinus, LucidePlus, LucideSparkles } from "lucide-react";
 import { useUpsertOnboarding, useAdvanceOnboardingStage, useUpdateProfile, useOnboarding, useValidateCompanyCode, useMyCompanies, useInitiateCreditPurchase } from "../../api/hooks";
@@ -46,6 +46,7 @@ const Onboarding = () => {
     const { user, refreshProfile } = useAuth();
     const { setUserType: storeSetUserType, reset: resetOnboarding } = useOnboardingStore();
     const { selectedCurrency } = useCurrencyStore();
+    const [searchParams] = useSearchParams();
 
     const { data: onboardingData } = useOnboarding();
     const { data: myCompanies } = useMyCompanies();
@@ -82,6 +83,18 @@ const Onboarding = () => {
     };
     const [step, setStep] = useState(getInitialStep);
     const didMountRefresh = useRef(false);
+    const consumedPostPayment = useRef(false);
+
+    // Consume ?step=welcome param from payment callback immediately on mount,
+    // then remove it from the URL so re-renders don't re-trigger it.
+    useEffect(() => {
+        if (searchParams.get("step") === "welcome" && !consumedPostPayment.current) {
+            consumedPostPayment.current = true;
+            setStep(S_WELCOME);
+            void navigate("/onboarding", { replace: true });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const [creditsToBuy, setCreditsToBuy] = useState(1);
 
     // Belt-and-suspenders: sync the latest profile on mount so user_credit_plan
