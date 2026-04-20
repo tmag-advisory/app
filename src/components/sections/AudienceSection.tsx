@@ -59,7 +59,7 @@ const AudienceSection = () => {
                             ))}
                         </ul>
                     </div>
-                    <Button variant="secondary" icon={<LucideArrowRight />} className="self-start" link="/register">
+                    <Button variant="secondary" icon={<LucideArrowRight />} className="self-start" link="/pricing">
                         Get started
                     </Button>
                 </AnimateIn>
@@ -94,8 +94,8 @@ const AudienceSection = () => {
                             ))}
                         </ul>
                     </div>
-                    <Button variant="primary" className="relative z-10 self-start bg-white !text-dark hover:bg-white/90">
-                        Contact sales
+                    <Button variant="primary" link="/pricing" className="relative z-10 self-start bg-white !text-dark hover:bg-white/90">
+                        Get Started
                     </Button>
                 </AnimateIn>
             </div>
