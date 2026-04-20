@@ -4,15 +4,28 @@ export type BillingCurrency = "USD" | "NGN" | "EUR" | "GBP";
 
 // ─── User Credit Plans ────────────────────────────────────────
 
-export type CreditPlanCode = "ESSENTIAL" | "STANDARD" | "PREMIUM";
+export type CreditPlanCode =
+  | "ESSENTIAL"
+  | "STANDARD"
+  | "PREMIUM"
+  | "ENTERPRISE_SILVER"
+  | "ENTERPRISE_PLUS"
+  | "ENTERPRISE_GOLD"
+  | "ENTERPRISE_ELITE"
+  | "ENTERPRISE_PLATINUM"
+  | "ENTERPRISE_SIGNATURE";
 
 export interface CreditPlan {
   id: number;
   code: CreditPlanCode;
   displayName: string;
   basePriceUsd: number;
+  basePriceNgn: number | null;
   description: string;
   isDefault: boolean;
+  isCompanyPlan: boolean;
+  signupRangeLabel: string | null;
+  serviceLevel: "STANDARD" | "PREMIUM" | null;
   createdAt: string;
   updatedAt: string;
 }

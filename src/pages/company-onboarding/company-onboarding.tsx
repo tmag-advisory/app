@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
 import {
   LucideCheck,
   LucideArrowRight,
@@ -16,6 +17,7 @@ import AnimateIn from "../../components/animations/AnimateIn";
 import { useCreditPlans, useSubmitCompanyOnboarding, useInitiateOnboardingPayment } from "../../api/hooks";
 import type { TeamMember, CompanyOnboardingResponse } from "../../api/types";
 import { useCurrencyStore } from "../../stores/currencyStore";
+import { featuresByServiceLevel, signupRanges, type SignupRange } from "../../constants/companyPlans";
 import toast, { Toaster } from "react-hot-toast";
 
 const steps = [
@@ -38,14 +40,26 @@ const industries = [
   "Other",
 ];
 
+function getRangeFromPlanCode(code: string): SignupRange {
+  if (code.includes("GOLD") || code.includes("ELITE")) return "100-500";
+  if (code.includes("PLATINUM") || code.includes("SIGNATURE")) return ">500";
+  return "0-100";
+}
+
 const CompanyOnboarding = () => {
+  const [searchParams] = useSearchParams();
+  const planFromUrl = searchParams.get("plan") ?? "";
+
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [onboardingResult, setOnboardingResult] = useState<CompanyOnboardingResponse | null>(null);
 
   // Step 1 state
-  const [selectedPlan, setSelectedPlan] = useState<string>("");
+  const [selectedPlan, setSelectedPlan] = useState<string>(planFromUrl);
+  const [selectedRange, setSelectedRange] = useState<SignupRange>(() =>
+    planFromUrl ? getRangeFromPlanCode(planFromUrl) : "0-100"
+  );
   const [creditCount, setCreditCount] = useState<string>("10");
   const [sampleRequest, setSampleRequest] = useState("");
   const [billingCurrency, setBillingCurrency] = useState("USD");
@@ -65,11 +79,22 @@ const CompanyOnboarding = () => {
   const initiatePayment = useInitiateOnboardingPayment();
   const { selectedCurrency } = useCurrencyStore();
 
-  const companyPlans = useMemo(() => plans?.filter((p) => p.code.toLowerCase() !== "essential"), [plans]);
-
   useEffect(() => {
     setBillingCurrency(selectedCurrency || "USD");
   }, [selectedCurrency]);
+
+  const enterprisePlans = useMemo(
+    () => plans?.filter((p) => p.isCompanyPlan) ?? [],
+    [plans]
+  );
+
+  const rangeEnterprisePlans = useMemo(
+    () =>
+      enterprisePlans
+        .filter((p) => p.signupRangeLabel === selectedRange)
+        .sort((a, b) => a.basePriceUsd - b.basePriceUsd),
+    [enterprisePlans, selectedRange]
+  );
 
   const getCurrencySymbol = () => {
     switch (billingCurrency.toUpperCase()) {
@@ -86,7 +111,22 @@ const CompanyOnboarding = () => {
   const getEstimatedTotal = () => {
     const plan = getSelectedPlanData();
     if (!plan || plan.basePriceUsd === 0) return null;
+    if (billingCurrency === "NGN") return (plan.basePriceNgn ?? 0) * numericCreditCount;
     return plan.basePriceUsd * numericCreditCount;
+  };
+
+  const formatTotal = (total: number | null) => {
+    if (total === null) return "Free";
+    if (billingCurrency === "NGN") return `₦${total.toLocaleString()} NGN`;
+    return `$${total.toLocaleString()} USD`;
+  };
+
+  const formatPricePerCredit = (plan: ReturnType<typeof getSelectedPlanData>) => {
+    if (!plan) return "";
+    if (plan.basePriceUsd === 0) return "Free tier";
+    if (billingCurrency === "NGN")
+      return `₦${(plan.basePriceNgn ?? 0).toLocaleString()} NGN/credit × ${numericCreditCount} credits`;
+    return `$${plan.basePriceUsd} USD/credit × ${numericCreditCount} credits`;
   };
 
   const addTeamMember = () => {
@@ -106,7 +146,9 @@ const CompanyOnboarding = () => {
   };
 
   const selectedPlanData = getSelectedPlanData();
-  const canProceedStep1 = selectedPlan && sampleRequest.trim().length > 0 &&
+  const canProceedStep1 =
+    selectedPlan &&
+    sampleRequest.trim().length > 0 &&
     (selectedPlanData?.basePriceUsd === 0 || numericCreditCount > 0);
   const canProceedStep2 =
     companyName.trim() &&
@@ -181,16 +223,14 @@ const CompanyOnboarding = () => {
           {steps.map((step, i) => (
             <div key={step.id} className="flex items-center">
               <button
-                onClick={() => {
-                  if (step.id < currentStep) goToStep(step.id);
-                }}
+                onClick={() => { if (step.id < currentStep) goToStep(step.id); }}
                 disabled={step.id > currentStep}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                   step.id === currentStep
                     ? "bg-dark text-white"
                     : step.id < currentStep
-                      ? "bg-accent/10 text-accent cursor-pointer hover:bg-accent/20"
-                      : "bg-button-secondary text-muted cursor-not-allowed"
+                    ? "bg-accent/10 text-accent cursor-pointer hover:bg-accent/20"
+                    : "bg-button-secondary text-muted cursor-not-allowed"
                 }`}
               >
                 {step.id < currentStep ? <LucideCheck className="w-3.5 h-3.5" /> : step.icon}
@@ -216,12 +256,12 @@ const CompanyOnboarding = () => {
             exit="exit"
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            {/* Step 1: Plan Selection & Sample Request */}
+            {/* Step 1: Plan Selection */}
             {currentStep === 1 && (
               <div className="space-y-8">
                 <div>
                   <h2 className="text-2xl font-serif text-heading mb-2">Select your plan</h2>
-                  <p className="text-sm text-body">Choose the plan that best fits your team size and needs.</p>
+                  <p className="text-sm text-body">Choose the plan that best fits your team size and reporting needs.</p>
                 </div>
 
                 {plansLoading ? (
@@ -229,10 +269,43 @@ const CompanyOnboarding = () => {
                     <LucideLoader2 className="w-8 h-8 animate-spin text-muted" />
                   </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {companyPlans?.map((plan) => {
-                        const isPremium = plan.code === "PREMIUM";
+                  <div className="space-y-6">
+                    {/* Signup-range selector */}
+                    <div>
+                      <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+                        How many employees will sign up?
+                      </p>
+                      <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
+                        {signupRanges.map((r) => (
+                          <button
+                            key={r.value}
+                            onClick={() => {
+                              setSelectedRange(r.value);
+                              setSelectedPlan("");
+                            }}
+                            className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                              selectedRange === r.value
+                                ? "bg-white shadow-sm text-heading"
+                                : "text-muted hover:text-heading"
+                            }`}
+                          >
+                            {r.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Enterprise plan cards for the selected range */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {rangeEnterprisePlans.map((plan) => {
+                        const isPremium = plan.serviceLevel === "PREMIUM";
                         const isSelected = selectedPlan === plan.code;
+                        const features = featuresByServiceLevel[plan.serviceLevel ?? "STANDARD"];
+                        const displayPrice =
+                          billingCurrency === "NGN"
+                            ? `₦${(plan.basePriceNgn ?? 0).toLocaleString()}`
+                            : `$${plan.basePriceUsd}`;
+
                         return (
                           <button
                             key={plan.code}
@@ -243,30 +316,39 @@ const CompanyOnboarding = () => {
                                   ? "border-amber-400 bg-amber-50"
                                   : "border-accent bg-accent/5"
                                 : isPremium
-                                  ? "border-amber-200/60 bg-background-primary hover:border-amber-300"
-                                  : "border-border-light/50 bg-background-primary hover:border-border-light"
-                              }`}
+                                ? "border-amber-200/60 bg-background-primary hover:border-amber-300"
+                                : "border-border-light/50 bg-background-primary hover:border-border-light"
+                            }`}
                           >
-                            <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-start justify-between mb-1">
                               <h3 className={`text-lg font-serif ${isPremium ? "text-amber-700" : "text-heading"}`}>
                                 {plan.displayName}
                               </h3>
                               {isSelected && (
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isPremium ? "bg-amber-500" : "bg-accent"}`}>
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ml-2 ${isPremium ? "bg-amber-500" : "bg-accent"}`}>
                                   <LucideCheck className="w-3.5 h-3.5 text-white" />
                                 </div>
                               )}
                             </div>
-                            <p className={`text-2xl font-serif mb-1 ${isPremium ? "text-amber-700" : "text-heading"}`}>
-                              {plan.basePriceUsd === 0 ? "Free" : `$${plan.basePriceUsd}`}
+                            <p className={`text-xs font-medium uppercase tracking-wide mb-3 ${isPremium ? "text-amber-500" : "text-muted"}`}>
+                              {isPremium ? "Premium service" : "Standard service"}
                             </p>
-                            <p className="text-xs text-muted mb-3">
-                              {plan.basePriceUsd === 0 ? "included at signup" : "per credit (USD)"}
+                            <p className={`text-2xl font-serif mb-0.5 ${isPremium ? "text-amber-700" : "text-heading"}`}>
+                              {displayPrice}
                             </p>
-                            <p className="text-xs text-body leading-relaxed">{plan.description}</p>
+                            <p className="text-xs text-muted mb-4">per credit</p>
+                            <ul className="space-y-2 mb-4">
+                              {features.map((f) => (
+                                <li key={f} className="flex items-start gap-2 text-xs text-body">
+                                  <LucideCheck className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${isPremium ? "text-amber-500" : "text-accent"}`} />
+                                  {f}
+                                </li>
+                              ))}
+                            </ul>
                           </button>
                         );
                       })}
+                    </div>
                   </div>
                 )}
 
@@ -289,11 +371,7 @@ const CompanyOnboarding = () => {
                           value={creditCount}
                           onChange={(e) => {
                             const rawValue = e.target.value;
-                            if (rawValue === "") {
-                              setCreditCount("");
-                              return;
-                            }
-
+                            if (rawValue === "") { setCreditCount(""); return; }
                             const value = Number(rawValue);
                             if (!Number.isFinite(value) || value < 0) return;
                             if (value > 10000) {
@@ -304,15 +382,13 @@ const CompanyOnboarding = () => {
                             setCreditCount(rawValue);
                           }}
                           onBlur={() => {
-                            if (creditCount === "" || Number(creditCount) < 1) {
-                              setCreditCount("1");
-                            }
+                            if (creditCount === "" || Number(creditCount) < 1) setCreditCount("1");
                           }}
                           className="w-32 bg-background-primary border border-heading/50 rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors"
                         />
                         <span className="text-sm text-muted">credits</span>
                         <span className="text-sm font-semibold text-heading ml-auto">
-                          {getCurrencySymbol()}{(getEstimatedTotal() ?? 0).toLocaleString()} USD estimated
+                          {getCurrencySymbol()}{(getEstimatedTotal() ?? 0).toLocaleString()} {billingCurrency} estimated
                         </span>
                       </div>
                     </div>
@@ -353,7 +429,6 @@ const CompanyOnboarding = () => {
                   <p className="text-sm text-body">Tell us about your company and who should have access.</p>
                 </div>
 
-                {/* Company info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-heading mb-1.5">Company name *</label>
@@ -498,15 +573,9 @@ const CompanyOnboarding = () => {
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="text-lg font-serif text-heading">{plan.displayName}</p>
-                          <p className="text-sm text-body">
-                            {plan.basePriceUsd === 0
-                              ? "Free tier"
-                              : `$${plan.basePriceUsd} USD/credit × ${numericCreditCount} credits`}
-                          </p>
+                          <p className="text-sm text-body">{formatPricePerCredit(plan)}</p>
                         </div>
-                        <p className="text-2xl font-serif text-heading">
-                          {total !== null ? `$${total.toLocaleString()} USD` : "Free"}
-                        </p>
+                        <p className="text-2xl font-serif text-heading">{formatTotal(total)}</p>
                       </div>
                     );
                   })()}
@@ -547,7 +616,9 @@ const CompanyOnboarding = () => {
 
                 {/* Team members summary */}
                 <div className="bg-button-secondary rounded-2xl p-6">
-                  <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Team Members ({teamMembers.length})</h3>
+                  <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+                    Team Members ({teamMembers.length})
+                  </h3>
                   <div className="space-y-2">
                     {teamMembers.map((member, i) => (
                       <div key={i} className="flex items-center justify-between text-sm">
@@ -569,11 +640,7 @@ const CompanyOnboarding = () => {
                   <Button variant="secondary" onClick={() => goToStep(2)} icon={<LucideArrowLeft />}>
                     Back
                   </Button>
-                  <Button
-                    variant="primary"
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                  >
+                  <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
                     {submitting ? (
                       <span className="flex items-center gap-2">
                         <LucideLoader2 className="w-4 h-4 animate-spin" />
@@ -606,30 +673,36 @@ const CompanyOnboarding = () => {
                     <div className="bg-button-secondary rounded-2xl p-6 text-left">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-muted">Plan</span>
-                        <span className="text-sm font-semibold text-heading">{onboardingResult.selectedPlanCode}</span>
+                        <span className="text-sm font-semibold text-heading">
+                          {selectedPlanData?.displayName ?? onboardingResult.selectedPlanCode}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted">Credits</span>
-                        <span className="text-sm font-semibold text-heading">{onboardingResult.creditCount ?? numericCreditCount}</span>
+                        <span className="text-sm font-semibold text-heading">
+                          {onboardingResult.creditCount ?? numericCreditCount}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-sm text-muted">Amount</span>
                         <span className="text-lg font-serif text-heading">
                           {(() => {
                             const estimated = getEstimatedTotal();
-                            if (estimated !== null && estimated > 0) {
-                              return `$${estimated.toLocaleString()} USD`;
-                            }
-                            if (onboardingResult.paymentAmount != null && onboardingResult.paymentAmount > 0) {
+                            if (estimated !== null && estimated > 0) return formatTotal(estimated);
+                            if (onboardingResult.paymentAmount != null && onboardingResult.paymentAmount > 0)
                               return `${getCurrencySymbol()}${onboardingResult.paymentAmount.toLocaleString()}`;
-                            }
                             return "Free";
                           })()}
                         </span>
                       </div>
                     </div>
 
-                    <Button variant="primary" onClick={handlePay} disabled={initiatePayment.isPending} className="w-full">
+                    <Button
+                      variant="primary"
+                      onClick={handlePay}
+                      disabled={initiatePayment.isPending}
+                      className="w-full"
+                    >
                       {initiatePayment.isPending ? (
                         <span className="flex items-center gap-2">
                           <LucideLoader2 className="w-4 h-4 animate-spin" />
@@ -641,8 +714,8 @@ const CompanyOnboarding = () => {
                     </Button>
 
                     <p className="text-xs text-muted">
-                      You will be redirected to our secure payment partner (Flutterwave) to complete the transaction.
-                      After payment, your registration will be reviewed by our team.
+                      You will be redirected to our secure payment partner (Flutterwave) to complete the
+                      transaction. After payment, your registration will be reviewed by our team.
                     </p>
                   </>
                 ) : (

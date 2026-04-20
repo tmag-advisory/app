@@ -1,67 +1,37 @@
+import { useState } from "react";
 import { LucideCheck, LucideArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
-import { creditPlans, premiumFeatures } from "../../constants/companyPlans";
+import { useCurrencyStore } from "../../stores/currencyStore";
+import {
+  individualPlans,
+  creditPlans,
+  premiumFeatures,
+  enterpriseTiers,
+  enterprisePlanCodes,
+  signupRanges,
+  type SignupRange,
+  type ServiceLevel,
+} from "../../constants/companyPlans";
 
-const individualPlans = [
-  {
-    name: "Essential",
-    code: "ESSENTIAL",
-    price: "Free",
-    priceNote: "1 credit included at signup",
-    description: "Generic destination health education for casual travellers.",
-    features: [
-      "Destination health risk overview",
-      "General food & water safety",
-      "Environmental considerations",
-      "Post-return awareness note",
-      "WHO & CDC validated guidance",
-    ],
-    cta: "Start free",
-    highlighted: false,
-    tier: "free",
-  },
-  {
-    name: "Standard",
-    code: "STANDARD",
-    price: "$50",
-    priceNote: "per credit",
-    description: "Fully personalised travel health report across 14 clinical decision trees.",
-    features: [
-      "Trip at a glance summary",
-      "Personalised health risk overview",
-      "Vaccination gap analysis",
-      "Activity & destination-specific guidance",
-      "Emergency contacts & local clinics",
-      "After-return symptom timeline",
-      "Next steps checklist",
-    ],
-    cta: "Get started",
-    highlighted: true,
-    tier: "standard",
-  },
-  {
-    name: "Premium",
-    code: "PREMIUM",
-    price: "$100",
-    priceNote: "per credit",
-    description: "Everything in Standard plus clinical-grade extras for high-risk or complex trips.",
-    features: [
-      "All Standard plan features",
-      "Pre-travel preparation checklist",
-      "Medication & supplies packing list",
-      "Doctor-ready clinical summary letter",
-      "Priority physician review flag",
-    ],
-    cta: "Get Premium",
-    highlighted: false,
-    tier: "premium",
-  },
-];
+type Audience = "individual" | "company";
+
+function formatPrice(priceUsd: number, priceNgn: number, currency: string): string {
+  if (priceUsd === 0) return "Free";
+  if (currency === "NGN") return `₦${priceNgn.toLocaleString()}`;
+  return `$${priceUsd}`;
+}
 
 const PricingPage = () => {
+  const [audience, setAudience] = useState<Audience>("individual");
+  const [signupRange, setSignupRange] = useState<SignupRange>("0-100");
+  const { selectedCurrency, setCurrency } = useCurrencyStore();
+
+  const standardPlan = creditPlans.find((p) => p.tier === "standard")!;
+  const premiumPlan = creditPlans.find((p) => p.tier === "premium")!;
+
   return (
     <main>
       {/* Hero */}
@@ -78,207 +48,256 @@ const PricingPage = () => {
         </p>
       </AnimateIn>
 
-      {/* Individual plans */}
-      <section className="px-8 lg:px-16 pb-8 max-w-7xl mx-auto">
-        <AnimateIn className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-3">
-            For <span className="italic">individuals</span>
-          </h2>
-          <p className="text-sm text-muted max-w-md mx-auto">
-            One credit = one travel health plan. Choose the depth of report that fits your trip.
-          </p>
-        </AnimateIn>
+      {/* Controls row — audience tabs + currency toggle */}
+      <div className="px-8 lg:px-16 max-w-7xl mx-auto mb-10">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Audience pill */}
+          <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
+            {(["individual", "company"] as Audience[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setAudience(tab)}
+                className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  audience === tab
+                    ? "bg-white shadow-sm text-heading"
+                    : "text-muted hover:text-heading"
+                }`}
+              >
+                {tab === "individual" ? "For individuals" : "For companies"}
+              </button>
+            ))}
+          </div>
 
-        <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto" stagger={0.12}>
-          {individualPlans.map((plan) => (
-            <motion.div
-              variants={staggerItem}
-              key={plan.name}
-              className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden ${
-                plan.highlighted ? "" : plan.tier === "premium" ? "bg-button-secondary border border-amber-200/60" : "bg-button-secondary"
-              }`}
-            >
-              {plan.highlighted && (
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #2a7a6a 0%, #1a6a7a 30%, #187080 55%, #1a6878 80%, #246858 100%)",
-                  }}
-                />
-              )}
-              {plan.highlighted && (
-                <span className="absolute top-6 right-6 text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full">
-                  Most popular
-                </span>
-              )}
-              {plan.tier === "premium" && (
-                <span className="absolute top-6 right-6 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
-                  Best report
-                </span>
-              )}
-              <div className="relative z-10">
-                <h3 className={`text-lg font-semibold mb-1 ${plan.highlighted ? "text-white" : "text-heading"}`}>
-                  {plan.name}
-                </h3>
-                <p className={`text-sm mb-6 ${plan.highlighted ? "text-white/60" : "text-body"}`}>
-                  {plan.description}
-                </p>
-                <div className="flex items-baseline gap-1.5 mb-1">
-                  <span className={`text-4xl font-serif ${plan.highlighted ? "text-white" : plan.tier === "premium" ? "text-amber-700" : "text-heading"}`}>
-                    {plan.price}
-                  </span>
-                </div>
-                <p className={`text-xs mb-8 ${plan.highlighted ? "text-white/50" : "text-muted"}`}>
-                  {plan.priceNote}
-                </p>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((f) => (
-                    <li
-                      key={f}
-                      className={`flex items-start gap-3 text-sm ${plan.highlighted ? "text-white" : "text-heading"}`}
-                    >
-                      <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${plan.highlighted ? "text-white/60" : plan.tier === "premium" ? "text-amber-600" : "text-accent"}`} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {plan.highlighted ? (
-                <Button
-                  variant="primary"
-                  link={`/register?plan=${plan.code}`}
-                  className="relative z-10 self-stretch bg-white text-dark! hover:bg-white/90 text-center justify-center flex"
-                >
-                  {plan.cta}
-                </Button>
-              ) : (
-                <Button
-                  variant="secondary"
-                  icon={<LucideArrowRight />}
-                  link={`/register?plan=${plan.code}`}
-                  className={`self-start relative z-10 ${plan.tier === "premium" ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`}
-                >
-                  {plan.cta}
-                </Button>
-              )}
-            </motion.div>
-          ))}
-        </StaggerGroup>
-      </section>
-
-      {/* Divider */}
-      <div className="px-8 lg:px-16 py-8 max-w-7xl mx-auto">
-        <div className="border-t border-border-light/50"></div>
+          {/* Currency toggle */}
+          <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
+            {(["USD", "NGN"] as const).map((cur) => (
+              <button
+                key={cur}
+                onClick={() => setCurrency(cur)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  selectedCurrency === cur
+                    ? "bg-white shadow-sm text-heading"
+                    : "text-muted hover:text-heading"
+                }`}
+              >
+                {cur === "USD" ? "$ USD" : "₦ NGN"}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Company plans */}
-      <section className="px-8 lg:px-16 pb-24 max-w-7xl mx-auto">
-        <AnimateIn className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-3">
-            For <span className="italic">companies</span>
-          </h2>
-          <p className="text-sm text-muted max-w-md mx-auto">
-            Your team buys credits and uses them to generate travel health plans. Choose the plan tier that matches your reporting needs.
-          </p>
-        </AnimateIn>
-
-        <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl justify-center mx-auto" stagger={0.12}>
-          {creditPlans.filter((plan) => plan.tier === "standard" || plan.tier === "premium").map((plan) => (
-            <motion.div
-              variants={staggerItem}
-              key={plan.tier}
-              className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden ${
-                plan.tier === "standard"
-                  ? ""
-                  : plan.tier === "premium"
-                  ? "bg-button-secondary border border-amber-200/60"
-                  : "bg-button-secondary"
-              }`}
-            >
-              {plan.tier === "standard" && (
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #2a7a6a 0%, #1a6a7a 30%, #187080 55%, #1a6878 80%, #246858 100%)",
-                  }}
-                />
-              )}
-              {plan.tier === "standard" && (
-                <span className="absolute top-6 right-6 text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full">
-                  Most popular
-                </span>
-              )}
-              {plan.tier === "premium" && (
-                <span className="absolute top-6 right-6 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
-                  Best report
-                </span>
-              )}
-              <div className="relative z-10">
-                <h3 className={`text-lg font-semibold mb-1 ${plan.tier === "standard" ? "text-white" : "text-heading"}`}>
-                  {plan.name}
-                </h3>
-                <p className={`text-sm mb-6 ${plan.tier === "standard" ? "text-white/60" : "text-body"}`}>
-                  {plan.description}
-                </p>
-                <div className="flex items-baseline gap-1.5 mb-1">
-                  <span className={`text-4xl font-serif ${plan.tier === "standard" ? "text-white" : plan.tier === "premium" ? "text-amber-700" : "text-heading"}`}>
-                    {plan.priceUsd === 0 ? "Free" : `$${plan.priceUsd}`}
+      {/* Individual plans */}
+      {audience === "individual" && (
+        <section className="px-8 lg:px-16 pb-24 max-w-7xl mx-auto">
+          <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto" stagger={0.12}>
+            {individualPlans.map((plan) => (
+              <motion.div
+                variants={staggerItem}
+                key={plan.name}
+                className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden ${
+                  plan.highlighted
+                    ? ""
+                    : plan.tier === "premium"
+                    ? "bg-button-secondary border border-amber-200/60"
+                    : "bg-button-secondary"
+                }`}
+              >
+                {plan.highlighted && (
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #2a7a6a 0%, #1a6a7a 30%, #187080 55%, #1a6878 80%, #246858 100%)",
+                    }}
+                  />
+                )}
+                {plan.highlighted && (
+                  <span className="absolute top-6 right-6 text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full">
+                    Most popular
                   </span>
+                )}
+                {plan.tier === "premium" && (
+                  <span className="absolute top-6 right-6 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                    Best report
+                  </span>
+                )}
+                <div className="relative z-10">
+                  <h3 className={`text-lg font-semibold mb-1 ${plan.highlighted ? "text-white" : "text-heading"}`}>
+                    {plan.name}
+                  </h3>
+                  <p className={`text-sm mb-6 ${plan.highlighted ? "text-white/60" : "text-body"}`}>
+                    {plan.description}
+                  </p>
+                  <div className="flex items-baseline gap-1.5 mb-1">
+                    <span className={`text-4xl font-serif ${plan.highlighted ? "text-white" : plan.tier === "premium" ? "text-amber-700" : "text-heading"}`}>
+                      {formatPrice(plan.priceUsd, plan.priceNgn, selectedCurrency)}
+                    </span>
+                  </div>
+                  <p className={`text-xs mb-8 ${plan.highlighted ? "text-white/50" : "text-muted"}`}>
+                    {plan.priceNote}
+                  </p>
+                  <ul className="space-y-3 mb-8">
+                    {plan.features.map((f) => (
+                      <li
+                        key={f}
+                        className={`flex items-start gap-3 text-sm ${plan.highlighted ? "text-white" : "text-heading"}`}
+                      >
+                        <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${plan.highlighted ? "text-white/60" : plan.tier === "premium" ? "text-amber-600" : "text-accent"}`} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <p className={`text-xs mb-8 ${plan.tier === "standard" ? "text-white/50" : "text-muted"}`}>
-                  {plan.priceUsd === 0 ? "included at signup" : "per credit"}
-                </p>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((f) => (
-                    <li
-                      key={f}
-                      className={`flex items-start gap-3 text-sm ${plan.tier === "standard" ? "text-white" : "text-heading"}`}
-                    >
-                      <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${plan.tier === "standard" ? "text-white/60" : plan.tier === "premium" ? "text-amber-600" : "text-accent"}`} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {plan.tier === "standard" ? (
-                <Button
-                  variant="primary"
-                  link="/company-onboarding"
-                  className="relative z-10 self-stretch bg-white text-dark! hover:bg-white/90 text-center justify-center flex"
-                >
-                  Get started
-                </Button>
-              ) : (
-                <Button
-                  variant="secondary"
-                  icon={<LucideArrowRight />}
-                  link="/company-onboarding"
-                  className={`self-start relative z-10 ${plan.tier === "premium" ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`}
-                >
-                  Get started
-                </Button>
-              )}
-            </motion.div>
-          ))}
-        </StaggerGroup>
+                {plan.highlighted ? (
+                  <Button
+                    variant="primary"
+                    link={`/register?plan=${plan.code}`}
+                    className="relative z-10 self-stretch bg-white text-dark! hover:bg-white/90 text-center justify-center flex"
+                  >
+                    {plan.cta}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    icon={<LucideArrowRight />}
+                    link={`/register?plan=${plan.code}`}
+                    className={`self-start relative z-10 ${plan.tier === "premium" ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`}
+                  >
+                    {plan.cta}
+                  </Button>
+                )}
+              </motion.div>
+            ))}
+          </StaggerGroup>
+        </section>
+      )}
 
-        {/* Premium extras callout */}
-        <AnimateIn className="mt-10">
-          <div className="bg-button-secondary rounded-3xl border border-amber-200/60 p-8">
-            <h3 className="text-xl font-serif text-heading mb-5">Exclusive to Premium</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {premiumFeatures.map((feature) => (
-                <div key={feature} className="flex items-start gap-3 text-sm text-heading">
-                  <LucideCheck className="w-4 h-4 mt-0.5 text-amber-600 shrink-0" />
-                  {feature}
-                </div>
+      {/* Company plans — matrix */}
+      {audience === "company" && (
+        <section className="px-8 lg:px-16 pb-16 max-w-7xl mx-auto">
+          {/* Signup-range selector */}
+          <div className="flex justify-center mb-10">
+            <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
+              {signupRanges.map((r) => (
+                <button
+                  key={r.value}
+                  onClick={() => setSignupRange(r.value)}
+                  className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    signupRange === r.value
+                      ? "bg-white shadow-sm text-heading"
+                      : "text-muted hover:text-heading"
+                  }`}
+                >
+                  {r.label} <span className="text-muted font-normal">signups</span>
+                </button>
               ))}
             </div>
           </div>
-        </AnimateIn>
-      </section>
+
+          {/* Two enterprise cards */}
+          <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto" stagger={0.12}>
+            {(["standard", "premium"] as ServiceLevel[]).map((level) => {
+              const basePlan = level === "standard" ? standardPlan : premiumPlan;
+              const tierName = enterpriseTiers[signupRange][level];
+              const isStandard = level === "standard";
+
+              return (
+                <motion.div
+                  variants={staggerItem}
+                  key={level}
+                  className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden ${
+                    isStandard ? "" : "bg-button-secondary border border-amber-200/60"
+                  }`}
+                >
+                  {isStandard && (
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #2a7a6a 0%, #1a6a7a 30%, #187080 55%, #1a6878 80%, #246858 100%)",
+                      }}
+                    />
+                  )}
+                  {isStandard && (
+                    <span className="absolute top-6 right-6 text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full">
+                      Most popular
+                    </span>
+                  )}
+                  {!isStandard && (
+                    <span className="absolute top-6 right-6 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                      Best report
+                    </span>
+                  )}
+                  <div className="relative z-10">
+                    <h3 className={`text-lg font-semibold mb-0.5 ${isStandard ? "text-white" : "text-heading"}`}>
+                      {tierName}
+                    </h3>
+                    <p className={`text-xs mb-6 font-medium uppercase tracking-wide ${isStandard ? "text-white/50" : "text-muted"}`}>
+                      {level === "standard" ? "Standard service" : "Premium service"}
+                    </p>
+                    <p className={`text-sm mb-6 ${isStandard ? "text-white/60" : "text-body"}`}>
+                      {basePlan.description}
+                    </p>
+                    <div className="flex items-baseline gap-1.5 mb-1">
+                      <span className={`text-4xl font-serif ${isStandard ? "text-white" : "text-amber-700"}`}>
+                        {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency)}
+                      </span>
+                    </div>
+                    <p className={`text-xs mb-8 ${isStandard ? "text-white/50" : "text-muted"}`}>
+                      per credit
+                    </p>
+                    <ul className="space-y-3 mb-8">
+                      {basePlan.features.map((f) => (
+                        <li
+                          key={f}
+                          className={`flex items-start gap-3 text-sm ${isStandard ? "text-white" : "text-heading"}`}
+                        >
+                          <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${isStandard ? "text-white/60" : "text-amber-600"}`} />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {isStandard ? (
+                    <Button
+                      variant="primary"
+                      link={`/company-onboarding?plan=${enterprisePlanCodes[signupRange][level]}`}
+                      className="relative z-10 self-stretch bg-white text-dark! hover:bg-white/90 text-center justify-center flex"
+                    >
+                      Get started
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      icon={<LucideArrowRight />}
+                      link={`/company-onboarding?plan=${enterprisePlanCodes[signupRange][level]}`}
+                      className="self-start relative z-10 border-amber-300 text-amber-700 hover:bg-amber-50"
+                    >
+                      Get started
+                    </Button>
+                  )}
+                </motion.div>
+              );
+            })}
+          </StaggerGroup>
+
+          {/* Premium extras callout */}
+          <AnimateIn className="mt-10 max-w-3xl mx-auto">
+            <div className="bg-button-secondary rounded-3xl border border-amber-200/60 p-8">
+              <h3 className="text-xl font-serif text-heading mb-5">Exclusive to Premium</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {premiumFeatures.map((feature) => (
+                  <div key={feature} className="flex items-start gap-3 text-sm text-heading">
+                    <LucideCheck className="w-4 h-4 mt-0.5 text-amber-600 shrink-0" />
+                    {feature}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </AnimateIn>
+        </section>
+      )}
 
       {/* FAQ section */}
       <div className="bg-background-secondary">
@@ -300,7 +319,7 @@ const PricingPage = () => {
               },
               {
                 q: "What's the difference between Standard and Premium?",
-                a: "Standard ($50/credit) generates a fully personalised travel health report covering vaccines, medications, risks, and emergency contacts. Premium ($100/credit) adds a Pre-Travel Checklist, Medication Packing List, and a Doctor-Ready Clinical Summary Letter for your GP.",
+                a: "Standard generates a fully personalised travel health report covering vaccines, medications, risks, and emergency contacts. Premium adds a Pre-Travel Checklist, Medication Packing List, and a Doctor-Ready Clinical Summary Letter for your GP.",
               },
               {
                 q: "Can I upgrade my company plan?",

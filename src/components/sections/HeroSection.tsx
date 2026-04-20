@@ -26,7 +26,7 @@ const HERO_VARIANT: HeroVariant = {
     eyebrow: "Physician-designed. Evidence-based.",
     headlineLines: ["Travel Far.", "Come Back", "Safe."],
     subtext: "Get a personalized travel health plan in under 2 minutes vaccines, medications, disease risks, and more.",
-    cta: "Get My Free Plan",
+    cta: "Get started",
     destinations: [
         { country: "Japan", flag: "🇯🇵", risk: "Low" },
         { country: "Kenya", flag: "🇰🇪", risk: "High", alert: "Malaria zone" },
@@ -263,7 +263,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                             <Divider />
                             <p data-hero-anim className="text-body leading-relaxed max-w-md sm:text-lg">{variant.subtext}</p>
                             <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8">
-                                <Button variant="primary" link="/register">{variant.cta}</Button>
+                                <Button variant="primary" link="/pricing">{variant.cta}</Button>
                                 <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">Learn More <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
                             </div>
                             {/*<StatsRow />*/}
