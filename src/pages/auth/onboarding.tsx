@@ -47,7 +47,6 @@ const Onboarding = () => {
     const { setUserType: storeSetUserType, reset: resetOnboarding } = useOnboardingStore();
     const { selectedCurrency } = useCurrencyStore();
     const [searchParams] = useSearchParams();
-
     const { data: onboardingData } = useOnboarding();
     const { data: myCompanies } = useMyCompanies();
 
@@ -167,6 +166,12 @@ const Onboarding = () => {
             setDebouncedCode(invitedCompany.company_code || "");
         }
     }, [invitedCompany]);
+
+    useEffect(() => {
+        if(user && user.extend && user.extend.role_name.toLowerCase() === "individual") {
+            setUserType(user?.extend?.role_name.toLowerCase() as "individual" | "company");
+        }
+    }, []);
 
     const upsertOnboarding = useUpsertOnboarding();
     const advanceStage = useAdvanceOnboardingStage();
@@ -637,8 +642,7 @@ const Onboarding = () => {
                                     transition={{ delay: 0.35 }}
                                     className="mb-8 p-4 rounded-xl bg-accent/5 border border-accent/20 max-w-sm mx-auto"
                                 >
-                                    <p className="text-sm text-heading font-semibold mb-1">Your free plan includes 1 health report</p>
-                                    <p className="text-xs text-muted">Additional reports are ₦50,000 each. No subscriptions, no hidden fees.</p>
+                                    <p className="text-sm text-heading font-semibold mb-1">Your plan includes 1 free health report</p>
                                 </motion.div>
 
                                 <motion.div
@@ -731,7 +735,7 @@ const Onboarding = () => {
                                         transition={{ delay: 0.3 }}
                                         className="text-base text-body mb-2 leading-relaxed max-w-sm mx-auto"
                                     >
-                                        Buy credits now and you're ready to generate plans the moment you land.
+                                        Buy credits now to start generating plans.
                                     </motion.p>
 
                                     {/* 1 credit = 1 plan — bold callout */}
@@ -739,7 +743,7 @@ const Onboarding = () => {
                                         initial={{ opacity: 0, y: 8 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.35 }}
-                                        className="inline-flex items-center gap-2 mb-8 px-5 py-2.5 rounded-xl bg-heading text-background-primary"
+                                        className="inline-flex items-center gap-2 mb-8 px-5 py-2.5 rounded-xl bg-background-secondary text-heading"
                                     >
                                         <LucideZap className="w-4 h-4 shrink-0" />
                                         <span className="text-sm font-bold tracking-tight">1 credit = 1 travel health plan</span>
@@ -806,9 +810,9 @@ const Onboarding = () => {
                                         </button>
                                         <button
                                             onClick={handleSkipCredits}
-                                            className="w-full py-3 text-sm text-muted hover:text-heading transition-colors"
+                                            className="w-full py-3 text-sm cursor-pointer text-muted hover:text-heading transition-colors"
                                         >
-                                            Skip for now — go to dashboard
+                                            Skip for now — Continue
                                         </button>
                                     </motion.div>
                                 </motion.div>
