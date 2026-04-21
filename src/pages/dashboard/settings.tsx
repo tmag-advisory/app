@@ -8,6 +8,7 @@ import {
     useCreateCreditRequest,
 } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
+import PlanUpgradeModal from "../../components/dashboard/PlanUpgradeModal";
 import {
     LucideUser,
     LucideLock,
@@ -57,9 +58,13 @@ const Settings = () => {
     const [creditCount, setCreditCount] = useState(1);
     const [requestReason, setRequestReason] = useState("");
     const [requestingCredits, setRequestingCredits] = useState(false);
+    const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
     const isCompanyUser = myCompanies && myCompanies.length > 0;
     const company = isCompanyUser ? myCompanies[0] : null;
+
+    // Detect free tier users
+    const isFreeUser = user?.user_credit_plan?.code === "ESSENTIAL";
 
     // Billing currency — company users use company currency, individuals use their preference
     // Default to NGN if not set
@@ -186,6 +191,11 @@ const Settings = () => {
         } finally {
             setRequestingCredits(false);
         }
+    };
+
+    const handleUpgradeSuccess = async () => {
+        await refreshProfile();
+        setPurchaseCreditsOpen(true);
     };
 
     return (
@@ -401,12 +411,22 @@ const Settings = () => {
                             </span>
                         </div>
                         <button
-                            onClick={() => setPurchaseCreditsOpen(true)}
+                            onClick={() => {
+                                if (isFreeUser) {
+                                    setUpgradeModalOpen(true);
+                                } else {
+                                    setPurchaseCreditsOpen(true);
+                                }
+                            }}
                             className="py-2.5 px-5 rounded-xl bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent/90 transition-colors duration-200"
                         >
-                            {isCompanyUser ?
+                            {isFreeUser ? (
+                                "Upgrade plan"
+                            ) : isCompanyUser ? (
                                 "Request credits"
-                                : "Purchase credits"}
+                            ) : (
+                                "Purchase credits"
+                            )}
                         </button>
                     </div>
 
@@ -459,7 +479,7 @@ const Settings = () => {
                                         </span>
                                         <span className="text-xs text-muted">
                                             {symbol}
-                                            {perCredit}/credit
+                                            {perCredit.toLocaleString()}/credit
                                         </span>
                                     </button>
                                 );
@@ -532,6 +552,14 @@ const Settings = () => {
                     </div>
                 </div>
             )}
+
+            {/* Plan Upgrade Modal */}
+            <PlanUpgradeModal
+                isOpen={upgradeModalOpen}
+                onClose={() => setUpgradeModalOpen(false)}
+                onUpgradeSuccess={handleUpgradeSuccess}
+                currentPlan={user?.user_credit_plan?.code}
+            />
 
             {/* Purchase Credits Modal */}
             {purchaseCreditsOpen && (

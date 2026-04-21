@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import api from "../../api/axios";
-import { creditPurchaseApi } from "../../api/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../api/hooks";
+import { useVerifyCreditPurchase } from "../../api/hooks";
 import { LucideCheckCircle, LucideXCircle, LucideLoader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,15 +14,18 @@ const PaymentCallback = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { mutateAsync: verifyPurchase } = useVerifyCreditPurchase();
     const [status, setStatus] = useState<PaymentStatus>("verifying");
     const [creditsPurchased, setCreditsPurchased] = useState(0);
     const [errorMessage, setErrorMessage] = useState("");
+    const hasVerified = useRef(false);
 
     const txRef = searchParams.get("tx_ref");
-    const flwStatus = searchParams.get("status");
-    const transactionId = searchParams.get("transaction_id");
+    const transactionId = searchParams.get("transaction_id") || undefined;
 
     useEffect(() => {
+        if (hasVerified.current) return;
+
         const verifyPayment = async () => {
             if (!txRef) {
                 setStatus("failed");
@@ -31,39 +33,37 @@ const PaymentCallback = () => {
                 return;
             }
 
-            // Flutterwave adds status=cancelled or status=failed to the redirect URL
-            if (flwStatus && flwStatus !== "successful" && flwStatus !== "completed") {
-                setStatus("failed");
-                setErrorMessage(
-                    flwStatus === "cancelled"
-                        ? "Payment was cancelled"
-                        : "Payment was not completed"
-                );
-                return;
-            }
+            hasVerified.current = true;
 
             try {
-                const result = await creditPurchaseApi.verify(txRef, transactionId || undefined);
+                const result = await verifyPurchase({
+                    txRef,
+                    transactionId,
+                });
 
                 if (result?.success && result?.purchase?.status === "completed") {
-                    setCreditsPurchased(result.purchase?.creditsPurchased || 0);
+                    const credits = result.purchase?.creditsPurchased || 0;
+                    setCreditsPurchased(credits);
                     setStatus("success");
 
                     sessionStorage.setItem("paymentSuccess", JSON.stringify({
                         success: true,
-                        credits: result.purchase?.creditsPurchased || 0,
+                        credits,
                         txRef,
                         timestamp: Date.now()
                     }));
 
-                    queryClient.removeQueries({ queryKey: queryKeys.profile.all });
+                    // Invalidate queries to refetch profile (server updated credits and onboarding_stage)
+                    queryClient.invalidateQueries({ queryKey: queryKeys.profile.all });
                     queryClient.invalidateQueries({ queryKey: queryKeys.creditPurchases.all });
 
-                    await api.put("/onboarding/stage", { stage: 5 });
-                    await queryClient.invalidateQueries({ queryKey: queryKeys.profile.all });
-
+                    const redirectTo = searchParams.get("redirect") || "settings";
                     setTimeout(() => {
-                        navigate("/onboarding?step=welcome", { replace: true });
+                        if (redirectTo === "settings") {
+                            navigate("/dashboard/settings", { replace: true });
+                        } else {
+                            navigate("/onboarding?step=welcome", { replace: true });
+                        }
                     }, 3000);
                 } else {
                     setStatus("failed");
@@ -74,12 +74,16 @@ const PaymentCallback = () => {
                 }
             } catch (error: any) {
                 setStatus("failed");
-                setErrorMessage(error?.message || "Failed to verify payment");
+                setErrorMessage(
+                    error?.response?.data?.error ||
+                    error?.response?.data?.message ||
+                    "Failed to verify payment"
+                );
             }
         };
 
         verifyPayment();
-    }, [txRef, flwStatus, navigate, queryClient]);
+    }, [txRef, transactionId]);
 
     return (
         <div className="min-h-screen bg-background-primary flex flex-col">
@@ -227,16 +231,23 @@ const PaymentCallback = () => {
                                     className="flex flex-col gap-3"
                                 >
                                     <button
-                                        onClick={() => navigate("/dashboard/settings")}
+                                        onClick={() => {
+                                            const redirectTo = searchParams.get("redirect");
+                                            if (redirectTo === "onboarding") {
+                                                navigate("/onboarding?step=welcome");
+                                            } else {
+                                                navigate("/dashboard/settings");
+                                            }
+                                        }}
                                         className="w-full py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200"
                                     >
                                         Try again
                                     </button>
                                     <button
-                                        onClick={() => navigate("/dashboard")}
+                                        onClick={() => navigate(searchParams.get("redirect") === "onboarding" ? "/onboarding?step=welcome" : "/dashboard")}
                                         className="w-full py-3 rounded-xl bg-button-secondary text-heading font-semibold text-sm cursor-pointer hover:bg-border-light transition-colors duration-200"
                                     >
-                                        Go to dashboard
+                                        Go {searchParams.get("redirect") === "onboarding" ? "to onboarding" : "to dashboard"}
                                     </button>
                                 </motion.div>
                             </motion.div>

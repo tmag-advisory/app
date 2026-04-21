@@ -910,6 +910,14 @@ export function useUpdateProfilePassword() {
   });
 }
 
+export function useUpgradeUserPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (planCode: string) => profileApi.upgradePlan(planCode),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.profile.all }),
+  });
+}
+
 export function useResendVerificationEmail() {
   return useMutation({
     mutationFn: (data: ResendVerificationRequest) => authApi.resendVerificationEmail(data),
@@ -1046,7 +1054,8 @@ export function useInitiateCreditPurchase() {
 export function useVerifyCreditPurchase() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (txRef: string) => creditPurchaseApi.verify(txRef),
+    mutationFn: ({ txRef, transactionId }: { txRef: string; transactionId?: string }) =>
+      creditPurchaseApi.verify(txRef, transactionId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.profile.all });
       qc.invalidateQueries({ queryKey: queryKeys.creditPurchases.all });

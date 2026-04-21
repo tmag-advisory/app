@@ -488,6 +488,9 @@ export const profileApi = {
 
   updatePassword: (data: UpdateProfilePasswordRequest) =>
     api.put<ApiResponse<null>>("/profile/password", data).then((r) => r.data.data),
+
+  upgradePlan: (planCode: string) =>
+    api.put<ApiResponse<ProfileResponse>>("/profile/upgrade-plan", { planCode }).then((r) => r.data.data),
 };
 
 // ─── Onboarding ──────────────────────────────────────────────
