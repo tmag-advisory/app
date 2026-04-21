@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 type PaymentStatus = "verifying" | "success" | "failed";
 
-const ease: number[] = [0.25, 0.1, 0.25, 1];
+const ease = [0.25, 0.1, 0.25, 1] as const;
 
 const PaymentCallback = () => {
     const [searchParams] = useSearchParams();

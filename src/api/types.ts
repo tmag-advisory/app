@@ -691,8 +691,100 @@ export interface UpdateProfilePasswordRequest {
 export interface CompanyUserResponse {
   id: number;
   role: string;
+  creditsAllocated?: number;
+  creditsUsed?: number;
   companyId: number;
   userId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCompanyUserRequest {
+  role: string;
+  company_id: number;
+  user_id: number;
+}
+
+export interface MyCompanyMembership {
+  id: number;
+  name: string;
+  industry: string;
+  plan: string;
+  company_code: string;
+  total_credits: number;
+  used_credits: number;
+  employee_count: number;
+  billing_currency?: BillingCurrency;
+  credit_plan?: CreditPlan | null;
+  role: string;
+  credits_allocated?: number;
+  credits_used?: number;
+}
+
+// ─── Onboarding ──────────────────────────────────────────────
+
+export interface UserOnboardingResponse {
+  id: number;
+  userType: string | null;
+  nationality: string | null;
+  companyCode: string | null;
+  completedAt: string | null;
+  userId: number;
+  createdAt: string;
+  updatedAt: string;
+  questionnaireCompleted: boolean | null;
+}
+
+export interface UpsertOnboardingRequest {
+  userType?: string;
+  nationality?: string;
+  companyCode?: string;
+  complete?: boolean;
+}
+
+export interface AdvanceStageRequest {
+  stage: number;
+}
+
+export interface OnboardingQuestion {
+  id: number;
+  text: string;
+  type: string;
+  options?: string[];
+  required?: boolean;
+}
+
+export interface OnboardingQuestionCategoryResponse {
+  id: number;
+  category_key: string;
+  category_name: string;
+  category_icon: string;
+  category_description: string;
+  display_order: number;
+  is_optional: boolean;
+  questions: string;
+}
+
+export interface SubmitQuestionnaireRequest {
+  responses: string | Record<string, unknown>;
+  complete?: boolean;
+}
+
+export interface QuestionnaireProgressRequest {
+  [key: string]: unknown;
+}
+
+// ─── Plan Usage Ledger ───────────────────────────────────────
+
+export interface PlanUsageLedgerResponse {
+  id: number;
+  action: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  travelPlanId: number | null;
+  travelPlanDestination: string | null;
+  travelPlanCountry: string | null;
+  userId: number | null;
   createdAt: string;
   updatedAt: string;
 }

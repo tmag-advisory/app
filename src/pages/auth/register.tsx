@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import { AxiosError } from "axios";
 import { LucideLoader, LucideArrowLeft } from "lucide-react";
 import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
+import type { BillingCurrency } from "../../api";
 
 const planLabels: Record<string, { name: string; color: string }> = {
     ESSENTIAL: { name: "Essential", color: "bg-gray-100 text-gray-700" },
@@ -62,7 +63,7 @@ const Register = () => {
                     form.email.split("@")[0] + form.name.split(" ")[0]
                 ).toLowerCase(),
                 planCode: selectedPlan ?? undefined,
-                billing_currency: selectedCurrency,
+                billing_currency: selectedCurrency as BillingCurrency,
             });
             setRegisteredEmail(form.email);
             toast.success("Check your email for a verification code!", { id: toastkey });
