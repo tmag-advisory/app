@@ -12,6 +12,7 @@ import {
 } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { DashboardAmbientBackground } from "../../components/dashboard/dashboardChrome";
+import QuestionnaireProgressBanner from "../../components/dashboard/QuestionnaireProgressBanner";
 import toast from "react-hot-toast";
 import PlanQuestionnaireFlow from "../../components/plan/PlanQuestionnaireFlow";
 import type { QuestionnairePlanPayload } from "../../components/plan/PlanQuestionnaireFlow";
@@ -264,6 +265,7 @@ const CreatePlan = () => {
                 </div>
 
                 <div className="max-w-5xl mx-auto px-6 pb-14 md:px-12">
+                    <QuestionnaireProgressBanner />
                     {activeDraft && !draftsLoading ? (
                         <DraftBanner draft={activeDraft} onResume={handleResumeDraft} onDiscard={() => void handleStartFresh()} />
                     ) : (

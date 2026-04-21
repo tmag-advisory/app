@@ -370,6 +370,7 @@ const TravelHealthQuestionnaire = () => {
 
     // Mobile accordion state for progress tracker
     const [mobileAccordionOpen, setMobileAccordionOpen] = useState(false);
+    const [isSavingExit, setIsSavingExit] = useState(false);
 
     const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const pendingSaveRef = useRef(false);
@@ -507,6 +508,25 @@ const TravelHealthQuestionnaire = () => {
                 },
             };
         });
+
+    const handleSaveAndExit = async () => {
+        const dashboardPath = user && canAccessHR(user) ? "/hr" : "/dashboard";
+        setIsSavingExit(true);
+        try {
+            const s = latestStateRef.current;
+            await saveProgress.mutateAsync({
+                answers: s.answers,
+                categoryIndex: s.categoryIndex,
+                questionIndex: s.questionIndex,
+            });
+            pendingSaveRef.current = false;
+        } catch {
+            // still navigate so user isn't trapped
+        } finally {
+            setIsSavingExit(false);
+        }
+        navigate(dashboardPath);
+    };
 
     // ─── Navigation ──────────────────────────────────────────
 
@@ -1077,14 +1097,11 @@ const TravelHealthQuestionnaire = () => {
                         </span>
                     </div>
                     <button
-                        onClick={() =>
-                            navigate(
-                                user && canAccessHR(user) ? "/hr" : "/dashboard"
-                            )
-                        }
-                        className="text-xs font-medium text-muted hover:text-heading transition-colors cursor-pointer"
+                        onClick={() => void handleSaveAndExit()}
+                        disabled={isSavingExit}
+                        className="text-xs font-medium text-muted hover:text-heading transition-colors cursor-pointer disabled:opacity-50"
                     >
-                        Save & exit
+                        {isSavingExit ? "Saving…" : "Save & exit"}
                     </button>
                 </div>
             </div>

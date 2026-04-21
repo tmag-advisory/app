@@ -277,6 +277,32 @@ const Onboarding = () => {
         updateProfile.isPending ||
         initiatePurchase.isPending;
 
+    const [isSavingExit, setIsSavingExit] = useState(false);
+
+    const handleSaveAndExit = async () => {
+        setIsSavingExit(true);
+        try {
+            if (step === S_USERTYPE && userType) {
+                await upsertOnboarding.mutateAsync({ userType });
+            } else if (step === S_PROFILE) {
+                await updateProfile.mutateAsync({
+                    first_name: profile.firstName.trim(),
+                    last_name: profile.lastName.trim(),
+                    phone: profile.phone,
+                });
+                await upsertOnboarding.mutateAsync({
+                    nationality: profile.nationality,
+                    companyCode: profile.companyCode,
+                });
+            }
+        } catch {
+            // still navigate so user isn't trapped
+        } finally {
+            setIsSavingExit(false);
+        }
+        navigate("/");
+    };
+
     return (
         <div className="min-h-screen bg-background-primary flex flex-col lg:flex-row">
             {/* Mobile Top bar / Desktop Minimal Header */}
@@ -284,10 +310,20 @@ const Onboarding = () => {
                 <Link to="/" className="text-heading tracking-tight text-xl font-serif font-medium">
                     TMAG
                 </Link>
-                {/* Mobile step counter */}
-                <span className="lg:hidden text-xs text-muted tabular-nums">
-                    Step {step + 1} of {steps.length}
-                </span>
+                <div className="flex items-center gap-5">
+                    {/* Mobile step counter */}
+                    <span className="lg:hidden text-xs text-muted tabular-nums">
+                        Step {step + 1} of {steps.length}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => void handleSaveAndExit()}
+                        disabled={isLoading || isSavingExit}
+                        className="text-xs font-medium text-muted hover:text-heading transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                        {isSavingExit ? "Saving…" : "Save & exit"}
+                    </button>
+                </div>
             </div>
 
             {/* Desktop Sidebar Progress */}

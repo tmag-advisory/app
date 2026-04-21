@@ -56,11 +56,11 @@ const PricingSection = () => {
                                 key={tab}
                                 onClick={() => setAudience(tab)}
                                 className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${audience === tab
-                                        ? "bg-white shadow-sm text-heading"
-                                        : "text-muted hover:text-heading"
+                                    ? "bg-white shadow-sm text-heading"
+                                    : "text-muted hover:text-heading"
                                     }`}
                             >
-                                {tab === "individual" ? "For individuals" : "For companies"}
+                                {tab === "individual" ? "For Individuals" : "For Businesses"}
                             </button>
                         ))}
                     </div>
@@ -72,8 +72,8 @@ const PricingSection = () => {
                                 key={cur}
                                 onClick={() => setCurrency(cur)}
                                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${selectedCurrency === cur
-                                        ? "bg-white shadow-sm text-heading"
-                                        : "text-muted hover:text-heading"
+                                    ? "bg-white shadow-sm text-heading"
+                                    : "text-muted hover:text-heading"
                                     }`}
                             >
                                 {cur === "USD" ? "$ USD" : "₦ NGN"}
@@ -94,10 +94,10 @@ const PricingSection = () => {
                                     variants={staggerItem}
                                     key={plan.name}
                                     className={`relative p-8 flex flex-col justify-between overflow-hidden ${isEssential
-                                            ? "bg-white border border-stone-200"
-                                            : isHighlighted
-                                                ? "border border-[#2a7a6a]/25"
-                                                : "border border-[#c4953a]/35"
+                                        ? "bg-white border border-stone-200"
+                                        : isHighlighted
+                                            ? "border border-[#2a7a6a]/25"
+                                            : "border border-[#c4953a]/35"
                                         }`}
                                 >
                                     {(isHighlighted || isPremium) && (
@@ -200,8 +200,8 @@ const PricingSection = () => {
                                         key={r.value}
                                         onClick={() => setSignupRange(r.value)}
                                         className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${signupRange === r.value
-                                                ? "bg-white shadow-sm text-heading"
-                                                : "text-muted hover:text-heading"
+                                            ? "bg-white shadow-sm text-heading"
+                                            : "text-muted hover:text-heading"
                                             }`}
                                     >
                                         {r.label} <span className="text-muted font-normal">signups</span>
@@ -270,8 +270,8 @@ const PricingSection = () => {
                                             variant="primary"
                                             link={`/company-onboarding?plan=${enterprisePlanCodes[signupRange][level]}`}
                                             className={`relative z-10 self-stretch text-center justify-center flex ${level === "premium"
-                                                    ? "bg-[#c4953a] text-white! hover:bg-[#b07a22]"
-                                                    : "bg-stone-900 text-white! hover:bg-stone-800"
+                                                ? "bg-[#c4953a] text-white! hover:bg-[#b07a22]"
+                                                : "bg-stone-900 text-white! hover:bg-stone-800"
                                                 }`}
                                         >
                                             Get started

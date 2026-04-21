@@ -8,6 +8,7 @@ import { LucideCoins, LucideFileText, LucidePlusCircle, LucideArrowRight, Lucide
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 import { useEffect } from "react";
+import QuestionnaireProgressBanner from "../../components/dashboard/QuestionnaireProgressBanner";
 
 const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
 const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
@@ -37,6 +38,8 @@ const DashboardOverview = () => {
     return (
         <div>
             <DashboardHeader title={`Welcome back, ${user?.first_name ?? ""}.`} />
+
+            <QuestionnaireProgressBanner />
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
