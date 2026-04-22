@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import CountryPicker from "../CountryPicker";
 import TripItineraryFlow, { hydrateLegacyTripItinerary, type TripItineraryData } from "./TripItineraryFlow";
 import { mergeCityCountry } from "./tripItineraryMerge";
-import { validateTripItineraryDates } from "./tripItineraryValidation";
+import { validateTripItineraryDates, getTripItineraryMissingFieldError } from "./tripItineraryValidation";
 import {
     isDateOfBirthPlausible,
     isPlausibleEmail,
@@ -469,6 +469,11 @@ const PlanQuestionnaireFlow = forwardRef<PlanQuestionnaireFlowHandle, PlanQuesti
             if (!isRequiredAnswered(q)) {
                 if (q.type === "trip_itinerary") {
                     const d = hydrateLegacyTripItinerary(answers[q.key] as TripItineraryData);
+                    const missingErr = getTripItineraryMissingFieldError(d);
+                    if (missingErr) {
+                        toast.error(missingErr);
+                        return false;
+                    }
                     const tripErr = validateTripItineraryDates(d);
                     if (tripErr) {
                         toast.error(tripErr);
@@ -543,7 +548,13 @@ const PlanQuestionnaireFlow = forwardRef<PlanQuestionnaireFlowHandle, PlanQuesti
     const handleGeneratePlan = async () => {
         const trip = answers.trip_itinerary as TripItineraryData | undefined;
         if (trip) {
-            const tripErr = validateTripItineraryDates(hydrateLegacyTripItinerary(trip));
+            const d = hydrateLegacyTripItinerary(trip);
+            const missingErr = getTripItineraryMissingFieldError(d);
+            if (missingErr) {
+                toast.error(missingErr);
+                return;
+            }
+            const tripErr = validateTripItineraryDates(d);
             if (tripErr) {
                 toast.error(tripErr);
                 return;
