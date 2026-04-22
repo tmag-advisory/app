@@ -61,7 +61,7 @@ const PricingPage = () => {
                                     : "text-muted hover:text-heading"
                                     }`}
                             >
-                                {tab === "individual" ? "For Individuals" : "For Businesses"}
+                                {tab === "individual" ? "Individuals" : "Company"}
                             </button>
                         ))}
                     </div>
