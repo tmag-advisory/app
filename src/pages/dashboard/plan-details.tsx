@@ -26,15 +26,16 @@ import {
     LucideHeartPulse,
     LucideSparkles,
     LucideCheck,
-    LucideMapPin,
-    LucideCloudSun,
+
     LucideLayers,
-    LucideClipboardList,
+    
     LucidePlane,
     LucideFileText,
     LucideGlobe,
     LucideActivity,
     LucideLoader2,
+    LucideBug,
+    LucideMapPin,
 } from "lucide-react";
 
 // ─── Processing Phases (warm, travel-health tone) ─────────────────
@@ -88,12 +89,14 @@ const WORKSPACE_SOURCES: {
     label: string;
     Icon: typeof LucideSyringe;
 }[] = [
-        { id: "f1", label: "WHO & international vaccine schedules", Icon: LucideSyringe },
-        { id: "f2", label: "Government travel advisories & notices", Icon: LucideShieldCheck },
-        { id: "f3", label: "Weather, climate & air quality snapshot", Icon: LucideCloudSun },
-        { id: "f4", label: "Local health risks & disease activity", Icon: LucideHeartPulse },
-        { id: "f5", label: "Your health profile & trip notes", Icon: LucideClipboardList },
-        { id: "f6", label: "Your personalized advisory sections", Icon: LucideSparkles },
+        { id: "personal_information", label: "Personal Information", Icon: LucideShieldCheck },
+        { id: "travel_details", label: "Travel Itinerary", Icon: LucidePlane },
+        { id: "accommodation_environment", label: "Accommodation & Environment", Icon: LucideShieldCheck },
+        { id: "planned_activities", label: "Planned Activities", Icon: LucideBug },
+        { id: "medical_history", label: "Medical History", Icon: LucideHeartPulse },
+        { id: "vaccination_history", label: "Vaccinations & Past Travel History", Icon: LucideSyringe },
+        { id: "awareness_preparation", label: "Awareness & Preparation", Icon: LucideShieldCheck },
+        { id: "personal_health_risk_behaviours", label: "Personal Health & Risk Behaviours", Icon: LucideBug },
     ];
 
 function indexedSourceCount(phaseIndex: number, phaseTotal: number, sourceCount: number): number {
@@ -820,7 +823,7 @@ const PlanProcessing = ({ destination, country }: { destination?: string; countr
                 {/* Left: hero */}
                 <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
                     {/* Ring + orbit + orb + phase icon */}
-                    <div className="relative mb-8 flex h-[min(220px,42vw)] w-[min(220px,42vw)] max-h-[220px] max-w-[220px] shrink-0 items-center justify-center lg:mx-0">
+                    <div className="relative mb-8 flex h-[min(220px,42vw)] w-[min(220px,42vw)] max-h-55 max-w-55 shrink-0 items-center justify-center lg:mx-0">
                         <OrbitGlyphs reduceMotion={!!reduceMotion} />
                         <div className="relative z-10 flex items-center justify-center" style={{ width: RING_SIZE, height: RING_SIZE }}>
                             <svg
