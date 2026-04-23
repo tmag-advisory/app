@@ -222,7 +222,7 @@ const Onboarding = () => {
             });
             await advanceStage.mutateAsync({ stage: 4 });
             await refreshProfile();
-            goTo(S_CREDITS);
+            goTo(isPaidIndividualPlan ? S_CREDITS : S_WELCOME);
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
             setError(msg || "Failed to save profile. Please try again.");

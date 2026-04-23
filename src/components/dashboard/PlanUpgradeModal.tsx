@@ -2,14 +2,15 @@ import { LucideCheck, LucideX, LucideLoader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "../../lib/utils";
 import { useUpgradeUserPlan } from "../../api/hooks";
-import { useCurrencyStore } from "../../stores/currencyStore";
 import { individualPlans, individualPlanFeatures } from "../../constants/companyPlans";
+import type { BillingCurrency } from "../../api/types";
 
 interface PlanUpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpgradeSuccess: (planCode: string) => void;
   currentPlan?: string;
+  currency: BillingCurrency;
 }
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
@@ -22,9 +23,9 @@ export default function PlanUpgradeModal({
   onClose,
   onUpgradeSuccess,
   currentPlan,
+  currency,
 }: PlanUpgradeModalProps) {
   const upgradePlan = useUpgradeUserPlan();
-  const { selectedCurrency } = useCurrencyStore();
 
   if (!isOpen) return null;
 
@@ -70,10 +71,10 @@ export default function PlanUpgradeModal({
           {plans.map((plan) => {
             const isCurrentPlan = currentPlan === plan.code;
             const price =
-              selectedCurrency === "USD"
+              currency === "USD"
                 ? plan.priceUsd
                 : (plan.priceNgn ?? plan.priceUsd);
-            const symbol = CURRENCY_SYMBOLS[selectedCurrency] || selectedCurrency;
+            const symbol = CURRENCY_SYMBOLS[currency] || currency;
             const tierKey = (plan.tier as "standard" | "premium") || "standard";
             const features = individualPlanFeatures[tierKey] || [];
 

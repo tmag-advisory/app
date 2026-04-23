@@ -559,6 +559,7 @@ const Settings = () => {
                 onClose={() => setUpgradeModalOpen(false)}
                 onUpgradeSuccess={handleUpgradeSuccess}
                 currentPlan={user?.user_credit_plan?.code}
+                currency={activeCurrency}
             />
 
             {/* Purchase Credits Modal */}

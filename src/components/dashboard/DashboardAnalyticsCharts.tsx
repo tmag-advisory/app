@@ -167,7 +167,7 @@ const DashboardAnalyticsCharts = ({ data, isLoading, variant }: DashboardAnalyti
                     )}
                 </ChartCard>
 
-                {variant === "company" ? (
+                {variant === "company" && (
                     <ChartCard title="Credit requests" description="By current status">
                         {hasPositiveCount(creditData) ? (
                             <ResponsiveContainer width="100%" height="100%">
@@ -194,13 +194,6 @@ const DashboardAnalyticsCharts = ({ data, isLoading, variant }: DashboardAnalyti
                                 No credit requests yet.
                             </p>
                         )}
-                    </ChartCard>
-                ) : (
-                    <ChartCard title="Your activity" description="Plans in the last six months">
-                        <p className="text-sm text-muted leading-relaxed px-1">
-                            Use <span className="font-medium text-heading">Create new plan</span> to build travel health advisories.
-                            Monthly totals are shown in the chart above.
-                        </p>
                     </ChartCard>
                 )}
             </div>
