@@ -104,6 +104,15 @@ import type {
   CartCheckoutResponse,
   ExchangeRatesResponse,
   SupportedCurrency,
+  // Doctor
+  DoctorApplicationRequest,
+  DoctorProfileResponse,
+  DoctorDashboardStats,
+  DoctorValidationPlanDto,
+  DoctorValidationDetailDto,
+  ValidatePlanRequest,
+  AdminDoctorApplicationDto,
+  AdminDoctorListItemDto,
 } from "./types";
 
 // ─── Generic CRUD helpers ────────────────────────────────────
@@ -723,6 +732,53 @@ export const publicPlansApi = {
 
   get: (id: number) =>
     api.get<ApiResponse<PublicPlanResponse>>(`/public/plans/${id}`).then((r) => r.data.data),
+};
+
+// ─── Doctor ────────────────────────────────────────────────
+
+export const doctorApi = {
+  getProfile: () =>
+    api.get<ApiResponse<DoctorProfileResponse>>("/doctor/profile").then((r) => r.data.data),
+
+  apply: (data: DoctorApplicationRequest) =>
+    api.post<ApiResponse<DoctorProfileResponse>>("/doctor/apply", data).then((r) => r.data.data),
+
+  getDashboardStats: () =>
+    api.get<ApiResponse<DoctorDashboardStats>>("/doctor/dashboard").then((r) => r.data.data),
+
+  getPendingValidations: (params?: PaginationParams) =>
+    api.get<ApiResponse<PaginatedResponse<DoctorValidationPlanDto>>>("/doctor/pending", { params: buildParams(params) }).then((r) => r.data.data),
+
+  getValidatedPlans: (params?: PaginationParams) =>
+    api.get<ApiResponse<PaginatedResponse<DoctorValidationPlanDto>>>("/doctor/validated", { params: buildParams(params) }).then((r) => r.data.data),
+
+  getValidationDetail: (planId: number) =>
+    api.get<ApiResponse<DoctorValidationDetailDto>>(`/doctor/plans/${planId}`).then((r) => r.data.data),
+
+  validatePlan: (data: ValidatePlanRequest) =>
+    api.post<ApiResponse<DoctorValidationDetailDto>>("/doctor/validate", data).then((r) => r.data.data),
+
+  downloadSignedPdf: (planId: number) =>
+    api.get<Blob>(`/doctor/plans/${planId}/signed-pdf`, { responseType: "blob" }).then((r) => r.data),
+};
+
+// ─── Admin Doctor ──────────────────────────────────────────
+
+export const adminDoctorApi = {
+  getApplications: (status?: string) =>
+    api.get<ApiResponse<AdminDoctorApplicationDto[]>>("/admin/doctors/applications", { params: status ? { status } : {} }).then((r) => r.data.data),
+
+  getDoctors: (params?: PaginationParams) =>
+    api.get<ApiResponse<PaginatedResponse<AdminDoctorListItemDto>>>("/admin/doctors", { params: buildParams(params) }).then((r) => r.data.data),
+
+  approveApplication: (userId: number) =>
+    api.post<ApiResponse<DoctorProfileResponse>>(`/admin/doctors/${userId}/approve`).then((r) => r.data.data),
+
+  rejectApplication: (userId: number, reason: string) =>
+    api.post<ApiResponse<DoctorProfileResponse>>(`/admin/doctors/${userId}/reject`, { reason }).then((r) => r.data.data),
+
+  revokeDoctor: (userId: number) =>
+    api.post<ApiResponse<DoctorProfileResponse>>(`/admin/doctors/${userId}/revoke`).then((r) => r.data.data),
 };
 
 // ─── Company Onboarding ────────────────────────────────────

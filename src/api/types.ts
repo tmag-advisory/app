@@ -237,6 +237,120 @@ export interface PurchaseCreditsRequest {
   reference?: string;
 }
 
+// ─── Doctor ──────────────────────────────────────────────────
+
+export type DoctorApplicationStatus = "NONE" | "PENDING" | "APPROVED" | "REJECTED";
+export type DoctorValidationStatus = "PENDING" | "APPROVED" | "REJECTED" | "NOT_REQUIRED";
+export type PlanTier = "FREE" | "STANDARD" | "PREMIUM";
+
+export interface DoctorApplicationRequest {
+  licenseNumber: string;
+  licenseState: string;
+  licenseCountry: string;
+  specialty: string;
+  yearsOfExperience: number;
+  institution: string;
+  bio: string;
+  phone: string;
+}
+
+export interface DoctorProfileResponse {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  avatarUrl: string;
+  licenseNumber: string;
+  licenseState: string;
+  licenseCountry: string;
+  specialty: string;
+  yearsOfExperience: number;
+  institution: string;
+  bio: string;
+  phone: string;
+  isVerifiedDoctor: boolean;
+  doctorApplicationStatus: DoctorApplicationStatus;
+  doctorApplicationRejectionReason: string | null;
+  doctorApplicationSubmittedAt: string | null;
+  doctorApplicationReviewedAt: string | null;
+  validatedPlansCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DoctorDashboardStats {
+  pendingValidations: number;
+  approvedToday: number;
+  totalValidated: number;
+  recentPlans: DoctorValidationPlanDto[];
+}
+
+export interface DoctorValidationPlanDto {
+  planId: number;
+  destination: string;
+  country: string;
+  purpose: string;
+  duration: number;
+  riskScore: number;
+  validationStatus: DoctorValidationStatus;
+  planTier: PlanTier;
+  travellerName: string;
+  travellerEmail: string;
+  createdAt: string;
+  generatedPlanStatus: string;
+}
+
+export interface DoctorValidationDetailDto {
+  planId: number;
+  destination: string;
+  country: string;
+  purpose: string;
+  duration: number;
+  riskScore: number;
+  validationStatus: DoctorValidationStatus;
+  validatedAt: string | null;
+  validatedByName: string | null;
+  rejectionReason: string | null;
+  planTier: PlanTier;
+  travellerName: string;
+  travellerEmail: string;
+  travellerPhone: string;
+  createdAt: string;
+  generatedPlan: GeneratedPlanPayload | null;
+  generatedPlanContent: GeneratedPlanContent | null;
+}
+
+export interface ValidatePlanRequest {
+  planId: number;
+  approved: boolean;
+  rejectionReason?: string;
+}
+
+export interface AdminDoctorApplicationDto {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  licenseNumber: string;
+  specialty: string;
+  yearsOfExperience: number;
+  institution: string;
+  status: DoctorApplicationStatus;
+  submittedAt: string;
+}
+
+export interface AdminDoctorListItemDto {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  specialty: string;
+  institution: string;
+  isVerifiedDoctor: boolean;
+  validatedPlansCount: number;
+  createdAt: string;
+}
+
 // ─── Travel Plan ─────────────────────────────────────────────
 
 /** Mirrors spring-server GeneratedPlanPayload; present on GET /travel-plans/:id when a row exists. */
@@ -248,6 +362,8 @@ export interface GeneratedPlanPayload {
   tokensUsed?: number | null;
   processingTimeMs?: number | null;
   errorMessage?: string | null;
+  signedPdfUrl?: string | null;
+  isSigned?: boolean;
 }
 
 /** Parsed from AI output (PlanGenerationService JSON schema). */
@@ -360,6 +476,11 @@ export interface TravelPlanResponse {
   createdAt: string;
   updatedAt: string;
   generatedPlan?: GeneratedPlanPayload | null;
+  planTier?: PlanTier;
+  validationStatus?: DoctorValidationStatus;
+  validatedAt?: string | null;
+  validatedByName?: string | null;
+  rejectionReason?: string | null;
 }
 
 export interface CreateTravelPlanRequest {

@@ -31,6 +31,8 @@ import {
   exchangeRatesApi,
   publicPlansApi,
   companyOnboardingApi,
+  doctorApi,
+  adminDoctorApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -73,6 +75,8 @@ import type {
   NewsletterSubscribeRequest,
   EbookCheckoutRequest,
   CartCheckoutRequest,
+  DoctorApplicationRequest,
+  ValidatePlanRequest,
 } from "./types";
 
 // ─── Query Keys ──────────────────────────────────────────────
@@ -217,6 +221,19 @@ export const queryKeys = {
     all: ["plan-usage-ledgers"] as const,
     mine: () => [...["plan-usage-ledgers"], "mine"] as const,
     byEmployee: (employeeId: number) => [...["plan-usage-ledgers"], "employee", employeeId] as const,
+  },
+  doctor: {
+    all: ["doctor"] as const,
+    profile: () => [...["doctor"], "profile"] as const,
+    dashboard: () => [...["doctor"], "dashboard"] as const,
+    pending: (params?: PaginationParams) => [...["doctor"], "pending", params] as const,
+    validated: (params?: PaginationParams) => [...["doctor"], "validated", params] as const,
+    planDetail: (planId: number) => [...["doctor"], "plan", planId] as const,
+  },
+  adminDoctor: {
+    all: ["admin-doctors"] as const,
+    applications: (status?: string) => [...["admin-doctors"], "applications", status] as const,
+    doctors: (params?: PaginationParams) => [...["admin-doctors"], "list", params] as const,
   },
 };
 
@@ -1317,6 +1334,104 @@ export function usePublicPlan(id: number) {
     queryKey: ["public-plans", id],
     queryFn: () => publicPlansApi.get(id),
     enabled: id > 0,
+  });
+}
+
+// ─── Doctor Hooks ────────────────────────────────────────────
+
+export function useDoctorProfile() {
+  return useQuery({
+    queryKey: queryKeys.doctor.profile(),
+    queryFn: () => doctorApi.getProfile(),
+  });
+}
+
+export function useDoctorDashboardStats() {
+  return useQuery({
+    queryKey: queryKeys.doctor.dashboard(),
+    queryFn: () => doctorApi.getDashboardStats(),
+  });
+}
+
+export function useDoctorPendingValidations(params?: PaginationParams) {
+  return useQuery({
+    queryKey: queryKeys.doctor.pending(params),
+    queryFn: () => doctorApi.getPendingValidations(params),
+  });
+}
+
+export function useDoctorValidatedPlans(params?: PaginationParams) {
+  return useQuery({
+    queryKey: queryKeys.doctor.validated(params),
+    queryFn: () => doctorApi.getValidatedPlans(params),
+  });
+}
+
+export function useDoctorValidationDetail(planId: number) {
+  return useQuery({
+    queryKey: queryKeys.doctor.planDetail(planId),
+    queryFn: () => doctorApi.getValidationDetail(planId),
+    enabled: planId > 0,
+  });
+}
+
+export function useApplyAsDoctor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: DoctorApplicationRequest) => doctorApi.apply(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.doctor.all }),
+  });
+}
+
+export function useValidatePlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: ValidatePlanRequest) => doctorApi.validatePlan(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.doctor.all });
+      qc.invalidateQueries({ queryKey: queryKeys.travelPlans.all });
+    },
+  });
+}
+
+// ─── Admin Doctor Hooks ──────────────────────────────────────
+
+export function useAdminDoctorApplications(status?: string) {
+  return useQuery({
+    queryKey: queryKeys.adminDoctor.applications(status),
+    queryFn: () => adminDoctorApi.getApplications(status),
+  });
+}
+
+export function useAdminDoctors(params?: PaginationParams) {
+  return useQuery({
+    queryKey: queryKeys.adminDoctor.doctors(params),
+    queryFn: () => adminDoctorApi.getDoctors(params),
+  });
+}
+
+export function useApproveDoctorApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: number) => adminDoctorApi.approveApplication(userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.adminDoctor.all }),
+  });
+}
+
+export function useRejectDoctorApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, reason }: { userId: number; reason: string }) =>
+      adminDoctorApi.rejectApplication(userId, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.adminDoctor.all }),
+  });
+}
+
+export function useRevokeDoctor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: number) => adminDoctorApi.revokeDoctor(userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.adminDoctor.all }),
   });
 }
 

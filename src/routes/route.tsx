@@ -4,6 +4,7 @@ import HomeLayout from "../layouts/homelayouts";
 import AuthLayout from "../layouts/authlayouts";
 import UserDashboardLayout from "../layouts/userlayouts";
 import HRDashboardLayout from "../layouts/hrlayouts";
+import DoctorDashboardLayout from "../layouts/doctorlayouts";
 import ProtectedRoute from "../components/guards/ProtectedRoute";
 import RoleGuard from "../components/guards/RoleGuard";
 
@@ -64,6 +65,12 @@ const CreditRequests = lazy(() => import("../pages/hr/credit-requests"));
 const Reports = lazy(() => import("../pages/hr/reports"));
 const Billing = lazy(() => import("../pages/hr/billing"));
 const HRBillingCallback = lazy(() => import("../pages/hr/billing-callback"));
+
+// Doctor dashboard (lazy-loaded)
+const DoctorOverview = lazy(() => import("../pages/doctor/overview"));
+const DoctorPendingValidations = lazy(() => import("../pages/doctor/pending-validations"));
+const DoctorValidatedPlans = lazy(() => import("../pages/doctor/validated-plans"));
+const DoctorValidationDetail = lazy(() => import("../pages/doctor/validation-detail"));
 
 // Payment pages
 const PaymentCallback = lazy(() => import("../pages/payment/callback"));
@@ -158,6 +165,24 @@ const router = createBrowserRouter([
     {
         path: "hr/billing/callback",
         element: <HRBillingCallback />,
+    },
+
+    // Doctor dashboard
+    {
+        path: "doctor",
+        element: (
+            <ProtectedRoute>
+                <RoleGuard section="doctor">
+                    <DoctorDashboardLayout />
+                </RoleGuard>
+            </ProtectedRoute>
+        ),
+        children: [
+            { index: true, element: <DoctorOverview /> },
+            { path: "pending", element: <DoctorPendingValidations /> },
+            { path: "validated", element: <DoctorValidatedPlans /> },
+            { path: "plans/:id", element: <DoctorValidationDetail /> },
+        ],
     },
 
     // Individual dashboard

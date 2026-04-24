@@ -36,6 +36,8 @@ import {
     LucideLoader2,
     LucideBug,
     LucideMapPin,
+    LucideShieldCheck as LucideShieldCheckIcon,
+    LucideClock,
 } from "lucide-react";
 
 // ─── Processing Phases (warm, travel-health tone) ─────────────────
@@ -421,6 +423,55 @@ function WhatsHappeningPanel({
 
 const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
 const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
+
+const validationStatusColors: Record<string, { text: string; bg: string }> = {
+    PENDING: { text: "text-amber-700", bg: "bg-amber-50" },
+    APPROVED: { text: "text-emerald-700", bg: "bg-emerald-50" },
+    REJECTED: { text: "text-red-700", bg: "bg-red-50" },
+    NOT_REQUIRED: { text: "text-gray-700", bg: "bg-gray-50" },
+};
+
+function ValidationStatusBadge({ status, validatedAt, validatedByName, rejectionReason }: {
+    status?: string;
+    validatedAt?: string | null;
+    validatedByName?: string | null;
+    rejectionReason?: string | null;
+}) {
+    if (!status || status === "NOT_REQUIRED") return null;
+    const colors = validationStatusColors[status] ?? validationStatusColors.NOT_REQUIRED;
+    return (
+        <div className="mt-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+                {status === "APPROVED" ? (
+                    <LucideShieldCheckIcon className="h-4 w-4 text-emerald-600" />
+                ) : status === "PENDING" ? (
+                    <LucideClock className="h-4 w-4 text-amber-600" />
+                ) : (
+                    <LucideAlertTriangle className="h-4 w-4 text-red-600" />
+                )}
+                <span className={`text-xs font-semibold uppercase tracking-wider ${colors.text}`}>
+                    Doctor Validation: {status}
+                </span>
+            </div>
+            {status === "APPROVED" && validatedAt && (
+                <p className="text-xs text-gray-500">
+                    Approved by Dr. {validatedByName} on {new Date(validatedAt).toLocaleDateString()}
+                </p>
+            )}
+            {status === "REJECTED" && rejectionReason && (
+                <div className="mt-2 p-2.5 rounded-lg bg-red-50">
+                    <p className="text-xs text-red-700 font-medium">Rejection reason:</p>
+                    <p className="text-xs text-red-600">{rejectionReason}</p>
+                </div>
+            )}
+            {status === "PENDING" && (
+                <p className="text-xs text-gray-500">
+                    Your plan is awaiting review by a verified travel medicine doctor. You will be notified once validation is complete.
+                </p>
+            )}
+        </div>
+    );
+}
 
 const getRiskLabel = (score: number) => {
     if (score <= 1) return "Low";
@@ -1196,6 +1247,12 @@ const PlanDetails = () => {
                     <div className="mt-2">
                         <GenerationMetaLine plan={plan} />
                     </div>
+                    <ValidationStatusBadge
+                        status={plan.validationStatus}
+                        validatedAt={plan.validatedAt}
+                        validatedByName={plan.validatedByName}
+                        rejectionReason={plan.rejectionReason}
+                    />
                 </motion.div>
 
                 <GeneratedPlanReport content={parsedContent} />
@@ -1382,6 +1439,12 @@ const PlanDetails = () => {
                     <span className="hidden sm:inline">·</span>
                     <span>Status: {plan.status}</span>
                 </div>
+                <ValidationStatusBadge
+                    status={plan.validationStatus}
+                    validatedAt={plan.validatedAt}
+                    validatedByName={plan.validatedByName}
+                    rejectionReason={plan.rejectionReason}
+                />
                 {plan.medicalConsiderations && (
                     <div className="mt-4 rounded-xl border border-gold/10 bg-gold/5 p-4">
                         <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-gold">

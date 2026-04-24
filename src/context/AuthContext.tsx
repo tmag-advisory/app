@@ -8,7 +8,7 @@ import {
     type ReactNode,
 } from "react";
 import type { BillingCurrency, LoginRequest, RegisterRequest } from "../api/types";
-import { canAccessHR } from "../lib/canAccessHr";
+import { canAccessHR, canAccessDoctor } from "../lib/canAccessHr";
 import api, { getAuthCookie, removeAuthCookie, setAuthCookie } from "../api/axios";
 import { queryclient } from "../lib/queryclient";
 
@@ -49,6 +49,7 @@ interface AuthContextValue {
     setAuthFromResponse: (data: Record<string, unknown>) => AuthUser;
     logout: () => Promise<void>;
     canAccessHR: boolean;
+    canAccessDoctor: boolean;
     refreshProfile: () => Promise<void>;
 }
 
@@ -139,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthFromResponse,
         logout,
         canAccessHR: canAccessHR(user),
+        canAccessDoctor: canAccessDoctor(user),
         refreshProfile,
     }), [user, isLoading, login, register, setAuthFromResponse, logout, refreshProfile]);
 

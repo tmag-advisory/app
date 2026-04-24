@@ -1,6 +1,6 @@
 import type { NavigateFunction } from "react-router-dom";
 import type { AuthUser } from "../context/AuthContext";
-import { canAccessDashboard, canAccessHR } from "./canAccessHr";
+import { canAccessDashboard, canAccessHR, canAccessDoctor } from "./canAccessHr";
 
 type RedirectDestination =
     | { type: "external"; url: string }
@@ -33,6 +33,10 @@ export function getPostAuthRedirect(user: AuthUser): RedirectDestination {
         return externalRedirect;
     }
 
+    if (canAccessDoctor(user)) {
+        return { type: "internal", path: "/doctor" };
+    }
+
     if (canAccessHR(user)) {
         return { type: "internal", path: "/hr" };
     }
@@ -53,6 +57,10 @@ export function getOnboardingCompletionRedirect(
 
     if (externalRedirect) {
         return externalRedirect;
+    }
+
+    if (canAccessDoctor(user)) {
+        return { type: "internal", path: "/doctor" };
     }
 
     if (canAccessHR(user)) {
