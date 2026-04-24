@@ -106,6 +106,7 @@ import type {
   SupportedCurrency,
   // Doctor
   DoctorApplicationRequest,
+  DoctorProfileUpdateRequest,
   DoctorProfileResponse,
   DoctorDashboardStats,
   DoctorValidationPlanDto,
@@ -740,8 +741,23 @@ export const doctorApi = {
   getProfile: () =>
     api.get<ApiResponse<DoctorProfileResponse>>("/doctor/profile").then((r) => r.data.data),
 
-  apply: (data: DoctorApplicationRequest) =>
-    api.post<ApiResponse<DoctorProfileResponse>>("/doctor/apply", data).then((r) => r.data.data),
+  apply: (data: DoctorApplicationRequest) => {
+    const form = new FormData();
+    form.append("medicalLicenseNumber", data.medicalLicenseNumber);
+    form.append("signature", data.signature);
+    if (data.stamp) form.append("stamp", data.stamp);
+    return api.post<ApiResponse<void>>("/doctor/apply", form, { headers: { "Content-Type": undefined } }).then((r) => r.data.data);
+  },
+
+  updateProfile: (data: DoctorProfileUpdateRequest) => {
+    const form = new FormData();
+    if (data.firstName) form.append("firstName", data.firstName);
+    if (data.lastName) form.append("lastName", data.lastName);
+    if (data.medicalLicenseNumber) form.append("medicalLicenseNumber", data.medicalLicenseNumber);
+    if (data.signature) form.append("signature", data.signature);
+    if (data.stamp) form.append("stamp", data.stamp);
+    return api.put<ApiResponse<DoctorProfileResponse>>("/doctor/profile", form, { headers: { "Content-Type": undefined } }).then((r) => r.data.data);
+  },
 
   getDashboardStats: () =>
     api.get<ApiResponse<DoctorDashboardStats>>("/doctor/dashboard").then((r) => r.data.data),

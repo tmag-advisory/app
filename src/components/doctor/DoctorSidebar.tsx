@@ -11,12 +11,14 @@ import {
     LucideLogOut,
     LucideX,
     LucideMenu,
+    LucideUser,
 } from "lucide-react";
 
 const navItems = [
     { path: "/doctor", label: "Dashboard", icon: <LucideLayoutDashboard className="w-4 h-4" /> },
     { path: "/doctor/pending", label: "Pending Validations", icon: <LucideClipboardList className="w-4 h-4" /> },
     { path: "/doctor/validated", label: "Validated Plans", icon: <LucideCheckCircle className="w-4 h-4" /> },
+    { path: "/doctor/profile", label: "Profile", icon: <LucideUser className="w-4 h-4" /> },
 ];
 
 const DoctorSidebar = () => {

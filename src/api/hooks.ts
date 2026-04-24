@@ -76,6 +76,7 @@ import type {
   EbookCheckoutRequest,
   CartCheckoutRequest,
   DoctorApplicationRequest,
+  DoctorProfileUpdateRequest,
   ValidatePlanRequest,
 } from "./types";
 
@@ -1380,6 +1381,14 @@ export function useApplyAsDoctor() {
   return useMutation({
     mutationFn: (data: DoctorApplicationRequest) => doctorApi.apply(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.doctor.all }),
+  });
+}
+
+export function useUpdateDoctorProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: DoctorProfileUpdateRequest) => doctorApi.updateProfile(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.doctor.profile() }),
   });
 }
 

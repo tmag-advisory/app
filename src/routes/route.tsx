@@ -71,6 +71,8 @@ const DoctorOverview = lazy(() => import("../pages/doctor/overview"));
 const DoctorPendingValidations = lazy(() => import("../pages/doctor/pending-validations"));
 const DoctorValidatedPlans = lazy(() => import("../pages/doctor/validated-plans"));
 const DoctorValidationDetail = lazy(() => import("../pages/doctor/validation-detail"));
+const DoctorProfile = lazy(() => import("../pages/doctor/profile"));
+const ApplyAsDoctor = lazy(() => import("../pages/apply-as-doctor/index"));
 
 // Payment pages
 const PaymentCallback = lazy(() => import("../pages/payment/callback"));
@@ -112,6 +114,7 @@ const router = createBrowserRouter([
             { path: "shop", element: <ShopPage /> },
             { path: "shop/:slug", element: <EbookDetailPage /> },
             { path: "shop/cart", element: <CartPage /> },
+            { path: "apply-as-doctor", element: <ApplyAsDoctor /> },
         ],
     },
 
@@ -182,8 +185,10 @@ const router = createBrowserRouter([
             { path: "pending", element: <DoctorPendingValidations /> },
             { path: "validated", element: <DoctorValidatedPlans /> },
             { path: "plans/:id", element: <DoctorValidationDetail /> },
+            { path: "profile", element: <DoctorProfile /> },
         ],
     },
+
 
     // Individual dashboard
     {

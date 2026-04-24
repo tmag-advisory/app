@@ -22,6 +22,7 @@ const footerLinks = [
             { label: "Careers", href: "/careers" },
             { label: "Blog", href: "/blog" },
             { label: "Press", href: "/press" },
+            { label: "Apply as Doctor", href: "/apply-as-doctor" },
         ],
     },
     {

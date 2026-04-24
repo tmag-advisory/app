@@ -244,38 +244,30 @@ export type DoctorValidationStatus = "PENDING" | "APPROVED" | "REJECTED" | "NOT_
 export type PlanTier = "FREE" | "STANDARD" | "PREMIUM";
 
 export interface DoctorApplicationRequest {
-  licenseNumber: string;
-  licenseState: string;
-  licenseCountry: string;
-  specialty: string;
-  yearsOfExperience: number;
-  institution: string;
-  bio: string;
-  phone: string;
+  medicalLicenseNumber: string;
+  signature: File;
+  stamp?: File;
+}
+
+export interface DoctorProfileUpdateRequest {
+  firstName?: string;
+  lastName?: string;
+  medicalLicenseNumber?: string;
+  signature?: File;
+  stamp?: File;
 }
 
 export interface DoctorProfileResponse {
-  id: number;
+  userId: number;
   firstName: string;
   lastName: string;
   email: string;
-  avatarUrl: string;
-  licenseNumber: string;
-  licenseState: string;
-  licenseCountry: string;
-  specialty: string;
-  yearsOfExperience: number;
-  institution: string;
-  bio: string;
   phone: string;
-  isVerifiedDoctor: boolean;
+  medicalLicenseNumber: string;
+  signatureUrl: string | null;
+  stampUrl: string | null;
   doctorApplicationStatus: DoctorApplicationStatus;
-  doctorApplicationRejectionReason: string | null;
-  doctorApplicationSubmittedAt: string | null;
-  doctorApplicationReviewedAt: string | null;
-  validatedPlansCount: number;
-  createdAt: string;
-  updatedAt: string;
+  applicationSubmittedAt: string | null;
 }
 
 export interface DoctorDashboardStats {
@@ -393,6 +385,45 @@ export interface GeneratedPlanRecommendationItem {
   details: string;
 }
 
+export interface GeneratedPlanMalariaPrevention {
+  riskLevel?: string;
+  recommendedAgent?: string;
+  rationale?: string;
+  mosquitoProtection?: string[];
+  contraindications?: string;
+}
+
+export interface GeneratedPlanSpecialistReferral {
+  condition: string;
+  specialist: string;
+  urgency: string;
+}
+
+export interface GeneratedPlanMedicalCondition {
+  condition: string;
+  precautions: string;
+}
+
+export interface GeneratedPlanFlightHealth {
+  vteRiskLevel?: string;
+  preventionMeasures?: string[];
+  medifClearanceRequired?: boolean;
+  medicationTimingGuidance?: string;
+}
+
+export interface GeneratedPlanMedicationLogistics {
+  packaging?: string;
+  supplyRule?: string;
+  destinationLegalityCheck?: boolean;
+  coldChainRequired?: boolean;
+}
+
+export interface GeneratedPlanSexualHealth {
+  riskLevel?: string;
+  preventionAdvice?: string[];
+  prepPepDiscussion?: boolean;
+}
+
 export interface GeneratedPlanAfterReturn {
   within1Week?: string[];
   within4Weeks?: string[];
@@ -442,10 +473,21 @@ export interface GeneratedPlanContent {
   travellerName?: string;
   destination?: string;
   travelDates?: string;
+  overallRiskLevel?: string;
+  hardStop?: string | null;
   tripAtGlance?: GeneratedPlanTripAtGlance;
   healthRiskOverview?: GeneratedPlanHealthRiskItem[];
   vaccinations?: GeneratedPlanVaccinationItem[];
+  malariaPrevention?: GeneratedPlanMalariaPrevention;
   recommendations?: GeneratedPlanRecommendationItem[];
+  clinicalFlags?: string[];
+  contraindications?: string[];
+  specialistReferrals?: GeneratedPlanSpecialistReferral[];
+  flightHealth?: GeneratedPlanFlightHealth;
+  medicalConditions?: GeneratedPlanMedicalCondition[];
+  medicationLogistics?: GeneratedPlanMedicationLogistics;
+  sexualHealth?: GeneratedPlanSexualHealth;
+  pregnancyGuidance?: unknown;
   afterReturn?: GeneratedPlanAfterReturn;
   medicalCare?: GeneratedPlanMedicalCare;
   itineraryGuidance?: GeneratedPlanItineraryGuidance;
@@ -473,6 +515,8 @@ export interface TravelPlanResponse {
   companyId?: number;
   employeeId?: number;
   userId?: number;
+  signedPdfUrl: string | null;
+  doctorValidationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_REQUIRED';
   createdAt: string;
   updatedAt: string;
   generatedPlan?: GeneratedPlanPayload | null;
