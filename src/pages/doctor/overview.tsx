@@ -9,6 +9,8 @@ import {
     Loader2,
 } from "lucide-react";
 import { useDoctorDashboardStats } from "../../api/hooks";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 const container = {
     hidden: { opacity: 0 },
@@ -54,7 +56,7 @@ const DoctorOverview = () => {
             label: "Total Validated",
             value: stats?.totalValidated ?? 0,
             icon: <Activity size={22} />,
-            color: "bg-[#008080]/10 text-[#008080]",
+            color: "bg-accent/10 text-accent",
             onClick: () => navigate("/doctor/validated"),
         },
     ];
@@ -67,12 +69,12 @@ const DoctorOverview = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-4"
             >
-                <div className="w-12 h-12 rounded-2xl bg-[#008080]/10 flex items-center justify-center text-[#008080]">
+                <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
                     <Stethoscope size={24} />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Doctor Dashboard</h1>
-                    <p className="text-gray-500 text-sm">Review and validate travel medicine plans</p>
+                    <h1 className="text-2xl font-serif text-heading">Doctor Dashboard</h1>
+                    <p className="text-muted text-sm">Review and validate travel medicine plans</p>
                 </div>
             </motion.div>
 
@@ -88,16 +90,16 @@ const DoctorOverview = () => {
                         key={card.label}
                         variants={item}
                         onClick={card.onClick}
-                        className="text-left p-5 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                        className={cn(DASHBOARD_GLASS_SURFACE, "text-left p-5 hover:shadow-md transition-shadow w-full")}
                     >
                         <div className="flex items-center justify-between mb-3">
                             <div className={`p-2.5 rounded-xl ${card.color}`}>
                                 {card.icon}
                             </div>
-                            <ArrowRight size={16} className="text-gray-300" />
+                            <ArrowRight size={16} className="text-muted/40" />
                         </div>
-                        <p className="text-2xl font-bold text-gray-900">{card.value}</p>
-                        <p className="text-sm text-gray-500 mt-1">{card.label}</p>
+                        <p className="text-2xl font-serif text-heading">{card.value}</p>
+                        <p className="text-sm text-muted mt-1">{card.label}</p>
                     </motion.button>
                 ))}
             </motion.div>
@@ -107,31 +109,31 @@ const DoctorOverview = () => {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}
             >
-                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-gray-900">Recent Plans</h2>
+                <div className="px-5 py-4 border-b border-border-light/50 flex items-center justify-between">
+                    <h2 className="text-base font-semibold text-heading">Recent Plans</h2>
                     <button
                         onClick={() => navigate("/doctor/pending")}
-                        className="text-sm text-[#008080] hover:underline"
+                        className="text-sm text-accent hover:underline"
                     >
                         View all
                     </button>
                 </div>
 
                 {stats?.recentPlans && stats.recentPlans.length > 0 ? (
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-border-light/50">
                         {stats.recentPlans.map((plan) => (
                             <button
                                 key={plan.planId}
                                 onClick={() => navigate(`/doctor/plans/${plan.planId}`)}
-                                className="w-full text-left p-4 hover:bg-gray-50 transition-colors flex items-center justify-between"
+                                className="w-full text-left px-5 py-4 hover:bg-background-secondary/50 transition-colors flex items-center justify-between"
                             >
                                 <div>
-                                    <p className="font-medium text-gray-900">
+                                    <p className="font-medium text-heading">
                                         {plan.destination}, {plan.country}
                                     </p>
-                                    <p className="text-sm text-gray-500 mt-0.5">
+                                    <p className="text-sm text-muted mt-0.5">
                                         {plan.travellerName} &bull; {plan.purpose} &bull; {plan.duration} days
                                     </p>
                                 </div>
@@ -145,13 +147,13 @@ const DoctorOverview = () => {
                                     }`}>
                                         {plan.validationStatus}
                                     </span>
-                                    <ArrowRight size={16} className="text-gray-300" />
+                                    <ArrowRight size={16} className="text-muted/40" />
                                 </div>
                             </button>
                         ))}
                     </div>
                 ) : (
-                    <div className="p-8 text-center text-gray-400">
+                    <div className="p-8 text-center text-muted">
                         <ClipboardList size={40} className="mx-auto mb-3 opacity-40" />
                         <p>No recent plans to display</p>
                     </div>

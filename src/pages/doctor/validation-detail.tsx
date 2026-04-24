@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { useDoctorValidationDetail, useValidatePlan } from "../../api/hooks";
 import toast from "react-hot-toast";
+import { cn } from "../../lib/utils";
+import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 const DoctorValidationDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -61,19 +63,19 @@ const DoctorValidationDetail = () => {
 
     if (isLoading) {
         return (
-                <div className="flex items-center justify-center h-64">
-                    <Loader2 className="w-8 h-8 text-accent animate-spin" />
-                </div>
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 text-accent animate-spin" />
+            </div>
         );
     }
 
     if (!plan) {
         return (
             <div className="text-center py-12">
-                <p className="text-gray-500">Plan not found</p>
+                <p className="text-muted">Plan not found</p>
                 <button
                     onClick={() => navigate("/doctor/pending")}
-                    className="mt-4 text-[#008080] hover:underline"
+                    className="mt-4 text-accent hover:underline"
                 >
                     Back to pending
                 </button>
@@ -90,15 +92,15 @@ const DoctorValidationDetail = () => {
             <div className="flex items-center gap-4">
                 <button
                     onClick={() => navigate(-1)}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="p-2 rounded-lg hover:bg-button-secondary transition-colors"
                 >
-                    <ArrowLeft size={20} />
+                    <ArrowLeft size={20} className="text-heading" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
+                    <h1 className="text-2xl font-serif text-heading">
                         {plan.destination}, {plan.country}
                     </h1>
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-muted text-sm">
                         Plan #{plan.planId} &bull; {plan.planTier} tier
                     </p>
                 </div>
@@ -117,37 +119,37 @@ const DoctorValidationDetail = () => {
             <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm"
+                className={cn(DASHBOARD_GLASS_SURFACE, "p-5")}
             >
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                <h2 className="text-xs uppercase tracking-wider text-muted font-semibold mb-4">
                     Traveller Information
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gray-50 rounded-lg">
-                            <User size={18} className="text-gray-500" />
+                        <div className="p-2 bg-button-secondary rounded-lg">
+                            <User size={18} className="text-muted" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Name</p>
-                            <p className="font-medium text-gray-900">{plan.travellerName}</p>
+                            <p className="text-sm text-muted">Name</p>
+                            <p className="font-medium text-heading">{plan.travellerName}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gray-50 rounded-lg">
-                            <MapPin size={18} className="text-gray-500" />
+                        <div className="p-2 bg-button-secondary rounded-lg">
+                            <MapPin size={18} className="text-muted" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Purpose</p>
-                            <p className="font-medium text-gray-900">{plan.purpose}</p>
+                            <p className="text-sm text-muted">Purpose</p>
+                            <p className="font-medium text-heading">{plan.purpose}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gray-50 rounded-lg">
-                            <Clock size={18} className="text-gray-500" />
+                        <div className="p-2 bg-button-secondary rounded-lg">
+                            <Clock size={18} className="text-muted" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Duration</p>
-                            <p className="font-medium text-gray-900">{plan.duration} days</p>
+                            <p className="text-sm text-muted">Duration</p>
+                            <p className="font-medium text-heading">{plan.duration} days</p>
                         </div>
                     </div>
                 </div>
@@ -158,11 +160,11 @@ const DoctorValidationDetail = () => {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
-                className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm"
+                className={cn(DASHBOARD_GLASS_SURFACE, "p-5")}
             >
                 <div className="flex items-center gap-3 mb-3">
                     <AlertTriangle size={18} className="text-amber-500" />
-                    <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                    <h2 className="text-xs uppercase tracking-wider text-muted font-semibold">
                         Risk Assessment
                     </h2>
                 </div>
@@ -177,14 +179,14 @@ const DoctorValidationDetail = () => {
                         {plan.riskScore}
                     </div>
                     <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-heading">
                             {plan.riskScore >= 7
                                 ? "High Risk"
                                 : plan.riskScore >= 4
                                 ? "Moderate Risk"
                                 : "Low Risk"}
                         </p>
-                        <p className="text-sm text-gray-500">Based on destination, duration, and health profile</p>
+                        <p className="text-sm text-muted">Based on destination, duration, and health profile</p>
                     </div>
                 </div>
             </motion.div>
@@ -195,28 +197,28 @@ const DoctorValidationDetail = () => {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-6"
+                    className={cn(DASHBOARD_GLASS_SURFACE, "p-5 space-y-6")}
                 >
                     <div className="flex items-center gap-3">
-                        <FileText size={18} className="text-[#008080]" />
-                        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                        <FileText size={18} className="text-accent" />
+                        <h2 className="text-xs uppercase tracking-wider text-muted font-semibold">
                             Generated Plan Summary
                         </h2>
                     </div>
 
                     {planContent.healthRiskOverview && planContent.healthRiskOverview.length > 0 && (
                         <div>
-                            <h3 className="font-medium text-gray-900 mb-2">Health Risk Overview</h3>
+                            <h3 className="font-medium text-heading mb-2">Health Risk Overview</h3>
                             <div className="space-y-2">
                                 {planContent.healthRiskOverview.map((risk, i) => (
-                                    <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                                    <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-background-secondary/50">
                                         <span className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${
                                             risk.level === "High" ? "bg-red-500" :
                                             risk.level === "Moderate" ? "bg-amber-500" : "bg-emerald-500"
                                         }`} />
                                         <div>
-                                            <p className="font-medium text-sm text-gray-900">{risk.category}</p>
-                                            <p className="text-sm text-gray-500">{risk.summary}</p>
+                                            <p className="font-medium text-sm text-heading">{risk.category}</p>
+                                            <p className="text-sm text-muted">{risk.summary}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -226,12 +228,12 @@ const DoctorValidationDetail = () => {
 
                     {planContent.vaccinations && planContent.vaccinations.length > 0 && (
                         <div>
-                            <h3 className="font-medium text-gray-900 mb-2">Vaccinations</h3>
+                            <h3 className="font-medium text-heading mb-2">Vaccinations</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {planContent.vaccinations.map((v, i) => (
-                                    <div key={i} className="p-3 rounded-xl bg-gray-50 text-sm">
-                                        <p className="font-medium text-gray-900">{v.vaccine}</p>
-                                        <p className="text-gray-500">{v.status} &bull; {v.recommendation}</p>
+                                    <div key={i} className="p-3 rounded-xl bg-background-secondary/50 text-sm">
+                                        <p className="font-medium text-heading">{v.vaccine}</p>
+                                        <p className="text-muted">{v.status} &bull; {v.recommendation}</p>
                                     </div>
                                 ))}
                             </div>
@@ -240,14 +242,14 @@ const DoctorValidationDetail = () => {
 
                     {planContent.recommendations && planContent.recommendations.length > 0 && (
                         <div>
-                            <h3 className="font-medium text-gray-900 mb-2">Recommendations</h3>
+                            <h3 className="font-medium text-heading mb-2">Recommendations</h3>
                             <ul className="space-y-2">
                                 {planContent.recommendations.map((r, i) => (
                                     <li key={i} className="flex items-start gap-2 text-sm">
-                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#008080] shrink-0" />
+                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
                                         <div>
-                                            <p className="font-medium text-gray-900">{r.title}</p>
-                                            <p className="text-gray-500">{r.details}</p>
+                                            <p className="font-medium text-heading">{r.title}</p>
+                                            <p className="text-muted">{r.details}</p>
                                         </div>
                                     </li>
                                 ))}
@@ -263,9 +265,9 @@ const DoctorValidationDetail = () => {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
-                    className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm"
+                    className={cn(DASHBOARD_GLASS_SURFACE, "p-5")}
                 >
-                    <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                    <h2 className="text-xs uppercase tracking-wider text-muted font-semibold mb-4">
                         Validation Decision
                     </h2>
 
@@ -299,7 +301,7 @@ const DoctorValidationDetail = () => {
                                 onChange={(e) => setRejectionReason(e.target.value)}
                                 placeholder="Provide a reason for rejecting this plan..."
                                 rows={3}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 resize-none"
+                                className="w-full px-4 py-3 rounded-xl border border-border-light bg-white text-sm focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 resize-none"
                             />
                             <div className="flex gap-3">
                                 <button
@@ -320,7 +322,7 @@ const DoctorValidationDetail = () => {
                                         setRejectionReason("");
                                     }}
                                     disabled={validateMutation.isPending}
-                                    className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                    className="px-6 py-3 rounded-xl border border-border-light text-muted font-medium hover:bg-button-secondary transition-colors disabled:opacity-50"
                                 >
                                     Cancel
                                 </button>
@@ -335,17 +337,17 @@ const DoctorValidationDetail = () => {
                 <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm"
+                    className={cn(DASHBOARD_GLASS_SURFACE, "p-5")}
                 >
-                    <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                    <h2 className="text-xs uppercase tracking-wider text-muted font-semibold mb-4">
                         Validation History
                     </h2>
                     <div className="space-y-2 text-sm">
-                        <p className="text-gray-500">
-                            Validated by: <span className="font-medium text-gray-900">{plan.validatedByName}</span>
+                        <p className="text-muted">
+                            Validated by: <span className="font-medium text-heading">{plan.validatedByName}</span>
                         </p>
-                        <p className="text-gray-500">
-                            Date: <span className="font-medium text-gray-900">
+                        <p className="text-muted">
+                            Date: <span className="font-medium text-heading">
                                 {plan.validatedAt ? new Date(plan.validatedAt).toLocaleString() : "N/A"}
                             </span>
                         </p>
