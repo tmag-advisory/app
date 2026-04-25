@@ -100,18 +100,20 @@ const StepProgress = ({ current }: { current: number }) => (
                 <div key={step.label} className="flex items-center">
                     <div
                         className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                            done
-                                ? "bg-accent/10 text-accent"
-                                : active
-                                    ? "bg-dark text-white"
-                                    : "bg-button-secondary text-muted"
+                            done ? "bg-accent/10 text-accent"
+                            : active ? "bg-dark text-white"
+                            : "bg-button-secondary text-muted"
                         }`}
                     >
-                        {done ? <LucideCheck className="w-3.5 h-3.5" /> : <Icon className="w-3.5 h-3.5" />}
+                        {done ?
+                            <LucideCheck className="w-3.5 h-3.5" />
+                        :   <Icon className="w-3.5 h-3.5" />}
                         <span className="hidden sm:inline">{step.label}</span>
                     </div>
                     {i < STEPS.length - 1 && (
-                        <div className={`w-8 sm:w-16 h-0.5 mx-1 ${done ? "bg-accent" : "bg-border-light/50"}`} />
+                        <div
+                            className={`w-16 sm:w-40 md:w-48 xl:w-80 h-0.5 mx-1 ${done ? "bg-accent" : "bg-border-light/50"}`}
+                        />
                     )}
                 </div>
             );
@@ -232,7 +234,9 @@ const ApplyAsDoctor = () => {
                         Join TMAG as a Doctor
                     </h1>
                     <p className="text-body text-lg max-w-xl mx-auto">
-                        Help travellers worldwide with your medical expertise. Review generated travel health plans and provide verified sign-off.
+                        Help travellers worldwide with your medical expertise.
+                        Review generated travel health plans and provide
+                        verified sign-off.
                     </p>
                 </motion.div>
 
@@ -251,7 +255,9 @@ const ApplyAsDoctor = () => {
                             <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center mb-4">
                                 {b.icon}
                             </div>
-                            <h3 className="font-medium text-heading mb-1.5">{b.title}</h3>
+                            <h3 className="font-medium text-heading mb-1.5">
+                                {b.title}
+                            </h3>
                             <p className="text-sm text-body">{b.desc}</p>
                         </div>
                     ))}
@@ -262,32 +268,43 @@ const ApplyAsDoctor = () => {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.14 }}
-                    className="max-w-lg mx-auto"
+                    className="max-w-5xl mx-auto"
                 >
-                    {isSuccess ? (
+                    {isSuccess ?
                         /* Success */
                         <div className="p-8 rounded-2xl border border-emerald-200 bg-emerald-50 text-center">
                             <LucideCheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-4" />
-                            <h2 className="text-2xl font-serif text-heading mb-2">Application Submitted</h2>
+                            <h2 className="text-2xl font-serif text-heading mb-2">
+                                Application Submitted
+                            </h2>
                             <p className="text-body text-sm">
-                                Our team will review your credentials and get back to you by email.
+                                Our team will review your credentials and get
+                                back to you by email.
                             </p>
                         </div>
-                    ) : (
-                        /* Wizard */
+                    :   /* Wizard */
                         <div className="p-8 rounded-2xl border border-border-light/50 bg-white shadow-sm">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
                                     <LucideStethoscope className="w-4.5 h-4.5" />
                                 </div>
-                                <h2 className="text-lg font-serif text-heading">Submit Your Application</h2>
+                                <h2 className="text-lg font-serif text-heading">
+                                    Submit Your Application
+                                </h2>
                             </div>
 
                             <StepProgress current={step} />
 
                             {error && (
                                 <div className="mb-5 px-4 py-3.5 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-700">
-                                    {(error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Something went wrong. Please try again."}
+                                    {(
+                                        error as {
+                                            response?: {
+                                                data?: { message?: string };
+                                            };
+                                        }
+                                    )?.response?.data?.message ??
+                                        "Something went wrong. Please try again."}
                                 </div>
                             )}
 
@@ -308,7 +325,9 @@ const ApplyAsDoctor = () => {
                                             animate="visible"
                                             className="text-2xl font-serif text-heading mb-2 leading-tight"
                                         >
-                                            Doctor Programme<br />Terms &amp; Conditions
+                                            Doctor Programme
+                                            <br />
+                                            Terms &amp; Conditions
                                         </motion.h3>
                                         <motion.p
                                             custom={1}
@@ -317,7 +336,8 @@ const ApplyAsDoctor = () => {
                                             animate="visible"
                                             className="text-sm text-body mb-6"
                                         >
-                                            Please review and accept before continuing.
+                                            Please review and accept before
+                                            continuing.
                                         </motion.p>
 
                                         <div
@@ -397,7 +417,8 @@ const ApplyAsDoctor = () => {
                                             animate="visible"
                                             className="text-sm text-body mb-8"
                                         >
-                                            Provide your medical licence and upload your signature.
+                                            Provide your medical licence and
+                                            upload your signature.
                                         </motion.p>
 
                                         <motion.div
@@ -409,12 +430,19 @@ const ApplyAsDoctor = () => {
                                         >
                                             <div>
                                                 <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                                    Medical License Number <span className="text-red-500">*</span>
+                                                    Medical License Number{" "}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
                                                 </label>
                                                 <input
                                                     type="text"
                                                     value={licenseNumber}
-                                                    onChange={(e) => setLicenseNumber(e.target.value)}
+                                                    onChange={(e) =>
+                                                        setLicenseNumber(
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     required
                                                     placeholder="e.g. MED-123456"
                                                     className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
@@ -480,7 +508,8 @@ const ApplyAsDoctor = () => {
                                             animate="visible"
                                             className="text-sm text-body mb-6"
                                         >
-                                            Confirm everything looks good before submitting.
+                                            Confirm everything looks good before
+                                            submitting.
                                         </motion.p>
 
                                         <motion.div
@@ -493,8 +522,12 @@ const ApplyAsDoctor = () => {
                                             {/* License */}
                                             <div className="flex items-start justify-between p-4 rounded-2xl border border-border-light/60 bg-background-primary">
                                                 <div>
-                                                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-0.5">Medical License</p>
-                                                    <p className="text-sm text-heading font-medium">{licenseNumber}</p>
+                                                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-0.5">
+                                                        Medical License
+                                                    </p>
+                                                    <p className="text-sm text-heading font-medium">
+                                                        {licenseNumber}
+                                                    </p>
                                                 </div>
                                                 <button
                                                     onClick={() => goTo(1)}
@@ -507,13 +540,17 @@ const ApplyAsDoctor = () => {
                                             {/* Signature */}
                                             <div className="flex items-start justify-between p-4 rounded-2xl border border-border-light/60 bg-background-primary">
                                                 <div className="min-w-0">
-                                                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-0.5">Signature</p>
+                                                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-0.5">
+                                                        Signature
+                                                    </p>
                                                     <p className="text-sm text-heading font-medium truncate">
                                                         {signature?.name}
                                                     </p>
                                                     {signature && (
                                                         <img
-                                                            src={URL.createObjectURL(signature)}
+                                                            src={URL.createObjectURL(
+                                                                signature,
+                                                            )}
                                                             alt="Signature preview"
                                                             className="mt-2 h-12 w-auto rounded-lg border border-border-light bg-white object-contain"
                                                         />
@@ -530,21 +567,26 @@ const ApplyAsDoctor = () => {
                                             {/* Stamp */}
                                             <div className="flex items-start justify-between p-4 rounded-2xl border border-border-light/60 bg-background-primary">
                                                 <div className="min-w-0">
-                                                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-0.5">Stamp / Seal</p>
-                                                    {stamp ? (
+                                                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-0.5">
+                                                        Stamp / Seal
+                                                    </p>
+                                                    {stamp ?
                                                         <>
                                                             <p className="text-sm text-heading font-medium truncate">
                                                                 {stamp.name}
                                                             </p>
                                                             <img
-                                                                src={URL.createObjectURL(stamp)}
+                                                                src={URL.createObjectURL(
+                                                                    stamp,
+                                                                )}
                                                                 alt="Stamp preview"
                                                                 className="mt-2 h-12 w-auto rounded-lg border border-border-light bg-white object-contain"
                                                             />
                                                         </>
-                                                    ) : (
-                                                        <p className="text-sm text-muted italic">Not provided</p>
-                                                    )}
+                                                    :   <p className="text-sm text-muted italic">
+                                                            Not provided
+                                                        </p>
+                                                    }
                                                 </div>
                                                 <button
                                                     onClick={() => goTo(1)}
@@ -559,13 +601,17 @@ const ApplyAsDoctor = () => {
                                                 <div className="w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center shrink-0">
                                                     <LucideCheck className="w-3 h-3" />
                                                 </div>
-                                                <p className="text-sm text-heading">Terms &amp; conditions accepted</p>
+                                                <p className="text-sm text-heading">
+                                                    Terms &amp; conditions
+                                                    accepted
+                                                </p>
                                             </div>
                                         </motion.div>
 
                                         {!isAuthenticated && (
                                             <div className="mb-5 px-4 py-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-700">
-                                                You'll need an account to submit your application.
+                                                You'll need an account to submit
+                                                your application.
                                             </div>
                                         )}
 
@@ -577,44 +623,50 @@ const ApplyAsDoctor = () => {
                                                 <LucideArrowLeft className="w-4 h-4" />
                                                 Back
                                             </button>
-                                            {isAuthenticated ? (
+                                            {isAuthenticated ?
                                                 <button
                                                     onClick={handleSubmit}
                                                     disabled={isPending}
                                                     className="flex-1 py-3.5 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-50 transition-all duration-200 flex items-center justify-center gap-2"
                                                 >
-                                                    {isPending ? (
+                                                    {isPending ?
                                                         <LucideLoader2 className="w-4 h-4 animate-spin" />
-                                                    ) : (
-                                                        <>
+                                                    :   <>
                                                             Submit Application
                                                             <LucideArrowRight className="w-4 h-4" />
                                                         </>
-                                                    )}
+                                                    }
                                                 </button>
-                                            ) : (
-                                                <div className="flex-1 flex items-center gap-2">
+                                            :   <div className="flex-1 flex items-center gap-2">
                                                     <button
-                                                        onClick={() => navigate("/login?redirect=/apply-as-doctor")}
+                                                        onClick={() =>
+                                                            navigate(
+                                                                "/login?redirect=/apply-as-doctor",
+                                                            )
+                                                        }
                                                         className="flex-1 py-3.5 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200 flex items-center justify-center gap-2"
                                                     >
                                                         Sign in to Submit
                                                         <LucideArrowRight className="w-4 h-4" />
                                                     </button>
                                                     <button
-                                                        onClick={() => navigate("/register?redirect=/apply-as-doctor")}
+                                                        onClick={() =>
+                                                            navigate(
+                                                                "/register?redirect=/apply-as-doctor",
+                                                            )
+                                                        }
                                                         className="px-5 py-3 rounded-2xl bg-button-secondary text-muted text-sm font-medium hover:text-heading transition-colors"
                                                     >
                                                         Register
                                                     </button>
                                                 </div>
-                                            )}
+                                            }
                                         </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
                         </div>
-                    )}
+                    }
                 </motion.div>
             </main>
         </div>

@@ -147,6 +147,11 @@ const TRAVEL_PURPOSE_TO_PLAN: Record<string, string> = {
 
 const PREFILLED_KEYS = new Set(["full_name_passport", "email_address"]);
 
+const CONSENT_TEXT =
+    "I hereby give Travel Medicine Advisory Global my explicit consent to collect, process, and store my personal and sensitive health information (including medical history, medications, pregnancy status, and risk behaviours) for the sole purpose of generating my personalised travel health advisory plan.";
+const DATA_PROTECTION_TEXT =
+    "We protect your information with encryption, multi-factor authentication, and strict security measures. We comply with the Nigeria Data Protection Act (NDPA) 2023. Your data will not be sold or shared without your permission.";
+
 /** Build create-plan payload from questionnaire answers (travel section). */
 function derivePlanFromQuestionnaireAnswers(
     answers: Record<string, unknown>
@@ -360,6 +365,8 @@ const TravelHealthQuestionnaire = () => {
     const [submitting, setSubmitting] = useState(false);
     const [showComplete, setShowComplete] = useState(false);
     const [showCreatePlan, setShowCreatePlan] = useState(false);
+    const [medicalDisclaimerConsentGiven, setMedicalDisclaimerConsentGiven] =
+        useState(false);
     const [planForm, setPlanForm] = useState({
         destination: "",
         country: "",
@@ -415,6 +422,9 @@ const TravelHealthQuestionnaire = () => {
                 const catIdx = Math.max(0, p.categoryIndex || 0);
                 const qIdx = p.questionIndex ?? -1;
                 setCategoryIndex(catIdx);
+                if (catIdx > 0 || qIdx >= 0) {
+                    setMedicalDisclaimerConsentGiven(true);
+                }
                 // Grouped flow: -1 or missing means section intro; legacy per-question saves used qIdx >= 0 for in-section — open questions view.
                 setShowIntro(qIdx < 0);
             }
@@ -595,6 +605,10 @@ const TravelHealthQuestionnaire = () => {
     };
 
     const startCategory = () => {
+        if (categoryIndex === 0 && !medicalDisclaimerConsentGiven) {
+            toast.error("Please accept the medical disclaimer to continue.");
+            return;
+        }
         setShowIntro(false);
         setDirection(1);
     };
@@ -1075,7 +1089,6 @@ const TravelHealthQuestionnaire = () => {
 
     return (
         <div className="min-h-screen bg-background-primary flex flex-col lg:flex-row">
-
             {/* ── Mobile Top Bar / Desktop Minimal Header ─────────────────────────────────── */}
             <div className="sticky top-0 z-30 px-5 sm:px-8 py-4 flex items-center justify-between border-b border-border-light/60 bg-background-primary/80 backdrop-blur-md lg:fixed lg:w-full">
                 <span className="text-heading tracking-tight text-lg font-serif font-medium select-none">
@@ -1112,8 +1125,12 @@ const TravelHealthQuestionnaire = () => {
                     {/* Progress header */}
                     <div className="mb-8">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-medium text-heading">Progress</span>
-                            <span className="text-sm font-bold text-accent">{progressPercent}%</span>
+                            <span className="text-sm font-medium text-heading">
+                                Progress
+                            </span>
+                            <span className="text-sm font-bold text-accent">
+                                {progressPercent}%
+                            </span>
                         </div>
                         <div className="h-2 rounded-full bg-border-light overflow-hidden">
                             <motion.div
@@ -1130,31 +1147,40 @@ const TravelHealthQuestionnaire = () => {
                         {categories.map((cat, i) => (
                             <div
                                 key={cat.category_key}
-                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${i === categoryIndex
-                                    ? "bg-accent/10 border border-accent/20"
-                                    : i < categoryIndex
-                                        ? "text-accent"
-                                        : "text-muted"
-                                    }`}
+                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${
+                                    i === categoryIndex ?
+                                        "bg-accent/10 border border-accent/20"
+                                    : i < categoryIndex ? "text-accent"
+                                    : "text-muted"
+                                }`}
                             >
                                 <div
-                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${i < categoryIndex
-                                        ? "bg-accent text-white"
-                                        : i === categoryIndex
-                                            ? "bg-heading text-white"
-                                            : "bg-border-light text-muted"
-                                        }`}
+                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
+                                        i < categoryIndex ?
+                                            "bg-accent text-white"
+                                        : i === categoryIndex ?
+                                            "bg-heading text-white"
+                                        :   "bg-border-light text-muted"
+                                    }`}
                                 >
-                                    {i < categoryIndex ? <LucideCheck className="w-3.5 h-3.5" /> : i + 1}
+                                    {i < categoryIndex ?
+                                        <LucideCheck className="w-3.5 h-3.5" />
+                                    :   i + 1}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className={`text-sm font-medium truncate ${i === categoryIndex ? "text-heading" : ""
-                                        }`}>
+                                    <p
+                                        className={`text-sm font-medium truncate ${
+                                            i === categoryIndex ? "text-heading"
+                                            :   ""
+                                        }`}
+                                    >
                                         {cat.category_name}
                                     </p>
                                     {i === categoryIndex && (
                                         <p className="text-xs text-muted mt-0.5">
-                                            {showIntro ? "Introduction" : "In progress"}
+                                            {showIntro ?
+                                                "Introduction"
+                                            :   "In progress"}
                                         </p>
                                     )}
                                 </div>
@@ -1178,7 +1204,10 @@ const TravelHealthQuestionnaire = () => {
                             {categoryIndex + 1}
                         </div>
                         <div className="text-left">
-                            <p className="text-xs text-muted font-medium">Section {categoryIndex + 1} of {categories.length}</p>
+                            <p className="text-xs text-muted font-medium">
+                                Section {categoryIndex + 1} of{" "}
+                                {categories.length}
+                            </p>
                             <p className="text-sm font-semibold text-heading truncate max-w-[180px]">
                                 {currentCategory?.category_name || "Loading..."}
                             </p>
@@ -1186,9 +1215,13 @@ const TravelHealthQuestionnaire = () => {
                     </div>
                     <div className="flex items-center gap-3">
                         {/* Progress percentage */}
-                        <span className="text-sm font-bold text-accent tabular-nums">{progressPercent}%</span>
+                        <span className="text-sm font-bold text-accent tabular-nums">
+                            {progressPercent}%
+                        </span>
                         {/* Chevron */}
-                        <div className={`transition-transform duration-200 ${mobileAccordionOpen ? "rotate-180" : ""}`}>
+                        <div
+                            className={`transition-transform duration-200 ${mobileAccordionOpen ? "rotate-180" : ""}`}
+                        >
                             <LucideChevronDown className="w-5 h-5 text-muted" />
                         </div>
                     </div>
@@ -1211,37 +1244,41 @@ const TravelHealthQuestionnaire = () => {
                                         type="button"
                                         onClick={() => {
                                             if (i !== categoryIndex) {
-                                                setDirection(i > categoryIndex ? 1 : -1);
+                                                setDirection(
+                                                    i > categoryIndex ? 1 : -1,
+                                                );
                                                 setCategoryIndex(i);
                                                 setShowIntro(true);
                                             }
                                             setMobileAccordionOpen(false);
                                         }}
                                         disabled={i === categoryIndex}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${i === categoryIndex
-                                            ? "bg-accent/10 border border-accent/20"
-                                            : i < categoryIndex
-                                                ? "hover:bg-accent/5 text-accent"
-                                                : "hover:bg-border-light/50 text-muted"
-                                            } ${i !== categoryIndex ? "cursor-pointer" : "cursor-default"}`}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                                            i === categoryIndex ?
+                                                "bg-accent/10 border border-accent/20"
+                                            : i < categoryIndex ?
+                                                "hover:bg-accent/5 text-accent"
+                                            :   "hover:bg-border-light/50 text-muted"
+                                        } ${i !== categoryIndex ? "cursor-pointer" : "cursor-default"}`}
                                     >
                                         {/* Status indicator */}
                                         <div
-                                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${i < categoryIndex
-                                                ? "bg-accent text-white"
-                                                : i === categoryIndex
-                                                    ? "bg-heading text-white"
-                                                    : "bg-border-light text-muted"
-                                                }`}
+                                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
+                                                i < categoryIndex ?
+                                                    "bg-accent text-white"
+                                                : i === categoryIndex ?
+                                                    "bg-heading text-white"
+                                                :   "bg-border-light text-muted"
+                                            }`}
                                         >
-                                            {i < categoryIndex ? (
+                                            {i < categoryIndex ?
                                                 <LucideCheck className="w-3.5 h-3.5" />
-                                            ) : (
-                                                i + 1
-                                            )}
+                                            :   i + 1}
                                         </div>
                                         {/* Section name */}
-                                        <span className={`text-sm font-medium truncate ${i === categoryIndex ? "text-heading" : ""}`}>
+                                        <span
+                                            className={`text-sm font-medium truncate ${i === categoryIndex ? "text-heading" : ""}`}
+                                        >
                                             {cat.category_name}
                                         </span>
                                         {/* Completed indicator */}
@@ -1261,7 +1298,7 @@ const TravelHealthQuestionnaire = () => {
                 <div className="w-full max-w-5xl flex justify-center">
                     <div className="w-full max-w-3xl">
                         <AnimatePresence mode="wait" custom={direction}>
-                            {showIntro ? (
+                            {showIntro ?
                                 <motion.div
                                     key={`intro-${categoryIndex}`}
                                     variants={introVariants}
@@ -1282,7 +1319,9 @@ const TravelHealthQuestionnaire = () => {
                                         }}
                                         className="w-24 h-24 rounded-3xl bg-accent/10 flex items-center justify-center mx-auto mb-8 text-accent"
                                     >
-                                        {iconMap[currentCategory.category_icon] || (
+                                        {iconMap[
+                                            currentCategory.category_icon
+                                        ] || (
                                             <LucideSparkles className="w-12 h-12" />
                                         )}
                                     </motion.div>
@@ -1294,7 +1333,8 @@ const TravelHealthQuestionnaire = () => {
                                         transition={{ delay: 0.2 }}
                                         className="text-sm font-bold tracking-[0.14em] text-accent uppercase mb-4"
                                     >
-                                        Section {categoryIndex + 1} of {categories.length}
+                                        Section {categoryIndex + 1} of{" "}
+                                        {categories.length}
                                     </motion.p>
 
                                     {/* Title */}
@@ -1317,6 +1357,92 @@ const TravelHealthQuestionnaire = () => {
                                         {currentCategory.category_description}
                                     </motion.p>
 
+                                    {categoryIndex === 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.36 }}
+                                            className="mb-8 rounded-2xl border-2 border-border-light/60 bg-white/70 p-4 text-left"
+                                        >
+                                            <p className="text-sm text-heading font-semibold mb-2">
+                                                Before proceeding, please read
+                                                and agree:
+                                            </p>
+                                            <p className="text-xs text-heading font-semibold mb-1">
+                                                Consent
+                                            </p>
+                                            <p className="text-xs text-muted leading-relaxed mb-3">
+                                                {CONSENT_TEXT}
+                                            </p>
+                                            <p className="text-xs text-heading font-semibold mb-1">
+                                                Medical Disclaimer
+                                            </p>
+                                            <ul className="list-disc pl-4 text-xs text-muted leading-relaxed space-y-1 mb-3">
+                                                <li>
+                                                    Your plan will be generated
+                                                    using AI and reviewed and
+                                                    validated by a licensed
+                                                    medical doctor.
+                                                </li>
+                                                <li>
+                                                    This is not a substitute for
+                                                    professional medical advice,
+                                                    diagnosis, or treatment.
+                                                </li>
+                                                <li>
+                                                    It is for informational and
+                                                    educational purposes only.
+                                                </li>
+                                                <li>
+                                                    You should consult your own
+                                                    doctor or a qualified
+                                                    healthcare professional
+                                                    before making decisions
+                                                    regarding your health,
+                                                    vaccinations, medications,
+                                                    or travel, especially if you
+                                                    are pregnant, have chronic
+                                                    conditions, or take regular
+                                                    medication.
+                                                </li>
+                                            </ul>
+                                            <p className="text-xs text-heading font-semibold mb-1">
+                                                Data Protection
+                                            </p>
+                                            <p className="text-xs text-muted leading-relaxed mb-3">
+                                                {DATA_PROTECTION_TEXT}
+                                            </p>
+                                            <label className="flex items-start gap-3 cursor-pointer">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setMedicalDisclaimerConsentGiven(
+                                                            (v) => !v,
+                                                        )
+                                                    }
+                                                    className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${medicalDisclaimerConsentGiven ? "border-accent bg-accent" : "border-border"}`}
+                                                >
+                                                    {medicalDisclaimerConsentGiven && (
+                                                        <LucideCheck className="w-3 h-3 text-white" />
+                                                    )}
+                                                </button>
+                                                <span
+                                                    className="text-sm text-body font-medium leading-relaxed"
+                                                    onClick={() =>
+                                                        setMedicalDisclaimerConsentGiven(
+                                                            (v) => !v,
+                                                        )
+                                                    }
+                                                >
+                                                    I have read, understood, and
+                                                    agree to the Consent,
+                                                    Medical Disclaimer, and
+                                                    Privacy Policy.
+                                                </span>
+                                            </label>
+                                        </motion.div>
+                                    )}
+
                                     {/* Actions */}
                                     <motion.div
                                         initial={{ opacity: 0, y: 10 }}
@@ -1326,9 +1452,14 @@ const TravelHealthQuestionnaire = () => {
                                     >
                                         <button
                                             onClick={startCategory}
-                                            className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl bg-dark text-white font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200"
+                                            disabled={
+                                                categoryIndex === 0 &&
+                                                !medicalDisclaimerConsentGiven
+                                            }
+                                            className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl bg-dark text-white font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
                                         >
-                                            Begin <LucideArrowRight className="w-4 h-4" />
+                                            Begin{" "}
+                                            <LucideArrowRight className="w-4 h-4" />
                                         </button>
                                         {currentCategory.is_optional && (
                                             <button
@@ -1341,8 +1472,7 @@ const TravelHealthQuestionnaire = () => {
                                         )}
                                     </motion.div>
                                 </motion.div>
-                            ) : (
-                                <motion.div
+                            :   <motion.div
                                     key={`section-${currentCategory.category_key}`}
                                     custom={direction}
                                     variants={questionVariants}
@@ -1353,7 +1483,8 @@ const TravelHealthQuestionnaire = () => {
                                 >
                                     <div>
                                         <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-accent mb-1">
-                                            Section {categoryIndex + 1} of {categories.length}
+                                            Section {categoryIndex + 1} of{" "}
+                                            {categories.length}
                                         </p>
                                         <h3 className="text-2xl md:text-3xl font-serif text-heading leading-snug">
                                             {currentCategory.category_name}
@@ -1361,38 +1492,65 @@ const TravelHealthQuestionnaire = () => {
                                     </div>
 
                                     {visibleQuestions.map((question) => {
-                                        const prefilled = PREFILLED_KEYS.has(question.key);
+                                        const prefilled = PREFILLED_KEYS.has(
+                                            question.key,
+                                        );
                                         return (
-                                            <div key={question.key} className="space-y-3">
+                                            <div
+                                                key={question.key}
+                                                className="space-y-3"
+                                            >
                                                 <div>
                                                     <p className="text-base md:text-lg font-semibold text-heading leading-snug">
                                                         {question.text}
                                                         {question.required && (
-                                                            <span className="text-red-500 ml-1">*</span>
+                                                            <span className="text-red-500 ml-1">
+                                                                *
+                                                            </span>
                                                         )}
                                                     </p>
                                                     {question.description && (
                                                         <p className="text-sm text-muted mt-1 leading-relaxed">
-                                                            {question.description}
+                                                            {
+                                                                question.description
+                                                            }
                                                         </p>
                                                     )}
                                                     {prefilled && (
                                                         <p className="text-xs text-accent mt-1">
-                                                            Pre-filled from your profile
+                                                            Pre-filled from your
+                                                            profile
                                                         </p>
                                                     )}
                                                 </div>
                                                 <QuestionInput
                                                     question={question}
-                                                    value={answers[question.key]}
+                                                    value={
+                                                        answers[question.key]
+                                                    }
                                                     prefilled={prefilled}
-                                                    onChange={(val) => setAnswer(question.key, val)}
-                                                    onToggleCheckbox={(val) => toggleCheckbox(question.key, val)}
-                                                    onSetVaccineStatus={setVaccineStatus}
+                                                    onChange={(val) =>
+                                                        setAnswer(
+                                                            question.key,
+                                                            val,
+                                                        )
+                                                    }
+                                                    onToggleCheckbox={(val) =>
+                                                        toggleCheckbox(
+                                                            question.key,
+                                                            val,
+                                                        )
+                                                    }
+                                                    onSetVaccineStatus={
+                                                        setVaccineStatus
+                                                    }
                                                     vaccineStatuses={
                                                         (answers.vaccine_status as Record<
                                                             string,
-                                                            Record<string, string>
+                                                            Record<
+                                                                string,
+                                                                string
+                                                            >
                                                         >) || {}
                                                     }
                                                 />
@@ -1400,7 +1558,7 @@ const TravelHealthQuestionnaire = () => {
                                         );
                                     })}
                                 </motion.div>
-                            )}
+                            }
                         </AnimatePresence>
                     </div>
                 </div>
@@ -1431,16 +1589,15 @@ const TravelHealthQuestionnaire = () => {
                                 disabled={submitting}
                                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-dark text-white text-sm font-semibold cursor-pointer hover:bg-darkest disabled:opacity-50 transition-all duration-200"
                             >
-                                {submitting ? (
+                                {submitting ?
                                     "Saving…"
-                                ) : isLastSection ? (
+                                : isLastSection ?
                                     "Complete"
-                                ) : (
-                                    <>
+                                :   <>
                                         Next{" "}
                                         <LucideArrowRight className="w-4 h-4" />
                                     </>
-                                )}
+                                }
                             </button>
                         </div>
                     </div>

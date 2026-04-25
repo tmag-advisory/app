@@ -81,6 +81,7 @@ interface PlanQuestionnaireFlowProps {
     initialShowVerify?: boolean;
     initialShowIntro?: boolean;
     initialRiskConsentGiven?: boolean;
+    initialMedicalDisclaimerConsentGiven?: boolean;
     onSaveDraft?: () => void | Promise<void>;
     isSavingDraft?: boolean;
     /** Callback fired when answers or category state changes (for sidebar sync / draft save) */
@@ -90,8 +91,14 @@ interface PlanQuestionnaireFlowProps {
         showVerify: boolean;
         showIntro: boolean;
         riskConsentGiven: boolean;
+        medicalDisclaimerConsentGiven: boolean;
     }) => void;
 }
+
+const CONSENT_TEXT =
+    "I hereby give Travel Medicine Advisory Global my explicit consent to collect, process, and store my personal and sensitive health information (including medical history, medications, pregnancy status, and risk behaviours) for the sole purpose of generating my personalised travel health advisory plan.";
+const DATA_PROTECTION_TEXT =
+    "We protect your information with encryption, multi-factor authentication, and strict security measures. We comply with the Nigeria Data Protection Act (NDPA) 2023. Your data will not be sold or shared without your permission.";
 
 function shouldShowQuestion(question: Question, answers: Record<string, unknown>): boolean {
     if (!question.conditionalOn) return true;
@@ -383,394 +390,586 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
 // ── Keys that should be pre-filled and read-only ──────────────────────────────
 const PREFILLED_KEYS = new Set(["full_name_passport", "email_address"]);
 
-const PlanQuestionnaireFlow = forwardRef<PlanQuestionnaireFlowHandle, PlanQuestionnaireFlowProps>(({
-    credits,
-    verifyTopSlot,
-    onSubmitPlan,
-    isSubmitting = false,
-    sidebarSlot,
-    initialAnswers,
-    initialCategoryIndex = 0,
-    initialShowVerify = false,
-    initialShowIntro,
-    initialRiskConsentGiven = false,
-    onSaveDraft,
-    isSavingDraft = false,
-    onStateChange,
-}, ref) => {
-    const { data: categoriesRaw, isLoading } = useOnboardingQuestions();
-    const { user } = useAuth();
-    const [answers, setAnswers] = useState<Record<string, unknown>>(initialAnswers ?? {});
-    const [categoryIndex, setCategoryIndex] = useState(initialCategoryIndex);
-    const [showIntro, setShowIntro] = useState(
-        initialShowIntro !== undefined ? initialShowIntro : initialCategoryIndex === 0
-    );
-    const [showVerify, setShowVerify] = useState(initialShowVerify);
-    // For Personal Health & Risk Behaviours: consent state lives on the intro card
-    const [riskConsentGiven, setRiskConsentGiven] = useState(initialRiskConsentGiven);
-
-    // Notify parent of state changes (for sidebar sync / draft save)
-    useEffect(() => {
-        onStateChange?.({ answers, categoryIndex, showVerify, showIntro, riskConsentGiven });
-    }, [answers, categoryIndex, showVerify, showIntro, riskConsentGiven, onStateChange]);
-
-    // Pre-fill user data on first load
-    useEffect(() => {
-        if (!user) return;
-        const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ").trim();
-        setAnswers((prev) => ({
-            ...prev,
-            ...(fullName && !prev.full_name_passport ? { full_name_passport: fullName } : {}),
-            ...(user.email && !prev.email_address ? { email_address: user.email } : {}),
-        }));
-    }, [user]);
-
-    const categories = useMemo(
-        () =>
-            ((categoriesRaw as QuestionCategory[] | undefined) ?? []).map((cat) => ({
-                ...cat,
-                parsedQuestions:
-                    (typeof cat.questions === "string" ? JSON.parse(cat.questions) : cat.questions) as Question[],
-            })),
-        [categoriesRaw]
-    );
-
-    useImperativeHandle(ref, () => ({
-        goToCategory: (index: number) => {
-            if (index < 0 || index >= categories.length) return;
-            setCategoryIndex(index);
-            setShowVerify(false);
-            setShowIntro(true);
+const PlanQuestionnaireFlow = forwardRef<
+    PlanQuestionnaireFlowHandle,
+    PlanQuestionnaireFlowProps
+>(
+    (
+        {
+            credits,
+            verifyTopSlot,
+            onSubmitPlan,
+            isSubmitting = false,
+            sidebarSlot,
+            initialAnswers,
+            initialCategoryIndex = 0,
+            initialShowVerify = false,
+            initialShowIntro,
+            initialRiskConsentGiven = false,
+            initialMedicalDisclaimerConsentGiven,
+            onSaveDraft,
+            isSavingDraft = false,
+            onStateChange,
         },
-        goToVerify: () => {
-            if (categories.length === 0) return;
-            setShowVerify(true);
-            setShowIntro(false);
-        },
-    }), [categories.length]);
+        ref,
+    ) => {
+        const { data: categoriesRaw, isLoading } = useOnboardingQuestions();
+        const { user } = useAuth();
+        const [answers, setAnswers] = useState<Record<string, unknown>>(
+            initialAnswers ?? {},
+        );
+        const [categoryIndex, setCategoryIndex] =
+            useState(initialCategoryIndex);
+        const [showIntro, setShowIntro] = useState(
+            initialShowIntro !== undefined ? initialShowIntro : (
+                initialCategoryIndex === 0
+            ),
+        );
+        const [showVerify, setShowVerify] = useState(initialShowVerify);
+        // For Personal Health & Risk Behaviours: consent state lives on the intro card
+        const [riskConsentGiven, setRiskConsentGiven] = useState(
+            initialRiskConsentGiven,
+        );
+        const [
+            medicalDisclaimerConsentGiven,
+            setMedicalDisclaimerConsentGiven,
+        ] = useState(
+            initialMedicalDisclaimerConsentGiven ??
+                (initialCategoryIndex > 0 || initialShowVerify),
+        );
 
-    const currentCategory = categories[categoryIndex];
-    const isRiskSection = currentCategory?.category_key === "personal_health_risk_behaviours";
+        // Notify parent of state changes (for sidebar sync / draft save)
+        useEffect(() => {
+            onStateChange?.({
+                answers,
+                categoryIndex,
+                showVerify,
+                showIntro,
+                riskConsentGiven,
+                medicalDisclaimerConsentGiven,
+            });
+        }, [
+            answers,
+            categoryIndex,
+            showVerify,
+            showIntro,
+            riskConsentGiven,
+            medicalDisclaimerConsentGiven,
+            onStateChange,
+        ]);
 
-    const visibleQuestions: Question[] = (currentCategory?.parsedQuestions ?? []).filter((q: Question) =>
-        shouldShowQuestion(q, answers)
-    );
-
-    const isRequiredAnswered = (question: Question): boolean => {
-        if (!question.required) return true;
-        const value = answers[question.key];
-        if (question.type === "trip_itinerary") return isTripItineraryComplete(value as TripItineraryData | undefined);
-        if (question.type === "checkbox" || question.type === "multi_country") return toNonEmptyStringArray(value).length > 0;
-        return String(value ?? "").trim().length > 0;
-    };
-
-    const validateCurrentPage = (): boolean => {
-        for (const q of visibleQuestions) {
-            if (!isRequiredAnswered(q)) {
-                if (q.type === "trip_itinerary") {
-                    const d = hydrateLegacyTripItinerary(answers[q.key] as TripItineraryData);
-                    const missingErr = getTripItineraryMissingFieldError(d);
-                    if (missingErr) {
-                        toast.error(missingErr);
-                        return false;
-                    }
-                    const tripErr = validateTripItineraryDates(d);
-                    if (tripErr) {
-                        toast.error(tripErr);
-                        return false;
-                    }
-                }
-                toast.error(`Please answer: "${q.text}"`);
-                return false;
-            }
-        }
-        for (const q of visibleQuestions) {
-            if (q.key === "date_of_birth" && q.required) {
-                const v = String(answers[q.key] ?? "").trim();
-                if (v && !isDateOfBirthPlausible(v)) {
-                    toast.error("Date of birth cannot be in the future.");
-                    return false;
-                }
-            }
-            if (q.key === "email_address" && q.required) {
-                const v = String(answers[q.key] ?? "").trim();
-                if (v && !isPlausibleEmail(v)) {
-                    toast.error("Please enter a valid email address.");
-                    return false;
-                }
-            }
-            if (
-                q.key === "longest_flight_leg_hours" ||
-                q.key === "total_flying_hours" ||
-                q.key === "number_of_flight_legs"
-            ) {
-                const v = String(answers[q.key] ?? "").trim();
-                if (v && !isValidOptionalNonNegativeNumber(v)) {
-                    toast.error(`Please enter a valid non-negative number for "${q.text}"`);
-                    return false;
-                }
-            }
-        }
-        return true;
-    };
-
-    const goToNext = () => {
-        if (!validateCurrentPage()) return;
-        const nextCategory = categoryIndex + 1;
-        if (nextCategory < categories.length) {
-            setCategoryIndex(nextCategory);
-            setShowIntro(true);
-            return;
-        }
-        setShowVerify(true);
-    };
-
-    const goToPrevious = () => {
-        if (showVerify) {
-            setCategoryIndex(categories.length - 1);
-            setShowIntro(false);
-            setShowVerify(false);
-            return;
-        }
-        if (showIntro) {
-            if (categoryIndex === 0) return;
-            setCategoryIndex((idx) => idx - 1);
-            setShowIntro(false);
-            return;
-        }
-        setShowIntro(true);
-    };
-
-    const startCategory = () => {
-        setShowIntro(false);
-    };
-
-    const handleGeneratePlan = async () => {
-        const trip = answers.trip_itinerary as TripItineraryData | undefined;
-        if (trip) {
-            const d = hydrateLegacyTripItinerary(trip);
-            const missingErr = getTripItineraryMissingFieldError(d);
-            if (missingErr) {
-                toast.error(missingErr);
-                return;
-            }
-            const tripErr = validateTripItineraryDates(d);
-            if (tripErr) {
-                toast.error(tripErr);
-                return;
-            }
-        }
-        const payload = buildPlanPayloadFromAnswers(answers);
-        if (!payload) {
-            toast.error("Please provide at least one destination country.");
-            return;
-        }
-        if (credits <= 0) {
-            toast.error("You don't have enough credits.");
-            return;
-        }
-        await onSubmitPlan(payload);
-    };
-
-    const setAnswer = (key: string, value: unknown) => {
-        setAnswers((prev) => ({ ...prev, [key]: value }));
-    };
-
-    const toggleCheckbox = (key: string, value: string) => {
-        setAnswers((prev) => {
-            const current = toNonEmptyStringArray(prev[key]);
-            return {
+        // Pre-fill user data on first load
+        useEffect(() => {
+            if (!user) return;
+            const fullName = [user.first_name, user.last_name]
+                .filter(Boolean)
+                .join(" ")
+                .trim();
+            setAnswers((prev) => ({
                 ...prev,
-                [key]: current.includes(value) ? current.filter((v) => v !== value) : [...current, value],
-            };
-        });
-    };
+                ...(fullName && !prev.full_name_passport ?
+                    { full_name_passport: fullName }
+                :   {}),
+                ...(user.email && !prev.email_address ?
+                    { email_address: user.email }
+                :   {}),
+            }));
+        }, [user]);
 
-    if (isLoading) {
+        const categories = useMemo(
+            () =>
+                ((categoriesRaw as QuestionCategory[] | undefined) ?? []).map(
+                    (cat) => ({
+                        ...cat,
+                        parsedQuestions: (typeof cat.questions === "string" ?
+                            JSON.parse(cat.questions)
+                        :   cat.questions) as Question[],
+                    }),
+                ),
+            [categoriesRaw],
+        );
+
+        useImperativeHandle(
+            ref,
+            () => ({
+                goToCategory: (index: number) => {
+                    if (index < 0 || index >= categories.length) return;
+                    setCategoryIndex(index);
+                    setShowVerify(false);
+                    setShowIntro(true);
+                },
+                goToVerify: () => {
+                    if (categories.length === 0) return;
+                    setShowVerify(true);
+                    setShowIntro(false);
+                },
+            }),
+            [categories.length],
+        );
+
+        const currentCategory = categories[categoryIndex];
+        const isRiskSection =
+            currentCategory?.category_key === "personal_health_risk_behaviours";
+        const requiresMedicalDisclaimerConsent = categoryIndex === 0;
+
+        const visibleQuestions: Question[] = (
+            currentCategory?.parsedQuestions ?? []
+        ).filter((q: Question) => shouldShowQuestion(q, answers));
+
+        const isRequiredAnswered = (question: Question): boolean => {
+            if (!question.required) return true;
+            const value = answers[question.key];
+            if (question.type === "trip_itinerary")
+                return isTripItineraryComplete(
+                    value as TripItineraryData | undefined,
+                );
+            if (
+                question.type === "checkbox" ||
+                question.type === "multi_country"
+            )
+                return toNonEmptyStringArray(value).length > 0;
+            return String(value ?? "").trim().length > 0;
+        };
+
+        const validateCurrentPage = (): boolean => {
+            for (const q of visibleQuestions) {
+                if (!isRequiredAnswered(q)) {
+                    if (q.type === "trip_itinerary") {
+                        const d = hydrateLegacyTripItinerary(
+                            answers[q.key] as TripItineraryData,
+                        );
+                        const missingErr = getTripItineraryMissingFieldError(d);
+                        if (missingErr) {
+                            toast.error(missingErr);
+                            return false;
+                        }
+                        const tripErr = validateTripItineraryDates(d);
+                        if (tripErr) {
+                            toast.error(tripErr);
+                            return false;
+                        }
+                    }
+                    toast.error(`Please answer: "${q.text}"`);
+                    return false;
+                }
+            }
+            for (const q of visibleQuestions) {
+                if (q.key === "date_of_birth" && q.required) {
+                    const v = String(answers[q.key] ?? "").trim();
+                    if (v && !isDateOfBirthPlausible(v)) {
+                        toast.error("Date of birth cannot be in the future.");
+                        return false;
+                    }
+                }
+                if (q.key === "email_address" && q.required) {
+                    const v = String(answers[q.key] ?? "").trim();
+                    if (v && !isPlausibleEmail(v)) {
+                        toast.error("Please enter a valid email address.");
+                        return false;
+                    }
+                }
+                if (
+                    q.key === "longest_flight_leg_hours" ||
+                    q.key === "total_flying_hours" ||
+                    q.key === "number_of_flight_legs"
+                ) {
+                    const v = String(answers[q.key] ?? "").trim();
+                    if (v && !isValidOptionalNonNegativeNumber(v)) {
+                        toast.error(
+                            `Please enter a valid non-negative number for "${q.text}"`,
+                        );
+                        return false;
+                    }
+                }
+            }
+            return true;
+        };
+
+        const goToNext = () => {
+            if (!validateCurrentPage()) return;
+            const nextCategory = categoryIndex + 1;
+            if (nextCategory < categories.length) {
+                setCategoryIndex(nextCategory);
+                setShowIntro(true);
+                return;
+            }
+            setShowVerify(true);
+        };
+
+        const goToPrevious = () => {
+            if (showVerify) {
+                setCategoryIndex(categories.length - 1);
+                setShowIntro(false);
+                setShowVerify(false);
+                return;
+            }
+            if (showIntro) {
+                if (categoryIndex === 0) return;
+                setCategoryIndex((idx) => idx - 1);
+                setShowIntro(false);
+                return;
+            }
+            setShowIntro(true);
+        };
+
+        const startCategory = () => {
+            setShowIntro(false);
+        };
+
+        const handleGeneratePlan = async () => {
+            const trip = answers.trip_itinerary as
+                | TripItineraryData
+                | undefined;
+            if (trip) {
+                const d = hydrateLegacyTripItinerary(trip);
+                const missingErr = getTripItineraryMissingFieldError(d);
+                if (missingErr) {
+                    toast.error(missingErr);
+                    return;
+                }
+                const tripErr = validateTripItineraryDates(d);
+                if (tripErr) {
+                    toast.error(tripErr);
+                    return;
+                }
+            }
+            const payload = buildPlanPayloadFromAnswers(answers);
+            if (!payload) {
+                toast.error("Please provide at least one destination country.");
+                return;
+            }
+            if (credits <= 0) {
+                toast.error("You don't have enough credits.");
+                return;
+            }
+            await onSubmitPlan(payload);
+        };
+
+        const setAnswer = (key: string, value: unknown) => {
+            setAnswers((prev) => ({ ...prev, [key]: value }));
+        };
+
+        const toggleCheckbox = (key: string, value: string) => {
+            setAnswers((prev) => {
+                const current = toNonEmptyStringArray(prev[key]);
+                return {
+                    ...prev,
+                    [key]:
+                        current.includes(value) ?
+                            current.filter((v) => v !== value)
+                        :   [...current, value],
+                };
+            });
+        };
+
+        if (isLoading) {
+            return (
+                <div className="min-h-[360px] flex items-center justify-center">
+                    <div className="text-center space-y-3">
+                        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+                        <p className="text-sm text-muted">
+                            Loading questionnaire...
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        if (!currentCategory) return null;
+
+        const allVisibleQuestions = categories.flatMap((cat) =>
+            cat.parsedQuestions
+                .filter((q: Question) => shouldShowQuestion(q, answers))
+                .map((q: Question) => ({
+                    categoryName: cat.category_name,
+                    question: q,
+                })),
+        );
+
+        const isBackDisabled = categoryIndex === 0 && showIntro && !showVerify;
+
         return (
-            <div className="min-h-[360px] flex items-center justify-center">
-                <div className="text-center space-y-3">
-                    <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-sm text-muted">Loading questionnaire...</p>
+            <div className="space-y-8">
+                {onSaveDraft ?
+                    <div className="sticky top-0 z-20 flex items-center justify-end border-b border-border-light/60 bg-background-primary/95 py-3 backdrop-blur">
+                        <button
+                            type="button"
+                            onClick={() => void onSaveDraft()}
+                            disabled={isSavingDraft}
+                            className="inline-flex items-center gap-2 rounded-xl border-2 border-border-light/60 px-4 py-2 text-sm font-semibold text-muted transition-colors hover:border-border hover:text-heading disabled:opacity-40"
+                        >
+                            {isSavingDraft ?
+                                <LucideLoader2 className="h-4 w-4 animate-spin" />
+                            :   null}
+                            Save draft
+                        </button>
+                    </div>
+                :   null}
+                {/* ── Sidebar slot (replaces internal stepper when provided) ── */}
+                {sidebarSlot}
+
+                {/* ── Section intro card ───────────────────────────────── */}
+                {!showVerify && showIntro && (
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={`intro-${currentCategory.category_key}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="rounded-3xl border border-border-light/70 bg-white/80 p-7 md:p-9"
+                        >
+                            <p className="text-xs text-accent font-semibold uppercase tracking-wider mb-2">
+                                Section {categoryIndex + 1} of{" "}
+                                {categories.length}
+                            </p>
+                            <h3 className="text-3xl md:text-4xl font-serif text-heading mb-3 leading-tight">
+                                {currentCategory.category_name}
+                            </h3>
+                            <p className="text-sm md:text-base text-muted mb-7 max-w-2xl leading-relaxed">
+                                {currentCategory.category_description}
+                            </p>
+
+                            {requiresMedicalDisclaimerConsent && (
+                                <div className="mb-6 p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
+                                    <p className="text-sm text-heading font-semibold mb-2">
+                                        Before proceeding, please read and
+                                        agree:
+                                    </p>
+                                    <p className="text-xs text-heading font-semibold mb-1">
+                                        Consent
+                                    </p>
+                                    <p className="text-xs text-muted leading-relaxed mb-3">
+                                        {CONSENT_TEXT}
+                                    </p>
+                                    <p className="text-xs text-heading font-semibold mb-1">
+                                        Medical Disclaimer
+                                    </p>
+                                    <ul className="list-disc pl-4 text-xs text-muted leading-relaxed space-y-1 mb-3">
+                                        <li>
+                                            Your plan will be generated using AI
+                                            and reviewed and validated by a
+                                            licensed medical doctor.
+                                        </li>
+                                        <li>
+                                            This is not a substitute for
+                                            professional medical advice,
+                                            diagnosis, or treatment.
+                                        </li>
+                                        <li>
+                                            It is for informational and
+                                            educational purposes only.
+                                        </li>
+                                        <li>
+                                            You should consult your own doctor
+                                            or a qualified healthcare
+                                            professional before making decisions
+                                            regarding your health, vaccinations,
+                                            medications, or travel, especially
+                                            if you are pregnant, have chronic
+                                            conditions, or take regular
+                                            medication.
+                                        </li>
+                                    </ul>
+                                    <p className="text-xs text-heading font-semibold mb-1">
+                                        Data Protection
+                                    </p>
+                                    <p className="text-xs text-muted leading-relaxed mb-3">
+                                        {DATA_PROTECTION_TEXT}
+                                    </p>
+                                    <label className="flex items-start gap-3 cursor-pointer">
+                                        <div
+                                            onClick={() =>
+                                                setMedicalDisclaimerConsentGiven(
+                                                    (v) => !v,
+                                                )
+                                            }
+                                            className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${medicalDisclaimerConsentGiven ? "border-accent bg-accent" : "border-border"}`}
+                                        >
+                                            {medicalDisclaimerConsentGiven && (
+                                                <LucideCheck className="w-3 h-3 text-white" />
+                                            )}
+                                        </div>
+                                        <span
+                                            className="text-sm text-body font-medium leading-relaxed"
+                                            onClick={() =>
+                                                setMedicalDisclaimerConsentGiven(
+                                                    (v) => !v,
+                                                )
+                                            }
+                                        >
+                                            I have read, understood, and agree
+                                            to the Consent, Medical Disclaimer,
+                                            and Privacy Policy.
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
+
+                            {/* Consent checkbox for Personal Health & Risk Behaviours */}
+                            {isRiskSection && (
+                                <div className="mb-6 p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
+                                    <p className="text-sm text-heading font-semibold mb-3">
+                                        Your responses are confidential and used
+                                        only to provide accurate health advice.
+                                    </p>
+                                    <label className="flex items-start gap-3 cursor-pointer">
+                                        <div
+                                            onClick={() =>
+                                                setRiskConsentGiven((v) => !v)
+                                            }
+                                            className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${riskConsentGiven ? "border-accent bg-accent" : "border-border"}`}
+                                        >
+                                            {riskConsentGiven && (
+                                                <LucideCheck className="w-3 h-3 text-white" />
+                                            )}
+                                        </div>
+                                        <span
+                                            className="text-sm text-body font-medium leading-relaxed"
+                                            onClick={() =>
+                                                setRiskConsentGiven((v) => !v)
+                                            }
+                                        >
+                                            I understand and agree to answer
+                                            this section
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={startCategory}
+                                disabled={
+                                    (requiresMedicalDisclaimerConsent &&
+                                        !medicalDisclaimerConsentGiven) ||
+                                    (isRiskSection && !riskConsentGiven)
+                                }
+                                className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-dark text-white text-sm font-semibold hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Begin <LucideArrowRight className="w-4 h-4" />
+                            </button>
+                        </motion.div>
+                    </AnimatePresence>
+                )}
+
+                {/* ── Questions page (all questions for this section) ───── */}
+                {!showVerify && !showIntro && (
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={`questions-${currentCategory.category_key}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="rounded-3xl border border-border-light/70 bg-white/80 p-5 py-7 md:p-9 space-y-8"
+                        >
+                            <div>
+                                <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-accent mb-1">
+                                    Section {categoryIndex + 1} of{" "}
+                                    {categories.length}
+                                </p>
+                                <h3 className="text-2xl md:text-3xl font-serif text-heading leading-snug">
+                                    {currentCategory.category_name}
+                                </h3>
+                            </div>
+
+                            {visibleQuestions.map((question) => (
+                                <QuestionBlock
+                                    key={question.key}
+                                    question={question}
+                                    value={answers[question.key]}
+                                    answers={answers}
+                                    prefilled={PREFILLED_KEYS.has(question.key)}
+                                    onChange={(value) =>
+                                        setAnswer(question.key, value)
+                                    }
+                                    onToggleCheckbox={(value) =>
+                                        toggleCheckbox(question.key, value)
+                                    }
+                                />
+                            ))}
+                        </motion.div>
+                    </AnimatePresence>
+                )}
+
+                {/* ── Verify page ─────────────────────────────────────────── */}
+                {showVerify && (
+                    <div className="rounded-3xl border border-border-light/70 bg-white/80 p-7 md:p-9 space-y-6">
+                        <div>
+                            <h3 className="text-3xl md:text-4xl font-serif text-heading leading-tight">
+                                Verify Your Inputs
+                            </h3>
+                            <p className="text-sm md:text-base text-muted leading-relaxed">
+                                Review each answer carefully before generating
+                                this plan.
+                            </p>
+                        </div>
+                        {verifyTopSlot}
+                        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                            {allVisibleQuestions.map(
+                                ({ categoryName, question }) => (
+                                    <div
+                                        key={question.key}
+                                        className="rounded-xl border border-border-light/60 bg-background-primary/60 p-3.5"
+                                    >
+                                        <p className="text-[11px] uppercase tracking-wider font-semibold text-accent mb-1">
+                                            {categoryName}
+                                        </p>
+                                        <p className="text-sm text-heading font-medium">
+                                            {question.text}
+                                        </p>
+                                        <p className="text-sm text-muted mt-1">
+                                            {getDisplayValue(
+                                                question,
+                                                answers[question.key],
+                                            )}
+                                        </p>
+                                    </div>
+                                ),
+                            )}
+                        </div>
+                        <p className="text-xs text-muted">
+                            This will use{" "}
+                            <strong className="text-heading">1 credit</strong>.
+                            You have {credits} remaining.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => void handleGeneratePlan()}
+                            disabled={credits === 0 || isSubmitting}
+                            className="inline-flex items-center gap-2 py-2.5 px-6 rounded-xl bg-dark text-white text-sm font-semibold hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                            {isSubmitting ?
+                                <LucideLoader2 className="w-4 h-4 animate-spin" />
+                            :   null}
+                            Generate plan
+                        </button>
+                    </div>
+                )}
+
+                {/* ── Navigation ──────────────────────────────────────────── */}
+                <div className="flex items-center justify-between border-t border-border-light/60 pt-5">
+                    <button
+                        type="button"
+                        onClick={goToPrevious}
+                        disabled={isBackDisabled}
+                        className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-heading disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                        <LucideArrowLeft className="w-4 h-4" /> Back
+                    </button>
+                    {!showIntro && !showVerify && (
+                        <button
+                            type="button"
+                            onClick={goToNext}
+                            className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-dark text-white text-sm font-semibold hover:bg-darkest"
+                        >
+                            Continue <LucideArrowRight className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
             </div>
         );
-    }
-
-    if (!currentCategory) return null;
-
-    const allVisibleQuestions = categories.flatMap((cat) =>
-        cat.parsedQuestions
-            .filter((q: Question) => shouldShowQuestion(q, answers))
-            .map((q: Question) => ({ categoryName: cat.category_name, question: q }))
-    );
-
-    const isBackDisabled = categoryIndex === 0 && showIntro && !showVerify;
-
-    return (
-        <div className="space-y-8">
-            {onSaveDraft ? (
-                <div className="sticky top-0 z-20 flex items-center justify-end border-b border-border-light/60 bg-background-primary/95 py-3 backdrop-blur">
-                    <button
-                        type="button"
-                        onClick={() => void onSaveDraft()}
-                        disabled={isSavingDraft}
-                        className="inline-flex items-center gap-2 rounded-xl border-2 border-border-light/60 px-4 py-2 text-sm font-semibold text-muted transition-colors hover:border-border hover:text-heading disabled:opacity-40"
-                    >
-                        {isSavingDraft ? <LucideLoader2 className="h-4 w-4 animate-spin" /> : null}
-                        Save draft
-                    </button>
-                </div>
-            ) : null}
-            {/* ── Sidebar slot (replaces internal stepper when provided) ── */}
-            {sidebarSlot}
-
-            {/* ── Section intro card ───────────────────────────────── */}
-            {!showVerify && showIntro && (
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={`intro-${currentCategory.category_key}`}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="rounded-3xl border border-border-light/70 bg-white/80 p-7 md:p-9"
-                    >
-                        <p className="text-xs text-accent font-semibold uppercase tracking-wider mb-2">
-                            Section {categoryIndex + 1} of {categories.length}
-                        </p>
-                        <h3 className="text-3xl md:text-4xl font-serif text-heading mb-3 leading-tight">
-                            {currentCategory.category_name}
-                        </h3>
-                        <p className="text-sm md:text-base text-muted mb-7 max-w-2xl leading-relaxed">
-                            {currentCategory.category_description}
-                        </p>
-
-                        {/* Consent checkbox for Personal Health & Risk Behaviours */}
-                        {isRiskSection && (
-                            <div className="mb-6 p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
-                                <p className="text-sm text-heading font-semibold mb-3">
-                                    Your responses are confidential and used only to provide accurate health advice.
-                                </p>
-                                <label className="flex items-start gap-3 cursor-pointer">
-                                    <div
-                                        onClick={() => setRiskConsentGiven((v) => !v)}
-                                        className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${riskConsentGiven ? "border-accent bg-accent" : "border-border"}`}
-                                    >
-                                        {riskConsentGiven && <LucideCheck className="w-3 h-3 text-white" />}
-                                    </div>
-                                    <span
-                                        className="text-sm text-body font-medium leading-relaxed"
-                                        onClick={() => setRiskConsentGiven((v) => !v)}
-                                    >
-                                        I understand and agree to answer this section
-                                    </span>
-                                </label>
-                            </div>
-                        )}
-
-                        <button
-                            type="button"
-                            onClick={startCategory}
-                            disabled={isRiskSection && !riskConsentGiven}
-                            className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-dark text-white text-sm font-semibold hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Begin <LucideArrowRight className="w-4 h-4" />
-                        </button>
-                    </motion.div>
-                </AnimatePresence>
-            )}
-
-            {/* ── Questions page (all questions for this section) ───── */}
-            {!showVerify && !showIntro && (
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={`questions-${currentCategory.category_key}`}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="rounded-3xl border border-border-light/70 bg-white/80 p-5 py-7 md:p-9 space-y-8"
-                    >
-                        <div>
-                            <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-accent mb-1">
-                                Section {categoryIndex + 1} of {categories.length}
-                            </p>
-                            <h3 className="text-2xl md:text-3xl font-serif text-heading leading-snug">
-                                {currentCategory.category_name}
-                            </h3>
-                        </div>
-
-                        {visibleQuestions.map((question) => (
-                            <QuestionBlock
-                                key={question.key}
-                                question={question}
-                                value={answers[question.key]}
-                                answers={answers}
-                                prefilled={PREFILLED_KEYS.has(question.key)}
-                                onChange={(value) => setAnswer(question.key, value)}
-                                onToggleCheckbox={(value) => toggleCheckbox(question.key, value)}
-                            />
-                        ))}
-                    </motion.div>
-                </AnimatePresence>
-            )}
-
-            {/* ── Verify page ─────────────────────────────────────────── */}
-            {showVerify && (
-                <div className="rounded-3xl border border-border-light/70 bg-white/80 p-7 md:p-9 space-y-6">
-                    <div>
-                        <h3 className="text-3xl md:text-4xl font-serif text-heading leading-tight">Verify Your Inputs</h3>
-                        <p className="text-sm md:text-base text-muted leading-relaxed">
-                            Review each answer carefully before generating this plan.
-                        </p>
-                    </div>
-                    {verifyTopSlot}
-                    <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                        {allVisibleQuestions.map(({ categoryName, question }) => (
-                            <div key={question.key} className="rounded-xl border border-border-light/60 bg-background-primary/60 p-3.5">
-                                <p className="text-[11px] uppercase tracking-wider font-semibold text-accent mb-1">{categoryName}</p>
-                                <p className="text-sm text-heading font-medium">{question.text}</p>
-                                <p className="text-sm text-muted mt-1">{getDisplayValue(question, answers[question.key])}</p>
-                            </div>
-                        ))}
-                    </div>
-                    <p className="text-xs text-muted">
-                        This will use <strong className="text-heading">1 credit</strong>. You have {credits} remaining.
-                    </p>
-                    <button
-                        type="button"
-                        onClick={() => void handleGeneratePlan()}
-                        disabled={credits === 0 || isSubmitting}
-                        className="inline-flex items-center gap-2 py-2.5 px-6 rounded-xl bg-dark text-white text-sm font-semibold hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                        {isSubmitting ? <LucideLoader2 className="w-4 h-4 animate-spin" /> : null}
-                        Generate plan
-                    </button>
-                </div>
-            )}
-
-            {/* ── Navigation ──────────────────────────────────────────── */}
-            <div className="flex items-center justify-between border-t border-border-light/60 pt-5">
-                <button
-                    type="button"
-                    onClick={goToPrevious}
-                    disabled={isBackDisabled}
-                    className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-heading disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                    <LucideArrowLeft className="w-4 h-4" /> Back
-                </button>
-                {!showIntro && !showVerify && (
-                    <button
-                        type="button"
-                        onClick={goToNext}
-                        className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-dark text-white text-sm font-semibold hover:bg-darkest"
-                    >
-                        Continue <LucideArrowRight className="w-4 h-4" />
-                    </button>
-                )}
-            </div>
-        </div>
-    );
-});
+    },
+);
 
 // ── Individual question block ─────────────────────────────────────────────────
 
