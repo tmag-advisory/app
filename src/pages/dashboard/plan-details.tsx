@@ -37,6 +37,7 @@ import {
   LucideBug,
   LucideMapPin,
   LucideShieldCheck as LucideShieldCheckIcon,
+  LucideShieldAlert,
   LucideClock,
 } from "lucide-react";
 
@@ -428,6 +429,7 @@ const validationStatusColors: Record<string, { text: string; bg: string }> = {
   PENDING: { text: "text-amber-700", bg: "bg-amber-50" },
   APPROVED: { text: "text-emerald-700", bg: "bg-emerald-50" },
   REJECTED: { text: "text-red-700", bg: "bg-red-50" },
+  ELEVATED: { text: "text-blue-700", bg: "bg-blue-50" },
   NOT_REQUIRED: { text: "text-gray-700", bg: "bg-gray-50" },
 };
 
@@ -446,6 +448,8 @@ function ValidationStatusBadge({ status, validatedAt, validatedByName, rejection
           <LucideShieldCheckIcon className="h-4 w-4 text-emerald-600" />
         ) : status === "PENDING" ? (
           <LucideClock className="h-4 w-4 text-amber-600" />
+        ) : status === "ELEVATED" ? (
+          <LucideShieldAlert className="h-4 w-4 text-blue-600" />
         ) : (
           <LucideAlertTriangle className="h-4 w-4 text-red-600" />
         )}
@@ -457,6 +461,12 @@ function ValidationStatusBadge({ status, validatedAt, validatedByName, rejection
         <p className="text-xs text-gray-500">
           Approved by Dr. {validatedByName} on {new Date(validatedAt).toLocaleDateString()}
         </p>
+      )}
+      {status === "ELEVATED" && rejectionReason && (
+        <div className="mt-2 p-2.5 rounded-lg bg-blue-50">
+          <p className="text-xs text-blue-700 font-medium">Doctor feedback:</p>
+          <p className="text-xs text-blue-600">{rejectionReason}</p>
+        </div>
       )}
       {status === "REJECTED" && rejectionReason && (
         <div className="mt-2 p-2.5 rounded-lg bg-red-50">
@@ -1223,13 +1233,15 @@ const PlanDetails = () => {
   }
 
   const needsDoctorApproval =
-    plan.doctorValidationStatus === "PENDING" || plan.doctorValidationStatus === "REJECTED";
+    plan.doctorValidationStatus === "PENDING" || plan.doctorValidationStatus === "ELEVATED" || plan.doctorValidationStatus === "REJECTED";
 
   if (needsDoctorApproval) {
+    const isElevated = plan.doctorValidationStatus === "ELEVATED";
     const isRejected = plan.doctorValidationStatus === "REJECTED";
+    
     return (
       <div>
-        <DashboardHeader title={isRejected ? "Plan not approved" : "Awaiting doctor approval"} />
+        <DashboardHeader title={isElevated ? "Plan Under Senior Review" : isRejected ? "Plan not approved" : "Awaiting doctor approval"} />
         <Link
           to="/dashboard/plans"
           className="mb-6 inline-flex items-center gap-1 text-xs text-muted transition-colors duration-200 hover:text-heading"
@@ -1240,33 +1252,41 @@ const PlanDetails = () => {
           className={cn(
             DASHBOARD_GLASS_SURFACE,
             "p-6 md:p-8",
-            isRejected ? "border-red-200/80" : "border-amber-200/80",
+            isElevated ? "border-blue-200/80" : isRejected ? "border-red-200/80" : "border-amber-200/80",
           )}
           initial={reduceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 320, damping: 32 }}
         >
           <div className="flex items-start gap-3">
-            {isRejected ? (
+            {isElevated ? (
+              <LucideShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden />
+            ) : isRejected ? (
               <LucideAlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden />
             ) : (
               <LucideClock className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
             )}
             <div className="min-w-0 space-y-2">
-              <p className={`font-semibold ${isRejected ? "text-red-900" : "text-amber-900"}`}>
-                {isRejected
+              <p className={`font-semibold ${isElevated ? "text-blue-900" : isRejected ? "text-red-900" : "text-amber-900"}`}>
+                {isElevated
+                  ? "Your plan has been elevated for senior review."
+                  : isRejected
                   ? "Your plan was not approved by the reviewing doctor."
                   : "Your plan is awaiting review by a verified travel medicine doctor."}
               </p>
-              <p className={`text-sm ${isRejected ? "text-red-900/85" : "text-amber-900/85"}`}>
-                {isRejected
+              <p className={`text-sm ${isElevated ? "text-blue-900/85" : isRejected ? "text-red-900/85" : "text-amber-900/85"}`}>
+                {isElevated
+                  ? "Your travel health plan has been escalated for further expert review by our senior medical team. A travel medicine specialist will be giving your plan additional attention to ensure the most comprehensive health guidance for your trip. You will receive an update as soon as the review is complete."
+                  : isRejected
                   ? "The doctor has reviewed your plan and decided it cannot be approved in its current form. Please review the reason below."
                   : "You will be notified once the doctor has completed their review. The full plan details will be available after approval."}
               </p>
-              {isRejected && plan.rejectionReason && (
-                <div className="mt-3 rounded-lg border border-red-200/60 bg-red-50/80 p-3">
-                  <p className="text-xs font-semibold text-red-700">Rejection reason:</p>
-                  <p className="mt-1 text-sm text-red-600">{plan.rejectionReason}</p>
+              {(isElevated || isRejected) && plan.rejectionReason && (
+                <div className={`mt-3 rounded-lg border ${isElevated ? "border-blue-200/60 bg-blue-50/80" : "border-red-200/60 bg-red-50/80"} p-3`}>
+                  <p className={`text-xs font-semibold ${isElevated ? "text-blue-700" : "text-red-700"}`}>
+                    {isElevated ? "Doctor feedback:" : "Rejection reason:"}
+                  </p>
+                  <p className={`mt-1 text-sm ${isElevated ? "text-blue-600" : "text-red-600"}`}>{plan.rejectionReason}</p>
                 </div>
               )}
               {isRejected && plan.validatedByName && plan.validatedAt && (

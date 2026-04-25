@@ -291,7 +291,6 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
             const toMerged = mergeCityCountry(it.oneToCity, it.oneTo) || primaryCountry;
             destination = toMerged;
             if (fromMerged) destination = `${fromMerged} → ${toMerged}`;
-            duration = 7;
             tripType = "one-way";
             tripDetailsJson = JSON.stringify({
                 tripType: "one-way",
@@ -310,7 +309,8 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
             destination = toMerged;
             if (fromMerged) destination = `${fromMerged} → ${toMerged}`;
             tripType = "return";
-            duration = 7;
+            const returnDuration = daysInclusiveBetween(it.returnDepartureDate, it.returnReturnDate);
+            if (returnDuration > 0) duration = returnDuration;
             tripDetailsJson = JSON.stringify({
                 tripType: "return",
                 departureCity: fromMerged,
@@ -328,6 +328,11 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
                 .filter(Boolean);
             destination = parts.join(" → ");
             primaryCountry = (legs[0]?.country ?? "").trim();
+            const totalNights = legs.reduce((sum, leg) => {
+                const n = parseInt(leg.nights ?? "", 10);
+                return sum + (Number.isNaN(n) ? 0 : n);
+            }, 0);
+            if (totalNights > 0) duration = totalNights + 1;
             const departingMerged =
                 mergeCityCountry(it.multiDepartingFromCity, it.multiDepartingFromCountry) || (it.multiDepartingFrom ?? "").trim();
             tripDetailsJson = JSON.stringify({
@@ -349,6 +354,8 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
             const finMerged =
                 mergeCityCountry(it.transitFinalDestinationCity, it.transitFinalDestination) || primaryCountry;
             destination = `${depMerged} via ${(it.transitLocation ?? "").trim()} → ${finMerged}`;
+            const transitDuration = daysInclusiveBetween(it.transitDepartureDate, it.transitReturnDate);
+            if (transitDuration > 0) duration = transitDuration;
             tripDetailsJson = JSON.stringify({
                 tripType: "transit",
                 departureCity: depMerged,
@@ -665,7 +672,7 @@ const PlanQuestionnaireFlow = forwardRef<
 
         if (isLoading) {
             return (
-                <div className="min-h-[360px] flex items-center justify-center">
+                <div className="min-h-90 flex items-center justify-center">
                     <div className="text-center space-y-3">
                         <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
                         <p className="text-sm text-muted">
@@ -913,7 +920,7 @@ const PlanQuestionnaireFlow = forwardRef<
                             </p>
                         </div>
                         {verifyTopSlot}
-                        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                        <div className="space-y-3 max-h-105 overflow-y-auto pr-1">
                             {allVisibleQuestions.map(
                                 ({ categoryName, question }) => (
                                     <div

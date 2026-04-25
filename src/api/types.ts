@@ -531,7 +531,7 @@ export interface TravelPlanResponse {
   employeeId?: number;
   userId?: number;
   signedPdfUrl: string | null;
-  doctorValidationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_REQUIRED';
+  doctorValidationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ELEVATED' | 'NOT_REQUIRED';
   createdAt: string;
   updatedAt: string;
   generatedPlan?: GeneratedPlanPayload | null;

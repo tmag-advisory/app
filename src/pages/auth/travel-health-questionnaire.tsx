@@ -187,14 +187,14 @@ function derivePlanFromQuestionnaireAnswers(
             const toMerged = mergeCityCountry(it.oneToCity, it.oneTo) || country;
             destination = toMerged;
             if (fromMerged) destination = `${fromMerged} → ${toMerged}`;
-            duration = 7;
         } else if (tripType === "return") {
             country = (it.returnTo || "").trim();
             const fromMerged = mergeCityCountry(it.returnFromCity, it.returnFromCountry) || (it.returnFrom || "").trim();
             const toMerged = mergeCityCountry(it.returnToCity, it.returnTo) || country;
             destination = toMerged;
             if (fromMerged) destination = `${fromMerged} → ${toMerged}`;
-            duration = 7;
+            const returnDuration = daysInclusiveBetween(it.returnDepartureDate, it.returnReturnDate);
+            if (returnDuration > 0) duration = returnDuration;
         } else if (tripType === "multi") {
             const legs = it.multiLegs || [];
             const parts = legs
@@ -202,14 +202,19 @@ function derivePlanFromQuestionnaireAnswers(
                 .filter(Boolean);
             destination = parts.join(" → ");
             country = (legs[0]?.country || "").trim();
-            duration = 7;
+            const totalNights = legs.reduce((sum, leg) => {
+                const n = parseInt(leg.nights ?? "", 10);
+                return sum + (Number.isNaN(n) ? 0 : n);
+            }, 0);
+            if (totalNights > 0) duration = totalNights + 1;
         } else if (tripType === "transit") {
             country = (it.transitFinalDestination || "").trim();
             const depMerged = mergeCityCountry(it.transitFromCity, it.transitFromCountry) || (it.transitFrom || "").trim();
             const finMerged =
                 mergeCityCountry(it.transitFinalDestinationCity, it.transitFinalDestination) || country;
             destination = `${depMerged} via ${(it.transitLocation || "").trim()} → ${finMerged}`;
-            duration = 7;
+            const transitDuration = daysInclusiveBetween(it.transitDepartureDate, it.transitReturnDate);
+            if (transitDuration > 0) duration = transitDuration;
         }
     } else if (newCountries.length > 0) {
         country = newCountries[0];
@@ -1210,7 +1215,7 @@ const TravelHealthQuestionnaire = () => {
                                 Section {categoryIndex + 1} of{" "}
                                 {categories.length}
                             </p>
-                            <p className="text-sm font-semibold text-heading truncate max-w-[180px]">
+                            <p className="text-sm font-semibold text-heading truncate max-w-45">
                                 {currentCategory?.category_name || "Loading..."}
                             </p>
                         </div>
