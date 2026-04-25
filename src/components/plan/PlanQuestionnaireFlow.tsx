@@ -21,7 +21,7 @@ import {
     isValidOptionalNonNegativeNumber,
     todayIsoDateLocal,
 } from "../../lib/questionnaireFieldValidation";
-import { useOnboardingQuestions } from "../../api/hooks";
+import { useOnboardingQuestions, useAcceptQuestionnaireConsent } from "../../api/hooks";
 import { useAuth } from "../../context/AuthContext";
 
 interface QuestionOption {
@@ -415,6 +415,7 @@ const PlanQuestionnaireFlow = forwardRef<
     ) => {
         const { data: categoriesRaw, isLoading } = useOnboardingQuestions();
         const { user } = useAuth();
+        const acceptConsent = useAcceptQuestionnaireConsent();
         const [answers, setAnswers] = useState<Record<string, unknown>>(
             initialAnswers ?? {},
         );
@@ -780,7 +781,11 @@ const PlanQuestionnaireFlow = forwardRef<
                                         <div
                                             onClick={() =>
                                                 setMedicalDisclaimerConsentGiven(
-                                                    (v) => !v,
+                                                    (v) => {
+                                                        const newVal = !v;
+                                                        if (newVal) acceptConsent.mutate();
+                                                        return newVal;
+                                                    },
                                                 )
                                             }
                                             className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${medicalDisclaimerConsentGiven ? "border-accent bg-accent" : "border-border"}`}
@@ -793,7 +798,11 @@ const PlanQuestionnaireFlow = forwardRef<
                                             className="text-sm text-body font-medium leading-relaxed"
                                             onClick={() =>
                                                 setMedicalDisclaimerConsentGiven(
-                                                    (v) => !v,
+                                                    (v) => {
+                                                        const newVal = !v;
+                                                        if (newVal) acceptConsent.mutate();
+                                                        return newVal;
+                                                    },
                                                 )
                                             }
                                         >

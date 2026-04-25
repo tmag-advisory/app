@@ -27,6 +27,7 @@ import {
     useSaveQuestionnaireProgress,
     useGetQuestionnaireProgress,
     useCreateTravelPlan,
+    useAcceptQuestionnaireConsent,
 } from "../../api/hooks";
 import toast from "react-hot-toast";
 import { getAuthCookie } from "../../api/axios";
@@ -357,6 +358,7 @@ const TravelHealthQuestionnaire = () => {
     const saveProgress = useSaveQuestionnaireProgress();
     const { data: savedProgress } = useGetQuestionnaireProgress();
     const createPlan = useCreateTravelPlan();
+    const acceptConsent = useAcceptQuestionnaireConsent();
 
     const [answers, setAnswers] = useState<Record<string, unknown>>({});
     const [categoryIndex, setCategoryIndex] = useState(0);
@@ -1417,7 +1419,11 @@ const TravelHealthQuestionnaire = () => {
                                                     type="button"
                                                     onClick={() =>
                                                         setMedicalDisclaimerConsentGiven(
-                                                            (v) => !v,
+                                                            (v) => {
+                                                                const newVal = !v;
+                                                                if (newVal) acceptConsent.mutate();
+                                                                return newVal;
+                                                            },
                                                         )
                                                     }
                                                     className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${medicalDisclaimerConsentGiven ? "border-accent bg-accent" : "border-border"}`}
@@ -1430,7 +1436,11 @@ const TravelHealthQuestionnaire = () => {
                                                     className="text-sm text-body font-medium leading-relaxed"
                                                     onClick={() =>
                                                         setMedicalDisclaimerConsentGiven(
-                                                            (v) => !v,
+                                                            (v) => {
+                                                                const newVal = !v;
+                                                                if (newVal) acceptConsent.mutate();
+                                                                return newVal;
+                                                            },
                                                         )
                                                     }
                                                 >

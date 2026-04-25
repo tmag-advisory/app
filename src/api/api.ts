@@ -814,3 +814,13 @@ export const companyOnboardingApi = {
   getStatus: (id: number) =>
     api.get<ApiResponse<import("./types").CompanyOnboardingResponse>>(`/public/company-onboarding/${id}/status`).then((r) => r.data.data),
 };
+
+// ─── User Settings ────────────────────────────────────────────
+
+export const settingsApi = {
+  get: () =>
+    api.get<ApiResponse<import("./types").UserSettingResponse>>("/settings").then((r) => r.data.data),
+
+  acceptQuestionnaireConsent: () =>
+    api.post<ApiResponse<import("./types").UserSettingResponse>>("/settings/questionnaire-consent").then((r) => r.data.data),
+};

@@ -112,6 +112,7 @@ export interface AuthResponse {
   accessToken: string; // Backend uses accessToken (camelCase) in AuthResponse.java @JsonProperty("accessToken")
   exp: number;
   extend?: any;
+  settings?: UserSettingResponse;
 }
 
 export interface GoogleAuthRequest {
@@ -268,6 +269,20 @@ export interface DoctorProfileResponse {
   stampUrl: string | null;
   doctorApplicationStatus: DoctorApplicationStatus;
   applicationSubmittedAt: string | null;
+}
+
+export interface UserSettingResponse {
+  medicalLicenseNumber?: string | null;
+  signatureUrl?: string | null;
+  stampUrl?: string | null;
+  doctorApplicationStatus?: DoctorApplicationStatus;
+  consentVersion?: number;
+  consentAcceptedByVersion?: number | null;
+  consentAcceptedAt?: string | null;
+}
+
+export interface ConsentAcceptRequest {
+  consentVersion: number;
 }
 
 export interface DoctorDashboardStats {
@@ -833,6 +848,7 @@ export interface ProfileResponse {
   createdAt: string;
   updatedAt: string;
   userCreditPlan?: CreditPlan | null;
+  settings?: UserSettingResponse;
 }
 
 export interface UpdateProfileRequest {

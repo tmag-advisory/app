@@ -33,6 +33,7 @@ import {
   companyOnboardingApi,
   doctorApi,
   adminDoctorApi,
+  settingsApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -1003,6 +1004,18 @@ export function useGetQuestionnaireProgress() {
     retry: false,
     staleTime: 0,
     gcTime: 0,
+  });
+}
+
+// ─── Settings / Consent Hooks ─────────────────────────────────────
+
+export function useAcceptQuestionnaireConsent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => settingsApi.acceptQuestionnaireConsent(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["profile"] });
+    },
   });
 }
 

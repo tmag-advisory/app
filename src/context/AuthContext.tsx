@@ -36,6 +36,8 @@ export interface AuthUser {
     billing_currency: BillingCurrency;
     extend: AuthRole;
     user_credit_plan?: import("../api/types").CreditPlan | null;
+    settings?: import("../api/types").UserSettingResponse;
+    consentValid?: boolean;
 }
 
 
@@ -163,6 +165,7 @@ export const useAuth = (): AuthContextValue => {
 
 function buildAuthUser(d: Record<string, unknown>): AuthUser {
     const extend = extractRole(d);
+    const settings = d.settings as import("../api/types").UserSettingResponse | undefined;
 
     return {
         id: d.id as number,
@@ -182,12 +185,17 @@ function buildAuthUser(d: Record<string, unknown>): AuthUser {
             role_name: extend?.role_name ?? "",
         },
         user_credit_plan: (d.userCreditPlan ?? d.user_credit_plan) as import("../api/types").CreditPlan | null ?? null,
+        settings: settings ?? undefined,
+        consentValid: !!(settings?.consentAcceptedByVersion != null
+            && settings?.consentVersion != null
+            && settings.consentAcceptedByVersion >= settings.consentVersion),
     };
 }
 
 // Login/register responses include extend.role
 function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
     const extend = extractRole(d);
+    const settings = d.settings as import("../api/types").UserSettingResponse | undefined;
 
     return {
         id: d.id as number,
@@ -207,6 +215,10 @@ function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
             role_name: extend?.role_name ?? "",
         },
         user_credit_plan: (d.userCreditPlan ?? d.user_credit_plan) as import("../api/types").CreditPlan | null ?? null,
+        settings: settings ?? undefined,
+        consentValid: !!(settings?.consentAcceptedByVersion != null
+            && settings?.consentVersion != null
+            && settings.consentAcceptedByVersion >= settings.consentVersion),
     };
 }
 
