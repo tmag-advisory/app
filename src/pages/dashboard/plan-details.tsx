@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useReducedMotion, LayoutGroup } from "framer-m
 import { travelPlansApi } from "../../api/api";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
-import { isTravelPlanGeneratingStatus, useTravelPlan } from "../../api/hooks";
+import { isTravelPlanGeneratingStatus, useTravelPlan, useTravelPlanSummaryPdf } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import {
   GeneratedPlanHeroMeta,
@@ -1099,6 +1099,7 @@ const PlanDetails = () => {
   const { id } = useParams<{ id: string }>();
   const planId = parseInt(id || "0", 10);
   const { data: plan, isLoading } = useTravelPlan(planId);
+  const { mutateAsync: downloadSummaryPdfBlob } = useTravelPlanSummaryPdf();
   const reduceMotion = useReducedMotion();
   const sectionContainerVariants = reduceMotion ? staticListVariants : listContainer;
   const sectionItemVariants = reduceMotion ? staticListVariants : listItem;
@@ -1107,6 +1108,30 @@ const PlanDetails = () => {
   const useStructuredLayout = parsedContent != null && hasGeneratedPlanLayout(parsedContent);
 
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [summaryPdfLoading, setSummaryPdfLoading] = useState(false);
+
+  const downloadBlob = useCallback((blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const planFilenameSlug = useCallback((destination: string | null | undefined) => {
+    return (
+      destination
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 48) || "travel-health-plan"
+    );
+  }, []);
+
   const handleDownloadPdf = useCallback(async () => {
     if (!plan) {
       return;
@@ -1125,21 +1150,8 @@ const PlanDetails = () => {
 
     try {
       const blob = await travelPlansApi.downloadPdfBlob(plan.id);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const slug =
-        plan.destination
-          ?.toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "")
-          .slice(0, 48) || "travel-health-plan";
-      a.download = `${slug}-travel-health.pdf`;
-      a.rel = "noopener";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      const slug = planFilenameSlug(plan.destination);
+      downloadBlob(blob, `${slug}-travel-health.pdf`);
       toast.success("Travel health plan downloaded");
     } catch (err) {
       console.error(err);
@@ -1147,7 +1159,42 @@ const PlanDetails = () => {
     } finally {
       setPdfLoading(false);
     }
-  }, [plan]);
+  }, [downloadBlob, plan, planFilenameSlug]);
+
+  const handleDownloadSummaryPdf = useCallback(async () => {
+    if (!plan) {
+      return;
+    }
+    if (plan.status !== "COMPLETED") {
+      toast.error("Summary PDF is only available when your plan is completed.");
+      return;
+    }
+    if (plan.planTier !== "STANDARD" && plan.planTier !== "PREMIUM") {
+      toast.error("Summary PDF is available for standard and premium plans.");
+      return;
+    }
+
+    const summaryPdfUrl = plan.summaryPdfUrl ?? plan.generatedPlan?.summaryPdfUrl;
+    setSummaryPdfLoading(true);
+
+    if (summaryPdfUrl) {
+      window.open(summaryPdfUrl, "_blank", "noopener");
+      setSummaryPdfLoading(false);
+      return;
+    }
+
+    try {
+      const blob = await downloadSummaryPdfBlob(plan.id);
+      const slug = planFilenameSlug(plan.destination);
+      downloadBlob(blob, `${slug}-travel-health-summary.pdf`);
+      toast.success("Travel health summary downloaded");
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not download summary PDF. Please try again.");
+    } finally {
+      setSummaryPdfLoading(false);
+    }
+  }, [downloadBlob, downloadSummaryPdfBlob, plan, planFilenameSlug]);
 
   if (isLoading) {
     return (
@@ -1342,6 +1389,21 @@ const PlanDetails = () => {
                 )}
                 {pdfLoading ? "Preparing PDF…" : "Download PDF"}
               </button>
+              {(plan.planTier === "STANDARD" || plan.planTier === "PREMIUM") && (
+                <button
+                  type="button"
+                  disabled={summaryPdfLoading}
+                  onClick={() => void handleDownloadSummaryPdf()}
+                  className="flex cursor-pointer items-center gap-2 rounded-xl border border-accent/20 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent transition-colors duration-200 hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-55"
+                >
+                  {summaryPdfLoading ? (
+                    <LucideLoader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+                  ) : (
+                    <LucideFileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  )}
+                  {summaryPdfLoading ? "Preparing summary…" : "Download Summary"}
+                </button>
+              )}
             </div>
           </div>
           <div className="flex flex-col gap-1 text-xs text-muted sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-1">
@@ -1536,6 +1598,21 @@ const PlanDetails = () => {
               )}
               {pdfLoading ? "Preparing PDF…" : "Download PDF"}
             </button>
+            {(plan.planTier === "STANDARD" || plan.planTier === "PREMIUM") && (
+              <button
+                type="button"
+                disabled={summaryPdfLoading}
+                onClick={() => void handleDownloadSummaryPdf()}
+                className="flex cursor-pointer items-center gap-2 rounded-xl border border-accent/20 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent transition-colors duration-200 hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-55"
+              >
+                {summaryPdfLoading ? (
+                  <LucideLoader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+                ) : (
+                  <LucideFileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                )}
+                {summaryPdfLoading ? "Preparing summary…" : "Download Summary"}
+              </button>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">

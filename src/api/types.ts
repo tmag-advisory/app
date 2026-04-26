@@ -370,6 +370,7 @@ export interface GeneratedPlanPayload {
   processingTimeMs?: number | null;
   errorMessage?: string | null;
   signedPdfUrl?: string | null;
+  summaryPdfUrl?: string | null;
   isSigned?: boolean;
 }
 
@@ -531,6 +532,7 @@ export interface TravelPlanResponse {
   employeeId?: number;
   userId?: number;
   signedPdfUrl: string | null;
+  summaryPdfUrl: string | null;
   doctorValidationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ELEVATED' | 'NOT_REQUIRED';
   createdAt: string;
   updatedAt: string;
@@ -1334,4 +1336,3 @@ export interface OnboardingPaymentInitiate {
   amount: number;
   currency: string;
 }
-

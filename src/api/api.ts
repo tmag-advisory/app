@@ -258,6 +258,10 @@ export const travelPlansApi = {
   /** Server-generated PDF (OpenHTMLToPDF). Requires completed plan; same auth as other travel-plan routes. */
   downloadPdfBlob: (id: number) =>
     api.get<Blob>(`/travel-plans/${id}/pdf`, { responseType: "blob" }).then((r) => r.data),
+
+  /** Condensed server-generated PDF. Available for completed standard and premium plans. */
+  downloadSummaryPdfBlob: (id: number) =>
+    api.get<Blob>(`/travel-plans/${id}/summary-pdf`, { responseType: "blob" }).then((r) => r.data),
 };
 
 // ─── Credit Requests ─────────────────────────────────────────

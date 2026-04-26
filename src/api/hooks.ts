@@ -475,6 +475,12 @@ export function useTravelPlan(id: number) {
   });
 }
 
+export function useTravelPlanSummaryPdf() {
+  return useMutation({
+    mutationFn: (id: number) => travelPlansApi.downloadSummaryPdfBlob(id),
+  });
+}
+
 export function useCreateTravelPlan() {
   const qc = useQueryClient();
   return useMutation({
