@@ -517,7 +517,7 @@ export interface TravelPlanResponse {
   country: string;
   duration: number;
   purpose: string;
-  tripType?: "one-way" | "return" | "multi";
+  tripType?: "one-way" | "return" | "multi" | "transit";
   tripDetailsJson?: string;
   riskScore: number;
   status: string;
@@ -552,7 +552,7 @@ export interface CreateTravelPlanRequest {
   country: string;
   duration: number;
   purpose: string;
-  tripType?: "one-way" | "return" | "multi";
+  tripType?: "one-way" | "return" | "multi" | "transit";
   tripDetailsJson?: string;
   riskScore?: number;
   status?: string;

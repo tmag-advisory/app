@@ -881,94 +881,12 @@ const Onboarding = () => {
                                     ))}
                                 </motion.div>
 
-                                <motion.div
-                                    initial={{ opacity: 0, y: 12 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.55 }}
-                                    className="mb-6 rounded-2xl border-2 border-border-light/60 bg-background-primary/70 p-4 text-left"
-                                >
-                                    <p className="text-sm font-semibold text-heading mb-2">
-                                        Before proceeding with payment, please
-                                        read and agree:
-                                    </p>
-                                    <p className="text-xs text-heading font-semibold mb-1">
-                                        Consent
-                                    </p>
-                                    <p className="text-xs text-muted leading-relaxed mb-3">
-                                        {CONSENT_TEXT}
-                                    </p>
-                                    <p className="text-xs text-heading font-semibold mb-1">
-                                        Medical Disclaimer
-                                    </p>
-                                    <ul className="list-disc pl-4 text-xs text-muted leading-relaxed space-y-1 mb-3">
-                                        <li>
-                                            Your plan will be generated using AI
-                                            and reviewed and validated by a
-                                            licensed medical doctor.
-                                        </li>
-                                        <li>
-                                            This is not a substitute for
-                                            professional medical advice,
-                                            diagnosis, or treatment.
-                                        </li>
-                                        <li>
-                                            It is for informational and
-                                            educational purposes only.
-                                        </li>
-                                        <li>
-                                            You should consult your own doctor
-                                            or a qualified healthcare
-                                            professional before making decisions
-                                            regarding your health, vaccinations,
-                                            medications, or travel, especially
-                                            if you are pregnant, have chronic
-                                            conditions, or take regular
-                                            medication.
-                                        </li>
-                                    </ul>
-                                    <p className="text-xs text-heading font-semibold mb-1">
-                                        Data Protection
-                                    </p>
-                                    <p className="text-xs text-muted leading-relaxed mb-3">
-                                        {DATA_PROTECTION_TEXT}
-                                    </p>
-                                    <label className="flex items-start gap-3 cursor-pointer">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setWelcomeDisclaimerAgreed(
-                                                    (v) => !v,
-                                                )
-                                            }
-                                            className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${welcomeDisclaimerAgreed ? "border-accent bg-accent" : "border-border"}`}
-                                        >
-                                            {welcomeDisclaimerAgreed && (
-                                                <LucideCheck className="w-3 h-3 text-white" />
-                                            )}
-                                        </button>
-                                        <span
-                                            className="text-sm text-body font-medium leading-relaxed"
-                                            onClick={() =>
-                                                setWelcomeDisclaimerAgreed(
-                                                    (v) => !v,
-                                                )
-                                            }
-                                        >
-                                            I have read, understood, and agree
-                                            to the Consent, Medical Disclaimer,
-                                            and Privacy Policy.
-                                        </span>
-                                    </label>
-                                </motion.div>
-
                                 <motion.button
                                     initial={{ opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.7 }}
                                     onClick={handleWelcomeNext}
-                                    disabled={
-                                        isLoading || !welcomeDisclaimerAgreed
-                                    }
+                                    disabled={isLoading}
                                     className="w-full py-4 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-40"
                                 >
                                     {isLoading ?

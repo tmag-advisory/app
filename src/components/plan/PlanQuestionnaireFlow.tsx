@@ -57,7 +57,7 @@ export interface QuestionnairePlanPayload {
     duration: number;
     purpose: string;
     medicalConsiderations: string;
-    tripType: "one-way" | "return";
+    tripType: "one-way" | "return" | "multi" | "transit";
     tripDetailsJson: string;
     questionnaireResponses: Record<string, unknown>;
 }
@@ -130,11 +130,58 @@ function isIsoDate(value: string): boolean {
 
 function daysInclusiveBetween(start?: string, end?: string): number {
     if (!start?.trim() || !end?.trim()) return 0;
-    const a = new Date(start);
-    const b = new Date(end);
+    const a = new Date(`${start.trim()}T00:00:00Z`);
+    const b = new Date(`${end.trim()}T00:00:00Z`);
     if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
     const diff = Math.ceil((b.getTime() - a.getTime()) / 86400000) + 1;
     return diff > 0 ? diff : 0;
+}
+
+function parsePositiveInteger(value?: string): number {
+    const parsed = parseInt(value ?? "", 10);
+    return Number.isNaN(parsed) || parsed <= 0 ? 0 : parsed;
+}
+
+function durationDaysFromLengthOfStay(value?: string): number {
+    switch ((value ?? "").trim()) {
+        case "<1m":
+            return 30;
+        case "1-3m":
+            return 90;
+        case "3-6m":
+            return 180;
+        case "6-12m":
+            return 365;
+        case "12m+":
+        case "open":
+            return 366;
+        default:
+            return 0;
+    }
+}
+
+function durationDaysFromTransitDuration(value?: string): number {
+    switch ((value ?? "").trim()) {
+        case "<12h":
+        case "12-24h":
+            return 1;
+        case ">24h":
+            return 2;
+        default:
+            return 0;
+    }
+}
+
+function durationDaysFromMultiStop(legs: TripItineraryData["multiLegs"], overallReturnDate?: string): number {
+    const validLegs = legs ?? [];
+    const firstArrivalDate = validLegs
+        .map((leg) => leg.arrivalDate?.trim() ?? "")
+        .find(Boolean);
+    const dateDuration = daysInclusiveBetween(firstArrivalDate, overallReturnDate);
+    if (dateDuration > 0) return dateDuration;
+
+    const totalNights = validLegs.reduce((sum, leg) => sum + parsePositiveInteger(leg.nights), 0);
+    return totalNights > 0 ? totalNights + 1 : 0;
 }
 
 function isTripItineraryComplete(data: TripItineraryData | undefined): boolean {
@@ -261,8 +308,8 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
     const destinationCountries = travelCountries.join(", ");
     let destination = [city, destinationCountries].filter(Boolean).join(", ") || destinationCountries;
 
-    let duration = 7;
-    let tripType: "one-way" | "return" = "one-way";
+    let duration = 0;
+    let tripType: QuestionnairePlanPayload["tripType"] = "one-way";
     let tripDetailsJson = JSON.stringify({
         tripType: "one-way",
         stops: [{ city: city || primaryCountry, country: primaryCountry, order: 1 }],
@@ -270,7 +317,7 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
 
     if (isIsoDate(returnDateOrDuration)) {
         const calculated = daysInclusiveBetween(departureDate, returnDateOrDuration);
-        duration = calculated > 0 ? calculated : 7;
+        if (calculated > 0) duration = calculated;
         tripType = "return";
         tripDetailsJson = JSON.stringify({
             tripType: "return",
@@ -279,8 +326,8 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
             stops: [{ city: city || primaryCountry, country: primaryCountry, order: 1 }],
         });
     } else {
-        const parsedDuration = parseInt(returnDateOrDuration, 10);
-        if (!Number.isNaN(parsedDuration) && parsedDuration > 0) duration = parsedDuration;
+        const parsedDuration = parsePositiveInteger(returnDateOrDuration);
+        if (parsedDuration > 0) duration = parsedDuration;
     }
 
     if (itinerary) {
@@ -292,6 +339,8 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
             destination = toMerged;
             if (fromMerged) destination = `${fromMerged} → ${toMerged}`;
             tripType = "one-way";
+            const oneWayDuration = durationDaysFromLengthOfStay(it.oneLengthOfStay);
+            if (oneWayDuration > 0) duration = oneWayDuration;
             tripDetailsJson = JSON.stringify({
                 tripType: "one-way",
                 departureCity: fromMerged,
@@ -328,11 +377,9 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
                 .filter(Boolean);
             destination = parts.join(" → ");
             primaryCountry = (legs[0]?.country ?? "").trim();
-            const totalNights = legs.reduce((sum, leg) => {
-                const n = parseInt(leg.nights ?? "", 10);
-                return sum + (Number.isNaN(n) ? 0 : n);
-            }, 0);
-            if (totalNights > 0) duration = totalNights + 1;
+            tripType = "multi";
+            const multiStopDuration = durationDaysFromMultiStop(legs, it.multiOverallReturnDate);
+            if (multiStopDuration > 0) duration = multiStopDuration;
             const departingMerged =
                 mergeCityCountry(it.multiDepartingFromCity, it.multiDepartingFromCountry) || (it.multiDepartingFrom ?? "").trim();
             tripDetailsJson = JSON.stringify({
@@ -354,8 +401,14 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
             const finMerged =
                 mergeCityCountry(it.transitFinalDestinationCity, it.transitFinalDestination) || primaryCountry;
             destination = `${depMerged} via ${(it.transitLocation ?? "").trim()} → ${finMerged}`;
+            tripType = "transit";
             const transitDuration = daysInclusiveBetween(it.transitDepartureDate, it.transitReturnDate);
-            if (transitDuration > 0) duration = transitDuration;
+            if (transitDuration > 0) {
+                duration = transitDuration;
+            } else {
+                const transitDurationBucket = durationDaysFromTransitDuration(it.transitDuration);
+                if (transitDurationBucket > 0) duration = transitDurationBucket;
+            }
             tripDetailsJson = JSON.stringify({
                 tripType: "transit",
                 departureCity: depMerged,
@@ -385,7 +438,7 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
     return {
         destination,
         country: primaryCountry,
-        duration,
+        duration: duration > 0 ? duration : 7,
         purpose,
         medicalConsiderations,
         tripType,

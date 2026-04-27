@@ -68,6 +68,18 @@ const planStatusConfig: Record<
         bg: "bg-red-50",
         icon: LucideAlertTriangle,
     },
+    ELEVATED: {
+        label: "Under review",
+        text: "text-amber-700",
+        bg: "bg-amber-50",
+        icon: LucideClock,
+    },
+    REJECTED: {
+        label: "Review needed",
+        text: "text-red-700",
+        bg: "bg-red-50",
+        icon: LucideAlertTriangle,
+    },
 };
 
 function PlanStatusBadge({ status }: { status: string }) {
@@ -114,6 +126,28 @@ const planFilenameSlug = (destination: string | null | undefined) => {
     );
 };
 
+const isPlanDownloadAvailable = (plan: TravelPlanResponse) => {
+    if (plan.status !== "COMPLETED") {
+        return false;
+    }
+    return (
+        !plan.doctorValidationStatus ||
+        plan.doctorValidationStatus === "NOT_REQUIRED" ||
+        plan.doctorValidationStatus === "APPROVED"
+    );
+};
+
+const getPlanDisplayStatus = (plan: TravelPlanResponse) => {
+    if (
+        plan.doctorValidationStatus === "PENDING" ||
+        plan.doctorValidationStatus === "ELEVATED" ||
+        plan.doctorValidationStatus === "REJECTED"
+    ) {
+        return plan.doctorValidationStatus;
+    }
+    return plan.status;
+};
+
 const PlanHistory = () => {
   const [search, setSearch] = useState("");
   const [downloadingAction, setDownloadingAction] = useState<string | null>(
@@ -134,12 +168,9 @@ const PlanHistory = () => {
   );
 
   const handleDownloadPdf = useCallback(async (plan: TravelPlanResponse) => {
-      if (
-          plan.status !== "COMPLETED" &&
-          plan.doctorValidationStatus !== "APPROVED"
-      ) {
+      if (!isPlanDownloadAvailable(plan)) {
           toast.error(
-              "PDF is only available when your plan is completed or approved by a doctor.",
+              "PDF is only available after required doctor approval.",
           );
           return;
       }
@@ -169,12 +200,9 @@ const PlanHistory = () => {
 
   const handleDownloadSummaryPdf = useCallback(
       async (plan: TravelPlanResponse) => {
-          if (
-              plan.status !== "COMPLETED" &&
-              plan.doctorValidationStatus !== "APPROVED"
-          ) {
+          if (!isPlanDownloadAvailable(plan)) {
               toast.error(
-                  "Summary PDF is only available when your plan is completed or approved by a doctor.",
+                  "Summary PDF is only available after required doctor approval.",
               );
               return;
           }
@@ -271,6 +299,8 @@ const PlanHistory = () => {
                                   const riskLabel = getRiskLabel(
                                       plan.riskScore,
                                   );
+                                  const canDownload =
+                                      isPlanDownloadAvailable(plan);
                                   return (
                                       <tr
                                           key={plan.id}
@@ -299,7 +329,9 @@ const PlanHistory = () => {
                                           </td>
                                           <td className="px-6 py-4">
                                               <PlanStatusBadge
-                                                  status={plan.status}
+                                                  status={getPlanDisplayStatus(
+                                                      plan,
+                                                  )}
                                               />
                                           </td>
                                           <td className="px-6 py-4 text-sm text-muted hidden sm:table-cell">
@@ -322,59 +354,61 @@ const PlanHistory = () => {
                                                       View{" "}
                                                       <LucideArrowRight className="w-3 h-3" />
                                                   </Link>
-                                                  <details className="flex flex-col items-end">
-                                                      <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-border-light/70 bg-white/85 px-3 py-1.5 text-xs font-semibold text-heading shadow-sm transition-colors duration-150 hover:border-accent/45 hover:text-accent">
-                                                          <LucideDownload className="h-3.5 w-3.5" />
-                                                          <span>Download</span>
-                                                          <LucideChevronDown className="h-3.5 w-3.5" />
-                                                      </summary>
-                                                      <div className="mt-2 w-44 overflow-hidden rounded-xl border border-border-light/70 bg-white shadow-lg">
-                                                          <button
-                                                              type="button"
-                                                              onClick={() =>
-                                                                  void handleDownloadPdf(
-                                                                      plan,
-                                                                  )
-                                                              }
-                                                              disabled={
-                                                                  downloadingAction ===
-                                                                  `${plan.id}:pdf`
-                                                              }
-                                                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-heading transition-colors hover:bg-background-secondary disabled:cursor-not-allowed disabled:opacity-60"
-                                                          >
-                                                              {(
-                                                                  downloadingAction ===
-                                                                  `${plan.id}:pdf`
-                                                              ) ?
-                                                                  <LucideLoader2 className="h-3.5 w-3.5 animate-spin" />
-                                                              :   <LucideFileText className="h-3.5 w-3.5" />
-                                                              }
-                                                              Full PDF
-                                                          </button>
-                                                          <button
-                                                              type="button"
-                                                              onClick={() =>
-                                                                  void handleDownloadSummaryPdf(
-                                                                      plan,
-                                                                  )
-                                                              }
-                                                              disabled={
-                                                                  downloadingAction ===
-                                                                  `${plan.id}:summary`
-                                                              }
-                                                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-heading transition-colors hover:bg-background-secondary disabled:cursor-not-allowed disabled:opacity-60"
-                                                          >
-                                                              {(
-                                                                  downloadingAction ===
-                                                                  `${plan.id}:summary`
-                                                              ) ?
-                                                                  <LucideLoader2 className="h-3.5 w-3.5 animate-spin" />
-                                                              :   <LucideFileText className="h-3.5 w-3.5" />
-                                                              }
-                                                              Summary PDF
-                                                          </button>
-                                                      </div>
-                                                  </details>
+                                                  {canDownload && (
+                                                      <details className="flex flex-col items-end">
+                                                          <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-border-light/70 bg-white/85 px-3 py-1.5 text-xs font-semibold text-heading shadow-sm transition-colors duration-150 hover:border-accent/45 hover:text-accent">
+                                                              <LucideDownload className="h-3.5 w-3.5" />
+                                                              <span>Download</span>
+                                                              <LucideChevronDown className="h-3.5 w-3.5" />
+                                                          </summary>
+                                                          <div className="mt-2 w-44 overflow-hidden rounded-xl border border-border-light/70 bg-white shadow-lg">
+                                                              <button
+                                                                  type="button"
+                                                                  onClick={() =>
+                                                                      void handleDownloadPdf(
+                                                                          plan,
+                                                                      )
+                                                                  }
+                                                                  disabled={
+                                                                      downloadingAction ===
+                                                                      `${plan.id}:pdf`
+                                                                  }
+                                                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-heading transition-colors hover:bg-background-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                                                              >
+                                                                  {(
+                                                                      downloadingAction ===
+                                                                      `${plan.id}:pdf`
+                                                                  ) ?
+                                                                      <LucideLoader2 className="h-3.5 w-3.5 animate-spin" />
+                                                                  :   <LucideFileText className="h-3.5 w-3.5" />
+                                                                  }
+                                                                  Full PDF
+                                                              </button>
+                                                              <button
+                                                                  type="button"
+                                                                  onClick={() =>
+                                                                      void handleDownloadSummaryPdf(
+                                                                          plan,
+                                                                      )
+                                                                  }
+                                                                  disabled={
+                                                                      downloadingAction ===
+                                                                      `${plan.id}:summary`
+                                                                  }
+                                                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-heading transition-colors hover:bg-background-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                                                              >
+                                                                  {(
+                                                                      downloadingAction ===
+                                                                      `${plan.id}:summary`
+                                                                  ) ?
+                                                                      <LucideLoader2 className="h-3.5 w-3.5 animate-spin" />
+                                                                  :   <LucideFileText className="h-3.5 w-3.5" />
+                                                                  }
+                                                                  Summary PDF
+                                                              </button>
+                                                          </div>
+                                                      </details>
+                                                  )}
                                               </div>
                                           </td>
                                       </tr>
