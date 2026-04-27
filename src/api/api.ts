@@ -31,6 +31,7 @@ import type {
   PurchaseCreditsRequest,
   // Travel Plan
   TravelPlanResponse,
+  TravelPlanListItemResponse,
   CreateTravelPlanRequest,
   UpdateTravelPlanRequest,
   // Draft Plan
@@ -114,6 +115,7 @@ import type {
   ValidatePlanRequest,
   AdminDoctorApplicationDto,
   AdminDoctorListItemDto,
+  AdminDoctorStatsDto,
 } from "./types";
 
 // ─── Generic CRUD helpers ────────────────────────────────────
@@ -238,7 +240,7 @@ export const employeesApi = {
 
 export const travelPlansApi = {
   list: (params?: PaginationParams) =>
-    api.get<ApiResponse<PaginatedResponse<TravelPlanResponse>>>("/travel-plans", { params: buildParams(params) }).then((r) => r.data.data),
+    api.get<ApiResponse<PaginatedResponse<TravelPlanListItemResponse>>>("/travel-plans", { params: buildParams(params) }).then((r) => r.data.data),
 
   listAll: () =>
     api.get<ApiResponse<SelectOption[]>>("/travel-plans/all").then((r) => r.data.data),
@@ -776,7 +778,7 @@ export const doctorApi = {
     api.get<ApiResponse<DoctorValidationDetailDto>>(`/doctor/plans/${planId}`).then((r) => r.data.data),
 
   validatePlan: (data: ValidatePlanRequest) =>
-    api.post<ApiResponse<DoctorValidationDetailDto>>("/doctor/validate", data).then((r) => r.data.data),
+    api.post<ApiResponse<null>>("/doctor/validate", data).then((r) => r.data.data),
 
   downloadSignedPdf: (planId: number) =>
     api.get<Blob>(`/doctor/plans/${planId}/signed-pdf`, { responseType: "blob" }).then((r) => r.data),
@@ -792,13 +794,16 @@ export const adminDoctorApi = {
     api.get<ApiResponse<PaginatedResponse<AdminDoctorListItemDto>>>("/admin/doctors", { params: buildParams(params) }).then((r) => r.data.data),
 
   approveApplication: (userId: number) =>
-    api.post<ApiResponse<DoctorProfileResponse>>(`/admin/doctors/${userId}/approve`).then((r) => r.data.data),
+    api.post<ApiResponse<null>>(`/admin/doctors/${userId}/approve`).then((r) => r.data.data),
 
   rejectApplication: (userId: number, reason: string) =>
-    api.post<ApiResponse<DoctorProfileResponse>>(`/admin/doctors/${userId}/reject`, { reason }).then((r) => r.data.data),
+    api.post<ApiResponse<null>>(`/admin/doctors/${userId}/reject`, { reason }).then((r) => r.data.data),
 
   revokeDoctor: (userId: number) =>
-    api.post<ApiResponse<DoctorProfileResponse>>(`/admin/doctors/${userId}/revoke`).then((r) => r.data.data),
+    api.post<ApiResponse<null>>(`/admin/doctors/${userId}/revoke`).then((r) => r.data.data),
+
+  getStats: () =>
+    api.get<ApiResponse<AdminDoctorStatsDto>>("/admin/doctors/stats").then((r) => r.data.data),
 };
 
 // ─── Company Onboarding ────────────────────────────────────

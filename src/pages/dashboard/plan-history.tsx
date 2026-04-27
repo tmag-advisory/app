@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { travelPlansApi } from "../../api/api";
-import type { TravelPlanResponse } from "../../api/types";
+import type { TravelPlanListItemResponse } from "../../api/types";
 import { useTravelPlans, useTravelPlanSummaryPdf } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import {
@@ -126,7 +126,7 @@ const planFilenameSlug = (destination: string | null | undefined) => {
     );
 };
 
-const isPlanDownloadAvailable = (plan: TravelPlanResponse) => {
+const isPlanDownloadAvailable = (plan: TravelPlanListItemResponse) => {
     if (plan.status !== "COMPLETED") {
         return false;
     }
@@ -137,7 +137,7 @@ const isPlanDownloadAvailable = (plan: TravelPlanResponse) => {
     );
 };
 
-const getPlanDisplayStatus = (plan: TravelPlanResponse) => {
+const getPlanDisplayStatus = (plan: TravelPlanListItemResponse) => {
     if (
         plan.doctorValidationStatus === "PENDING" ||
         plan.doctorValidationStatus === "ELEVATED" ||
@@ -167,7 +167,7 @@ const PlanHistory = () => {
       [plans],
   );
 
-  const handleDownloadPdf = useCallback(async (plan: TravelPlanResponse) => {
+  const handleDownloadPdf = useCallback(async (plan: TravelPlanListItemResponse) => {
       if (!isPlanDownloadAvailable(plan)) {
           toast.error(
               "PDF is only available after required doctor approval.",
@@ -199,7 +199,7 @@ const PlanHistory = () => {
   }, []);
 
   const handleDownloadSummaryPdf = useCallback(
-      async (plan: TravelPlanResponse) => {
+      async (plan: TravelPlanListItemResponse) => {
           if (!isPlanDownloadAvailable(plan)) {
               toast.error(
                   "Summary PDF is only available after required doctor approval.",
@@ -213,8 +213,7 @@ const PlanHistory = () => {
               return;
           }
 
-          const summaryPdfUrl =
-              plan.summaryPdfUrl ?? plan.generatedPlan?.summaryPdfUrl;
+          const summaryPdfUrl = plan.summaryPdfUrl;
           setDownloadingAction(`${plan.id}:summary`);
 
           if (summaryPdfUrl) {
@@ -259,7 +258,7 @@ const PlanHistory = () => {
           {/* Plans table */}
           <div className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
               <div className="overflow-x-auto">
-                  <table className="w-full min-w-[58rem]">
+                  <table className="w-full min-w-232">
                       <thead>
                           <tr className="border-b border-border-light/50">
                               <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">

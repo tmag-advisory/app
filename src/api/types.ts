@@ -338,12 +338,14 @@ export interface AdminDoctorApplicationDto {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
   licenseNumber: string;
-  specialty: string;
-  yearsOfExperience: number;
-  institution: string;
-  status: DoctorApplicationStatus;
-  submittedAt: string;
+  specialization: string;
+  applicationStatus: DoctorApplicationStatus;
+  applicationSubmittedAt: string | null;
+  identityDocumentUrl: string | null;
+  licenseDocumentUrl: string | null;
+  createdAt: string | null;
 }
 
 export interface AdminDoctorListItemDto {
@@ -351,11 +353,18 @@ export interface AdminDoctorListItemDto {
   firstName: string;
   lastName: string;
   email: string;
-  specialty: string;
-  institution: string;
-  isVerifiedDoctor: boolean;
+  phone: string;
+  licenseNumber: string;
+  specialization: string;
   validatedPlansCount: number;
-  createdAt: string;
+  createdAt: string | null;
+}
+
+export interface AdminDoctorStatsDto {
+  totalDoctors: number;
+  pendingApplications: number;
+  approvedToday: number;
+  totalValidatedPlans: number;
 }
 
 // ─── Travel Plan ─────────────────────────────────────────────
@@ -542,6 +551,28 @@ export interface TravelPlanResponse {
   validatedAt?: string | null;
   validatedByName?: string | null;
   rejectionReason?: string | null;
+}
+
+export interface TravelPlanListItemResponse {
+  id: number;
+  destination: string;
+  country: string;
+  duration: number;
+  purpose: string;
+  riskScore: number;
+  status: string;
+  companyId?: number;
+  employeeId?: number;
+  userId?: number;
+  createdAt: string;
+  updatedAt: string;
+  planTier?: PlanTier;
+  doctorValidationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ELEVATED' | 'NOT_REQUIRED';
+  validatedByName?: string | null;
+  validatedAt?: string | null;
+  rejectionReason?: string | null;
+  signedPdfUrl?: string | null;
+  summaryPdfUrl?: string | null;
 }
 
 export interface CreateTravelPlanRequest {
