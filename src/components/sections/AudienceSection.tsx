@@ -32,13 +32,17 @@ const AudienceSection = () => {
                 </span>
                 <h2 className="text-4xl md:text-5xl lg:text-6xl text-heading leading-[1.1] font-serif">
                     Whether you travel <span className="italic">alone</span> or
-                    <br className="hidden md:block" /> send a <span className="italic">team.</span>
+                    <br className="hidden md:block" /> send a{" "}
+                    <span className="italic">team.</span>
                 </h2>
             </AnimateIn>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Individuals */}
-                <AnimateIn type="fadeLeft" className="bg-button-secondary rounded-3xl p-8 md:p-10 flex flex-col justify-between">
+                <AnimateIn
+                    type="fadeLeft"
+                    className="bg-button-secondary rounded-3xl p-8 md:p-10 flex flex-col justify-between"
+                >
                     <div>
                         <div className="w-12 h-12 rounded-xl bg-heading text-background-primary flex items-center justify-center mb-6">
                             <LucideUser className="w-6 h-6" />
@@ -52,20 +56,32 @@ const AudienceSection = () => {
                         </p>
                         <ul className="space-y-3 mb-8">
                             {individualFeatures.map((f) => (
-                                <li key={f} className="flex items-start gap-3 text-sm text-heading">
+                                <li
+                                    key={f}
+                                    className="flex items-start gap-3 text-sm text-heading"
+                                >
                                     <LucideCheck className="w-4 h-4 mt-0.5 text-accent shrink-0" />
                                     {f}
                                 </li>
                             ))}
                         </ul>
                     </div>
-                    <Button variant="secondary" icon={<LucideArrowRight />} className="self-start" link="/pricing">
-                        Get started
+                    <Button
+                        variant="secondary"
+                        icon={<LucideArrowRight />}
+                        className="self-start"
+                        link="/pricing"
+                    >
+                        Get Started
                     </Button>
                 </AnimateIn>
 
                 {/* Companies */}
-                <AnimateIn type="fadeRight" delay={0.15} className="relative rounded-3xl p-8 md:p-10 flex flex-col justify-between overflow-hidden">
+                <AnimateIn
+                    type="fadeRight"
+                    delay={0.15}
+                    className="relative rounded-3xl p-8 md:p-10 flex flex-col justify-between overflow-hidden"
+                >
                     <div
                         className="absolute inset-0"
                         style={{
@@ -74,27 +90,36 @@ const AudienceSection = () => {
                         }}
                     />
                     <div className="relative z-10">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
-                            style={{ background: "rgba(255,255,255,0.15)" }}>
+                        <div
+                            className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
+                            style={{ background: "rgba(255,255,255,0.15)" }}
+                        >
                             <LucideBuilding2 className="w-6 h-6 text-white" />
                         </div>
                         <h3 className="text-2xl font-serif text-white mb-2">
                             For Companies
                         </h3>
                         <p className="text-sm text-white/70 leading-relaxed mb-6">
-                            Protect your people at scale meet duty-of-care obligations
-                            and keep every traveler informed.
+                            Protect your people at scale meet duty-of-care
+                            obligations and keep every traveler informed.
                         </p>
                         <ul className="space-y-3 mb-8">
                             {companyFeatures.map((f) => (
-                                <li key={f} className="flex items-start gap-3 text-sm text-white">
+                                <li
+                                    key={f}
+                                    className="flex items-start gap-3 text-sm text-white"
+                                >
                                     <LucideCheck className="w-4 h-4 mt-0.5 text-white/60 shrink-0" />
                                     {f}
                                 </li>
                             ))}
                         </ul>
                     </div>
-                    <Button variant="primary" link="/pricing" className="relative z-10 self-start bg-white !text-dark hover:bg-white/90">
+                    <Button
+                        variant="primary"
+                        link="/pricing"
+                        className="relative z-10 self-start bg-white text-dark! hover:bg-white/90"
+                    >
                         Get Started
                     </Button>
                 </AnimateIn>

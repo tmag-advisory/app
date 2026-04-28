@@ -26,7 +26,7 @@ const HERO_VARIANT: HeroVariant = {
     eyebrow: "Physician-designed. Evidence-based.",
     headlineLines: ["Travel Far.", "Come Back", "Safe."],
     subtext: "Get a personalized travel health plan in under 2 minutes vaccines, medications, disease risks, and more.",
-    cta: "Get started",
+    cta: "Get Started",
     destinations: [
         { country: "Japan", flag: "🇯🇵", risk: "Low" },
         { country: "Kenya", flag: "🇰🇪", risk: "High", alert: "Malaria zone" },

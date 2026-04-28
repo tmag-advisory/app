@@ -11,11 +11,13 @@ import {
     LucidePlus,
     LucideX,
     LucideUsers,
+    LucideTag,
+    LucidePhone,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
-import { useCreditPlans, useSubmitCompanyOnboarding, useInitiateOnboardingPayment } from "../../api/hooks";
-import type { TeamMember, CompanyOnboardingResponse } from "../../api/types";
+import { useCreditPlans, useSubmitCompanyOnboarding, useInitiateOnboardingPayment, useOnboardingPricingPreview } from "../../api/hooks";
+import type { TeamMember, CompanyOnboardingResponse, PublicPricingPreview } from "../../api/types";
 import { useCurrencyStore } from "../../stores/currencyStore";
 import { featuresByServiceLevel, signupRanges, type SignupRange } from "../../constants/companyPlans";
 import toast, { Toaster } from "react-hot-toast";
@@ -80,6 +82,9 @@ const CompanyOnboarding = () => {
     const initiatePayment = useInitiateOnboardingPayment();
     const { selectedCurrency } = useCurrencyStore();
 
+    const numericCreditCount = creditCount === "" ? 0 : Number(creditCount);
+    const { data: pricingPreviews } = useOnboardingPricingPreview(numericCreditCount);
+
     useEffect(() => {
         setBillingCurrency(selectedCurrency || "USD");
     }, [selectedCurrency]);
@@ -107,11 +112,28 @@ const CompanyOnboarding = () => {
     };
 
     const getSelectedPlanData = () => plans?.find((p) => p.code === selectedPlan) ?? null;
-    const numericCreditCount = creditCount === "" ? 0 : Number(creditCount);
+
+    const getVolumePricing = (): PublicPricingPreview | null => {
+        if (!pricingPreviews || !selectedPlanData) return null;
+        const serviceLevel = selectedPlanData.serviceLevel ?? "STANDARD";
+        return pricingPreviews.find(
+            (p) => p.serviceLevel === serviceLevel && p.currency === billingCurrency
+        ) ?? null;
+    };
+
+    const getDiscountInfo = () => {
+        const vp = getVolumePricing();
+        if (!vp || vp.contactSales) return null;
+        if (vp.appliedTier === "TIER_3") return { label: "20% volume discount", pct: 20 };
+        if (vp.appliedTier === "TIER_2") return { label: "10% volume discount", pct: 10 };
+        return null;
+    };
 
     const getEstimatedTotal = () => {
         const plan = getSelectedPlanData();
         if (!plan || plan.basePriceUsd === 0) return null;
+        const volumePricing = getVolumePricing();
+        if (volumePricing) return volumePricing.totalAmount;
         if (billingCurrency === "NGN") return (plan.basePriceNgn ?? 0) * numericCreditCount;
         return plan.basePriceUsd * numericCreditCount;
     };
@@ -125,6 +147,13 @@ const CompanyOnboarding = () => {
     const formatPricePerCredit = (plan: ReturnType<typeof getSelectedPlanData>) => {
         if (!plan) return "";
         if (plan.basePriceUsd === 0) return "Free tier";
+        const volumePricing = getVolumePricing();
+        if (volumePricing) {
+            const sym = billingCurrency === "NGN" ? "₦" : "$";
+            const suffix = billingCurrency === "NGN" ? " NGN" : " USD";
+            if (volumePricing.contactSales) return "Contact sales for pricing";
+            return `${sym}${volumePricing.pricePerCredit.toLocaleString()}${suffix}/credit × ${numericCreditCount} credits`;
+        }
         if (billingCurrency === "NGN")
             return `₦${(plan.basePriceNgn ?? 0).toLocaleString()} NGN/credit × ${numericCreditCount} credits`;
         return `$${plan.basePriceUsd} USD/credit × ${numericCreditCount} credits`;
@@ -147,10 +176,12 @@ const CompanyOnboarding = () => {
     };
 
     const selectedPlanData = getSelectedPlanData();
+    const isContactSalesRequired = numericCreditCount >= 500 && !!selectedPlanData && selectedPlanData.basePriceUsd > 0;
     const canProceedStep1 =
         selectedPlan &&
         sampleRequest.trim().length > 0 &&
-        (selectedPlanData?.basePriceUsd === 0 || numericCreditCount > 0);
+        (selectedPlanData?.basePriceUsd === 0 || numericCreditCount > 0) &&
+        !isContactSalesRequired;
     const canProceedStep2 =
         companyName.trim() &&
         contactEmail.trim() &&
@@ -354,13 +385,14 @@ const CompanyOnboarding = () => {
                                 {/* Credit count input */}
                                 {selectedPlan && (() => {
                                     const plan = getSelectedPlanData();
+                                    const discountInfo = getDiscountInfo();
                                     return plan && plan.basePriceUsd > 0 ? (
                                         <div>
                                             <label className="block text-sm font-semibold text-heading mb-2">
                                                 How many credits to purchase upfront?
                                             </label>
                                             <p className="text-xs text-muted mb-3">
-                                                Each credit generates one travel health plan for one employee trip.
+                                                Each credit generates one travel health plan for one employee trip. Volume discounts apply automatically.
                                             </p>
                                             <div className="flex items-center gap-3">
                                                 <input
@@ -383,13 +415,100 @@ const CompanyOnboarding = () => {
                                                     onBlur={() => {
                                                         if (creditCount === "" || Number(creditCount) < 1) setCreditCount("1");
                                                     }}
-                                                    className="w-32 bg-background-primary border border-heading/50 rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors"
+                                                    className={`w-32 bg-background-primary border rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors ${
+                                                        isContactSalesRequired ? "border-amber-400 bg-amber-50/30" : "border-heading/50"
+                                                    }`}
                                                 />
                                                 <span className="text-sm text-muted">credits</span>
-                                                <span className="text-sm font-semibold text-heading ml-auto">
-                                                    {getCurrencySymbol()}{(getEstimatedTotal() ?? 0).toLocaleString()} {billingCurrency} estimated
-                                                </span>
+                                                {isContactSalesRequired ? (
+                                                    <span className="text-sm font-semibold text-amber-700 ml-auto">
+                                                        Contact sales for custom pricing
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-sm font-semibold text-heading ml-auto flex items-center gap-2">
+                                                        {getCurrencySymbol()}{(getEstimatedTotal() ?? 0).toLocaleString()} {billingCurrency} estimated
+                                                        {discountInfo && (
+                                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full animate-pulse">
+                                                                <LucideTag className="w-3 h-3" />
+                                                                {discountInfo.label}
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                )}
                                             </div>
+
+                                            {/* Discount tier progress indicator */}
+                                            {!isContactSalesRequired && selectedPlanData && (
+                                                <div className="mt-3">
+                                                    <div className="flex items-center gap-1 mb-1.5">
+                                                        {[{ min: 1, max: 49, label: "1–49" }, { min: 50, max: 99, label: "50–99" }, { min: 100, max: 499, label: "100–499" }].map((tier) => {
+                                                            const isActive = numericCreditCount >= tier.min && numericCreditCount <= tier.max;
+                                                            const isPast = numericCreditCount > tier.max;
+                                                            return (
+                                                                <div key={tier.label} className="flex-1">
+                                                                    <div className={`h-1.5 rounded-full transition-colors duration-300 ${
+                                                                        isActive ? "bg-accent" : isPast ? "bg-accent/40" : "bg-border-light"
+                                                                    }`} />
+                                                                    <p className={`text-[10px] mt-0.5 text-center transition-colors ${
+                                                                        isActive ? "text-accent font-semibold" : "text-muted"
+                                                                    }`}>{tier.label}</p>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                        <div className="flex-1">
+                                                            <div className={`h-1.5 rounded-full transition-colors duration-300 ${
+                                                                numericCreditCount >= 500 ? "bg-amber-400" : "bg-border-light"
+                                                            }`} />
+                                                            <p className={`text-[10px] mt-0.5 text-center transition-colors ${
+                                                                numericCreditCount >= 500 ? "text-amber-600 font-semibold" : "text-muted"
+                                                            }`}>500+</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Contact sales CTA for 500+ */}
+                                            {isContactSalesRequired && (
+                                                <div className="mt-4 p-5 bg-amber-50 border-2 border-amber-300 rounded-2xl">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-2 bg-amber-100 rounded-xl shrink-0">
+                                                            <LucidePhone className="w-5 h-5 text-amber-600" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-semibold text-amber-800 mb-1">
+                                                                Custom pricing available for {numericCreditCount.toLocaleString()} credits
+                                                            </p>
+                                                            <p className="text-xs text-amber-700 mb-3">
+                                                                For orders of 500+ credits, our sales team can offer tailored packages with deeper discounts. Contact us for a personalized quote.
+                                                            </p>
+                                                            <a
+                                                                href="/contact"
+                                                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white text-sm font-semibold rounded-xl hover:bg-amber-600 transition-colors"
+                                                            >
+                                                                <LucidePhone className="w-4 h-4" />
+                                                                Contact Sales
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Discount applied celebration for 50-499 */}
+                                            {discountInfo && !isContactSalesRequired && (
+                                                <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
+                                                    <div className="p-1.5 bg-emerald-100 rounded-lg shrink-0">
+                                                        <LucideTag className="w-4 h-4 text-emerald-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-emerald-800">
+                                                            {discountInfo.label} applied!
+                                                        </p>
+                                                        <p className="text-xs text-emerald-600">
+                                                            You're saving {discountInfo.pct}% per credit at {numericCreditCount} credits
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : null;
                                 })()}
@@ -568,17 +687,124 @@ const CompanyOnboarding = () => {
                                         const plan = getSelectedPlanData();
                                         if (!plan) return null;
                                         const total = getEstimatedTotal();
+                                        const discountInfo = getDiscountInfo();
                                         return (
-                                            <div className="flex items-start justify-between">
-                                                <div>
-                                                    <p className="text-lg font-serif text-heading">{plan.displayName}</p>
-                                                    <p className="text-sm text-body">{formatPricePerCredit(plan)}</p>
+                                            <>
+                                                <div className="flex items-start justify-between">
+                                                    <div>
+                                                        <p className="text-lg font-serif text-heading">{plan.displayName}</p>
+                                                        <p className="text-sm text-body">{formatPricePerCredit(plan)}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-2xl font-serif text-heading">{formatTotal(total)}</p>
+                                                        {discountInfo && (
+                                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full mt-1">
+                                                                <LucideTag className="w-3 h-3" />
+                                                                {discountInfo.label}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <p className="text-2xl font-serif text-heading">{formatTotal(total)}</p>
-                                            </div>
+                                                {isContactSalesRequired && (
+                                                    <div className="mt-4 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl">
+                                                        <div className="flex items-start gap-3">
+                                                            <LucidePhone className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+                                                            <div>
+                                                                <p className="text-sm font-semibold text-amber-800">
+                                                                    Custom pricing for {numericCreditCount.toLocaleString()} credits
+                                                                </p>
+                                                                <p className="text-xs text-amber-700 mt-1">
+                                                                    Orders of 500+ credits qualify for tailored packages with deeper discounts. Please contact our sales team before proceeding.
+                                                                </p>
+                                                                <a
+                                                                    href="/contact"
+                                                                    className="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-amber-500 text-white text-xs font-semibold rounded-xl hover:bg-amber-600 transition-colors"
+                                                                >
+                                                                    <LucidePhone className="w-3.5 h-3.5" />
+                                                                    Contact Sales
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
                                         );
                                     })()}
                                 </div>
+
+                                {/* Volume pricing table */}
+                                {selectedPlanData && selectedPlanData.basePriceUsd > 0 && pricingPreviews && pricingPreviews.length > 0 && (
+                                    <div className="bg-button-secondary rounded-2xl p-6">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">Volume Pricing</h3>
+                                            {getDiscountInfo() && (
+                                                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                                                    <LucideTag className="w-3 h-3" />
+                                                    {getDiscountInfo()!.label} active
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="text-left text-muted border-b border-border-light/50">
+                                                        <th className="pb-2 pr-4">Credits</th>
+                                                        <th className="pb-2 pr-4">Standard</th>
+                                                        <th className="pb-2 pr-4">Premium</th>
+                                                        <th className="pb-2">Savings</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="text-heading">
+                                                    <tr className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_1" ? "bg-accent/5" : ""}`}>
+                                                        <td className="py-2.5 pr-4">1–49</td>
+                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦50,000" : "$50"}</td>
+                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦100,000" : "$100"}</td>
+                                                        <td className="py-2.5 text-muted">—</td>
+                                                    </tr>
+                                                    <tr className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_2" ? "bg-accent/5" : ""}`}>
+                                                        <td className="py-2.5 pr-4">50–99</td>
+                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦45,000" : "$45"}</td>
+                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦90,000" : "$90"}</td>
+                                                        <td className="py-2.5 text-emerald-600 font-medium">10%</td>
+                                                    </tr>
+                                                    <tr className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_3" ? "bg-accent/5" : ""}`}>
+                                                        <td className="py-2.5 pr-4">100–499</td>
+                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦40,000" : "$40"}</td>
+                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦80,000" : "$80"}</td>
+                                                        <td className="py-2.5 text-emerald-600 font-medium">20%</td>
+                                                    </tr>
+                                                    <tr className={numericCreditCount >= 500 ? "bg-amber-50" : ""}>
+                                                        <td className="py-2.5 pr-4">500+</td>
+                                                        <td colSpan={2} className="py-2.5 text-amber-600 italic font-medium">Contact sales</td>
+                                                        <td className="py-2.5 text-amber-600 font-medium">Custom</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {getDiscountInfo() && (() => {
+                                            const vp = getVolumePricing();
+                                            if (!vp) return null;
+                                            const tier1Price = vp.serviceLevel === "PREMIUM"
+                                                ? (billingCurrency === "NGN" ? 100000 : 100)
+                                                : (billingCurrency === "NGN" ? 50000 : 50);
+                                            const savingsPerCredit = tier1Price - vp.pricePerCredit;
+                                            const totalSavings = savingsPerCredit * numericCreditCount;
+                                            return (
+                                                <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <LucideTag className="w-4 h-4 text-emerald-600" />
+                                                        <span className="text-xs font-semibold text-emerald-800">
+                                                            {getDiscountInfo()!.label} applied
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-sm font-bold text-emerald-700">
+                                                        You save {billingCurrency === "NGN" ? "₦" : "$"}{totalSavings.toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
 
                                 {/* Company info summary */}
                                 <div className="bg-button-secondary rounded-2xl p-6">
@@ -638,12 +864,14 @@ const CompanyOnboarding = () => {
                                     <Button variant="secondary" onClick={() => goToStep(2)} icon={<LucideArrowLeft />}>
                                         Back
                                     </Button>
-                                    <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
+                                    <Button variant="primary" onClick={handleSubmit} disabled={submitting || isContactSalesRequired}>
                                         {submitting ? (
                                             <span className="flex items-center gap-2">
                                                 <LucideLoader2 className="w-4 h-4 animate-spin" />
                                                 Submitting...
                                             </span>
+                                        ) : isContactSalesRequired ? (
+                                            "Contact sales to proceed"
                                         ) : (
                                             "Submit & Proceed to Payment"
                                         )}

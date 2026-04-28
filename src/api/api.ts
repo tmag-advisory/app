@@ -822,6 +822,11 @@ export const companyOnboardingApi = {
 
   getStatus: (id: number) =>
     api.get<ApiResponse<import("./types").CompanyOnboardingResponse>>(`/public/company-onboarding/${id}/status`).then((r) => r.data.data),
+
+  getPricingPreview: (credits: number) =>
+    api.get<ApiResponse<import("./types").PublicPricingPreview[]>>("/public/company-onboarding/pricing", {
+      params: { credits },
+    }).then((r) => r.data.data),
 };
 
 // ─── User Settings ────────────────────────────────────────────

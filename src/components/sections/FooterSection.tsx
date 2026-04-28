@@ -253,6 +253,21 @@ const FooterSection = () => {
                         © {new Date().getFullYear()} TMAG · Travel Medicine
                         Advisory Global. All rights reserved.
                     </p>
+                    <div className="flex items-center gap-4">
+                        <Link
+                            to="/privacy"
+                            className="text-xs text-white/25 hover:text-white transition-colors duration-200"
+                        >
+                            Privacy Policy
+                        </Link>
+                        <span className="text-white/10">·</span>
+                        <Link
+                            to="/terms"
+                            className="text-xs text-white/25 hover:text-white transition-colors duration-200"
+                        >
+                            Terms of Service
+                        </Link>
+                    </div>
                     <div className="flex items-center gap-6">
                         {["Twitter", "LinkedIn", "GitHub", "Instagram"].map(
                             (social) => (

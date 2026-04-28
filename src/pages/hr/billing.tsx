@@ -89,7 +89,7 @@ const Billing = () => {
                                 </div>
                                 {creditPlan.basePriceUsd > 0 && (
                                     <p className="text-xs text-accent font-semibold mb-1">
-                                        ${creditPlan.basePriceUsd.toFixed(0)} USD per credit
+                                        From ${creditPlan.basePriceUsd.toFixed(0)} USD per credit — volume discounts available
                                     </p>
                                 )}
                                 <p className="text-xs text-muted leading-relaxed max-w-sm">
@@ -105,11 +105,9 @@ const Billing = () => {
             <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6 mb-6")}>
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-base font-semibold text-heading">Purchase credits</h2>
-                    {creditPlan && creditPlan.basePriceUsd > 0 && (
-                        <span className="text-xs text-muted">
-                            {creditPlan.displayName}: ${creditPlan.basePriceUsd.toFixed(0)} USD/credit
-                        </span>
-                    )}
+                    <span className="text-xs text-muted">
+                        Volume discounts applied automatically
+                    </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     {creditPackages.map((credits, idx) => {

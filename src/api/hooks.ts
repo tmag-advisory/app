@@ -1496,3 +1496,12 @@ export function useOnboardingStatus(id: number) {
     },
   });
 }
+
+export function useOnboardingPricingPreview(credits: number) {
+  return useQuery({
+    queryKey: ["company-onboarding-pricing", credits],
+    queryFn: () => companyOnboardingApi.getPricingPreview(credits),
+    enabled: credits > 0,
+    staleTime: 60_000,
+  });
+}
