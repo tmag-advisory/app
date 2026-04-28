@@ -41,10 +41,10 @@ const fadeUp = {
     }),
 };
 
-const CONSENT_TEXT =
-    "I hereby give Travel Medicine Advisory Global my explicit consent to collect, process, and store my personal and sensitive health information (including medical history, medications, pregnancy status, and risk behaviours) for the sole purpose of generating my personalised travel health advisory plan.";
-const DATA_PROTECTION_TEXT =
-    "We protect your information with encryption, multi-factor authentication, and strict security measures. We comply with the Nigeria Data Protection Act (NDPA) 2023. Your data will not be sold or shared without your permission.";
+// const CONSENT_TEXT =
+//     "I hereby give Travel Medicine Advisory Global my explicit consent to collect, process, and store my personal and sensitive health information (including medical history, medications, pregnancy status, and risk behaviours) for the sole purpose of generating my personalised travel health advisory plan.";
+// const DATA_PROTECTION_TEXT =
+//     "We protect your information with encryption, multi-factor authentication, and strict security measures. We comply with the Nigeria Data Protection Act (NDPA) 2023. Your data will not be sold or shared without your permission.";
 
 const Onboarding = () => {
     const navigate = useNavigate();
@@ -283,8 +283,6 @@ const Onboarding = () => {
         initiatePurchase.isPending;
 
     const [isSavingExit, setIsSavingExit] = useState(false);
-    const [welcomeDisclaimerAgreed, setWelcomeDisclaimerAgreed] =
-        useState(false);
 
     const handleSaveAndExit = async () => {
         setIsSavingExit(true);
