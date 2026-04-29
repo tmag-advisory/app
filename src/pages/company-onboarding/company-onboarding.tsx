@@ -20,7 +20,12 @@ import AnimateIn from "../../components/animations/AnimateIn";
 import { useCreditPlans, useSubmitCompanyOnboarding, useInitiateOnboardingPayment, useOnboardingPricingPreview } from "../../api/hooks";
 import type { TeamMember, CompanyOnboardingResponse, PublicPricingPreview } from "../../api/types";
 import { useCurrencyStore } from "../../stores/currencyStore";
-import { featuresByServiceLevel, signupRanges, type SignupRange } from "../../constants/companyPlans";
+import {
+    enterpriseTierColors,
+    featuresByServiceLevel,
+    signupRanges,
+    type SignupRange,
+} from "../../constants/companyPlans";
 import toast, { Toaster } from "react-hot-toast";
 import Navbar from "../../components/sections/Navbar";
 
@@ -78,6 +83,17 @@ function getRangeFromPlanCode(code: string): SignupRange {
     if (code.includes("PLATINUM") || code.includes("SIGNATURE")) return ">500";
     return "0-100";
 }
+
+const fieldClassName =
+    "w-full rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:ring-4 focus:ring-accent/15";
+const selectClassName = `${fieldClassName} cursor-pointer`;
+const compactFieldClassName =
+    "rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15";
+const panelClassName = "rounded-2xl border border-slate-200 bg-white p-6";
+const actionButtonClassName =
+    "inline-flex items-center gap-2 rounded-xl border border-accent bg-accent px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-accent/90";
+const secondaryActionClassName =
+    "inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 transition-colors hover:border-accent hover:text-accent";
 
 const CompanyOnboarding = () => {
     const [searchParams] = useSearchParams();
@@ -295,16 +311,23 @@ const CompanyOnboarding = () => {
     return (
         <main className="min-h-screen bg-background-primary">
             <Navbar />
-            <Toaster position="top-right" containerStyle={{ fontSize: "14px" }} />
-            <AnimateIn as="section" className="flex flex-col items-center text-center pt-16 pb-8 px-6">
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
+            <Toaster
+                position="top-right"
+                containerStyle={{ fontSize: "14px" }}
+            />
+            <AnimateIn
+                as="section"
+                className="flex flex-col items-center text-center pt-16 pb-8 px-6"
+            >
+                <span className="inline-block text-xs text-accent bg-accent/20 font-semibold rounded-xl px-4 py-1.5 mb-6">
                     Company Onboarding
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl leading-[0.9] text-heading font-serif max-w-3xl">
                     Get your team <span className="italic">protected.</span>
                 </h1>
                 <p className="text-sm text-body mt-4 max-w-lg leading-relaxed">
-                    Choose a plan, set up your team, and start generating travel health plans in minutes.
+                    Choose a plan, set up your team, and start generating travel
+                    health plans in minutes.
                 </p>
             </AnimateIn>
 
@@ -314,20 +337,30 @@ const CompanyOnboarding = () => {
                     {steps.map((step, i) => (
                         <div key={step.id} className="flex items-center">
                             <button
-                                onClick={() => { if (step.id < currentStep) goToStep(step.id); }}
+                                onClick={() => {
+                                    if (step.id < currentStep)
+                                        goToStep(step.id);
+                                }}
                                 disabled={step.id > currentStep}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${step.id === currentStep
-                                        ? "bg-dark text-white"
-                                        : step.id < currentStep
-                                            ? "bg-accent/10 text-accent cursor-pointer hover:bg-accent/20"
-                                            : "bg-button-secondary text-muted cursor-not-allowed"
-                                    }`}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                                    step.id === currentStep ?
+                                        "bg-dark text-white"
+                                    : step.id < currentStep ?
+                                        "bg-accent/10 text-accent cursor-pointer hover:bg-accent/20"
+                                    :   "bg-button-secondary text-muted cursor-not-allowed"
+                                }`}
                             >
-                                {step.id < currentStep ? <LucideCheck className="w-3.5 h-3.5" /> : step.icon}
-                                <span className="hidden sm:inline">{step.title}</span>
+                                {step.id < currentStep ?
+                                    <LucideCheck className="w-3.5 h-3.5" />
+                                :   step.icon}
+                                <span className="hidden sm:inline">
+                                    {step.title}
+                                </span>
                             </button>
                             {i < steps.length - 1 && (
-                                <div className={`w-8 sm:w-16 h-0.5 mx-1 ${step.id < currentStep ? "bg-accent" : "bg-border-light/50"}`} />
+                                <div
+                                    className={`w-8 sm:w-16 h-0.5 mx-1 ${step.id < currentStep ? "bg-accent" : "bg-border-light/50"}`}
+                                />
                             )}
                         </div>
                     ))}
@@ -350,33 +383,43 @@ const CompanyOnboarding = () => {
                         {currentStep === 1 && (
                             <div className="space-y-8">
                                 <div>
-                                    <h2 className="text-2xl font-serif text-heading mb-2">Select your plan</h2>
-                                    <p className="text-sm text-body">Choose the plan that best fits your team size and reporting needs.</p>
+                                    <h2 className="text-2xl font-serif text-heading mb-2">
+                                        Select your plan
+                                    </h2>
+                                    <p className="text-sm text-body">
+                                        Choose the plan that best fits your team
+                                        size and reporting needs.
+                                    </p>
                                 </div>
 
-                                {plansLoading ? (
+                                {plansLoading ?
                                     <div className="flex justify-center py-12">
                                         <LucideLoader2 className="w-8 h-8 animate-spin text-muted" />
                                     </div>
-                                ) : (
-                                    <div className="space-y-6">
+                                :   <div className="space-y-6">
                                         {/* Signup-range selector */}
                                         <div>
                                             <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
                                                 How many employees will sign up?
                                             </p>
-                                            <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
+                                            <div className="inline-flex items-center bg-white border border-slate-200 rounded-2xl p-1 gap-1 shadow-sm">
                                                 {signupRanges.map((r) => (
                                                     <button
                                                         key={r.value}
                                                         onClick={() => {
-                                                            setSelectedRange(r.value);
+                                                            setSelectedRange(
+                                                                r.value,
+                                                            );
                                                             setSelectedPlan("");
                                                         }}
-                                                        className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${selectedRange === r.value
-                                                                ? "bg-white shadow-sm text-heading"
-                                                                : "text-muted hover:text-heading"
-                                                            }`}
+                                                        className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                                                            (
+                                                                selectedRange ===
+                                                                r.value
+                                                            ) ?
+                                                                "bg-accent shadow-sm text-white"
+                                                            :   "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                                                        }`}
                                                     >
                                                         {r.label}
                                                     </button>
@@ -385,202 +428,441 @@ const CompanyOnboarding = () => {
                                         </div>
 
                                         {/* Enterprise plan cards for the selected range */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                            {rangeEnterprisePlans.map((plan) => {
-                                                const isPremium = plan.serviceLevel === "PREMIUM";
-                                                const isSelected = selectedPlan === plan.code;
-                                                const features = featuresByServiceLevel[plan.serviceLevel ?? "STANDARD"];
-                                                const displayPrice =
-                                                    billingCurrency === "NGN"
-                                                        ? `₦${(plan.basePriceNgn ?? 0).toLocaleString()}`
-                                                        : `$${plan.basePriceUsd}`;
+                                        <div className="grid grid-cols-1 min-h-125 md:grid-cols-2 gap-5">
+                                            {rangeEnterprisePlans.map(
+                                                (plan) => {
+                                                    const isPremium =
+                                                        plan.serviceLevel ===
+                                                        "PREMIUM";
+                                                    const isSelected =
+                                                        selectedPlan ===
+                                                        plan.code;
+                                                    const serviceLevel =
+                                                        (
+                                                            plan.serviceLevel ===
+                                                            "PREMIUM"
+                                                        ) ?
+                                                            "premium"
+                                                        :   "standard";
+                                                    const colors =
+                                                        enterpriseTierColors[
+                                                            selectedRange
+                                                        ][serviceLevel];
+                                                    const features =
+                                                        featuresByServiceLevel[
+                                                            plan.serviceLevel ??
+                                                                "STANDARD"
+                                                        ];
+                                                    const displayPrice =
+                                                        (
+                                                            billingCurrency ===
+                                                            "NGN"
+                                                        ) ?
+                                                            `₦${(plan.basePriceNgn ?? 0).toLocaleString()}`
+                                                        :   `$${plan.basePriceUsd}`;
 
-                                                return (
-                                                    <button
-                                                        key={plan.code}
-                                                        onClick={() => setSelectedPlan(plan.code)}
-                                                        className={`text-left rounded-2xl p-6 border-2 transition-all ${isSelected
-                                                                ? isPremium
-                                                                    ? "border-amber-400 bg-amber-50"
-                                                                    : "border-accent bg-accent/5"
-                                                                : isPremium
-                                                                    ? "border-amber-200/60 bg-background-primary hover:border-amber-300"
-                                                                    : "border-border-light/50 bg-background-primary hover:border-border-light"
+                                                    return (
+                                                        <button
+                                                            key={plan.code}
+                                                            onClick={() =>
+                                                                setSelectedPlan(
+                                                                    plan.code,
+                                                                )
+                                                            }
+                                                            className={`relative overflow-hidden text-left p-6 transition-all hover:-translate-y-0.5 ${colors.border} ${
+                                                                isSelected ?
+                                                                    "ring-2 ring-offset-2 ring-stone-900/20"
+                                                                :   ""
                                                             }`}
-                                                    >
-                                                        <div className="flex items-start justify-between mb-1">
-                                                            <h3 className={`text-lg font-serif ${isPremium ? "text-amber-700" : "text-heading"}`}>
-                                                                {plan.displayName}
-                                                            </h3>
-                                                            {isSelected && (
-                                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ml-2 ${isPremium ? "bg-amber-500" : "bg-accent"}`}>
-                                                                    <LucideCheck className="w-3.5 h-3.5 text-white" />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <p className={`text-xs font-medium uppercase tracking-wide mb-3 ${isPremium ? "text-amber-500" : "text-muted"}`}>
-                                                            {isPremium ? "Premium service" : "Standard service"}
-                                                        </p>
-                                                        <p className={`text-2xl font-serif mb-0.5 ${isPremium ? "text-amber-700" : "text-heading"}`}>
-                                                            {displayPrice}
-                                                        </p>
-                                                        <p className="text-xs text-muted mb-4">per credit</p>
-                                                        <ul className="space-y-2 mb-4">
-                                                            {features.map((f) => (
-                                                                <li key={f} className="flex items-start gap-2 text-xs text-body">
-                                                                    <LucideCheck className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${isPremium ? "text-amber-500" : "text-accent"}`} />
-                                                                    {f}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </button>
-                                                );
-                                            })}
+                                                        >
+                                                            <div
+                                                                className="absolute inset-0"
+                                                                style={{
+                                                                    background:
+                                                                        colors.gradient,
+                                                                }}
+                                                            />
+                                                            <div
+                                                                className={`absolute top-0 left-0 w-1 h-full ${colors.sideAccent}`}
+                                                            />
+                                                            <span
+                                                                className={`absolute top-6 right-6 text-xs font-semibold ${colors.badgeBg} ${colors.badgeText} px-3 py-1 rounded-full`}
+                                                            >
+                                                                {isPremium ?
+                                                                    "Best report"
+                                                                :   "Most popular"
+                                                                }
+                                                            </span>
+                                                            <div className="relative z-10 flex items-start justify-between mb-1 pr-28">
+                                                                <h3
+                                                                    className={`text-lg font-serif ${colors.textPrimary}`}
+                                                                >
+                                                                    {
+                                                                        plan.displayName
+                                                                    }
+                                                                </h3>
+                                                                {isSelected && (
+                                                                    <div
+                                                                        className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ml-2 ${isPremium ? "bg-gold" : "bg-stone-900"}`}
+                                                                    >
+                                                                        <LucideCheck className="w-3.5 h-3.5 text-white" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <p
+                                                                className={`relative z-10 text-xs font-medium uppercase tracking-wide mb-3 ${colors.textMuted}`}
+                                                            >
+                                                                {isPremium ?
+                                                                    "Premium service"
+                                                                :   "Standard service"
+                                                                }
+                                                            </p>
+                                                            <p
+                                                                className={`relative z-10 text-2xl font-serif mb-0.5 ${colors.textPrimary}`}
+                                                            >
+                                                                {displayPrice}
+                                                            </p>
+                                                            <p
+                                                                className={`relative z-10 text-xs mb-4 ${colors.textMuted}`}
+                                                            >
+                                                                per credit
+                                                            </p>
+                                                            <ul className="relative z-10 space-y-2 mb-4">
+                                                                {features.map(
+                                                                    (f) => (
+                                                                        <li
+                                                                            key={
+                                                                                f
+                                                                            }
+                                                                            className={`flex items-start gap-2 text-xs ${colors.textPrimary}`}
+                                                                        >
+                                                                            <LucideCheck
+                                                                                className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${colors.checkColor}`}
+                                                                            />
+                                                                            {f}
+                                                                        </li>
+                                                                    ),
+                                                                )}
+                                                            </ul>
+                                                        </button>
+                                                    );
+                                                },
+                                            )}
                                         </div>
                                     </div>
-                                )}
+                                }
 
                                 {/* Credit count input */}
-                                {selectedPlan && (() => {
-                                    const plan = getSelectedPlanData();
-                                    const discountInfo = getDiscountInfo();
-                                    return plan && plan.basePriceUsd > 0 ? (
-                                        <div>
-                                            <label className="block text-sm font-semibold text-heading mb-2">
-                                                How many credits to purchase upfront?
-                                            </label>
-                                            <p className="text-xs text-muted mb-3">
-                                                Each credit generates one travel health plan for one employee trip. Volume discounts apply automatically.
-                                            </p>
-                                            <div className="flex items-center gap-3">
-                                                <input
-                                                    type="number"
-                                                    min={1}
-                                                    max={10000}
-                                                    value={creditCount}
-                                                    onChange={(e) => {
-                                                        const rawValue = e.target.value;
-                                                        if (rawValue === "") { setCreditCount(""); return; }
-                                                        const value = Number(rawValue);
-                                                        if (!Number.isFinite(value) || value < 0) return;
-                                                        if (value > 10000) {
-                                                            toast.error("Maximum credit count is 10,000");
-                                                            setCreditCount("10000");
-                                                            return;
-                                                        }
-                                                        setCreditCount(rawValue);
-                                                    }}
-                                                    onBlur={() => {
-                                                        if (creditCount === "" || Number(creditCount) < 1) setCreditCount("1");
-                                                    }}
-                                                    className={`w-32 bg-background-primary border rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors ${
-                                                        isContactSalesRequired ? "border-amber-400 bg-amber-50/30" : "border-heading/50"
-                                                    }`}
-                                                />
-                                                <span className="text-sm text-muted">credits</span>
-                                                {isContactSalesRequired ? (
-                                                    <span className="text-sm font-semibold text-amber-700 ml-auto">
-                                                        Contact sales for custom pricing
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-sm font-semibold text-heading ml-auto flex items-center gap-2">
-                                                        {getCurrencySymbol()}{(getEstimatedTotal() ?? 0).toLocaleString()} {billingCurrency} estimated
-                                                        {discountInfo && (
-                                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full animate-pulse">
-                                                                <LucideTag className="w-3 h-3" />
-                                                                {discountInfo.label}
+                                {selectedPlan &&
+                                    (() => {
+                                        const plan = getSelectedPlanData();
+                                        const discountInfo = getDiscountInfo();
+                                        return plan && plan.basePriceUsd > 0 ?
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-heading mb-2">
+                                                        How many credits to
+                                                        purchase upfront?
+                                                    </label>
+                                                    <p className="text-xs text-muted mb-3">
+                                                        Each credit generates
+                                                        one travel health plan
+                                                        for one employee trip.
+                                                        Volume discounts apply
+                                                        automatically.
+                                                    </p>
+                                                    <div className="flex items-center gap-3">
+                                                        <input
+                                                            type="number"
+                                                            min={1}
+                                                            max={10000}
+                                                            value={creditCount}
+                                                            onChange={(e) => {
+                                                                const rawValue =
+                                                                    e.target
+                                                                        .value;
+                                                                if (
+                                                                    rawValue ===
+                                                                    ""
+                                                                ) {
+                                                                    setCreditCount(
+                                                                        "",
+                                                                    );
+                                                                    return;
+                                                                }
+                                                                const value =
+                                                                    Number(
+                                                                        rawValue,
+                                                                    );
+                                                                if (
+                                                                    !Number.isFinite(
+                                                                        value,
+                                                                    ) ||
+                                                                    value < 0
+                                                                )
+                                                                    return;
+                                                                if (
+                                                                    value >
+                                                                    10000
+                                                                ) {
+                                                                    toast.error(
+                                                                        "Maximum credit count is 10,000",
+                                                                    );
+                                                                    setCreditCount(
+                                                                        "10000",
+                                                                    );
+                                                                    return;
+                                                                }
+                                                                setCreditCount(
+                                                                    rawValue,
+                                                                );
+                                                            }}
+                                                            onBlur={() => {
+                                                                if (
+                                                                    creditCount ===
+                                                                        "" ||
+                                                                    Number(
+                                                                        creditCount,
+                                                                    ) < 1
+                                                                )
+                                                                    setCreditCount(
+                                                                        "1",
+                                                                    );
+                                                            }}
+                                                            className={`w-32 ${compactFieldClassName} ${
+                                                                (
+                                                                    isContactSalesRequired
+                                                                ) ?
+                                                                    "border-amber-400 bg-amber-50 focus:border-amber-500 focus:ring-amber-200"
+                                                                :   ""
+                                                            }`}
+                                                        />
+                                                        <span className="text-sm text-muted">
+                                                            credits
+                                                        </span>
+                                                        {(
+                                                            isContactSalesRequired
+                                                        ) ?
+                                                            <span className="text-sm font-semibold text-amber-700 ml-auto">
+                                                                Contact sales
+                                                                for custom
+                                                                pricing
                                                             </span>
-                                                        )}
-                                                    </span>
-                                                )}
-                                            </div>
+                                                        :   <span className="text-sm font-semibold text-heading ml-auto flex items-center gap-2">
+                                                                {getCurrencySymbol()}
+                                                                {(
+                                                                    getEstimatedTotal() ??
+                                                                    0
+                                                                ).toLocaleString()}{" "}
+                                                                {
+                                                                    billingCurrency
+                                                                }{" "}
+                                                                estimated
+                                                                {discountInfo && (
+                                                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full animate-pulse">
+                                                                        <LucideTag className="w-3 h-3" />
+                                                                        {
+                                                                            discountInfo.label
+                                                                        }
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        }
+                                                    </div>
 
-                                            {/* Discount tier progress indicator */}
-                                            {!isContactSalesRequired && selectedPlanData && (
-                                                <div className="mt-3">
-                                                    <div className="flex items-center gap-1 mb-1.5">
-                                                        {[{ min: 1, max: 49, label: "1–49" }, { min: 50, max: 99, label: "50–99" }, { min: 100, max: 499, label: "100–499" }].map((tier) => {
-                                                            const isActive = numericCreditCount >= tier.min && numericCreditCount <= tier.max;
-                                                            const isPast = numericCreditCount > tier.max;
-                                                            return (
-                                                                <div key={tier.label} className="flex-1">
-                                                                    <div className={`h-1.5 rounded-full transition-colors duration-300 ${
-                                                                        isActive ? "bg-accent" : isPast ? "bg-accent/40" : "bg-border-light"
-                                                                    }`} />
-                                                                    <p className={`text-[10px] mt-0.5 text-center transition-colors ${
-                                                                        isActive ? "text-accent font-semibold" : "text-muted"
-                                                                    }`}>{tier.label}</p>
+                                                    {/* Discount tier progress indicator */}
+                                                    {!isContactSalesRequired &&
+                                                        selectedPlanData && (
+                                                            <div className="mt-3">
+                                                                <div className="flex items-center gap-1 mb-1.5">
+                                                                    {[
+                                                                        {
+                                                                            min: 1,
+                                                                            max: 49,
+                                                                            label: "1–49",
+                                                                        },
+                                                                        {
+                                                                            min: 50,
+                                                                            max: 99,
+                                                                            label: "50–99",
+                                                                        },
+                                                                        {
+                                                                            min: 100,
+                                                                            max: 499,
+                                                                            label: "100–499",
+                                                                        },
+                                                                    ].map(
+                                                                        (
+                                                                            tier,
+                                                                        ) => {
+                                                                            const isActive =
+                                                                                numericCreditCount >=
+                                                                                    tier.min &&
+                                                                                numericCreditCount <=
+                                                                                    tier.max;
+                                                                            const isPast =
+                                                                                numericCreditCount >
+                                                                                tier.max;
+                                                                            return (
+                                                                                <div
+                                                                                    key={
+                                                                                        tier.label
+                                                                                    }
+                                                                                    className="flex-1"
+                                                                                >
+                                                                                    <div
+                                                                                        className={`h-1.5 rounded-full transition-colors duration-300 ${
+                                                                                            (
+                                                                                                isActive
+                                                                                            ) ?
+                                                                                                "bg-accent"
+                                                                                            : (
+                                                                                                isPast
+                                                                                            ) ?
+                                                                                                "bg-accent/40"
+                                                                                            :   "bg-border-light"
+                                                                                        }`}
+                                                                                    />
+                                                                                    <p
+                                                                                        className={`text-[10px] mt-0.5 text-center transition-colors ${
+                                                                                            (
+                                                                                                isActive
+                                                                                            ) ?
+                                                                                                "text-accent font-semibold"
+                                                                                            :   "text-muted"
+                                                                                        }`}
+                                                                                    >
+                                                                                        {
+                                                                                            tier.label
+                                                                                        }
+                                                                                    </p>
+                                                                                </div>
+                                                                            );
+                                                                        },
+                                                                    )}
+                                                                    <div className="flex-1">
+                                                                        <div
+                                                                            className={`h-1.5 rounded-full transition-colors duration-300 ${
+                                                                                (
+                                                                                    numericCreditCount >=
+                                                                                    500
+                                                                                ) ?
+                                                                                    "bg-amber-400"
+                                                                                :   "bg-border-light"
+                                                                            }`}
+                                                                        />
+                                                                        <p
+                                                                            className={`text-[10px] mt-0.5 text-center transition-colors ${
+                                                                                (
+                                                                                    numericCreditCount >=
+                                                                                    500
+                                                                                ) ?
+                                                                                    "text-amber-600 font-semibold"
+                                                                                :   "text-muted"
+                                                                            }`}
+                                                                        >
+                                                                            500+
+                                                                        </p>
+                                                                    </div>
                                                                 </div>
-                                                            );
-                                                        })}
-                                                        <div className="flex-1">
-                                                            <div className={`h-1.5 rounded-full transition-colors duration-300 ${
-                                                                numericCreditCount >= 500 ? "bg-amber-400" : "bg-border-light"
-                                                            }`} />
-                                                            <p className={`text-[10px] mt-0.5 text-center transition-colors ${
-                                                                numericCreditCount >= 500 ? "text-amber-600 font-semibold" : "text-muted"
-                                                            }`}>500+</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
+                                                            </div>
+                                                        )}
 
-                                            {/* Contact sales CTA for 500+ */}
-                                            {isContactSalesRequired && (
-                                                <div className="mt-4 p-5 bg-amber-50 border-2 border-amber-300 rounded-2xl">
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="p-2 bg-amber-100 rounded-xl shrink-0">
-                                                            <LucidePhone className="w-5 h-5 text-amber-600" />
+                                                    {/* Contact sales CTA for 500+ */}
+                                                    {isContactSalesRequired && (
+                                                        <div className="mt-4 p-5 bg-amber-50 border-2 border-amber-300 rounded-2xl">
+                                                            <div className="flex items-start gap-3">
+                                                                <div className="p-2 bg-amber-100 rounded-xl shrink-0">
+                                                                    <LucidePhone className="w-5 h-5 text-amber-600" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <p className="text-sm font-semibold text-amber-800 mb-1">
+                                                                        Custom
+                                                                        pricing
+                                                                        available
+                                                                        for{" "}
+                                                                        {numericCreditCount.toLocaleString()}{" "}
+                                                                        credits
+                                                                    </p>
+                                                                    <p className="text-xs text-amber-700 mb-3">
+                                                                        For
+                                                                        orders
+                                                                        of 500+
+                                                                        credits,
+                                                                        our
+                                                                        sales
+                                                                        team can
+                                                                        offer
+                                                                        tailored
+                                                                        packages
+                                                                        with
+                                                                        deeper
+                                                                        discounts.
+                                                                        Contact
+                                                                        us for a
+                                                                        personalized
+                                                                        quote.
+                                                                    </p>
+                                                                    <a
+                                                                        href="/contact"
+                                                                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white text-sm font-semibold rounded-xl hover:bg-amber-600 transition-colors"
+                                                                    >
+                                                                        <LucidePhone className="w-4 h-4" />
+                                                                        Contact
+                                                                        Sales
+                                                                    </a>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex-1">
-                                                            <p className="text-sm font-semibold text-amber-800 mb-1">
-                                                                Custom pricing available for {numericCreditCount.toLocaleString()} credits
-                                                            </p>
-                                                            <p className="text-xs text-amber-700 mb-3">
-                                                                For orders of 500+ credits, our sales team can offer tailored packages with deeper discounts. Contact us for a personalized quote.
-                                                            </p>
-                                                            <a
-                                                                href="/contact"
-                                                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white text-sm font-semibold rounded-xl hover:bg-amber-600 transition-colors"
-                                                            >
-                                                                <LucidePhone className="w-4 h-4" />
-                                                                Contact Sales
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
+                                                    )}
 
-                                            {/* Discount applied celebration for 50-499 */}
-                                            {discountInfo && !isContactSalesRequired && (
-                                                <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
-                                                    <div className="p-1.5 bg-emerald-100 rounded-lg shrink-0">
-                                                        <LucideTag className="w-4 h-4 text-emerald-600" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-semibold text-emerald-800">
-                                                            {discountInfo.label} applied!
-                                                        </p>
-                                                        <p className="text-xs text-emerald-600">
-                                                            You're saving {discountInfo.pct}% per credit at {numericCreditCount} credits
-                                                        </p>
-                                                    </div>
+                                                    {/* Discount applied celebration for 50-499 */}
+                                                    {discountInfo &&
+                                                        !isContactSalesRequired && (
+                                                            <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
+                                                                <div className="p-1.5 bg-emerald-100 rounded-lg shrink-0">
+                                                                    <LucideTag className="w-4 h-4 text-emerald-600" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-xs font-semibold text-emerald-800">
+                                                                        {
+                                                                            discountInfo.label
+                                                                        }{" "}
+                                                                        applied!
+                                                                    </p>
+                                                                    <p className="text-xs text-emerald-600">
+                                                                        You're
+                                                                        saving{" "}
+                                                                        {
+                                                                            discountInfo.pct
+                                                                        }
+                                                                        % per
+                                                                        credit
+                                                                        at{" "}
+                                                                        {
+                                                                            numericCreditCount
+                                                                        }{" "}
+                                                                        credits
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                 </div>
-                                            )}
-                                        </div>
-                                    ) : null;
-                                })()}
+                                            :   null;
+                                    })()}
 
                                 <div>
                                     <label className="block text-sm font-semibold text-heading mb-2">
-                                        Describe your typical travel health needs (optional)
+                                        Describe your typical travel health
+                                        needs (optional)
                                     </label>
                                     <textarea
                                         value={sampleRequest}
-                                        onChange={(e) => setSampleRequest(e.target.value)}
+                                        onChange={(e) =>
+                                            setSampleRequest(e.target.value)
+                                        }
                                         placeholder="E.g., We send 50+ employees to Southeast Asia and Africa quarterly. We need vaccination plans, medication guidance, and emergency contact info for each destination..."
                                         rows={4}
-                                        className="w-full bg-background-primary border border-heading/50 rounded-xl px-4 py-3 text-sm text-heading placeholder:text-muted outline-none focus:border-accent transition-colors resize-none"
+                                        className={`${fieldClassName} resize-none`}
                                     />
                                 </div>
 
@@ -601,131 +883,215 @@ const CompanyOnboarding = () => {
                         {currentStep === 2 && (
                             <div className="space-y-8">
                                 <div>
-                                    <h2 className="text-2xl font-serif text-heading mb-2">Company & team details</h2>
-                                    <p className="text-sm text-body">Tell us about your company and who should have access.</p>
+                                    <h2 className="text-2xl font-serif text-heading mb-2">
+                                        Company & team details
+                                    </h2>
+                                    <p className="text-sm text-body">
+                                        Tell us about your company and who
+                                        should have access.
+                                    </p>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-heading mb-1.5">Company name *</label>
+                                        <label className="block text-xs font-semibold text-heading mb-1.5">
+                                            Company name *
+                                        </label>
                                         <input
                                             type="text"
                                             value={companyName}
-                                            onChange={(e) => setCompanyName(e.target.value)}
+                                            onChange={(e) =>
+                                                setCompanyName(e.target.value)
+                                            }
                                             placeholder="Acme Corp"
-                                            className="w-full bg-background-primary border border-border-light/50 rounded-xl px-4 py-3 text-sm text-heading placeholder:text-muted outline-none focus:border-accent transition-colors"
+                                            className={fieldClassName}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-heading mb-1.5">Industry</label>
+                                        <label className="block text-xs font-semibold text-heading mb-1.5">
+                                            Industry
+                                        </label>
                                         <select
                                             value={industry}
-                                            onChange={(e) => setIndustry(e.target.value)}
-                                            className="w-full bg-background-primary border border-border-light/50 rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors cursor-pointer"
+                                            onChange={(e) =>
+                                                setIndustry(e.target.value)
+                                            }
+                                            className={selectClassName}
                                         >
-                                            <option value="">Select industry</option>
+                                            <option value="">
+                                                Select industry
+                                            </option>
                                             {industries.map((ind) => (
-                                                <option key={ind} value={ind}>{ind}</option>
+                                                <option key={ind} value={ind}>
+                                                    {ind}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-heading mb-1.5">Contact email *</label>
+                                        <label className="block text-xs font-semibold text-heading mb-1.5">
+                                            Contact email *
+                                        </label>
                                         <input
                                             type="email"
                                             value={contactEmail}
-                                            onChange={(e) => setContactEmail(e.target.value)}
+                                            onChange={(e) =>
+                                                setContactEmail(e.target.value)
+                                            }
                                             placeholder="hr@acmecorp.com"
-                                            className="w-full bg-background-primary border border-border-light/50 rounded-xl px-4 py-3 text-sm text-heading placeholder:text-muted outline-none focus:border-accent transition-colors"
+                                            className={fieldClassName}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-heading mb-1.5">Contact phone</label>
+                                        <label className="block text-xs font-semibold text-heading mb-1.5">
+                                            Contact phone
+                                        </label>
                                         <input
                                             type="tel"
                                             value={contactPhone}
-                                            onChange={(e) => setContactPhone(e.target.value)}
+                                            onChange={(e) =>
+                                                setContactPhone(e.target.value)
+                                            }
                                             placeholder="+1 555 000 0000"
-                                            className="w-full bg-background-primary border border-border-light/50 rounded-xl px-4 py-3 text-sm text-heading placeholder:text-muted outline-none focus:border-accent transition-colors"
+                                            className={fieldClassName}
                                         />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className="block text-xs font-semibold text-heading mb-1.5">Website</label>
+                                        <label className="block text-xs font-semibold text-heading mb-1.5">
+                                            Website
+                                        </label>
                                         <input
                                             type="url"
                                             value={website}
-                                            onChange={(e) => setWebsite(e.target.value)}
+                                            onChange={(e) =>
+                                                setWebsite(e.target.value)
+                                            }
                                             placeholder="https://acmecorp.com"
-                                            className="w-full bg-background-primary border border-border-light/50 rounded-xl px-4 py-3 text-sm text-heading placeholder:text-muted outline-none focus:border-accent transition-colors"
+                                            className={fieldClassName}
                                         />
                                     </div>
                                 </div>
 
                                 {/* Team members */}
                                 <div>
-                                     <div className="flex items-center justify-between mb-3">
-                                        <label className="text-sm font-semibold text-heading">Team members *</label>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <label className="text-sm font-semibold text-heading">
+                                            Team members *
+                                        </label>
                                         <div className="flex items-center gap-3">
-                                            <label className="flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent/80 transition-colors cursor-pointer">
+                                            <label
+                                                className={`${actionButtonClassName} cursor-pointer`}
+                                            >
                                                 <LucideUpload className="w-3.5 h-3.5" />
                                                 Upload CSV
                                                 <input
                                                     type="file"
                                                     accept=".csv,text/csv"
                                                     className="hidden"
-                                                    onChange={(e) => void handleTeamMembersCsvUpload(e.target.files?.[0] ?? null)}
+                                                    onChange={(e) =>
+                                                        void handleTeamMembersCsvUpload(
+                                                            e.target
+                                                                .files?.[0] ??
+                                                                null,
+                                                        )
+                                                    }
                                                 />
                                             </label>
                                             <a
                                                 href={`data:text/csv;charset=utf-8,${encodeURIComponent(teamMembersCsvSample)}`}
                                                 download="team-members-template.csv"
-                                                className="text-xs font-semibold text-muted hover:text-accent transition-colors"
+                                                className={
+                                                    secondaryActionClassName
+                                                }
                                             >
                                                 Download sample
                                             </a>
                                             <button
                                                 onClick={addTeamMember}
-                                                className="flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
+                                                className={
+                                                    secondaryActionClassName
+                                                }
                                             >
                                                 <LucidePlus className="w-3.5 h-3.5" />
                                                 Add another
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="mb-3 rounded-xl border border-border-light/50 bg-background-primary px-4 py-3 text-xs text-muted">
-                                        CSV columns: <span className="font-semibold text-heading">name,email,role</span>. Role is optional and defaults to HR.
-                                        {teamMembersCsv && <span className="block mt-1 text-accent">Uploaded: {teamMembersCsv.name}</span>}
-                                        {teamMembersCsvError && <span className="block mt-1 text-red-500">{teamMembersCsvError}</span>}
+                                    <div className="mb-3 rounded-xl  bg-white/50 px-4 py-3 text-xs text-slate-600">
+                                        CSV columns:{" "}
+                                        <span className="font-semibold text-heading">
+                                            name,email,role
+                                        </span>
+                                        . Role is optional and defaults to HR.
+                                        {teamMembersCsv && (
+                                            <span className="block mt-1 text-accent">
+                                                Uploaded: {teamMembersCsv.name}
+                                            </span>
+                                        )}
+                                        {teamMembersCsvError && (
+                                            <span className="block mt-1 text-red-500">
+                                                {teamMembersCsvError}
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="space-y-3">
                                         {teamMembers.map((member, index) => (
-                                            <div key={index} className="flex gap-3 items-start">
+                                            <div
+                                                key={index}
+                                                className="flex gap-3 items-start"
+                                            >
                                                 <input
                                                     type="text"
                                                     value={member.name}
-                                                    onChange={(e) => updateTeamMember(index, "name", e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateTeamMember(
+                                                            index,
+                                                            "name",
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder="Full name"
-                                                    className="flex-1 bg-background-primary border border-border-light/50 rounded-xl px-4 py-3 text-sm text-heading placeholder:text-muted outline-none focus:border-accent transition-colors"
+                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
                                                 />
                                                 <input
                                                     type="email"
                                                     value={member.email}
-                                                    onChange={(e) => updateTeamMember(index, "email", e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateTeamMember(
+                                                            index,
+                                                            "email",
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder="Email address"
-                                                    className="flex-1 bg-background-primary border border-border-light/50 rounded-xl px-4 py-3 text-sm text-heading placeholder:text-muted outline-none focus:border-accent transition-colors"
+                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
                                                 />
                                                 <select
                                                     value={member.role}
-                                                    onChange={(e) => updateTeamMember(index, "role", e.target.value)}
-                                                    className="w-28 bg-background-primary border border-border-light/50 rounded-xl px-3 py-3 text-sm text-heading outline-none focus:border-accent transition-colors cursor-pointer"
+                                                    onChange={(e) =>
+                                                        updateTeamMember(
+                                                            index,
+                                                            "role",
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="w-28 rounded-xl border border-slate-300 bg-white/50 px-3 py-3 text-sm text-slate-950 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15 cursor-pointer"
                                                 >
-                                                    <option value="admin">Admin</option>
-                                                    <option value="hr">HR</option>
+                                                    <option value="admin">
+                                                        Admin
+                                                    </option>
+                                                    <option value="hr">
+                                                        HR
+                                                    </option>
                                                 </select>
                                                 {teamMembers.length > 1 && (
                                                     <button
-                                                        onClick={() => removeTeamMember(index)}
-                                                        className="p-3 rounded-xl text-muted hover:text-red-500 hover:bg-red-50 transition-colors"
+                                                        onClick={() =>
+                                                            removeTeamMember(
+                                                                index,
+                                                            )
+                                                        }
+                                                        className="p-3 rounded-xl border border-transparent text-slate-500 hover:border-red-200 hover:text-red-600 hover:bg-red-50 transition-colors"
                                                     >
                                                         <LucideX className="w-4 h-4" />
                                                     </button>
@@ -734,12 +1100,18 @@ const CompanyOnboarding = () => {
                                         ))}
                                     </div>
                                     <p className="text-xs text-muted mt-2">
-                                        Admin users have full dashboard access. HR users can manage employees and travel plans.
+                                        Admin users have full dashboard access.
+                                        HR users can manage employees and travel
+                                        plans.
                                     </p>
                                 </div>
 
                                 <div className="flex justify-between">
-                                    <Button variant="secondary" onClick={() => goToStep(1)} icon={<LucideArrowLeft />}>
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => goToStep(1)}
+                                        icon={<LucideArrowLeft />}
+                                    >
                                         Back
                                     </Button>
                                     <Button
@@ -758,13 +1130,20 @@ const CompanyOnboarding = () => {
                         {currentStep === 3 && (
                             <div className="space-y-8">
                                 <div>
-                                    <h2 className="text-2xl font-serif text-heading mb-2">Review your order</h2>
-                                    <p className="text-sm text-body">Please verify all details before proceeding to payment.</p>
+                                    <h2 className="text-2xl font-serif text-heading mb-2">
+                                        Review your order
+                                    </h2>
+                                    <p className="text-sm text-body">
+                                        Please verify all details before
+                                        proceeding to payment.
+                                    </p>
                                 </div>
 
                                 {/* Plan summary */}
-                                <div className="bg-button-secondary rounded-2xl p-6">
-                                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Selected Plan</h3>
+                                <div className={panelClassName}>
+                                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+                                        Selected Plan
+                                    </h3>
                                     {(() => {
                                         const plan = getSelectedPlanData();
                                         if (!plan) return null;
@@ -774,15 +1153,25 @@ const CompanyOnboarding = () => {
                                             <>
                                                 <div className="flex items-start justify-between">
                                                     <div>
-                                                        <p className="text-lg font-serif text-heading">{plan.displayName}</p>
-                                                        <p className="text-sm text-body">{formatPricePerCredit(plan)}</p>
+                                                        <p className="text-lg font-serif text-heading">
+                                                            {plan.displayName}
+                                                        </p>
+                                                        <p className="text-sm text-body">
+                                                            {formatPricePerCredit(
+                                                                plan,
+                                                            )}
+                                                        </p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-2xl font-serif text-heading">{formatTotal(total)}</p>
+                                                        <p className="text-2xl font-serif text-heading">
+                                                            {formatTotal(total)}
+                                                        </p>
                                                         {discountInfo && (
                                                             <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full mt-1">
                                                                 <LucideTag className="w-3 h-3" />
-                                                                {discountInfo.label}
+                                                                {
+                                                                    discountInfo.label
+                                                                }
                                                             </span>
                                                         )}
                                                     </div>
@@ -793,17 +1182,32 @@ const CompanyOnboarding = () => {
                                                             <LucidePhone className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
                                                             <div>
                                                                 <p className="text-sm font-semibold text-amber-800">
-                                                                    Custom pricing for {numericCreditCount.toLocaleString()} credits
+                                                                    Custom
+                                                                    pricing for{" "}
+                                                                    {numericCreditCount.toLocaleString()}{" "}
+                                                                    credits
                                                                 </p>
                                                                 <p className="text-xs text-amber-700 mt-1">
-                                                                    Orders of 500+ credits qualify for tailored packages with deeper discounts. Please contact our sales team before proceeding.
+                                                                    Orders of
+                                                                    500+ credits
+                                                                    qualify for
+                                                                    tailored
+                                                                    packages
+                                                                    with deeper
+                                                                    discounts.
+                                                                    Please
+                                                                    contact our
+                                                                    sales team
+                                                                    before
+                                                                    proceeding.
                                                                 </p>
                                                                 <a
                                                                     href="/contact"
                                                                     className="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-amber-500 text-white text-xs font-semibold rounded-xl hover:bg-amber-600 transition-colors"
                                                                 >
                                                                     <LucidePhone className="w-3.5 h-3.5" />
-                                                                    Contact Sales
+                                                                    Contact
+                                                                    Sales
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -815,101 +1219,245 @@ const CompanyOnboarding = () => {
                                 </div>
 
                                 {/* Volume pricing table */}
-                                {selectedPlanData && selectedPlanData.basePriceUsd > 0 && pricingPreviews && pricingPreviews.length > 0 && (
-                                    <div className="bg-button-secondary rounded-2xl p-6">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">Volume Pricing</h3>
-                                            {getDiscountInfo() && (
-                                                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-                                                    <LucideTag className="w-3 h-3" />
-                                                    {getDiscountInfo()!.label} active
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-sm">
-                                                <thead>
-                                                    <tr className="text-left text-muted border-b border-border-light/50">
-                                                        <th className="pb-2 pr-4">Credits</th>
-                                                        <th className="pb-2 pr-4">Standard</th>
-                                                        <th className="pb-2 pr-4">Premium</th>
-                                                        <th className="pb-2">Savings</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="text-heading">
-                                                    <tr className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_1" ? "bg-accent/5" : ""}`}>
-                                                        <td className="py-2.5 pr-4">1–49</td>
-                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦50,000" : "$50"}</td>
-                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦100,000" : "$100"}</td>
-                                                        <td className="py-2.5 text-muted">—</td>
-                                                    </tr>
-                                                    <tr className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_2" ? "bg-accent/5" : ""}`}>
-                                                        <td className="py-2.5 pr-4">50–99</td>
-                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦45,000" : "$45"}</td>
-                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦90,000" : "$90"}</td>
-                                                        <td className="py-2.5 text-emerald-600 font-medium">10%</td>
-                                                    </tr>
-                                                    <tr className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_3" ? "bg-accent/5" : ""}`}>
-                                                        <td className="py-2.5 pr-4">100–499</td>
-                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦40,000" : "$40"}</td>
-                                                        <td className="py-2.5 pr-4">{billingCurrency === "NGN" ? "₦80,000" : "$80"}</td>
-                                                        <td className="py-2.5 text-emerald-600 font-medium">20%</td>
-                                                    </tr>
-                                                    <tr className={numericCreditCount >= 500 ? "bg-amber-50" : ""}>
-                                                        <td className="py-2.5 pr-4">500+</td>
-                                                        <td colSpan={2} className="py-2.5 text-amber-600 italic font-medium">Contact sales</td>
-                                                        <td className="py-2.5 text-amber-600 font-medium">Custom</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        {getDiscountInfo() && (() => {
-                                            const vp = getVolumePricing();
-                                            if (!vp) return null;
-                                            const tier1Price = vp.serviceLevel === "PREMIUM"
-                                                ? (billingCurrency === "NGN" ? 100000 : 100)
-                                                : (billingCurrency === "NGN" ? 50000 : 50);
-                                            const savingsPerCredit = tier1Price - vp.pricePerCredit;
-                                            const totalSavings = savingsPerCredit * numericCreditCount;
-                                            return (
-                                                <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <LucideTag className="w-4 h-4 text-emerald-600" />
-                                                        <span className="text-xs font-semibold text-emerald-800">
-                                                            {getDiscountInfo()!.label} applied
-                                                        </span>
-                                                    </div>
-                                                    <span className="text-sm font-bold text-emerald-700">
-                                                        You save {billingCurrency === "NGN" ? "₦" : "$"}{totalSavings.toLocaleString()}
+                                {selectedPlanData &&
+                                    selectedPlanData.basePriceUsd > 0 &&
+                                    pricingPreviews &&
+                                    pricingPreviews.length > 0 && (
+                                        <div className={panelClassName}>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+                                                    Volume Pricing
+                                                </h3>
+                                                {getDiscountInfo() && (
+                                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                                                        <LucideTag className="w-3 h-3" />
+                                                        {
+                                                            getDiscountInfo()!
+                                                                .label
+                                                        }{" "}
+                                                        active
                                                     </span>
-                                                </div>
-                                            );
-                                        })()}
-                                    </div>
-                                )}
+                                                )}
+                                            </div>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="text-left text-muted border-b border-border-light/50">
+                                                            <th className="pb-2 pr-4">
+                                                                Credits
+                                                            </th>
+                                                            <th className="pb-2 pr-4">
+                                                                Standard
+                                                            </th>
+                                                            <th className="pb-2 pr-4">
+                                                                Premium
+                                                            </th>
+                                                            <th className="pb-2">
+                                                                Savings
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="text-heading">
+                                                        <tr
+                                                            className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_1" ? "bg-accent/5" : ""}`}
+                                                        >
+                                                            <td className="py-2.5 pr-4">
+                                                                1–49
+                                                            </td>
+                                                            <td className="py-2.5 pr-4">
+                                                                {(
+                                                                    billingCurrency ===
+                                                                    "NGN"
+                                                                ) ?
+                                                                    "₦50,000"
+                                                                :   "$50"}
+                                                            </td>
+                                                            <td className="py-2.5 pr-4">
+                                                                {(
+                                                                    billingCurrency ===
+                                                                    "NGN"
+                                                                ) ?
+                                                                    "₦100,000"
+                                                                :   "$100"}
+                                                            </td>
+                                                            <td className="py-2.5 text-muted">
+                                                                —
+                                                            </td>
+                                                        </tr>
+                                                        <tr
+                                                            className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_2" ? "bg-accent/5" : ""}`}
+                                                        >
+                                                            <td className="py-2.5 pr-4">
+                                                                50–99
+                                                            </td>
+                                                            <td className="py-2.5 pr-4">
+                                                                {(
+                                                                    billingCurrency ===
+                                                                    "NGN"
+                                                                ) ?
+                                                                    "₦45,000"
+                                                                :   "$45"}
+                                                            </td>
+                                                            <td className="py-2.5 pr-4">
+                                                                {(
+                                                                    billingCurrency ===
+                                                                    "NGN"
+                                                                ) ?
+                                                                    "₦90,000"
+                                                                :   "$90"}
+                                                            </td>
+                                                            <td className="py-2.5 text-emerald-600 font-medium">
+                                                                10%
+                                                            </td>
+                                                        </tr>
+                                                        <tr
+                                                            className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_3" ? "bg-accent/5" : ""}`}
+                                                        >
+                                                            <td className="py-2.5 pr-4">
+                                                                100–499
+                                                            </td>
+                                                            <td className="py-2.5 pr-4">
+                                                                {(
+                                                                    billingCurrency ===
+                                                                    "NGN"
+                                                                ) ?
+                                                                    "₦40,000"
+                                                                :   "$40"}
+                                                            </td>
+                                                            <td className="py-2.5 pr-4">
+                                                                {(
+                                                                    billingCurrency ===
+                                                                    "NGN"
+                                                                ) ?
+                                                                    "₦80,000"
+                                                                :   "$80"}
+                                                            </td>
+                                                            <td className="py-2.5 text-emerald-600 font-medium">
+                                                                20%
+                                                            </td>
+                                                        </tr>
+                                                        <tr
+                                                            className={
+                                                                (
+                                                                    numericCreditCount >=
+                                                                    500
+                                                                ) ?
+                                                                    "bg-amber-50"
+                                                                :   ""
+                                                            }
+                                                        >
+                                                            <td className="py-2.5 pr-4">
+                                                                500+
+                                                            </td>
+                                                            <td
+                                                                colSpan={2}
+                                                                className="py-2.5 text-amber-600 italic font-medium"
+                                                            >
+                                                                Contact sales
+                                                            </td>
+                                                            <td className="py-2.5 text-amber-600 font-medium">
+                                                                Custom
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            {getDiscountInfo() &&
+                                                (() => {
+                                                    const vp =
+                                                        getVolumePricing();
+                                                    if (!vp) return null;
+                                                    const tier1Price =
+                                                        (
+                                                            vp.serviceLevel ===
+                                                            "PREMIUM"
+                                                        ) ?
+                                                            (
+                                                                billingCurrency ===
+                                                                "NGN"
+                                                            ) ?
+                                                                100000
+                                                            :   100
+                                                        : (
+                                                            billingCurrency ===
+                                                            "NGN"
+                                                        ) ?
+                                                            50000
+                                                        :   50;
+                                                    const savingsPerCredit =
+                                                        tier1Price -
+                                                        vp.pricePerCredit;
+                                                    const totalSavings =
+                                                        savingsPerCredit *
+                                                        numericCreditCount;
+                                                    return (
+                                                        <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <LucideTag className="w-4 h-4 text-emerald-600" />
+                                                                <span className="text-xs font-semibold text-emerald-800">
+                                                                    {
+                                                                        getDiscountInfo()!
+                                                                            .label
+                                                                    }{" "}
+                                                                    applied
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-sm font-bold text-emerald-700">
+                                                                You save{" "}
+                                                                {(
+                                                                    billingCurrency ===
+                                                                    "NGN"
+                                                                ) ?
+                                                                    "₦"
+                                                                :   "$"}
+                                                                {totalSavings.toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })()}
+                                        </div>
+                                    )}
 
                                 {/* Company info summary */}
-                                <div className="bg-button-secondary rounded-2xl p-6">
-                                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Company Information</h3>
+                                <div className={panelClassName}>
+                                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+                                        Company Information
+                                    </h3>
                                     <div className="grid grid-cols-2 gap-3 text-sm">
                                         <div>
-                                            <p className="text-muted">Company</p>
-                                            <p className="text-heading font-medium">{companyName}</p>
+                                            <p className="text-muted">
+                                                Company
+                                            </p>
+                                            <p className="text-heading font-medium">
+                                                {companyName}
+                                            </p>
                                         </div>
                                         {industry && (
                                             <div>
-                                                <p className="text-muted">Industry</p>
-                                                <p className="text-heading font-medium">{industry}</p>
+                                                <p className="text-muted">
+                                                    Industry
+                                                </p>
+                                                <p className="text-heading font-medium">
+                                                    {industry}
+                                                </p>
                                             </div>
                                         )}
                                         <div>
-                                            <p className="text-muted">Contact Email</p>
-                                            <p className="text-heading font-medium">{contactEmail}</p>
+                                            <p className="text-muted">
+                                                Contact Email
+                                            </p>
+                                            <p className="text-heading font-medium">
+                                                {contactEmail}
+                                            </p>
                                         </div>
                                         {contactPhone && (
                                             <div>
-                                                <p className="text-muted">Phone</p>
-                                                <p className="text-heading font-medium">{contactPhone}</p>
+                                                <p className="text-muted">
+                                                    Phone
+                                                </p>
+                                                <p className="text-heading font-medium">
+                                                    {contactPhone}
+                                                </p>
                                             </div>
                                         )}
                                     </div>
@@ -917,27 +1465,48 @@ const CompanyOnboarding = () => {
 
                                 {/* Sample request */}
                                 {sampleRequest.trim() && (
-                                    <div className="bg-button-secondary rounded-2xl p-6">
-                                        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Sample Request</h3>
-                                        <p className="text-sm text-body leading-relaxed">{sampleRequest}</p>
+                                    <div className={panelClassName}>
+                                        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+                                            Sample Request
+                                        </h3>
+                                        <p className="text-sm text-body leading-relaxed">
+                                            {sampleRequest}
+                                        </p>
                                     </div>
                                 )}
 
                                 {/* Team members summary */}
-                                <div className="bg-button-secondary rounded-2xl p-6">
+                                <div className={panelClassName}>
                                     <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
                                         Team Members ({teamMembers.length})
                                     </h3>
                                     <div className="space-y-2">
                                         {teamMembers.map((member, i) => (
-                                            <div key={i} className="flex items-center justify-between text-sm">
+                                            <div
+                                                key={i}
+                                                className="flex items-center justify-between text-sm"
+                                            >
                                                 <div>
-                                                    <span className="text-heading font-medium">{member.name}</span>
-                                                    <span className="text-muted ml-2">({member.email})</span>
+                                                    <span className="text-heading font-medium">
+                                                        {member.name}
+                                                    </span>
+                                                    <span className="text-muted ml-2">
+                                                        ({member.email})
+                                                    </span>
                                                 </div>
-                                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${member.role === "admin" ? "bg-accent/10 text-accent" : "bg-blue-50 text-blue-600"
-                                                    }`}>
-                                                    {member.role === "admin" ? "Admin" : "HR"}
+                                                <span
+                                                    className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                                        (
+                                                            member.role ===
+                                                            "admin"
+                                                        ) ?
+                                                            "bg-accent/10 text-accent"
+                                                        :   "bg-blue-50 text-blue-600"
+                                                    }`}
+                                                >
+                                                    {member.role === "admin" ?
+                                                        "Admin"
+                                                    :   "HR"}
                                                 </span>
                                             </div>
                                         ))}
@@ -945,20 +1514,28 @@ const CompanyOnboarding = () => {
                                 </div>
 
                                 <div className="flex justify-between">
-                                    <Button variant="secondary" onClick={() => goToStep(2)} icon={<LucideArrowLeft />}>
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => goToStep(2)}
+                                        icon={<LucideArrowLeft />}
+                                    >
                                         Back
                                     </Button>
-                                    <Button variant="primary" onClick={handleSubmit} disabled={submitting || isContactSalesRequired}>
-                                        {submitting ? (
+                                    <Button
+                                        variant="primary"
+                                        onClick={handleSubmit}
+                                        disabled={
+                                            submitting || isContactSalesRequired
+                                        }
+                                    >
+                                        {submitting ?
                                             <span className="flex items-center gap-2">
                                                 <LucideLoader2 className="w-4 h-4 animate-spin" />
                                                 Submitting...
                                             </span>
-                                        ) : isContactSalesRequired ? (
+                                        : isContactSalesRequired ?
                                             "Contact sales to proceed"
-                                        ) : (
-                                            "Submit & Proceed to Payment"
-                                        )}
+                                        :   "Submit & Proceed to Payment"}
                                     </Button>
                                 </div>
                             </div>
@@ -967,39 +1544,70 @@ const CompanyOnboarding = () => {
                         {/* Step 4: Payment */}
                         {currentStep === 4 && (
                             <div className="space-y-8 max-w-lg mx-auto text-center">
-                                {onboardingResult ? (
+                                {onboardingResult ?
                                     <>
                                         <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto">
                                             <LucideCreditCard className="w-8 h-8 text-accent" />
                                         </div>
                                         <div>
-                                            <h2 className="text-2xl font-serif text-heading mb-2">Complete your payment</h2>
+                                            <h2 className="text-2xl font-serif text-heading mb-2">
+                                                Complete your payment
+                                            </h2>
                                             <p className="text-sm text-body">
-                                                Your registration for <strong>{onboardingResult.companyName}</strong> has been saved.
-                                                Complete payment to submit it for approval.
+                                                Your registration for{" "}
+                                                <strong>
+                                                    {
+                                                        onboardingResult.companyName
+                                                    }
+                                                </strong>{" "}
+                                                has been saved. Complete payment
+                                                to submit it for approval.
                                             </p>
                                         </div>
 
-                                        <div className="bg-button-secondary rounded-2xl p-6 text-left">
+                                        <div
+                                            className={`${panelClassName} text-left`}
+                                        >
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="text-sm text-muted">Plan</span>
+                                                <span className="text-sm text-muted">
+                                                    Plan
+                                                </span>
                                                 <span className="text-sm font-semibold text-heading">
-                                                    {selectedPlanData?.displayName ?? onboardingResult.selectedPlanCode}
+                                                    {selectedPlanData?.displayName ??
+                                                        onboardingResult.selectedPlanCode}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-sm text-muted">Credits</span>
+                                                <span className="text-sm text-muted">
+                                                    Credits
+                                                </span>
                                                 <span className="text-sm font-semibold text-heading">
-                                                    {onboardingResult.creditCount ?? numericCreditCount}
+                                                    {onboardingResult.creditCount ??
+                                                        numericCreditCount}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between mt-2">
-                                                <span className="text-sm text-muted">Amount</span>
+                                                <span className="text-sm text-muted">
+                                                    Amount
+                                                </span>
                                                 <span className="text-lg font-serif text-heading">
                                                     {(() => {
-                                                        const estimated = getEstimatedTotal();
-                                                        if (estimated !== null && estimated > 0) return formatTotal(estimated);
-                                                        if (onboardingResult.paymentAmount != null && onboardingResult.paymentAmount > 0)
+                                                        const estimated =
+                                                            getEstimatedTotal();
+                                                        if (
+                                                            estimated !==
+                                                                null &&
+                                                            estimated > 0
+                                                        )
+                                                            return formatTotal(
+                                                                estimated,
+                                                            );
+                                                        if (
+                                                            onboardingResult.paymentAmount !=
+                                                                null &&
+                                                            onboardingResult.paymentAmount >
+                                                                0
+                                                        )
                                                             return `${getCurrencySymbol()}${onboardingResult.paymentAmount.toLocaleString()}`;
                                                         return "Free";
                                                     })()}
@@ -1013,27 +1621,29 @@ const CompanyOnboarding = () => {
                                             disabled={initiatePayment.isPending}
                                             className="w-full"
                                         >
-                                            {initiatePayment.isPending ? (
+                                            {initiatePayment.isPending ?
                                                 <span className="flex items-center gap-2">
                                                     <LucideLoader2 className="w-4 h-4 animate-spin" />
                                                     Processing...
                                                 </span>
-                                            ) : (
-                                                "Pay Now"
-                                            )}
+                                            :   "Pay Now"}
                                         </Button>
 
                                         <p className="text-xs text-muted">
-                                            You will be redirected to our secure payment partner (Flutterwave) to complete the
-                                            transaction. After payment, your registration will be reviewed by our team.
+                                            You will be redirected to our secure
+                                            payment partner (Flutterwave) to
+                                            complete the transaction. After
+                                            payment, your registration will be
+                                            reviewed by our team.
                                         </p>
                                     </>
-                                ) : (
-                                    <div className="py-12">
+                                :   <div className="py-12">
                                         <LucideLoader2 className="w-8 h-8 animate-spin text-muted mx-auto mb-4" />
-                                        <p className="text-sm text-muted">Loading...</p>
+                                        <p className="text-sm text-muted">
+                                            Loading...
+                                        </p>
                                     </div>
-                                )}
+                                }
                             </div>
                         )}
                     </motion.div>
