@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { LucideCheck, LucideArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
@@ -27,7 +28,10 @@ function formatPrice(priceUsd: number, priceNgn: number, currency: string): stri
 }
 
 const PricingPage = () => {
-    const [audience, setAudience] = useState<Audience>("individual");
+    const [searchParams] = useSearchParams();
+    const [audience, setAudience] = useState<Audience>(
+        searchParams.get("tab") === "company" ? "company" : "individual"
+    );
     const [signupRange, setSignupRange] = useState<SignupRange>("0-100");
     const { selectedCurrency, setCurrency } = useCurrencyStore();
 

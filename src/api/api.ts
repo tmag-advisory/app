@@ -809,8 +809,16 @@ export const adminDoctorApi = {
 // ─── Company Onboarding ────────────────────────────────────
 
 export const companyOnboardingApi = {
-  submit: (data: import("./types").CompanyOnboardingRequest) =>
-    api.post<ApiResponse<import("./types").CompanyOnboardingResponse>>("/public/company-onboarding", data).then((r) => r.data.data),
+  submit: (data: import("./types").CompanyOnboardingRequest) => {
+    const formData = new FormData();
+    const { teamMembersCsv, ...payload } = data;
+    formData.append("request", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+    if (teamMembersCsv) formData.append("teamMembersCsv", teamMembersCsv);
+
+    return api.post<ApiResponse<import("./types").CompanyOnboardingResponse>>("/public/company-onboarding", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data.data);
+  },
 
   initiatePayment: (id: number) =>
     api.post<ApiResponse<import("./types").OnboardingPaymentInitiate>>(`/public/company-onboarding/${id}/pay`).then((r) => r.data.data),

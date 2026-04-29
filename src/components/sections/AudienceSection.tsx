@@ -117,7 +117,7 @@ const AudienceSection = () => {
                     </div>
                     <Button
                         variant="primary"
-                        link="/pricing"
+                        link="/pricing?tab=company"
                         className="relative z-10 self-start bg-white text-dark! hover:bg-white/90"
                     >
                         Get Started

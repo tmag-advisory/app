@@ -13,6 +13,7 @@ import {
     LucideUsers,
     LucideTag,
     LucidePhone,
+    LucideUpload,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
@@ -42,6 +43,35 @@ const industries = [
     "Logistics & Transportation",
     "Other",
 ];
+
+const teamMembersCsvSample = "name,email,role\nJane Doe,jane@example.com,admin\nJohn Smith,john@example.com,hr\n";
+
+const parseTeamMembersCsv = (csv: string): TeamMember[] => {
+    const rows = csv
+        .split(/\r?\n/)
+        .map((row) => row.trim())
+        .filter(Boolean);
+
+    if (rows.length === 0) return [];
+
+    const hasHeader = rows[0]
+        .toLowerCase()
+        .split(",")
+        .some((column) => ["name", "email", "role"].includes(column.trim()));
+
+    return rows.slice(hasHeader ? 1 : 0).map((row, index) => {
+        const [name = "", email = "", role = "hr"] = row.split(",").map((value) => value.trim());
+        if (!name || !email) {
+            throw new Error(`Row ${index + (hasHeader ? 2 : 1)} must include name and email.`);
+        }
+
+        return {
+            name,
+            email,
+            role: role.toLowerCase() === "admin" ? "admin" : "hr",
+        };
+    });
+};
 
 function getRangeFromPlanCode(code: string): SignupRange {
     if (code.includes("GOLD") || code.includes("ELITE")) return "100-500";
@@ -73,6 +103,8 @@ const CompanyOnboarding = () => {
     const [contactEmail, setContactEmail] = useState("");
     const [contactPhone, setContactPhone] = useState("");
     const [website, setWebsite] = useState("");
+    const [teamMembersCsv, setTeamMembersCsv] = useState<File | null>(null);
+    const [teamMembersCsvError, setTeamMembersCsvError] = useState("");
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
         { name: "", email: "", role: "admin" },
     ]);
@@ -175,11 +207,36 @@ const CompanyOnboarding = () => {
         setTeamMembers(updated);
     };
 
+    const handleTeamMembersCsvUpload = async (file: File | null) => {
+        setTeamMembersCsvError("");
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith(".csv")) {
+            setTeamMembersCsv(null);
+            setTeamMembersCsvError("Please upload a CSV file.");
+            return;
+        }
+
+        try {
+            const importedMembers = parseTeamMembersCsv(await file.text());
+            if (importedMembers.length === 0) {
+                setTeamMembersCsvError("The CSV did not include any team members.");
+                return;
+            }
+
+            const hasOnlyEmptyStarter = teamMembers.length === 1 && !teamMembers[0].name.trim() && !teamMembers[0].email.trim();
+            setTeamMembers(hasOnlyEmptyStarter ? importedMembers : [...teamMembers, ...importedMembers]);
+            setTeamMembersCsv(file);
+        } catch (err) {
+            setTeamMembersCsv(null);
+            setTeamMembersCsvError(err instanceof Error ? err.message : "Failed to read CSV file.");
+        }
+    };
+
     const selectedPlanData = getSelectedPlanData();
     const isContactSalesRequired = numericCreditCount >= 500 && !!selectedPlanData && selectedPlanData.basePriceUsd > 0;
     const canProceedStep1 =
         selectedPlan &&
-        sampleRequest.trim().length > 0 &&
         (selectedPlanData?.basePriceUsd === 0 || numericCreditCount > 0) &&
         !isContactSalesRequired;
     const canProceedStep2 =
@@ -206,6 +263,7 @@ const CompanyOnboarding = () => {
                 creditCount: numericCreditCount,
                 sampleRequest,
                 teamMembers,
+                teamMembersCsv,
             });
             setOnboardingResult(result);
             goToStep(4);
@@ -515,7 +573,7 @@ const CompanyOnboarding = () => {
 
                                 <div>
                                     <label className="block text-sm font-semibold text-heading mb-2">
-                                        Describe your typical travel health needs
+                                        Describe your typical travel health needs (optional)
                                     </label>
                                     <textarea
                                         value={sampleRequest}
@@ -605,15 +663,39 @@ const CompanyOnboarding = () => {
 
                                 {/* Team members */}
                                 <div>
-                                    <div className="flex items-center justify-between mb-3">
+                                     <div className="flex items-center justify-between mb-3">
                                         <label className="text-sm font-semibold text-heading">Team members *</label>
-                                        <button
-                                            onClick={addTeamMember}
-                                            className="flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
-                                        >
-                                            <LucidePlus className="w-3.5 h-3.5" />
-                                            Add another
-                                        </button>
+                                        <div className="flex items-center gap-3">
+                                            <label className="flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent/80 transition-colors cursor-pointer">
+                                                <LucideUpload className="w-3.5 h-3.5" />
+                                                Upload CSV
+                                                <input
+                                                    type="file"
+                                                    accept=".csv,text/csv"
+                                                    className="hidden"
+                                                    onChange={(e) => void handleTeamMembersCsvUpload(e.target.files?.[0] ?? null)}
+                                                />
+                                            </label>
+                                            <a
+                                                href={`data:text/csv;charset=utf-8,${encodeURIComponent(teamMembersCsvSample)}`}
+                                                download="team-members-template.csv"
+                                                className="text-xs font-semibold text-muted hover:text-accent transition-colors"
+                                            >
+                                                Download sample
+                                            </a>
+                                            <button
+                                                onClick={addTeamMember}
+                                                className="flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
+                                            >
+                                                <LucidePlus className="w-3.5 h-3.5" />
+                                                Add another
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="mb-3 rounded-xl border border-border-light/50 bg-background-primary px-4 py-3 text-xs text-muted">
+                                        CSV columns: <span className="font-semibold text-heading">name,email,role</span>. Role is optional and defaults to HR.
+                                        {teamMembersCsv && <span className="block mt-1 text-accent">Uploaded: {teamMembersCsv.name}</span>}
+                                        {teamMembersCsvError && <span className="block mt-1 text-red-500">{teamMembersCsvError}</span>}
                                     </div>
                                     <div className="space-y-3">
                                         {teamMembers.map((member, index) => (
@@ -834,10 +916,12 @@ const CompanyOnboarding = () => {
                                 </div>
 
                                 {/* Sample request */}
-                                <div className="bg-button-secondary rounded-2xl p-6">
-                                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Sample Request</h3>
-                                    <p className="text-sm text-body leading-relaxed">{sampleRequest}</p>
-                                </div>
+                                {sampleRequest.trim() && (
+                                    <div className="bg-button-secondary rounded-2xl p-6">
+                                        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Sample Request</h3>
+                                        <p className="text-sm text-body leading-relaxed">{sampleRequest}</p>
+                                    </div>
+                                )}
 
                                 {/* Team members summary */}
                                 <div className="bg-button-secondary rounded-2xl p-6">

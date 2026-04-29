@@ -1346,6 +1346,7 @@ export interface CompanyOnboardingRequest {
   creditCount?: number;
   sampleRequest: string;
   teamMembers: TeamMember[];
+  teamMembersCsv?: File | null;
 }
 
 export interface CompanyOnboardingResponse {
@@ -1360,6 +1361,8 @@ export interface CompanyOnboardingResponse {
   creditCount?: number | null;
   sampleRequest: string;
   teamMembers: TeamMember[];
+  teamMembersCsvFileName?: string | null;
+  teamMembersCsvUrl?: string | null;
   txRef: string;
   paymentStatus: string;
   paymentAmount: number;
