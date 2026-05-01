@@ -140,12 +140,12 @@ const TERMS_SECTIONS = [
     {
         title: "Signature & Stamp Usage",
         content:
-            "Your uploaded signature and stamp/seal will be applied to every travel health plan you approve. These documents become part of the official signed PDF delivered to the traveller. You are responsible for ensuring your signature and stamp are current and legible.",
+            "Your uploaded signature and stamp/seal and professional liscence number will be applied to every travel health plan you approve. These documents become part of the official signed PDF delivered to the traveller. You are responsible for ensuring your signature and stamp are current and legible.",
     },
     {
         title: "Confidentiality & Data Handling",
         content:
-            "You will have access to traveller health information, including medical conditions, vaccination history, and risk behaviours. This information is strictly confidential and must not be shared, stored outside the platform, or used for any purpose other than plan validation. All data handling is governed by our Privacy Policy and HIPAA compliance standards.",
+            "You will have access to traveller health information, including medical conditions, vaccination history, and risk behaviours. This information is strictly confidential and must not be shared, stored outside the platform, or used for any purpose other than plan validation. All data handling is governed by our Privacy Policy standards.",
     },
     {
         title: "Account Termination",
@@ -226,10 +226,6 @@ const ApplyAsDoctor = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="text-center mb-16"
                 >
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/30 bg-accent/5 text-accent text-xs font-medium mb-6">
-                        <LucideStethoscope className="w-3.5 h-3.5" />
-                        Doctor Programme
-                    </div>
                     <h1 className="text-4xl md:text-5xl font-serif text-heading mb-4 leading-tight">
                         Join TMAG as a Doctor
                     </h1>
