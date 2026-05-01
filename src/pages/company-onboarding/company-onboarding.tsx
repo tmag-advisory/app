@@ -974,11 +974,11 @@ const CompanyOnboarding = () => {
 
                                 {/* Team members */}
                                 <div>
-                                    <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-start md:items-center justify-between mb-3">
                                         <label className="text-sm font-semibold text-heading">
                                             Team members *
                                         </label>
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex flex-wrap items-center gap-3">
                                             <label
                                                 className={`${actionButtonClassName} cursor-pointer`}
                                             >
@@ -1040,6 +1040,24 @@ const CompanyOnboarding = () => {
                                                 key={index}
                                                 className="flex gap-3 items-start"
                                             >
+                                                <select
+                                                    value={member.role}
+                                                    onChange={(e) =>
+                                                        updateTeamMember(
+                                                            index,
+                                                            "role",
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="w-28 rounded-xl border border-slate-300 bg-white/50 px-3 py-3 text-sm text-slate-950 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15 cursor-pointer"
+                                                >
+                                                    <option value="admin">
+                                                        Admin
+                                                    </option>
+                                                    <option value="hr">
+                                                        HR
+                                                    </option>
+                                                </select>
                                                 <input
                                                     type="text"
                                                     value={member.name}
@@ -1066,24 +1084,7 @@ const CompanyOnboarding = () => {
                                                     placeholder="Email address"
                                                     className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
                                                 />
-                                                <select
-                                                    value={member.role}
-                                                    onChange={(e) =>
-                                                        updateTeamMember(
-                                                            index,
-                                                            "role",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    className="w-28 rounded-xl border border-slate-300 bg-white/50 px-3 py-3 text-sm text-slate-950 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15 cursor-pointer"
-                                                >
-                                                    <option value="admin">
-                                                        Admin
-                                                    </option>
-                                                    <option value="hr">
-                                                        HR
-                                                    </option>
-                                                </select>
+
                                                 {teamMembers.length > 1 && (
                                                     <button
                                                         onClick={() =>
