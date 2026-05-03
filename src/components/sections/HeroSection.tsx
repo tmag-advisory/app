@@ -217,9 +217,13 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
     );
 
     const coords = (side: "right" | "left" = "right") => (
-        <div aria-hidden className={`pointer-events-none absolute top-6 ${side === "right" ? "right-8 text-right" : "left-8"} hidden lg:block select-none`}>
-            <p className="font-mono text-[10px] tracking-widest text-brand-muted opacity-50">TMAG — GLOBAL HEALTH ADVISORY</p>
-            <p className={`font-mono text-[10px] tracking-widest text-brand-muted opacity-35 mt-0.5 ${side === "right" ? "text-right" : ""}`}>48.8566°N / 2.3522°E</p>
+        <div
+            aria-hidden
+            className={`pointer-events-none absolute top-6 ${side === "right" ? "right-8 text-right" : "left-8"} hidden lg:block select-none`}
+        >
+            <p className="font-mono text-[10px] tracking-widest text-brand-muted opacity-50">
+                TMAG — GLOBAL HEALTH ADVISORY
+            </p>
         </div>
     );
 

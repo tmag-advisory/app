@@ -759,10 +759,19 @@ export const doctorApi = {
     const form = new FormData();
     if (data.firstName) form.append("firstName", data.firstName);
     if (data.lastName) form.append("lastName", data.lastName);
+    if (data.profilePictureOption) form.append("profilePictureOption", data.profilePictureOption);
     if (data.medicalLicenseNumber) form.append("medicalLicenseNumber", data.medicalLicenseNumber);
     if (data.signature) form.append("signature", data.signature);
     if (data.stamp) form.append("stamp", data.stamp);
     return api.put<ApiResponse<DoctorProfileResponse>>("/doctor/profile", form, { headers: { "Content-Type": undefined } }).then((r) => r.data.data);
+  },
+
+  updateAvatar: (file: File) => {
+    const form = new FormData();
+    form.append("avatar", file);
+    return api.put<ApiResponse<ProfileResponse>>("/profile/avatar", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data.data);
   },
 
   getDashboardStats: () =>

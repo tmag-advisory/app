@@ -37,12 +37,12 @@ export function getPostAuthRedirect(user: AuthUser): RedirectDestination {
         return { type: "internal", path: "/doctor" };
     }
 
-    if (canAccessHR(user)) {
-        return { type: "internal", path: "/hr" };
-    }
-
     if (canAccessDashboard(user)) {
         return { type: "internal", path: "/dashboard" };
+    }
+
+    if (canAccessHR(user)) {
+        return { type: "internal", path: "/hr" };
     }
 
     return { type: "internal", path: "/unauthorized" };
@@ -61,10 +61,6 @@ export function getOnboardingCompletionRedirect(
 
     if (canAccessDoctor(user)) {
         return { type: "internal", path: "/doctor" };
-    }
-
-    if (canAccessHR(user)) {
-        return { type: "internal", path: "/hr" };
     }
 
     return { type: "internal", path: userType === "company" ? "/hr" : "/onboarding/questionnaire" };

@@ -7,7 +7,7 @@ import {
     useMemo,
     type ReactNode,
 } from "react";
-import type { BillingCurrency, LoginRequest, RegisterRequest } from "../api/types";
+import type { BillingCurrency, LoginRequest, ProfilePictureOption, RegisterRequest } from "../api/types";
 import { canAccessHR, canAccessDoctor } from "../lib/canAccessHr";
 import api, { getAuthCookie, removeAuthCookie, setAuthCookie } from "../api/axios";
 import { queryclient } from "../lib/queryclient";
@@ -29,6 +29,7 @@ export interface AuthUser {
     phone: string;
     email: string;
     avatar_url: string;
+    profile_picture_option?: ProfilePictureOption | null;
     last_login: string;
     onboarding_stage: number;
     is_verified: boolean;
@@ -179,6 +180,7 @@ function buildAuthUser(d: Record<string, unknown>): AuthUser {
         credits: (d.credits as number) ?? 0,
         billing_currency: ((d.billing_currency as BillingCurrency) ?? "NGN"),
         avatar_url: (d.avatar_url as string) ?? "",
+        profile_picture_option: (d.profile_picture_option as ProfilePictureOption | null) ?? null,
         last_login: (d.last_login as string) ?? "",
         extend: {
             role_id: extend?.role_id ?? 0,
@@ -209,6 +211,7 @@ function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
         credits: (d.credits as number) ?? 0,
         billing_currency: ((d.billing_currency as BillingCurrency) ?? "NGN"),
         avatar_url: (d.avatar_url as string) ?? "",
+        profile_picture_option: (d.profile_picture_option as ProfilePictureOption | null) ?? null,
         last_login: (d.last_login as string) ?? "",
         extend: {
             role_id: extend?.role_id ?? 0,

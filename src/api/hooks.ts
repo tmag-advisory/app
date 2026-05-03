@@ -1411,6 +1411,14 @@ export function useUpdateDoctorProfile() {
   });
 }
 
+export function useUpdateDoctorProfileAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => doctorApi.updateAvatar(file),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.doctor.profile() }),
+  });
+}
+
 export function useValidatePlan() {
   const qc = useQueryClient();
   return useMutation({

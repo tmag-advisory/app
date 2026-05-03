@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import {
     useUpdateProfile,
+    useUpdateProfileAvatar,
     useUpdateProfilePassword,
     useMyCompanies,
     useInitiateCreditPurchase,
@@ -13,6 +14,7 @@ import {
     LucideUser,
     LucideLock,
     LucideCreditCard, LucideLoader2,
+    LucideUpload,
     LucideX,
     LucideSend
 } from "lucide-react";
@@ -50,6 +52,7 @@ const Settings = () => {
     });
 
     const updateProfile = useUpdateProfile();
+    const updateAvatar = useUpdateProfileAvatar();
     const updatePassword = useUpdateProfilePassword();
     const { data: myCompanies } = useMyCompanies();
     const createCreditRequest = useCreateCreditRequest();
@@ -84,6 +87,7 @@ const Settings = () => {
     const [currencyForm, setCurrencyForm] = useState<BillingCurrency>(userBillingCurrency);
     const [savingCurrency, setSavingCurrency] = useState(false);
     const [processingPayment, setProcessingPayment] = useState(false);
+    const [avatarPreview, setAvatarPreview] = useState(user?.avatar_url ?? "");
 
     const handleSaveCurrency = async () => {
         if (currencyForm === userBillingCurrency) return;
@@ -143,6 +147,26 @@ const Settings = () => {
             toast.success("Profile updated successfully");
         } catch {
             toast.error("Failed to update profile");
+        }
+    };
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Profile picture must be 5MB or smaller");
+            e.target.value = "";
+            return;
+        }
+        try {
+            const updatedProfile = await updateAvatar.mutateAsync(file);
+            setAvatarPreview(updatedProfile.avatarUrl ?? "");
+            await refreshProfile();
+            toast.success("Profile picture updated");
+        } catch {
+            toast.error("Failed to update profile picture");
+        } finally {
+            e.target.value = "";
         }
     };
 
@@ -221,9 +245,33 @@ const Settings = () => {
             {/* Profile tab */}
             {tab === "profile" && (
                 <>
+                    <div className="space-y-6 max-w-2xl">
+                    <section className={cn(DASHBOARD_GLASS_SURFACE, "p-6 md:p-8")}> 
+                        <h2 className="text-base font-semibold text-heading mb-2">
+                            Profile picture
+                        </h2>
+                        <p className="text-sm text-muted mb-6">
+                            Upload a square profile photo for your travel dashboard. Images up to 5MB are cropped and compressed on the server.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-5 sm:items-center mb-6">
+                            <div className="w-20 h-20 rounded-3xl bg-accent/10 border border-border-light overflow-hidden flex items-center justify-center text-xl font-semibold text-accent">
+                                {avatarPreview ? (
+                                    <img src={avatarPreview} alt="Profile preview" className="w-full h-full object-cover" />
+                                ) : (
+                                    `${user?.first_name?.[0] ?? ""}${user?.last_name?.[0] ?? ""}` || "U"
+                                )}
+                            </div>
+                            <label className="inline-flex w-fit items-center gap-2 py-2.5 px-4 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200">
+                                <LucideUpload className="w-4 h-4" />
+                                {updateAvatar.isPending ? "Uploading..." : "Upload photo"}
+                                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={updateAvatar.isPending} />
+                            </label>
+                        </div>
+                    </section>
+
                     <form
                         onSubmit={handleProfileSubmit}
-                        className={cn(DASHBOARD_GLASS_SURFACE, "p-6 md:p-8 max-w-2xl")}
+                        className={cn(DASHBOARD_GLASS_SURFACE, "p-6 md:p-8")}
                     >
                         <h2 className="text-base font-semibold text-heading mb-6">
                             Personal information
@@ -311,6 +359,7 @@ const Settings = () => {
                             </button>
                         </div>
                     </form>
+                    </div>
 
                 </>
             )}

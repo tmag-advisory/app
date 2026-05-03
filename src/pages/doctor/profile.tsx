@@ -2,9 +2,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { User, FileSignature, Stamp, Loader2, Upload } from "lucide-react";
 import toast from "react-hot-toast";
-import { useDoctorProfile, useUpdateDoctorProfile } from "../../api/hooks";
+import { useDoctorProfile, useUpdateDoctorProfile, useUpdateDoctorProfileAvatar } from "../../api/hooks";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 import { cn } from "../../lib/utils";
+import type { ProfilePictureOption } from "../../api/types";
+
+const PROFILE_PICTURE_OPTIONS: { id: ProfilePictureOption; label: string; description: string }[] = [
+    { id: "upload", label: "Uploaded photo", description: "Use your current uploaded profile photo." },
+    { id: "initials", label: "Initials", description: "Show initials when a photo is not needed." },
+    { id: "doctor", label: "Doctor badge", description: "Use a professional clinical badge." },
+];
 
 const FilePreview = ({ url, label }: { url: string | null; label: string }) => {
     if (!url) return <p className="text-sm text-muted">No {label} uploaded yet</p>;
@@ -52,10 +59,13 @@ const FilePickerField = ({
 const DoctorProfile = () => {
     const { data: profile, isLoading } = useDoctorProfile();
     const { mutate: update, isPending } = useUpdateDoctorProfile();
+    const updateAvatar = useUpdateDoctorProfileAvatar();
 
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [licenseNumber, setLicenseNumber] = useState("");
+    const [avatarPreview, setAvatarPreview] = useState("");
+    const [profilePictureOption, setProfilePictureOption] = useState<ProfilePictureOption>("doctor");
     const [signature, setSignature] = useState<File | undefined>();
     const [stamp, setStamp] = useState<File | undefined>();
 
@@ -64,9 +74,11 @@ const DoctorProfile = () => {
             setLicenseNumber(profile.medicalLicenseNumber ?? "");
             setLastName(profile.lastName ?? "");
             setFirstName(profile.firstName ?? "");
+            setAvatarPreview(profile.avatarUrl ?? "");
+            setProfilePictureOption(profile.profilePictureOption ?? "doctor");
         }
     }, [
-        profile, setFirstName, setLastName, setLicenseNumber
+        profile, setFirstName, setLastName, setLicenseNumber, setAvatarPreview, setProfilePictureOption
     ])
 
     useEffect(() => {
@@ -126,6 +138,33 @@ const DoctorProfile = () => {
         );
     };
 
+    const handleAvatarUpload = (file: File | undefined) => {
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Profile picture must be 5MB or smaller");
+            return;
+        }
+        updateAvatar.mutate(file, {
+            onSuccess: (updatedProfile) => {
+                toast.success("Profile picture updated");
+                setAvatarPreview(updatedProfile.avatarUrl ?? "");
+                setProfilePictureOption("upload");
+            },
+            onError: () => toast.error("Failed to update profile picture"),
+        });
+    };
+
+    const handleAvatarSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        update(
+            { profilePictureOption },
+            {
+                onSuccess: () => toast.success("Profile picture settings updated"),
+                onError: () => toast.error("Failed to update profile picture settings"),
+            },
+        );
+    };
+
 
     return (
         <div className="space-y-8 max-w-2xl">
@@ -142,6 +181,62 @@ const DoctorProfile = () => {
                     <p className="text-muted text-sm">Manage your name, credentials, signature and stamp</p>
                 </div>
             </motion.div>
+
+            <motion.form
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.03 }}
+                onSubmit={handleAvatarSubmit}
+                className={cn(DASHBOARD_GLASS_SURFACE, "p-6 space-y-5")}
+            >
+                <div className="flex items-center gap-3 mb-1">
+                    <User className="w-4 h-4 text-accent" />
+                    <h2 className="font-medium text-heading">Profile Picture</h2>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-5 sm:items-center">
+                    <div className="w-20 h-20 rounded-3xl bg-accent/10 border border-border overflow-hidden flex items-center justify-center text-xl font-semibold text-accent">
+                        {avatarPreview ? (
+                            <img src={avatarPreview} alt="Doctor profile preview" className="w-full h-full object-cover" />
+                        ) : (
+                            `${profile?.firstName?.[0] ?? ""}${profile?.lastName?.[0] ?? ""}` || "Dr"
+                        )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                        <FilePickerField
+                            label={updateAvatar.isPending ? "Uploading..." : "Profile Photo"}
+                            onChange={handleAvatarUpload}
+                            file={undefined}
+                        />
+                        <p className="text-xs text-muted">Images up to 5MB are cropped square and compressed to WebP on the server.</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {PROFILE_PICTURE_OPTIONS.map((option) => (
+                        <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => setProfilePictureOption(option.id)}
+                            className={cn(
+                                "text-left rounded-2xl border p-4 transition-colors",
+                                profilePictureOption === option.id
+                                    ? "border-accent bg-accent/10 text-heading"
+                                    : "border-border bg-surface text-muted hover:border-accent/50",
+                            )}
+                        >
+                            <span className="block text-sm font-medium text-heading mb-1">{option.label}</span>
+                            <span className="text-xs leading-5">{option.description}</span>
+                        </button>
+                    ))}
+                </div>
+                <button
+                    type="submit"
+                    disabled={isPending}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-medium hover:bg-accent/90 disabled:opacity-50 transition-colors"
+                >
+                    {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Save Picture Settings
+                </button>
+            </motion.form>
 
             {/* Personal Info */}
             <motion.form

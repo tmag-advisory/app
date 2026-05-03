@@ -18,7 +18,7 @@ import {
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import { useCreditPlans, useSubmitCompanyOnboarding, useInitiateOnboardingPayment, useOnboardingPricingPreview } from "../../api/hooks";
-import type { TeamMember, CompanyOnboardingResponse, PublicPricingPreview } from "../../api/types";
+import type { TeamMember, PlatformEmployee, CompanyOnboardingResponse, PublicPricingPreview } from "../../api/types";
 import { useCurrencyStore } from "../../stores/currencyStore";
 import {
     enterpriseTierColors,
@@ -49,7 +49,7 @@ const industries = [
     "Other",
 ];
 
-const teamMembersCsvSample = "name,email,role\nJane Doe,jane@example.com,admin\nJohn Smith,john@example.com,hr\n";
+const teamMembersCsvSample = "name,email\nJane Doe,jane@example.com\nJohn Smith,john@example.com\n";
 
 const parseTeamMembersCsv = (csv: string): TeamMember[] => {
     const rows = csv
@@ -62,10 +62,10 @@ const parseTeamMembersCsv = (csv: string): TeamMember[] => {
     const hasHeader = rows[0]
         .toLowerCase()
         .split(",")
-        .some((column) => ["name", "email", "role"].includes(column.trim()));
+        .some((column) => ["name", "email"].includes(column.trim()));
 
     return rows.slice(hasHeader ? 1 : 0).map((row, index) => {
-        const [name = "", email = "", role = "hr"] = row.split(",").map((value) => value.trim());
+        const [name = "", email = ""] = row.split(",").map((value) => value.trim());
         if (!name || !email) {
             throw new Error(`Row ${index + (hasHeader ? 2 : 1)} must include name and email.`);
         }
@@ -73,7 +73,7 @@ const parseTeamMembersCsv = (csv: string): TeamMember[] => {
         return {
             name,
             email,
-            role: role.toLowerCase() === "admin" ? "admin" : "hr",
+            role: "admin" as const,
         };
     });
 };
@@ -123,6 +123,9 @@ const CompanyOnboarding = () => {
     const [teamMembersCsvError, setTeamMembersCsvError] = useState("");
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
         { name: "", email: "", role: "admin" },
+    ]);
+    const [platformEmployees, setPlatformEmployees] = useState<PlatformEmployee[]>([
+        { email: "", name: "" },
     ]);
 
     const { data: plans, isLoading: plansLoading } = useCreditPlans();
@@ -223,6 +226,22 @@ const CompanyOnboarding = () => {
         setTeamMembers(updated);
     };
 
+    const addPlatformEmployee = () => {
+        setPlatformEmployees([...platformEmployees, { email: "", name: "" }]);
+    };
+
+    const removePlatformEmployee = (index: number) => {
+        if (platformEmployees.length > 1) {
+            setPlatformEmployees(platformEmployees.filter((_, i) => i !== index));
+        }
+    };
+
+    const updatePlatformEmployee = (index: number, field: keyof PlatformEmployee, value: string) => {
+        const updated = [...platformEmployees];
+        updated[index] = { ...updated[index], [field]: value };
+        setPlatformEmployees(updated);
+    };
+
     const handleTeamMembersCsvUpload = async (file: File | null) => {
         setTeamMembersCsvError("");
         if (!file) return;
@@ -236,12 +255,13 @@ const CompanyOnboarding = () => {
         try {
             const importedMembers = parseTeamMembersCsv(await file.text());
             if (importedMembers.length === 0) {
-                setTeamMembersCsvError("The CSV did not include any team members.");
+                setTeamMembersCsvError("The CSV did not include any employees.");
                 return;
             }
 
-            const hasOnlyEmptyStarter = teamMembers.length === 1 && !teamMembers[0].name.trim() && !teamMembers[0].email.trim();
-            setTeamMembers(hasOnlyEmptyStarter ? importedMembers : [...teamMembers, ...importedMembers]);
+            const imported: PlatformEmployee[] = importedMembers.map((m) => ({ email: m.email, name: m.name }));
+            const hasOnlyEmptyStarter = platformEmployees.length === 1 && !platformEmployees[0].email.trim();
+            setPlatformEmployees(hasOnlyEmptyStarter ? imported : [...platformEmployees, ...imported]);
             setTeamMembersCsv(file);
         } catch (err) {
             setTeamMembersCsv(null);
@@ -280,6 +300,7 @@ const CompanyOnboarding = () => {
                 sampleRequest,
                 teamMembers,
                 teamMembersCsv,
+                platformEmployees: platformEmployees.filter((e) => e.email.trim()),
             });
             setOnboardingResult(result);
             goToStep(4);
@@ -976,63 +997,15 @@ const CompanyOnboarding = () => {
                                 <div>
                                     <div className="flex items-start md:items-center justify-between mb-3">
                                         <label className="text-sm font-semibold text-heading">
-                                            Team members *
+                                            Admin team members *
                                         </label>
-                                        <div className="flex flex-wrap items-center gap-3">
-                                            <label
-                                                className={`${actionButtonClassName} cursor-pointer`}
-                                            >
-                                                <LucideUpload className="w-3.5 h-3.5" />
-                                                Upload CSV
-                                                <input
-                                                    type="file"
-                                                    accept=".csv,text/csv"
-                                                    className="hidden"
-                                                    onChange={(e) =>
-                                                        void handleTeamMembersCsvUpload(
-                                                            e.target
-                                                                .files?.[0] ??
-                                                                null,
-                                                        )
-                                                    }
-                                                />
-                                            </label>
-                                            <a
-                                                href={`data:text/csv;charset=utf-8,${encodeURIComponent(teamMembersCsvSample)}`}
-                                                download="team-members-template.csv"
-                                                className={
-                                                    secondaryActionClassName
-                                                }
-                                            >
-                                                Download sample
-                                            </a>
-                                            <button
-                                                onClick={addTeamMember}
-                                                className={
-                                                    secondaryActionClassName
-                                                }
-                                            >
-                                                <LucidePlus className="w-3.5 h-3.5" />
-                                                Add another
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="mb-3 rounded-xl  bg-white/50 px-4 py-3 text-xs text-slate-600">
-                                        CSV columns:{" "}
-                                        <span className="font-semibold text-heading">
-                                            name,email,role
-                                        </span>
-                                        . Role is optional and defaults to HR.
-                                        {teamMembersCsv && (
-                                            <span className="block mt-1 text-accent">
-                                                Uploaded: {teamMembersCsv.name}
-                                            </span>
-                                        )}
-                                        {teamMembersCsvError && (
-                                            <span className="block mt-1 text-red-500">
-                                                {teamMembersCsvError}
-                                            </span>
-                                        )}
+                                        <button
+                                            onClick={addTeamMember}
+                                            className={secondaryActionClassName}
+                                        >
+                                            <LucidePlus className="w-3.5 h-3.5" />
+                                            Add another
+                                        </button>
                                     </div>
                                     <div className="space-y-3">
                                         {teamMembers.map((member, index) => (
@@ -1040,24 +1013,9 @@ const CompanyOnboarding = () => {
                                                 key={index}
                                                 className="flex gap-3 items-start"
                                             >
-                                                <select
-                                                    value={member.role}
-                                                    onChange={(e) =>
-                                                        updateTeamMember(
-                                                            index,
-                                                            "role",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    className="w-28 rounded-xl border border-slate-300 bg-white/50 px-3 py-3 text-sm text-slate-950 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15 cursor-pointer"
-                                                >
-                                                    <option value="admin">
-                                                        Admin
-                                                    </option>
-                                                    <option value="hr">
-                                                        HR
-                                                    </option>
-                                                </select>
+                                                <span className="inline-flex items-center px-3 py-3 rounded-xl border border-accent/30 bg-accent/10 text-xs font-bold text-accent whitespace-nowrap">
+                                                    Admin
+                                                </span>
                                                 <input
                                                     type="text"
                                                     value={member.name}
@@ -1101,9 +1059,101 @@ const CompanyOnboarding = () => {
                                         ))}
                                     </div>
                                     <p className="text-xs text-muted mt-2">
-                                        Admin users have full dashboard access.
-                                        HR users can manage employees and travel
-                                        plans.
+                                        Admin users have full dashboard access and can manage employees and travel plans.
+                                    </p>
+                                </div>
+
+                                {/* Platform employees */}
+                                <div>
+                                    <div className="flex items-start md:items-center justify-between mb-3">
+                                        <div>
+                                            <label className="text-sm font-semibold text-heading">
+                                                Platform Employees
+                                            </label>
+                                            <p className="text-xs text-muted mt-0.5">
+                                                Add existing TMAG users by email to link them as employees of this company.
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <label className={`${actionButtonClassName} cursor-pointer`}>
+                                                <LucideUpload className="w-3.5 h-3.5" />
+                                                Upload CSV
+                                                <input
+                                                    type="file"
+                                                    accept=".csv,text/csv"
+                                                    className="hidden"
+                                                    onChange={(e) =>
+                                                        void handleTeamMembersCsvUpload(
+                                                            e.target.files?.[0] ?? null,
+                                                        )
+                                                    }
+                                                />
+                                            </label>
+                                            <a
+                                                href={`data:text/csv;charset=utf-8,${encodeURIComponent(teamMembersCsvSample)}`}
+                                                download="employees-template.csv"
+                                                className={secondaryActionClassName}
+                                            >
+                                                Download sample
+                                            </a>
+                                            <button
+                                                onClick={addPlatformEmployee}
+                                                className={secondaryActionClassName}
+                                            >
+                                                <LucidePlus className="w-3.5 h-3.5" />
+                                                Add employee
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="mb-3 rounded-xl bg-white/50 px-4 py-3 text-xs text-slate-600">
+                                        CSV columns:{" "}
+                                        <span className="font-semibold text-heading">name,email</span>
+                                        . Each row links an existing platform user to this company.
+                                        {teamMembersCsv && (
+                                            <span className="block mt-1 text-accent">
+                                                Uploaded: {teamMembersCsv.name}
+                                            </span>
+                                        )}
+                                        {teamMembersCsvError && (
+                                            <span className="block mt-1 text-red-500">
+                                                {teamMembersCsvError}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="space-y-3">
+                                        {platformEmployees.map((emp, index) => (
+                                            <div key={index} className="flex gap-3 items-start">
+                                                <input
+                                                    type="text"
+                                                    value={emp.name ?? ""}
+                                                    onChange={(e) =>
+                                                        updatePlatformEmployee(index, "name", e.target.value)
+                                                    }
+                                                    placeholder="Full name (optional)"
+                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
+                                                />
+                                                <input
+                                                    type="email"
+                                                    value={emp.email}
+                                                    onChange={(e) =>
+                                                        updatePlatformEmployee(index, "email", e.target.value)
+                                                    }
+                                                    placeholder="Platform user email"
+                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
+                                                />
+                                                {platformEmployees.length > 1 && (
+                                                    <button
+                                                        onClick={() => removePlatformEmployee(index)}
+                                                        className="p-3 rounded-xl border border-transparent text-slate-500 hover:border-red-200 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                    >
+                                                        <LucideX className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-muted mt-2">
+                                        Leave empty to skip. Linked users will be associated with this company upon approval.
                                     </p>
                                 </div>
 
@@ -1495,24 +1545,37 @@ const CompanyOnboarding = () => {
                                                         ({member.email})
                                                     </span>
                                                 </div>
-                                                <span
-                                                    className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                                                        (
-                                                            member.role ===
-                                                            "admin"
-                                                        ) ?
-                                                            "bg-accent/10 text-accent"
-                                                        :   "bg-blue-50 text-blue-600"
-                                                    }`}
-                                                >
-                                                    {member.role === "admin" ?
-                                                        "Admin"
-                                                    :   "HR"}
+                                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                                                    Admin
                                                 </span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
+
+                                {/* Platform employees summary */}
+                                {platformEmployees.some((e) => e.email.trim()) && (
+                                    <div className={panelClassName}>
+                                        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+                                            Platform Employees ({platformEmployees.filter((e) => e.email.trim()).length})
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {platformEmployees.filter((e) => e.email.trim()).map((emp, i) => (
+                                                <div key={i} className="flex items-center justify-between text-sm">
+                                                    <div>
+                                                        {emp.name && (
+                                                            <span className="text-heading font-medium">{emp.name} </span>
+                                                        )}
+                                                        <span className="text-muted">({emp.email})</span>
+                                                    </div>
+                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
+                                                        Employee
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="flex justify-between">
                                     <Button

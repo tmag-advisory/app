@@ -253,6 +253,7 @@ export interface DoctorApplicationRequest {
 export interface DoctorProfileUpdateRequest {
   firstName?: string;
   lastName?: string;
+  profilePictureOption?: ProfilePictureOption;
   medicalLicenseNumber?: string;
   signature?: File;
   stamp?: File;
@@ -264,6 +265,8 @@ export interface DoctorProfileResponse {
   lastName: string;
   email: string;
   phone: string;
+  avatarUrl: string | null;
+  profilePictureOption: ProfilePictureOption | null;
   medicalLicenseNumber: string;
   signatureUrl: string | null;
   stampUrl: string | null;
@@ -874,6 +877,7 @@ export interface ProfileResponse {
   isVerified: boolean;
   lastLogin: string;
   avatarUrl: string;
+  profilePictureOption: ProfilePictureOption | null;
   credits: number;
   type: string;
   roleId: number;
@@ -890,8 +894,12 @@ export interface UpdateProfileRequest {
   username?: string;
   phone?: string;
   email?: string;
+  avatar_url?: string;
+  profile_picture_option?: ProfilePictureOption;
   billing_currency?: BillingCurrency;
 }
+
+export type ProfilePictureOption = "upload" | "initials" | "doctor";
 
 export interface UpdateProfilePasswordRequest {
   OldPassword: string;
@@ -1332,7 +1340,12 @@ export interface ExchangeRatesResponse {
 export interface TeamMember {
   name: string;
   email: string;
-  role: "admin" | "hr";
+  role: "admin";
+}
+
+export interface PlatformEmployee {
+  email: string;
+  name?: string;
 }
 
 export interface CompanyOnboardingRequest {
@@ -1347,6 +1360,7 @@ export interface CompanyOnboardingRequest {
   sampleRequest: string;
   teamMembers: TeamMember[];
   teamMembersCsv?: File | null;
+  platformEmployees?: PlatformEmployee[];
 }
 
 export interface CompanyOnboardingResponse {
@@ -1361,6 +1375,7 @@ export interface CompanyOnboardingResponse {
   creditCount?: number | null;
   sampleRequest: string;
   teamMembers: TeamMember[];
+  platformEmployees?: PlatformEmployee[];
   teamMembersCsvFileName?: string | null;
   teamMembersCsvUrl?: string | null;
   txRef: string;
