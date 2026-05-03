@@ -40,7 +40,7 @@ const footerLinks = [
             { label: "Privacy policy", href: "/privacy" },
             { label: "Terms of service", href: "/terms" },
             { label: "Medical disclaimer", href: "/medical-disclaimer" },
-            { label: "HIPAA compliance", href: "/hipaa" },
+            { label: "NDPR compliance", href: "/ndpr" },
         ],
     },
 ];

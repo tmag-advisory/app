@@ -49,7 +49,7 @@ const industries = [
     "Other",
 ];
 
-const teamMembersCsvSample = "name,email\nJane Doe,jane@example.com\nJohn Smith,john@example.com\n";
+const teamMembersCsvSample = "firstName,lastName,email\nJane,Doe,jane@example.com\nJohn,Smith,john@example.com\n";
 
 const parseTeamMembersCsv = (csv: string): TeamMember[] => {
     const rows = csv
@@ -59,19 +59,34 @@ const parseTeamMembersCsv = (csv: string): TeamMember[] => {
 
     if (rows.length === 0) return [];
 
-    const hasHeader = rows[0]
-        .toLowerCase()
-        .split(",")
-        .some((column) => ["name", "email"].includes(column.trim()));
+    const headers = rows[0].toLowerCase().split(",").map((h) => h.trim());
+    const hasHeader = headers.some((column) => ["firstname", "first_name", "name", "email"].includes(column));
 
     return rows.slice(hasHeader ? 1 : 0).map((row, index) => {
-        const [name = "", email = ""] = row.split(",").map((value) => value.trim());
-        if (!name || !email) {
-            throw new Error(`Row ${index + (hasHeader ? 2 : 1)} must include name and email.`);
+        const cols = row.split(",").map((value) => value.trim());
+        let firstName = "";
+        let lastName = "";
+        let email = "";
+
+        if (cols.length >= 3) {
+            firstName = cols[0];
+            lastName = cols[1];
+            email = cols[2];
+        } else {
+            const [rawName = "", rawEmail = ""] = cols;
+            const nameParts = rawName.split(/\s+/);
+            firstName = nameParts[0] || "";
+            lastName = nameParts.slice(1).join(" ") || "";
+            email = rawEmail;
+        }
+
+        if (!firstName || !email) {
+            throw new Error(`Row ${index + (hasHeader ? 2 : 1)} must include first name and email.`);
         }
 
         return {
-            name,
+            firstName,
+            lastName,
             email,
             role: "admin" as const,
         };
@@ -122,10 +137,10 @@ const CompanyOnboarding = () => {
     const [teamMembersCsv, setTeamMembersCsv] = useState<File | null>(null);
     const [teamMembersCsvError, setTeamMembersCsvError] = useState("");
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
-        { name: "", email: "", role: "admin" },
+        { firstName: "", lastName: "", email: "", role: "admin" },
     ]);
     const [platformEmployees, setPlatformEmployees] = useState<PlatformEmployee[]>([
-        { email: "", name: "" },
+        { email: "", firstName: "", lastName: "" },
     ]);
 
     const { data: plans, isLoading: plansLoading } = useCreditPlans();
@@ -211,7 +226,7 @@ const CompanyOnboarding = () => {
     };
 
     const addTeamMember = () => {
-        setTeamMembers([...teamMembers, { name: "", email: "", role: "hr" }]);
+        setTeamMembers([...teamMembers, { firstName: "", lastName: "", email: "", role: "admin" }]);
     };
 
     const removeTeamMember = (index: number) => {
@@ -227,7 +242,7 @@ const CompanyOnboarding = () => {
     };
 
     const addPlatformEmployee = () => {
-        setPlatformEmployees([...platformEmployees, { email: "", name: "" }]);
+        setPlatformEmployees([...platformEmployees, { email: "", firstName: "", lastName: "" }]);
     };
 
     const removePlatformEmployee = (index: number) => {
@@ -259,7 +274,7 @@ const CompanyOnboarding = () => {
                 return;
             }
 
-            const imported: PlatformEmployee[] = importedMembers.map((m) => ({ email: m.email, name: m.name }));
+            const imported: PlatformEmployee[] = importedMembers.map((m) => ({ email: m.email, firstName: m.firstName, lastName: m.lastName }));
             const hasOnlyEmptyStarter = platformEmployees.length === 1 && !platformEmployees[0].email.trim();
             setPlatformEmployees(hasOnlyEmptyStarter ? imported : [...platformEmployees, ...imported]);
             setTeamMembersCsv(file);
@@ -278,7 +293,7 @@ const CompanyOnboarding = () => {
     const canProceedStep2 =
         companyName.trim() &&
         contactEmail.trim() &&
-        teamMembers.every((m) => m.name.trim() && m.email.trim());
+        teamMembers.every((m) => m.firstName.trim() && m.email.trim());
 
     const goToStep = (step: number) => {
         setDirection(step > currentStep ? 1 : -1);
@@ -379,9 +394,10 @@ const CompanyOnboarding = () => {
                                 </span>
                             </button>
                             {i < steps.length - 1 && (
-                                <div
-                                    className={`w-8 sm:w-16 h-0.5 mx-1 ${step.id < currentStep ? "bg-accent" : "bg-border-light/50"}`}
-                                />
+                                <div className="relative mx-1 flex w-8 sm:w-16 items-center">
+                                    <div className={`h-0.5 flex-1 ${step.id < currentStep ? "bg-accent" : "bg-border-light/50"}`} />
+                                    <LucideArrowRight className={`absolute left-1/2 h-3.5 w-3.5 -translate-x-1/2 ${step.id < currentStep ? "text-accent" : "text-border"}`} />
+                                </div>
                             )}
                         </div>
                     ))}
@@ -1018,15 +1034,28 @@ const CompanyOnboarding = () => {
                                                 </span>
                                                 <input
                                                     type="text"
-                                                    value={member.name}
+                                                    value={member.firstName}
                                                     onChange={(e) =>
                                                         updateTeamMember(
                                                             index,
-                                                            "name",
+                                                            "firstName",
                                                             e.target.value,
                                                         )
                                                     }
-                                                    placeholder="Full name"
+                                                    placeholder="First name"
+                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={member.lastName}
+                                                    onChange={(e) =>
+                                                        updateTeamMember(
+                                                            index,
+                                                            "lastName",
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Last name"
                                                     className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
                                                 />
                                                 <input
@@ -1125,11 +1154,20 @@ const CompanyOnboarding = () => {
                                             <div key={index} className="flex gap-3 items-start">
                                                 <input
                                                     type="text"
-                                                    value={emp.name ?? ""}
+                                                    value={emp.firstName ?? ""}
                                                     onChange={(e) =>
-                                                        updatePlatformEmployee(index, "name", e.target.value)
+                                                        updatePlatformEmployee(index, "firstName", e.target.value)
                                                     }
-                                                    placeholder="Full name (optional)"
+                                                    placeholder="First name (optional)"
+                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={emp.lastName ?? ""}
+                                                    onChange={(e) =>
+                                                        updatePlatformEmployee(index, "lastName", e.target.value)
+                                                    }
+                                                    placeholder="Last name (optional)"
                                                     className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
                                                 />
                                                 <input
@@ -1539,7 +1577,7 @@ const CompanyOnboarding = () => {
                                             >
                                                 <div>
                                                     <span className="text-heading font-medium">
-                                                        {member.name}
+                                                        {member.firstName} {member.lastName}
                                                     </span>
                                                     <span className="text-muted ml-2">
                                                         ({member.email})
@@ -1563,8 +1601,8 @@ const CompanyOnboarding = () => {
                                             {platformEmployees.filter((e) => e.email.trim()).map((emp, i) => (
                                                 <div key={i} className="flex items-center justify-between text-sm">
                                                     <div>
-                                                        {emp.name && (
-                                                            <span className="text-heading font-medium">{emp.name} </span>
+                                                        {(emp.firstName || emp.lastName) && (
+                                                            <span className="text-heading font-medium">{emp.firstName} {emp.lastName}</span>
                                                         )}
                                                         <span className="text-muted">({emp.email})</span>
                                                     </div>

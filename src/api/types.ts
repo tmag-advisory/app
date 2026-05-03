@@ -4,16 +4,7 @@ export type BillingCurrency = "USD" | "NGN" | "EUR" | "GBP";
 
 // ─── User Credit Plans ────────────────────────────────────────
 
-export type CreditPlanCode =
-  | "ESSENTIAL"
-  | "STANDARD"
-  | "PREMIUM"
-  | "ENTERPRISE_SILVER"
-  | "ENTERPRISE_PLUS"
-  | "ENTERPRISE_GOLD"
-  | "ENTERPRISE_ELITE"
-  | "ENTERPRISE_PLATINUM"
-  | "ENTERPRISE_SIGNATURE";
+export type CreditPlanCode = string;
 
 export interface CreditPlan {
   id: number;
@@ -26,6 +17,9 @@ export interface CreditPlan {
   isCompanyPlan: boolean;
   signupRangeLabel: string | null;
   serviceLevel: "STANDARD" | "PREMIUM" | null;
+  visibility?: "PUBLIC" | "CUSTOM";
+  assignedCompanyId?: number | null;
+  planCount?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -245,9 +239,17 @@ export type DoctorValidationStatus = "PENDING" | "APPROVED" | "REJECTED" | "NOT_
 export type PlanTier = "FREE" | "STANDARD" | "PREMIUM";
 
 export interface DoctorApplicationRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  specialty: string;
+  country: string;
   medicalLicenseNumber: string;
+  profilePicture?: File;
   signature: File;
   stamp?: File;
+  confidentialityAgreementAccepted: boolean;
+  conductAgreementAccepted: boolean;
 }
 
 export interface DoctorProfileUpdateRequest {
@@ -267,6 +269,7 @@ export interface DoctorProfileResponse {
   phone: string;
   avatarUrl: string | null;
   profilePictureOption: ProfilePictureOption | null;
+  bio?: string | null;
   medicalLicenseNumber: string;
   signatureUrl: string | null;
   stampUrl: string | null;
@@ -308,6 +311,8 @@ export interface DoctorValidationPlanDto {
   travellerEmail: string;
   createdAt: string;
   generatedPlanStatus: string;
+  assignedDoctors?: DoctorReviewerDto[];
+  openToAllDoctors?: boolean;
 }
 
 export interface DoctorValidationDetailDto {
@@ -328,6 +333,8 @@ export interface DoctorValidationDetailDto {
   createdAt: string;
   generatedPlan: GeneratedPlanPayload | null;
   generatedPlanContent: GeneratedPlanContent | null;
+  assignedDoctors?: DoctorReviewerDto[];
+  openToAllDoctors?: boolean;
 }
 
 export interface ValidatePlanRequest {
@@ -343,11 +350,16 @@ export interface AdminDoctorApplicationDto {
   email: string;
   phone: string;
   licenseNumber: string;
-  specialization: string;
+  specialty: string;
+  country: string;
   applicationStatus: DoctorApplicationStatus;
   applicationSubmittedAt: string | null;
   identityDocumentUrl: string | null;
   licenseDocumentUrl: string | null;
+  cvOrProfileUrl?: string | null;
+  confidentialityAgreementAccepted: boolean;
+  conductAgreementAccepted: boolean;
+  bio?: string | null;
   createdAt: string | null;
 }
 
@@ -359,8 +371,19 @@ export interface AdminDoctorListItemDto {
   phone: string;
   licenseNumber: string;
   specialization: string;
+  profilePictureUrl?: string | null;
+  bio?: string | null;
   validatedPlansCount: number;
   createdAt: string | null;
+}
+
+export interface DoctorReviewerDto {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profilePictureUrl?: string | null;
+  bio?: string | null;
 }
 
 export interface AdminDoctorStatsDto {
@@ -553,6 +576,8 @@ export interface TravelPlanResponse {
   validationStatus?: DoctorValidationStatus;
   validatedAt?: string | null;
   validatedByName?: string | null;
+  assignedDoctors?: DoctorReviewerDto[];
+  openToAllDoctors?: boolean;
   rejectionReason?: string | null;
 }
 
@@ -598,6 +623,7 @@ export interface CreateTravelPlanRequest {
   waterFood?: string;
   emergencyContacts?: string;
   questionnaireResponses?: string;
+  selectedDoctorIds?: number[];
 }
 
 export interface UpdateTravelPlanRequest extends Partial<CreateTravelPlanRequest> { }
@@ -1338,14 +1364,16 @@ export interface ExchangeRatesResponse {
 // ============ Company Onboarding ============
 
 export interface TeamMember {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: "admin";
 }
 
 export interface PlatformEmployee {
   email: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface CompanyOnboardingRequest {

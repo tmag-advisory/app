@@ -87,6 +87,7 @@ const HRCreatePlan = () => {
                 tripDetailsJson: payload.tripDetailsJson,
                 medicalConsiderations: payload.medicalConsiderations,
                 questionnaireResponses: JSON.stringify(payload.questionnaireResponses),
+                selectedDoctorIds: payload.selectedDoctorIds,
                 companyId: companyIdNum,
                 employeeId: parseInt(employeeId, 10),
                 status: "completed",

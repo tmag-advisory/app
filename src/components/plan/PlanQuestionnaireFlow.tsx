@@ -8,6 +8,7 @@ import {
     LucideChevronUp,
     LucideLoader2,
     LucidePlus,
+    LucideUsers,
     LucideX,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -21,7 +22,7 @@ import {
     isValidOptionalNonNegativeNumber,
     todayIsoDateLocal,
 } from "../../lib/questionnaireFieldValidation";
-import { useOnboardingQuestions, useAcceptQuestionnaireConsent } from "../../api/hooks";
+import { useOnboardingQuestions, useAcceptQuestionnaireConsent, useDoctorReviewers } from "../../api/hooks";
 import { useAuth } from "../../context/AuthContext";
 
 interface QuestionOption {
@@ -60,6 +61,7 @@ export interface QuestionnairePlanPayload {
     tripType: "one-way" | "return" | "multi" | "transit";
     tripDetailsJson: string;
     questionnaireResponses: Record<string, unknown>;
+    selectedDoctorIds?: number[];
 }
 
 export interface PlanQuestionnaireFlowHandle {
@@ -474,7 +476,9 @@ const PlanQuestionnaireFlow = forwardRef<
         ref,
     ) => {
         const { data: categoriesRaw, isLoading } = useOnboardingQuestions();
+        const { data: reviewers = [] } = useDoctorReviewers();
         const { user } = useAuth();
+        const isFreePlan = !user?.user_credit_plan || user.user_credit_plan.code === "ESSENTIAL";
         const acceptConsent = useAcceptQuestionnaireConsent();
         const [answers, setAnswers] = useState<Record<string, unknown>>(
             initialAnswers ?? {},
@@ -487,6 +491,8 @@ const PlanQuestionnaireFlow = forwardRef<
             ),
         );
         const [showVerify, setShowVerify] = useState(initialShowVerify);
+        const [wantsDoctorSelection, setWantsDoctorSelection] = useState(false);
+        const [selectedDoctorIds, setSelectedDoctorIds] = useState<number[]>([]);
         // For Personal Health & Risk Behaviours: consent state lives on the intro card
         const [riskConsentGiven, setRiskConsentGiven] = useState(
             initialRiskConsentGiven,
@@ -703,7 +709,10 @@ const PlanQuestionnaireFlow = forwardRef<
                 toast.error("You don't have enough credits.");
                 return;
             }
-            await onSubmitPlan(payload);
+            await onSubmitPlan({
+                ...payload,
+                selectedDoctorIds: wantsDoctorSelection ? selectedDoctorIds : [],
+            });
         };
 
         const setAnswer = (key: string, value: unknown) => {
@@ -1001,10 +1010,79 @@ const PlanQuestionnaireFlow = forwardRef<
                             <strong className="text-heading">1 credit</strong>.
                             You have {credits} remaining.
                         </p>
+                        {!isFreePlan && reviewers.length > 0 && (
+                            <div className="rounded-2xl border border-border-light/60 bg-background-primary/60 p-4 space-y-3">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setWantsDoctorSelection((v) => {
+                                            if (v) setSelectedDoctorIds([]);
+                                            return !v;
+                                        });
+                                    }}
+                                    className="flex w-full items-center justify-between gap-4 text-left"
+                                >
+                                    <div>
+                                        <p className="text-sm font-semibold text-heading flex items-center gap-1.5">
+                                            <LucideUsers className="h-4 w-4 text-accent" />
+                                            Choose a reviewing doctor
+                                            <span className="text-xs font-normal text-muted ml-1">(optional)</span>
+                                        </p>
+                                        <p className="text-xs text-muted mt-0.5">
+                                            {wantsDoctorSelection
+                                                ? "Select one or more doctors to review your plan."
+                                                : "By default, any verified doctor can review your plan."}
+                                        </p>
+                                    </div>
+                                    {wantsDoctorSelection ? (
+                                        <LucideChevronUp className="h-4 w-4 shrink-0 text-muted" />
+                                    ) : (
+                                        <LucideChevronDown className="h-4 w-4 shrink-0 text-muted" />
+                                    )}
+                                </button>
+                                {wantsDoctorSelection && (
+                                    <div className="grid gap-2 pt-1">
+                                        {reviewers.map((doctor) => {
+                                            const checked = selectedDoctorIds.includes(doctor.userId);
+                                            const name = `${doctor.firstName ?? ""} ${doctor.lastName ?? ""}`.trim() || doctor.email;
+                                            return (
+                                                <button
+                                                    key={doctor.userId}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setSelectedDoctorIds((ids) =>
+                                                            ids.includes(doctor.userId)
+                                                                ? ids.filter((id) => id !== doctor.userId)
+                                                                : [...ids, doctor.userId],
+                                                        )
+                                                    }
+                                                    className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${checked ? "border-accent bg-accent/5" : "border-border-light bg-white hover:border-border"}`}
+                                                >
+                                                    {doctor.profilePictureUrl ? (
+                                                        <img src={doctor.profilePictureUrl} alt="" className="h-9 w-9 rounded-full object-cover shrink-0" />
+                                                    ) : (
+                                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                                                            <LucideUsers className="h-4 w-4" />
+                                                        </div>
+                                                    )}
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-sm font-semibold text-heading">{name}</p>
+                                                        {doctor.bio && <p className="mt-0.5 line-clamp-1 text-xs text-muted">{doctor.bio}</p>}
+                                                    </div>
+                                                    <div className={`h-4 w-4 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${checked ? "border-accent bg-accent" : "border-border"}`}>
+                                                        {checked && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         <button
                             type="button"
                             onClick={() => void handleGeneratePlan()}
-                            disabled={credits === 0 || isSubmitting}
+                            disabled={credits === 0 || isSubmitting || (wantsDoctorSelection && selectedDoctorIds.length === 0)}
                             className="inline-flex items-center gap-2 py-2.5 px-6 rounded-xl bg-dark text-white text-sm font-semibold hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         >
                             {isSubmitting ?

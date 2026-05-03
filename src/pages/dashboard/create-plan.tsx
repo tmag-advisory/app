@@ -147,6 +147,7 @@ const CreatePlan = () => {
                 tripDetailsJson: payload.tripDetailsJson,
                 medicalConsiderations: payload.medicalConsiderations,
                 questionnaireResponses: JSON.stringify(payload.questionnaireResponses),
+                selectedDoctorIds: payload.selectedDoctorIds,
                 userId: user?.id,
                 status: "completed",
                 riskScore: 1,

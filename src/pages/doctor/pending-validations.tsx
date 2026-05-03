@@ -72,6 +72,13 @@ const DoctorPendingValidations = () => {
                                     <p className="text-sm text-muted">
                                         {plan.travellerName} &bull; {plan.purpose} &bull; {plan.duration} days &bull; Risk: {plan.riskScore}/10
                                     </p>
+                                    {plan.openToAllDoctors ? (
+                                        <p className="text-xs text-muted mt-1">Open to all doctors</p>
+                                    ) : plan.assignedDoctors && plan.assignedDoctors.length > 0 ? (
+                                        <p className="text-xs text-muted mt-1">
+                                            Assigned: {plan.assignedDoctors.map((d) => `${d.firstName ?? ""} ${d.lastName ?? ""}`.trim()).join(", ")}
+                                        </p>
+                                    ) : null}
                                 </div>
                                 <ArrowRight size={18} className="text-muted/40 ml-4" />
                             </button>

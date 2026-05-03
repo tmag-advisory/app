@@ -39,6 +39,7 @@ import {
   LucideShieldCheck as LucideShieldCheckIcon,
   LucideShieldAlert,
   LucideClock,
+  LucideUsers,
 } from "lucide-react";
 
 // ─── Processing Phases (warm, travel-health tone) ─────────────────
@@ -432,6 +433,29 @@ const validationStatusColors: Record<string, { text: string; bg: string }> = {
   ELEVATED: { text: "text-blue-700", bg: "bg-blue-50" },
   NOT_REQUIRED: { text: "text-gray-700", bg: "bg-gray-50" },
 };
+
+function DoctorAssignmentIndicator({ assignedDoctors, openToAllDoctors }: {
+  assignedDoctors?: { firstName?: string; lastName?: string; email?: string }[];
+  openToAllDoctors?: boolean;
+}) {
+  if (openToAllDoctors) {
+    return (
+      <div className="mt-2 flex items-center gap-2 text-xs text-muted">
+        <LucideUsers className="h-3.5 w-3.5" />
+        <span>Open to all doctors</span>
+      </div>
+    );
+  }
+  if (assignedDoctors && assignedDoctors.length > 0) {
+    return (
+      <div className="mt-2 text-xs text-muted">
+        <span className="font-medium text-heading">Assigned doctors:</span>{" "}
+        {assignedDoctors.map((d) => `${d.firstName ?? ""} ${d.lastName ?? ""}`.trim() || d.email).join(", ")}
+      </div>
+    );
+  }
+  return null;
+}
 
 function ValidationStatusBadge({ status, validatedAt, validatedByName, rejectionReason }: {
   status?: string;
@@ -1420,6 +1444,10 @@ const PlanDetails = () => {
             validatedByName={plan.validatedByName}
             rejectionReason={plan.rejectionReason}
           />
+          <DoctorAssignmentIndicator
+            assignedDoctors={plan.assignedDoctors}
+            openToAllDoctors={plan.openToAllDoctors}
+          />
         </motion.div>
 
         <GeneratedPlanReport content={parsedContent} />
@@ -1625,6 +1653,10 @@ const PlanDetails = () => {
           validatedAt={plan.validatedAt}
           validatedByName={plan.validatedByName}
           rejectionReason={plan.rejectionReason}
+        />
+        <DoctorAssignmentIndicator
+          assignedDoctors={plan.assignedDoctors}
+          openToAllDoctors={plan.openToAllDoctors}
         />
         {plan.medicalConsiderations && (
           <div className="mt-4 rounded-xl border border-gold/10 bg-gold/5 p-4">

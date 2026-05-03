@@ -18,7 +18,7 @@ const FAQPage = lazy(() => import("../pages/faq/faq"));
 const TermsOfService = lazy(() => import("../pages/legal/terms"));
 const PrivacyPolicy = lazy(() => import("../pages/legal/privacy"));
 const MedicalDisclaimer = lazy(() => import("../pages/legal/medical-disclaimer"));
-const HIPAACompliance = lazy(() => import("../pages/legal/hipaa"));
+const NDPRCompliance = lazy(() => import("../pages/legal/ndpr"));
 const Careers = lazy(() => import("../pages/careers/careers"));
 const Blog = lazy(() => import("../pages/blog/blog"));
 const Press = lazy(() => import("../pages/press/press"));
@@ -102,7 +102,8 @@ const router = createBrowserRouter([
             { path: "terms", element: <TermsOfService /> },
             { path: "privacy", element: <PrivacyPolicy /> },
             { path: "medical-disclaimer", element: <MedicalDisclaimer /> },
-            { path: "hipaa", element: <HIPAACompliance /> },
+            { path: "ndpr", element: <NDPRCompliance /> },
+            { path: "hipaa", element: <NDPRCompliance /> },
             { path: "careers", element: <Careers /> },
             { path: "blog", element: <Blog /> },
             { path: "press", element: <Press /> },

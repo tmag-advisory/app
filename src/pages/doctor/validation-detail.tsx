@@ -118,6 +118,13 @@ const DoctorValidationDetail = () => {
                     <p className="text-muted text-sm">
                         Plan #{plan.planId} &bull; {plan.planTier} tier
                     </p>
+                    {plan.openToAllDoctors ? (
+                        <p className="text-xs text-muted mt-1">Open to all doctors</p>
+                    ) : plan.assignedDoctors && plan.assignedDoctors.length > 0 ? (
+                        <p className="text-xs text-muted mt-1">
+                            Assigned: {plan.assignedDoctors.map((d) => `${d.firstName ?? ""} ${d.lastName ?? ""}`.trim()).join(", ")}
+                        </p>
+                    ) : null}
                 </div>
                 <span className={`ml-auto px-3 py-1 rounded-full text-sm font-medium ${
                     plan.validationStatus === "PENDING"

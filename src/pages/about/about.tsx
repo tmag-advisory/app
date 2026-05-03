@@ -26,7 +26,7 @@ const values = [
         icon: <LucideLock className="w-6 h-6" />,
         title: "Data privacy",
         description:
-            "Your health data is encrypted in transit and at rest, never sold to third parties, and fully deletable from your account at any time. We follow HIPAA-compliant practices.",
+            "Your health data is encrypted in transit and at rest, never sold to third parties, and fully deletable from your account at any time. We follow NDPR-aligned practices.",
     },
     {
         icon: <LucideShieldCheck className="w-6 h-6" />,
@@ -148,7 +148,7 @@ const About = () => {
                             "You can delete all your data at any time",
                             "We don't train our models on your personal health data",
                             "Advisory outputs are clearly labeled as system-generated",
-                            "All data processing follows HIPAA-compliant practices",
+                            "All data processing follows NDPR-aligned practices",
                         ].map((item) => (
                             <motion.div
                                 key={item}

@@ -228,7 +228,7 @@ const ForCompanies = () => {
                                 "ISO 31030 travel risk management alignment",
                                 "Timestamped plan delivery and read receipts",
                                 "Exportable compliance reports per trip",
-                                "HIPAA-compliant data handling",
+                                "NDPR-aligned data handling",
                             ].map((item) => (
                                 <div key={item} className="flex items-start gap-3">
                                     <LucideCheck className="w-4 h-4 mt-0.5 text-accent shrink-0" />

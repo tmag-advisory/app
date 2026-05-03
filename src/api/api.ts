@@ -749,11 +749,22 @@ export const doctorApi = {
 
   apply: (data: DoctorApplicationRequest) => {
     const form = new FormData();
+    form.append("firstName", data.firstName);
+    form.append("lastName", data.lastName);
+    form.append("email", data.email);
+    form.append("specialty", data.specialty);
+    form.append("country", data.country);
     form.append("medicalLicenseNumber", data.medicalLicenseNumber);
+    if (data.profilePicture) form.append("profilePicture", data.profilePicture);
     form.append("signature", data.signature);
     if (data.stamp) form.append("stamp", data.stamp);
+    form.append("confidentialityAgreementAccepted", String(data.confidentialityAgreementAccepted));
+    form.append("conductAgreementAccepted", String(data.conductAgreementAccepted));
     return api.post<ApiResponse<void>>("/doctor/apply", form, { headers: { "Content-Type": undefined } }).then((r) => r.data.data);
   },
+
+  getReviewers: () =>
+    api.get<ApiResponse<import("./types").DoctorReviewerDto[]>>("/doctor/reviewers").then((r) => r.data.data),
 
   updateProfile: (data: DoctorProfileUpdateRequest) => {
     const form = new FormData();

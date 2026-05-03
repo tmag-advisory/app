@@ -88,7 +88,7 @@ const PrivacyPolicy = () => {
                             </h2>
                             <p>
                                 Your data is encrypted in transit (TLS 1.3) and
-                                at rest (AES-256). We follow HIPAA-compliant
+                                at rest (AES-256). We follow NDPR-aligned
                                 data handling practices. Access to personal data
                                 is restricted to authorized personnel and
                                 subject to audit logging.

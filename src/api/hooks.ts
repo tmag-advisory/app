@@ -1366,6 +1366,13 @@ export function useDoctorProfile() {
   });
 }
 
+export function useDoctorReviewers() {
+  return useQuery({
+    queryKey: [...queryKeys.doctor.all, "reviewers"],
+    queryFn: () => doctorApi.getReviewers(),
+  });
+}
+
 export function useDoctorDashboardStats() {
   return useQuery({
     queryKey: queryKeys.doctor.dashboard(),
