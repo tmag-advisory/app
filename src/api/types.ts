@@ -330,6 +330,8 @@ export interface DoctorValidationDetailDto {
   travellerName: string;
   travellerEmail: string;
   travellerPhone: string;
+  travellerAge?: number | null;
+  travellerDateOfBirth?: string | null;
   createdAt: string;
   generatedPlan: GeneratedPlanPayload | null;
   generatedPlanContent: GeneratedPlanContent | null;
