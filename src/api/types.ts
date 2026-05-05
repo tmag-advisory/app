@@ -611,7 +611,8 @@ export interface CreateTravelPlanRequest {
   userId?: number;
   destination: string;
   country: string;
-  duration: number;
+  /** Omitted or null when only known from tripDetailsJson; server infers */
+  duration?: number | null;
   purpose: string;
   tripType?: "one-way" | "return" | "multi" | "transit";
   tripDetailsJson?: string;

@@ -38,7 +38,7 @@ import TripItineraryFlow, {
     hydrateLegacyTripItinerary,
     type TripItineraryData,
 } from "../../components/plan/TripItineraryFlow";
-import { mergeCityCountry } from "../../components/plan/tripItineraryMerge";
+import { buildPlanPayloadFromAnswers } from "../../components/plan/PlanQuestionnaireFlow";
 import { validateTripItineraryDates } from "../../components/plan/tripItineraryValidation";
 import {
     isDateOfBirthPlausible,
@@ -124,144 +124,12 @@ function isTripItineraryComplete(data: TripItineraryData | undefined): boolean {
     return filled && validateTripItineraryDates(d) === null;
 }
 
-function daysInclusiveBetween(start?: string, end?: string): number {
-    if (!start?.trim() || !end?.trim()) return 0;
-    const a = new Date(start);
-    const b = new Date(end);
-    if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
-    const diff = Math.ceil((b.getTime() - a.getTime()) / 86400000) + 1;
-    return diff > 0 ? diff : 0;
-}
-
-const TRAVEL_PURPOSE_TO_PLAN: Record<string, string> = {
-    leisure_tourism: "Leisure",
-    business_work: "Business",
-    study_relocation: "Study",
-    visiting_family_friends: "Leisure",
-    religious_pilgrimage: "Other",
-    other: "Other",
-    // Backward compatibility for older seeded questionnaires.
-    tourism: "Leisure",
-    business: "Business",
-    visiting_family: "Leisure",
-    study_work: "Study",
-    volunteer: "Volunteer",
-    pilgrimage: "Other",
-};
-
 const PREFILLED_KEYS = new Set(["full_name_passport", "email_address"]);
 
 const CONSENT_TEXT =
     "I hereby give Travel Medicine Advisory Global my explicit consent to collect, process, and store my personal and sensitive health information (including medical history, medications, pregnancy status, and risk behaviours) for the sole purpose of generating my personalised travel health advisory plan.";
 const DATA_PROTECTION_TEXT =
     "We protect your information with encryption, multi-factor authentication, and strict security measures. We comply with the Nigeria Data Protection Act (NDPA) 2023. Your data will not be sold or shared without your permission.";
-
-/** Build create-plan payload from questionnaire answers (travel section). */
-function derivePlanFromQuestionnaireAnswers(
-    answers: Record<string, unknown>
-): { destination: string; country: string; duration: number; purpose: string; medicalConsiderations: string } | null {
-    const newCountriesRaw = answers.travel_countries;
-    const newCountries = Array.isArray(newCountriesRaw)
-        ? (newCountriesRaw as string[]).map((c) => c.trim()).filter(Boolean)
-        : [];
-    const itinerary = (answers.trip_itinerary as TripItineraryData | undefined) ?? undefined;
-
-    const newCity = typeof answers.travel_city_region === "string"
-        ? answers.travel_city_region.trim()
-        : "";
-    const newDeparture = typeof answers.departure_date === "string"
-        ? answers.departure_date.trim()
-        : "";
-    const newReturnOrDuration = typeof answers.return_date_or_duration === "string"
-        ? answers.return_date_or_duration.trim()
-        : "";
-
-    let destination = "";
-    let country = "";
-    let duration = 0;
-
-    if (itinerary) {
-        const it = hydrateLegacyTripItinerary(itinerary);
-        const tripType = it.tripType || "one";
-
-        if (tripType === "one") {
-            country = (it.oneTo || "").trim();
-            const fromMerged = mergeCityCountry(it.oneFromCity, it.oneFromCountry) || (it.oneFrom || "").trim();
-            const toMerged = mergeCityCountry(it.oneToCity, it.oneTo) || country;
-            destination = toMerged;
-            if (fromMerged) destination = `${fromMerged} → ${toMerged}`;
-        } else if (tripType === "return") {
-            country = (it.returnTo || "").trim();
-            const fromMerged = mergeCityCountry(it.returnFromCity, it.returnFromCountry) || (it.returnFrom || "").trim();
-            const toMerged = mergeCityCountry(it.returnToCity, it.returnTo) || country;
-            destination = toMerged;
-            if (fromMerged) destination = `${fromMerged} → ${toMerged}`;
-            const returnDuration = daysInclusiveBetween(it.returnDepartureDate, it.returnReturnDate);
-            if (returnDuration > 0) duration = returnDuration;
-        } else if (tripType === "multi") {
-            const legs = it.multiLegs || [];
-            const parts = legs
-                .map((leg) => [leg.city, leg.country].filter(Boolean).join(", ").trim())
-                .filter(Boolean);
-            destination = parts.join(" → ");
-            country = (legs[0]?.country || "").trim();
-            const totalNights = legs.reduce((sum, leg) => {
-                const n = parseInt(leg.nights ?? "", 10);
-                return sum + (Number.isNaN(n) ? 0 : n);
-            }, 0);
-            if (totalNights > 0) duration = totalNights + 1;
-        } else if (tripType === "transit") {
-            country = (it.transitFinalDestination || "").trim();
-            const depMerged = mergeCityCountry(it.transitFromCity, it.transitFromCountry) || (it.transitFrom || "").trim();
-            const finMerged =
-                mergeCityCountry(it.transitFinalDestinationCity, it.transitFinalDestination) || country;
-            destination = `${depMerged} via ${(it.transitLocation || "").trim()} → ${finMerged}`;
-            const transitDuration = daysInclusiveBetween(it.transitDepartureDate, it.transitReturnDate);
-            if (transitDuration > 0) duration = transitDuration;
-        }
-    } else if (newCountries.length > 0) {
-        country = newCountries[0];
-        const countryList = newCountries.join(", ");
-        destination = [newCity, countryList].filter(Boolean).join(", ") || countryList;
-
-        if (/^\d{4}-\d{2}-\d{2}$/.test(newReturnOrDuration)) {
-            duration = daysInclusiveBetween(newDeparture, newReturnOrDuration);
-        } else {
-            const durationFromText = parseInt(newReturnOrDuration, 10);
-            if (!Number.isNaN(durationFromText) && durationFromText > 0) {
-                duration = durationFromText;
-            }
-        }
-    }
-
-    if (!country.trim()) return null;
-
-    const purposeSelections = answers.purpose_of_travel ?? answers.travel_purpose;
-    let purpose = "Leisure";
-    if (Array.isArray(purposeSelections) && purposeSelections.length > 0) {
-        const first = purposeSelections[0] as string;
-        purpose = TRAVEL_PURPOSE_TO_PLAN[first] ?? "Other";
-    }
-
-    const extra =
-        typeof answers.additional_relevant_activities === "string"
-            ? answers.additional_relevant_activities.trim()
-            : typeof answers.lifestyle_additional_context === "string"
-                ? answers.lifestyle_additional_context.trim()
-                : typeof answers.additional_considerations === "string"
-                    ? answers.additional_considerations.trim()
-                    : typeof answers.additional_information === "string"
-                        ? answers.additional_information.trim()
-                        : "";
-
-    return {
-        destination: destination || country,
-        country,
-        duration: duration > 0 ? duration : 7,
-        purpose,
-        medicalConsiderations: extra,
-    };
-}
 
 // ─── Icon Map ────────────────────────────────────────────────
 
@@ -690,10 +558,13 @@ const TravelHealthQuestionnaire = () => {
     const submitTravelPlan = async (payload: {
         destination: string;
         country: string;
-        duration: number;
+        duration: number | null;
         purpose: string;
         medicalConsiderations: string;
         selectedDoctorIds?: number[];
+        tripType?: "one-way" | "return" | "multi" | "transit";
+        tripDetailsJson?: string;
+        questionnaireResponses?: string;
     }) => {
         const credits = user?.credits ?? 0;
         if (credits <= 0) {
@@ -708,20 +579,23 @@ const TravelHealthQuestionnaire = () => {
             const result = await createPlan.mutateAsync({
                 destination: payload.destination,
                 country: payload.country,
-                duration: payload.duration,
+                duration: payload.duration ?? undefined,
                 purpose: payload.purpose,
-                tripType: "one-way",
-                tripDetailsJson: JSON.stringify({
-                    tripType: "one-way",
-                    stops: [
-                        {
-                            city: payload.destination,
-                            country: payload.country,
-                            order: 1,
-                        },
-                    ],
-                }),
+                tripType: payload.tripType ?? "one-way",
+                tripDetailsJson:
+                    payload.tripDetailsJson ??
+                    JSON.stringify({
+                        tripType: "one-way",
+                        stops: [
+                            {
+                                city: payload.destination,
+                                country: payload.country,
+                                order: 1,
+                            },
+                        ],
+                    }),
                 medicalConsiderations: payload.medicalConsiderations,
+                questionnaireResponses: payload.questionnaireResponses,
                 selectedDoctorIds: payload.selectedDoctorIds ?? [],
                 userId: user?.id,
                 status: "completed",
@@ -745,7 +619,8 @@ const TravelHealthQuestionnaire = () => {
         await submitTravelPlan({
             destination: planForm.destination,
             country: planForm.country,
-            duration: parseInt(planForm.duration, 10) || 0,
+            duration:
+                planForm.duration.trim() !== "" ? parseInt(planForm.duration, 10) || null : null,
             purpose: planForm.purpose,
             medicalConsiderations: planForm.medicalConsiderations,
             selectedDoctorIds: wantsDoctorSelection ? selectedDoctorIds : [],
@@ -761,7 +636,7 @@ const TravelHealthQuestionnaire = () => {
                 return;
             }
         }
-        const derived = derivePlanFromQuestionnaireAnswers(answers);
+        const derived = buildPlanPayloadFromAnswers(answers);
         if (!derived) {
             toast.error(
                 "We couldn't read your trip details. Add your destination below to generate a plan."
@@ -772,12 +647,19 @@ const TravelHealthQuestionnaire = () => {
         setPlanForm({
             destination: derived.destination,
             country: derived.country,
-            duration: String(derived.duration),
+            duration: derived.duration != null ? String(derived.duration) : "",
             purpose: derived.purpose,
             medicalConsiderations: derived.medicalConsiderations,
         });
         await submitTravelPlan({
-            ...derived,
+            destination: derived.destination,
+            country: derived.country,
+            duration: derived.duration,
+            purpose: derived.purpose,
+            medicalConsiderations: derived.medicalConsiderations,
+            tripType: derived.tripType,
+            tripDetailsJson: derived.tripDetailsJson,
+            questionnaireResponses: JSON.stringify(derived.questionnaireResponses),
             selectedDoctorIds: wantsDoctorSelection ? selectedDoctorIds : [],
         });
     };
@@ -1009,12 +891,12 @@ const TravelHealthQuestionnaire = () => {
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: 0.55 }}
                                     onClick={() => {
-                                        const d = derivePlanFromQuestionnaireAnswers(answers);
+                                        const d = buildPlanPayloadFromAnswers(answers);
                                         if (d) {
                                             setPlanForm({
                                                 destination: d.destination,
                                                 country: d.country,
-                                                duration: String(d.duration),
+                                                duration: d.duration != null ? String(d.duration) : "",
                                                 purpose: d.purpose,
                                                 medicalConsiderations: d.medicalConsiderations,
                                             });

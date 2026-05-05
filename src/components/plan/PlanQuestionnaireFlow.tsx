@@ -17,6 +17,7 @@ import TripItineraryFlow, { hydrateLegacyTripItinerary, type TripItineraryData }
 import { mergeCityCountry } from "./tripItineraryMerge";
 import { validateTripItineraryDates, getTripItineraryMissingFieldError } from "./tripItineraryValidation";
 import {
+    daysInclusiveBetweenIso,
     isDateOfBirthPlausible,
     isPlausibleEmail,
     isValidOptionalNonNegativeNumber,
@@ -55,7 +56,8 @@ interface QuestionCategory {
 export interface QuestionnairePlanPayload {
     destination: string;
     country: string;
-    duration: number;
+    /** Days away; null only when not inferable — server fills from tripDetailsJson if missing */
+    duration: number | null;
     purpose: string;
     medicalConsiderations: string;
     tripType: "one-way" | "return" | "multi" | "transit";
@@ -130,15 +132,6 @@ function isIsoDate(value: string): boolean {
     return /^\d{4}-\d{2}-\d{2}$/.test(value.trim());
 }
 
-function daysInclusiveBetween(start?: string, end?: string): number {
-    if (!start?.trim() || !end?.trim()) return 0;
-    const a = new Date(`${start.trim()}T00:00:00Z`);
-    const b = new Date(`${end.trim()}T00:00:00Z`);
-    if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
-    const diff = Math.ceil((b.getTime() - a.getTime()) / 86400000) + 1;
-    return diff > 0 ? diff : 0;
-}
-
 function parsePositiveInteger(value?: string): number {
     const parsed = parseInt(value ?? "", 10);
     return Number.isNaN(parsed) || parsed <= 0 ? 0 : parsed;
@@ -174,12 +167,48 @@ function durationDaysFromTransitDuration(value?: string): number {
     }
 }
 
+/** Recover duration from the JSON we send to the API when primary derivation yields 0 */
+function inferDurationFromTripDetailsJson(tripDetailsJson: string): number {
+    try {
+        const j = JSON.parse(tripDetailsJson) as Record<string, unknown>;
+        const tt = String(j.tripType ?? "").trim();
+        if (tt === "return") {
+            return daysInclusiveBetweenIso(
+                String(j.departureDate ?? "").trim(),
+                String(j.returnDate ?? "").trim(),
+            );
+        }
+        if (tt === "transit") {
+            const dep = String(j.departureDate ?? "").trim();
+            const ret = String(j.returnDate ?? "").trim();
+            const span = daysInclusiveBetweenIso(dep, ret);
+            if (span > 0) return span;
+            return durationDaysFromTransitDuration(String(j.transitDuration ?? ""));
+        }
+        if (tt === "multi") {
+            const overall = String(j.overallReturnDate ?? "").trim();
+            const stops = j.stops as Array<{ arrivalDate?: string; nights?: string }> | undefined;
+            const firstArrival = stops?.map((s) => String(s?.arrivalDate ?? "").trim()).find(Boolean) ?? "";
+            const span = daysInclusiveBetweenIso(firstArrival, overall);
+            if (span > 0) return span;
+            const totalNights = (stops ?? []).reduce((sum, leg) => sum + parsePositiveInteger(leg.nights), 0);
+            return totalNights > 0 ? totalNights + 1 : 0;
+        }
+        if (tt === "one-way") {
+            return durationDaysFromLengthOfStay(String(j.lengthOfStay ?? ""));
+        }
+    } catch {
+        return 0;
+    }
+    return 0;
+}
+
 function durationDaysFromMultiStop(legs: TripItineraryData["multiLegs"], overallReturnDate?: string): number {
     const validLegs = legs ?? [];
     const firstArrivalDate = validLegs
         .map((leg) => leg.arrivalDate?.trim() ?? "")
         .find(Boolean);
-    const dateDuration = daysInclusiveBetween(firstArrivalDate, overallReturnDate);
+    const dateDuration = daysInclusiveBetweenIso(firstArrivalDate, overallReturnDate);
     if (dateDuration > 0) return dateDuration;
 
     const totalNights = validLegs.reduce((sum, leg) => sum + parsePositiveInteger(leg.nights), 0);
@@ -318,7 +347,7 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
     });
 
     if (isIsoDate(returnDateOrDuration)) {
-        const calculated = daysInclusiveBetween(departureDate, returnDateOrDuration);
+        const calculated = daysInclusiveBetweenIso(departureDate, returnDateOrDuration);
         if (calculated > 0) duration = calculated;
         tripType = "return";
         tripDetailsJson = JSON.stringify({
@@ -360,7 +389,7 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
             destination = toMerged;
             if (fromMerged) destination = `${fromMerged} → ${toMerged}`;
             tripType = "return";
-            const returnDuration = daysInclusiveBetween(it.returnDepartureDate, it.returnReturnDate);
+            const returnDuration = daysInclusiveBetweenIso(it.returnDepartureDate, it.returnReturnDate);
             if (returnDuration > 0) duration = returnDuration;
             tripDetailsJson = JSON.stringify({
                 tripType: "return",
@@ -404,7 +433,7 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
                 mergeCityCountry(it.transitFinalDestinationCity, it.transitFinalDestination) || primaryCountry;
             destination = `${depMerged} via ${(it.transitLocation ?? "").trim()} → ${finMerged}`;
             tripType = "transit";
-            const transitDuration = daysInclusiveBetween(it.transitDepartureDate, it.transitReturnDate);
+            const transitDuration = daysInclusiveBetweenIso(it.transitDepartureDate, it.transitReturnDate);
             if (transitDuration > 0) {
                 duration = transitDuration;
             } else {
@@ -435,12 +464,18 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
     const medicalConsiderations =
         (typeof answers.additional_relevant_activities === "string" && answers.additional_relevant_activities.trim()) ||
         (typeof answers.lifestyle_additional_context === "string" && answers.lifestyle_additional_context.trim()) ||
+        (typeof answers.additional_considerations === "string" && answers.additional_considerations.trim()) ||
+        (typeof answers.additional_information === "string" && answers.additional_information.trim()) ||
         "";
+
+    if (duration <= 0) {
+        duration = inferDurationFromTripDetailsJson(tripDetailsJson);
+    }
 
     return {
         destination,
         country: primaryCountry,
-        duration: duration > 0 ? duration : 7,
+        duration: duration > 0 ? duration : null,
         purpose,
         medicalConsiderations,
         tripType,

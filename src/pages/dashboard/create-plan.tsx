@@ -141,7 +141,7 @@ const CreatePlan = () => {
             const result = await createPlan.mutateAsync({
                 destination: payload.destination,
                 country: payload.country,
-                duration: payload.duration,
+                duration: payload.duration ?? undefined,
                 purpose: payload.purpose,
                 tripType: payload.tripType,
                 tripDetailsJson: payload.tripDetailsJson,

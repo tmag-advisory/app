@@ -14,7 +14,7 @@ import {
 import CountryPicker from "../CountryPicker";
 import { mergeCityCountry, splitLegacyDeparting } from "./tripItineraryMerge";
 import { maxIsoDate, validateTripItineraryDates } from "./tripItineraryValidation";
-import { todayIsoDateLocal } from "../../lib/questionnaireFieldValidation";
+import { addCalendarDaysToIsoDate, todayIsoDateLocal } from "../../lib/questionnaireFieldValidation";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -497,6 +497,28 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
                                     onChange={(e) => update({ returnReturnDate: e.target.value })}
                                     className={inputCls}
                                 />
+                                {(data.returnDepartureDate ?? "").trim() ?
+                                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                        <span className="text-[11px] font-medium text-muted">Quick:</span>
+                                        {([7, 14, 21, 30] as const).map((d) => (
+                                            <button
+                                                key={d}
+                                                type="button"
+                                                onClick={() =>
+                                                    update({
+                                                        returnReturnDate: addCalendarDaysToIsoDate(
+                                                            (data.returnDepartureDate ?? "").trim(),
+                                                            d,
+                                                        ),
+                                                    })
+                                                }
+                                                className="rounded-lg border border-border-light/80 bg-white px-2.5 py-1 text-[11px] font-semibold text-body hover:border-accent hover:text-accent transition-colors cursor-pointer"
+                                            >
+                                                +{d}d
+                                            </button>
+                                        ))}
+                                    </div>
+                                :   null}
                             </div>
                             <div>
                                 <label className={fieldLabelCls}>Return flight number</label>
@@ -649,6 +671,30 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
                                 onChange={(e) => update({ multiOverallReturnDate: e.target.value })}
                                 className={inputCls}
                             />
+                            {(() => {
+                                const legs = data.multiLegs ?? [];
+                                const anchor =
+                                    legs.length > 0 ? (legs[legs.length - 1]?.arrivalDate ?? "").trim() : "";
+                                return anchor ?
+                                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                            <span className="text-[11px] font-medium text-muted">From last arrival:</span>
+                                            {([7, 14, 21] as const).map((d) => (
+                                                <button
+                                                    key={d}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        update({
+                                                            multiOverallReturnDate: addCalendarDaysToIsoDate(anchor, d),
+                                                        })
+                                                    }
+                                                    className="rounded-lg border border-border-light/80 bg-white px-2.5 py-1 text-[11px] font-semibold text-body hover:border-accent hover:text-accent transition-colors cursor-pointer"
+                                                >
+                                                    +{d}d
+                                                </button>
+                                            ))}
+                                        </div>
+                                    :   null;
+                            })()}
                         </div>
                     </div>
                 </motion.div>
@@ -763,6 +809,28 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
                                     onChange={(e) => update({ transitReturnDate: e.target.value })}
                                     className={inputCls}
                                 />
+                                {(data.transitDepartureDate ?? "").trim() ?
+                                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                        <span className="text-[11px] font-medium text-muted">Quick:</span>
+                                        {([1, 2, 7] as const).map((d) => (
+                                            <button
+                                                key={d}
+                                                type="button"
+                                                onClick={() =>
+                                                    update({
+                                                        transitReturnDate: addCalendarDaysToIsoDate(
+                                                            (data.transitDepartureDate ?? "").trim(),
+                                                            d,
+                                                        ),
+                                                    })
+                                                }
+                                                className="rounded-lg border border-border-light/80 bg-white px-2.5 py-1 text-[11px] font-semibold text-body hover:border-accent hover:text-accent transition-colors cursor-pointer"
+                                            >
+                                                +{d}d
+                                            </button>
+                                        ))}
+                                    </div>
+                                :   null}
                             </div>
                         </div>
                     </div>
