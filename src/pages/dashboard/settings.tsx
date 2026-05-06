@@ -142,7 +142,12 @@ const Settings = () => {
     const handleProfileSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await updateProfile.mutateAsync(profileForm);
+            const formData = {
+                first_name: profileForm.first_name,
+                last_name: profileForm.last_name,
+                phone: profileForm.phone,
+            };
+            await updateProfile.mutateAsync(formData);
             await refreshProfile();
             toast.success("Profile updated successfully");
         } catch {
@@ -232,10 +237,11 @@ const Settings = () => {
                     <button
                         key={t.id}
                         onClick={() => setTab(t.id)}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${tab === t.id ?
-                            "bg-white text-heading shadow-sm"
-                            : "text-muted hover:text-heading"
-                            }`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                            tab === t.id ?
+                                "bg-white text-heading shadow-sm"
+                            :   "text-muted hover:text-heading"
+                        }`}
                     >
                         {t.icon} {t.label}
                     </button>
@@ -246,121 +252,137 @@ const Settings = () => {
             {tab === "profile" && (
                 <>
                     <div className="space-y-6 max-w-2xl">
-                    <section className={cn(DASHBOARD_GLASS_SURFACE, "p-6 md:p-8")}> 
-                        <h2 className="text-base font-semibold text-heading mb-2">
-                            Profile picture
-                        </h2>
-                        <p className="text-sm text-muted mb-6">
-                            Upload a square profile photo for your travel dashboard. Images up to 5MB are cropped and compressed on the server.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-5 sm:items-center mb-6">
-                            <div className="w-20 h-20 rounded-3xl bg-accent/10 border border-border-light overflow-hidden flex items-center justify-center text-xl font-semibold text-accent">
-                                {avatarPreview ? (
-                                    <img src={avatarPreview} alt="Profile preview" className="w-full h-full object-cover" />
-                                ) : (
-                                    `${user?.first_name?.[0] ?? ""}${user?.last_name?.[0] ?? ""}` || "U"
-                                )}
+                        <section
+                            className={cn(
+                                DASHBOARD_GLASS_SURFACE,
+                                "p-6 md:p-8",
+                            )}
+                        >
+                            <h2 className="text-base font-semibold text-heading mb-2">
+                                Profile picture
+                            </h2>
+                            <p className="text-sm text-muted mb-6">
+                                Upload a square profile photo for your travel
+                                dashboard. Images up to 5MB are cropped and
+                                compressed on the server.
+                            </p>
+                            <div className="flex flex-col sm:flex-row gap-5 sm:items-center mb-6">
+                                <div className="w-20 h-20 rounded-3xl bg-accent/10 border border-border-light overflow-hidden flex items-center justify-center text-xl font-semibold text-accent">
+                                    {avatarPreview ?
+                                        <img
+                                            src={avatarPreview}
+                                            alt="Profile preview"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    :   `${user?.first_name?.[0] ?? ""}${user?.last_name?.[0] ?? ""}` ||
+                                        "U"
+                                    }
+                                </div>
+                                <label className="inline-flex w-fit items-center gap-2 py-2.5 px-4 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200">
+                                    <LucideUpload className="w-4 h-4" />
+                                    {updateAvatar.isPending ?
+                                        "Uploading..."
+                                    :   "Upload photo"}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleAvatarUpload}
+                                        disabled={updateAvatar.isPending}
+                                    />
+                                </label>
                             </div>
-                            <label className="inline-flex w-fit items-center gap-2 py-2.5 px-4 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200">
-                                <LucideUpload className="w-4 h-4" />
-                                {updateAvatar.isPending ? "Uploading..." : "Upload photo"}
-                                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={updateAvatar.isPending} />
-                            </label>
-                        </div>
-                    </section>
+                        </section>
 
-                    <form
-                        onSubmit={handleProfileSubmit}
-                        className={cn(DASHBOARD_GLASS_SURFACE, "p-6 md:p-8")}
-                    >
-                        <h2 className="text-base font-semibold text-heading mb-6">
-                            Personal information
-                        </h2>
-                        <div className="space-y-5">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                        First name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={profileForm.first_name}
-                                        onChange={(e) =>
-                                            setProfileForm({
-                                                ...profileForm,
-                                                first_name: e.target.value,
-                                            })
-                                        }
-                                        className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
-                                    />
+                        <form
+                            onSubmit={handleProfileSubmit}
+                            className={cn(
+                                DASHBOARD_GLASS_SURFACE,
+                                "p-6 md:p-8",
+                            )}
+                        >
+                            <h2 className="text-base font-semibold text-heading mb-6">
+                                Personal information
+                            </h2>
+                            <div className="space-y-5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                            First name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={profileForm.first_name}
+                                            onChange={(e) =>
+                                                setProfileForm({
+                                                    ...profileForm,
+                                                    first_name: e.target.value,
+                                                })
+                                            }
+                                            className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                            Last name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={profileForm.last_name}
+                                            onChange={(e) =>
+                                                setProfileForm({
+                                                    ...profileForm,
+                                                    last_name: e.target.value,
+                                                })
+                                            }
+                                            className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                        Last name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={profileForm.last_name}
-                                        onChange={(e) =>
-                                            setProfileForm({
-                                                ...profileForm,
-                                                last_name: e.target.value,
-                                            })
-                                        }
-                                        className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
-                                    />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                            Email
+                                        </label>
+                                        <input
+                                            type="email"
+                                            disabled
+                                            value={profileForm.email}
+                                            className="w-full cursor-not-allowed disabled:bg-white bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                            Phone
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={profileForm.phone}
+                                            onChange={(e) =>
+                                                setProfileForm({
+                                                    ...profileForm,
+                                                    phone: e.target.value,
+                                                })
+                                            }
+                                            className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                        Email
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={profileForm.email}
-                                        onChange={(e) =>
-                                            setProfileForm({
-                                                ...profileForm,
-                                                email: e.target.value,
-                                            })
-                                        }
-                                        className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                        Phone
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        value={profileForm.phone}
-                                        onChange={(e) =>
-                                            setProfileForm({
-                                                ...profileForm,
-                                                phone: e.target.value,
-                                            })
-                                        }
-                                        className="w-full bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
-                                    />
-                                </div>
+                            <div className="mt-6 pt-6 border-t border-border-light/50 flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={updateProfile.isPending}
+                                    className="py-2.5 px-5 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200 flex items-center gap-2"
+                                >
+                                    {updateProfile.isPending && (
+                                        <LucideLoader2 className="w-3 h-3 animate-spin" />
+                                    )}
+                                    Save changes
+                                </button>
                             </div>
-                        </div>
-                        <div className="mt-6 pt-6 border-t border-border-light/50 flex justify-end">
-                            <button
-                                type="submit"
-                                disabled={updateProfile.isPending}
-                                className="py-2.5 px-5 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200 flex items-center gap-2"
-                            >
-                                {updateProfile.isPending && (
-                                    <LucideLoader2 className="w-3 h-3 animate-spin" />
-                                )}
-                                Save changes
-                            </button>
-                        </div>
-                    </form>
+                        </form>
                     </div>
-
                 </>
             )}
 
@@ -368,7 +390,10 @@ const Settings = () => {
             {tab === "password" && (
                 <form
                     onSubmit={handlePasswordSubmit}
-                    className={cn(DASHBOARD_GLASS_SURFACE, "p-6 md:p-8 max-w-2xl")}
+                    className={cn(
+                        DASHBOARD_GLASS_SURFACE,
+                        "p-6 md:p-8 max-w-2xl",
+                    )}
                 >
                     <h2 className="text-base font-semibold text-heading mb-6">
                         Change password
@@ -469,13 +494,11 @@ const Settings = () => {
                             }}
                             className="py-2.5 px-5 rounded-xl bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent/90 transition-colors duration-200"
                         >
-                            {isFreeUser ? (
+                            {isFreeUser ?
                                 "Upgrade plan"
-                            ) : isCompanyUser ? (
+                            : isCompanyUser ?
                                 "Request credits"
-                            ) : (
-                                "Purchase credits"
-                            )}
+                            :   "Purchase credits"}
                         </button>
                     </div>
 
@@ -492,7 +515,7 @@ const Settings = () => {
                                 </span>{" "}
                                 and cannot be changed here.
                             </p>
-                            : <p className="text-xs text-muted mb-4">
+                        :   <p className="text-xs text-muted mb-4">
                                 Choose the currency for credit purchases.
                             </p>
                         }
@@ -503,11 +526,12 @@ const Settings = () => {
                                 ) as BillingCurrency[]
                             ).map((c) => {
                                 const symbol = CURRENCY_SYMBOLS[c];
-                                const perCredit = c === "USD" ? basePriceUsd : basePriceNgn;
+                                const perCredit =
+                                    c === "USD" ? basePriceUsd : basePriceNgn;
                                 const selected =
                                     isCompanyUser ?
                                         activeCurrency === c
-                                        : currencyForm === c;
+                                    :   currencyForm === c;
                                 return (
                                     <button
                                         key={c}
@@ -515,10 +539,11 @@ const Settings = () => {
                                         onClick={() =>
                                             !isCompanyUser && setCurrencyForm(c)
                                         }
-                                        className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-sm font-semibold transition-all duration-200 ${selected ?
-                                            "border-accent bg-accent/5 text-accent"
-                                            : "border-border-light text-muted hover:border-accent/40"
-                                            } ${isCompanyUser ? "cursor-default opacity-60" : "cursor-pointer"}`}
+                                        className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-sm font-semibold transition-all duration-200 ${
+                                            selected ?
+                                                "border-accent bg-accent/5 text-accent"
+                                            :   "border-border-light text-muted hover:border-accent/40"
+                                        } ${isCompanyUser ? "cursor-default opacity-60" : "cursor-pointer"}`}
                                     >
                                         <span className="text-lg">
                                             {symbol}
@@ -564,31 +589,50 @@ const Settings = () => {
                         </h2>
                         {(() => {
                             const plan = user?.user_credit_plan;
-                            const planName = plan?.displayName ?? (isCompanyUser ? "Company" : "Individual");
-                            const planDescription = plan?.description ?? (isCompanyUser ? "Organisational billing" : "Pay-per-plan pricing");
+                            const planName =
+                                plan?.displayName ??
+                                (isCompanyUser ? "Company" : "Individual");
+                            const planDescription =
+                                plan?.description ??
+                                (isCompanyUser ?
+                                    "Organisational billing"
+                                :   "Pay-per-plan pricing");
                             const basePriceUsd = plan?.basePriceUsd ?? null;
                             const planCode = plan?.code ?? null;
                             const planBadgeColor =
-                                planCode === "PREMIUM" ? "text-amber-700 bg-amber-50 border-amber-200" :
-                                    planCode === "STANDARD" ? "text-accent bg-accent/10 border-accent/20" :
-                                        "text-muted bg-muted/10 border-border-light";
+                                planCode === "PREMIUM" ?
+                                    "text-amber-700 bg-amber-50 border-amber-200"
+                                : planCode === "STANDARD" ?
+                                    "text-accent bg-accent/10 border-accent/20"
+                                :   "text-muted bg-muted/10 border-border-light";
                             return (
                                 <div>
                                     <div className="flex items-start justify-between mb-3">
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
-                                                <p className="text-sm font-semibold text-heading">{planName}</p>
-                                                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${planBadgeColor}`}>
+                                                <p className="text-sm font-semibold text-heading">
+                                                    {planName}
+                                                </p>
+                                                <span
+                                                    className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${planBadgeColor}`}
+                                                >
                                                     Active
                                                 </span>
                                             </div>
-                                            {basePriceUsd !== null && basePriceUsd > 0 && (
-                                                <p className="text-xs text-accent font-semibold mb-1">
-                                                    ${basePriceUsd.toFixed(0)} USD per credit
-                                                </p>
-                                            )}
+                                            {basePriceUsd !== null &&
+                                                basePriceUsd > 0 && (
+                                                    <p className="text-xs text-accent font-semibold mb-1">
+                                                        $
+                                                        {basePriceUsd.toFixed(
+                                                            0,
+                                                        )}{" "}
+                                                        USD per credit
+                                                    </p>
+                                                )}
                                             {basePriceUsd === 0 && (
-                                                <p className="text-xs text-muted font-semibold mb-1">Free tier</p>
+                                                <p className="text-xs text-muted font-semibold mb-1">
+                                                    Free tier
+                                                </p>
                                             )}
                                             <p className="text-xs text-muted leading-relaxed max-w-sm line-clamp-2">
                                                 {planDescription}
@@ -618,7 +662,10 @@ const Settings = () => {
                     onClick={() => setPurchaseCreditsOpen(false)}
                 >
                     <div
-                        className={cn(DASHBOARD_GLASS_SURFACE, "relative w-full max-w-md p-6 md:p-8")}
+                        className={cn(
+                            DASHBOARD_GLASS_SURFACE,
+                            "relative w-full max-w-md p-6 md:p-8",
+                        )}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
@@ -685,27 +732,34 @@ const Settings = () => {
                                             <LucideLoader2 className="w-4 h-4 animate-spin" />
                                             Submitting...
                                         </>
-                                        : <>
+                                    :   <>
                                             <LucideSend className="w-4 h-4" />
                                             Submit to HR
                                         </>
                                     }
                                 </button>
                             </>
-                            :   /* ── Individual user view ── */
+                        :   /* ── Individual user view ── */
                             <>
                                 <h2 className="text-base font-semibold text-heading mb-1">
                                     Purchase credits
                                 </h2>
                                 {user?.user_credit_plan && (
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-xs text-muted">Plan:</span>
+                                        <span className="text-xs text-muted">
+                                            Plan:
+                                        </span>
                                         <span className="text-xs font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">
                                             {user.user_credit_plan.displayName}
                                         </span>
-                                        {user.user_credit_plan.basePriceUsd > 0 && (
+                                        {user.user_credit_plan.basePriceUsd >
+                                            0 && (
                                             <span className="text-xs text-muted">
-                                                — ${user.user_credit_plan.basePriceUsd.toFixed(0)} USD/credit
+                                                — $
+                                                {user.user_credit_plan.basePriceUsd.toFixed(
+                                                    0,
+                                                )}{" "}
+                                                USD/credit
                                             </span>
                                         )}
                                     </div>
@@ -734,7 +788,8 @@ const Settings = () => {
                                         },
                                     ].map((tier) => {
                                         const basePrice =
-                                            effectivePricing.pricePerCredit * tier.credits;
+                                            effectivePricing.pricePerCredit *
+                                            tier.credits;
                                         const isSelected =
                                             creditCount === tier.credits;
                                         return (
@@ -743,10 +798,11 @@ const Settings = () => {
                                                 onClick={() =>
                                                     setCreditCount(tier.credits)
                                                 }
-                                                className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-left ${isSelected ?
-                                                    "border-accent bg-accent/5"
-                                                    : "border-border-light hover:border-accent/50"
-                                                    }`}
+                                                className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                                                    isSelected ?
+                                                        "border-accent bg-accent/5"
+                                                    :   "border-border-light hover:border-accent/50"
+                                                }`}
                                             >
                                                 {tier.popular && (
                                                     <span className="absolute -top-2 right-3 px-2 py-0.5 bg-accent text-white text-xs font-semibold rounded-full">
@@ -819,7 +875,10 @@ const Settings = () => {
                                         </span>
                                         <span className="text-lg font-bold text-heading">
                                             {currencySymbol}
-                                            {(effectivePricing.pricePerCredit * creditCount).toLocaleString()}
+                                            {(
+                                                effectivePricing.pricePerCredit *
+                                                creditCount
+                                            ).toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
@@ -834,7 +893,7 @@ const Settings = () => {
                                             <LucideLoader2 className="w-4 h-4 animate-spin" />
                                             Processing...
                                         </>
-                                        : <>Proceed to payment</>}
+                                    :   <>Proceed to payment</>}
                                 </button>
                             </>
                         }
