@@ -15,11 +15,15 @@ export interface CreditPlan {
   description: string;
   isDefault: boolean;
   isCompanyPlan: boolean;
+  isFamilyPlan: boolean;
   signupRangeLabel: string | null;
   serviceLevel: "STANDARD" | "PREMIUM" | null;
   visibility?: "PUBLIC" | "CUSTOM";
   assignedCompanyId?: number | null;
   planCount?: number | null;
+  includedFamilyMembers?: number | null;
+  additionalMemberPriceUsd?: number | null;
+  additionalMemberPriceNgn?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1427,4 +1431,123 @@ export interface OnboardingPaymentInitiate {
   paymentLink: string;
   amount: number;
   currency: string;
+}
+
+// ============ Family Plan ============
+
+export interface FamilyTripMemberRequest {
+  relationship: string;
+  firstName: string;
+  lastName: string;
+  memberEmail?: string;
+  dateOfBirth?: string;
+  questionnaireResponses?: string;
+}
+
+export interface FamilyTripRequest {
+  packageType?: string;
+  destination: string;
+  country: string;
+  duration: number;
+  purpose: string;
+  tripType: string;
+  tripDetailsJson?: string;
+  members: FamilyTripMemberRequest[];
+}
+
+export interface ActivePackageAllowanceDto {
+  type: string;
+  tripsRemaining: number;
+}
+
+export interface PaymentBreakdownItem {
+  label: string;
+  minor: number;
+  satisfiedBy: string;
+}
+
+export interface FamilyTripPreviewResponse {
+  includedMembers: number;
+  additionalMembers: number;
+  baseFiatCost: number;
+  extraFiatCost: number;
+  totalFiatCost: number;
+  currency: string;
+  availableCredits: number;
+  activePackageAllowance?: ActivePackageAllowanceDto;
+  paymentRequired: boolean;
+  paymentBreakdown: PaymentBreakdownItem[];
+}
+
+export interface FamilyTripMemberResponse {
+  id: number;
+  relationship: string;
+  firstName: string;
+  lastName: string;
+  memberEmail?: string;
+  dateOfBirth?: string;
+  ageAtDeparture?: number;
+  includedInBase?: boolean;
+  questionnaireStatus: string;
+  travelPlanId?: number;
+  loginCode?: string;
+}
+
+export interface FamilyTripResponse {
+  id: number;
+  status: string;
+  destination: string;
+  country: string;
+  duration: number;
+  purpose: string;
+  tripType: string;
+  tripDetailsJson?: string;
+  baseFiatCost: number;
+  extraMemberCount: number;
+  totalFiatCost: number;
+  currency: string;
+  members: FamilyTripMemberResponse[];
+}
+
+// ─── Family Package Purchase ─────────────────────────────────
+
+export type FamilyPackageType = "ONE_TRIP" | "TWO_TRIP";
+
+export interface FamilyPackageCheckoutRequest {
+  packageType: FamilyPackageType;
+  currency: BillingCurrency;
+}
+
+export interface FamilyPackageCheckoutResponse {
+  success: boolean;
+  txRef: string;
+  paymentLink: string;
+  packageType: FamilyPackageType;
+  tripsAllowed: number;
+  amount: number;
+  currency: BillingCurrency;
+  currencySymbol: string;
+  purchaseId: number;
+  error?: string;
+  errorType?: string;
+}
+
+export interface FamilyPackagePurchaseResponse {
+  id: number;
+  txRef: string;
+  flwRef: string | null;
+  userId: number;
+  packageType: FamilyPackageType;
+  tripsAllowed: number;
+  tripsUsed: number;
+  amountPaidMinor: number;
+  currency: string;
+  paymentProvider: string | null;
+  paymentReference: string | null;
+  status: "PENDING" | "ACTIVE" | "EXHAUSTED" | "REFUNDED";
+  expiresAt: string | null;
+  paidAt: string | null;
+  flutterwaveStatus: string | null;
+  failedReason: string | null;
+  createdAt: string;
 }

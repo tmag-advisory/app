@@ -116,6 +116,10 @@ import type {
   AdminDoctorApplicationDto,
   AdminDoctorListItemDto,
   AdminDoctorStatsDto,
+  // Family Package
+  FamilyPackageCheckoutRequest,
+  FamilyPackageCheckoutResponse,
+  FamilyPackagePurchaseResponse,
 } from "./types";
 
 // ─── Generic CRUD helpers ────────────────────────────────────
@@ -577,6 +581,18 @@ export const creditPurchaseApi = {
 
   get: (txRef: string) =>
     api.get<ApiResponse<CreditPurchaseResponse>>(`/credit-purchases/${txRef}`).then((r) => r.data.data),
+};
+
+// ─── Family Package Purchase ──────────────────────────────────
+export const familyPackagePurchaseApi = {
+  checkout: (data: FamilyPackageCheckoutRequest) =>
+    api.post<ApiResponse<FamilyPackageCheckoutResponse>>("/family-package-purchases/checkout", data).then((r) => r.data.data),
+
+  getActive: () =>
+    api.get<ApiResponse<FamilyPackagePurchaseResponse | null>>("/family-package-purchases/active").then((r) => r.data.data),
+
+  getHistory: () =>
+    api.get<ApiResponse<FamilyPackagePurchaseResponse[]>>("/family-package-purchases/history").then((r) => r.data.data),
 };
 
 // ─── Company Admin Credits (HR Payment) ────────────────────────────────────

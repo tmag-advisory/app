@@ -14,11 +14,12 @@ import {
     signupRanges,
     enterpriseTierColors,
     individualPlanFeatures,
+    familyPlans,
     type SignupRange,
     type ServiceLevel,
 } from "../../constants/companyPlans";
 
-type Audience = "individual" | "company";
+type Audience = "individual" | "family" | "company";
 
 function formatPrice(priceUsd: number, priceNgn: number, currency: string): string {
     if (priceUsd === 0) return "Free";
@@ -51,7 +52,7 @@ const PricingSection = () => {
                 <AnimateIn className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-10">
                     {/* Audience pill */}
                     <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
-                        {(["individual", "company"] as Audience[]).map((tab) => (
+                        {(["individual", "family", "company"] as Audience[]).map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setAudience(tab)}
@@ -60,7 +61,7 @@ const PricingSection = () => {
                                     : "text-muted hover:text-heading"
                                     }`}
                             >
-                                {tab === "individual" ? "Individuals" : "Company"}
+                                {tab === "individual" ? "Individuals" : tab === "family" ? "Family" : "Company"}
                             </button>
                         ))}
                     </div>
@@ -183,6 +184,86 @@ const PricingSection = () => {
                                             {plan.cta}
                                         </Button>
                                     )}
+                                </motion.div>
+                            );
+                        })}
+                    </StaggerGroup>
+                )}
+
+                {/* Family plans */}
+                {audience === "family" && (
+                    <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto" stagger={0.12}>
+                        {familyPlans.map((plan) => {
+                            const isHighlighted = plan.highlighted;
+                            return (
+                                <motion.div
+                                    variants={staggerItem}
+                                    key={plan.id}
+                                    className={`relative p-8 flex flex-col justify-between overflow-hidden ${
+                                        isHighlighted
+                                            ? "border border-[#2a7a6a]/25"
+                                            : "bg-white border border-stone-200"
+                                        }`}
+                                >
+                                    {isHighlighted && (
+                                        <div
+                                            className="absolute inset-0"
+                                            style={{
+                                                background: "linear-gradient(145deg, #eaf7f4 0%, #dff2ee 45%, #e6f5f1 100%)",
+                                            }}
+                                        />
+                                    )}
+                                    {isHighlighted && (
+                                        <div className="absolute top-0 left-0 w-full h-1 bg-[#2a7a6a]" />
+                                    )}
+                                    {isHighlighted && (
+                                        <span className="absolute top-6 right-6 text-xs font-semibold text-white bg-[#2a7a6a] px-3 py-1 rounded-full">
+                                            Best value
+                                        </span>
+                                    )}
+                                    <div className="relative z-10">
+                                        <h3 className={`text-xl font-semibold mb-2 ${isHighlighted ? "text-[#1a3c38]" : "text-stone-800"
+                                            }`}>
+                                            {plan.name}
+                                        </h3>
+                                        <p className={`text-sm mb-6 ${isHighlighted ? "text-[#2a5858]/80" : "text-stone-500"
+                                            }`}>
+                                            {plan.description}
+                                        </p>
+                                        <div className="flex items-baseline gap-1.5 mb-1">
+                                            <span className={`text-4xl font-serif ${isHighlighted ? "text-[#1a5c52]" : "text-stone-800"
+                                                }`}>
+                                                {formatPrice(plan.priceUsd, plan.priceNgn, selectedCurrency)}
+                                            </span>
+                                        </div>
+                                        <p className={`text-xs mb-8 ${isHighlighted ? "text-[#2a5858]/60" : "text-stone-400"
+                                            }`}>
+                                            {plan.priceNote}
+                                        </p>
+                                        <ul className="space-y-3 mb-8">
+                                            {plan.features.map((f) => (
+                                                <li
+                                                    key={f}
+                                                    className={`flex items-start gap-3 text-sm ${isHighlighted ? "text-[#1a3c38]" : "text-stone-700"
+                                                        }`}
+                                                >
+                                                    <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${isHighlighted ? "text-[#2a7a6a]" : "text-emerald-600"
+                                                        }`} />
+                                                    {f}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    <Button
+                                        variant={isHighlighted ? "primary" : "secondary"}
+                                        icon={!isHighlighted ? <LucideArrowRight /> : undefined}
+                                        link={`/family-checkout?plan=FAMILY_${plan.id}`}
+                                        className={`relative z-10 self-stretch text-center justify-center flex ${
+                                            isHighlighted ? "bg-[#2a7a6a] text-white! hover:bg-[#246858]" : ""
+                                        }`}
+                                    >
+                                        {plan.cta}
+                                    </Button>
                                 </motion.div>
                             );
                         })}

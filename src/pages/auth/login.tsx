@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import AnimateIn from "../../components/animations/AnimateIn";
 import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
@@ -8,6 +8,7 @@ import { getPostAuthRedirect, performRedirect } from "../../lib/roleRedirect";
 const Login = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -20,6 +21,11 @@ const Login = () => {
         try {
             const user = await login({ email, password });
             const stage = user.onboarding_stage;
+            const redirect = searchParams.get("redirect");
+            if (redirect?.startsWith("/") && !redirect.startsWith("//")) {
+                navigate(redirect, { replace: true });
+                return;
+            }
             if (stage > 4) {
                 performRedirect(getPostAuthRedirect(user), navigate);
             } else if (!user.is_verified) {

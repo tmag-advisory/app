@@ -7,6 +7,7 @@ import HRDashboardLayout from "../layouts/hrlayouts";
 import DoctorDashboardLayout from "../layouts/doctorlayouts";
 import ProtectedRoute from "../components/guards/ProtectedRoute";
 import RoleGuard from "../components/guards/RoleGuard";
+import FamilyMemberRoute from "../components/guards/FamilyMemberRoute";
 
 // Marketing pages (lazy-loaded)
 const Home = lazy(() => import("../pages/home/home"));
@@ -55,6 +56,9 @@ const PlanDetails = lazy(() => import("../pages/dashboard/plan-details"));
 const Settings = lazy(() => import("../pages/dashboard/settings"));
 const Transactions = lazy(() => import("../pages/dashboard/transactions"));
 const MyEbooks = lazy(() => import("../pages/dashboard/my-ebooks"));
+const FamilyTripBuilder = lazy(() => import("../pages/dashboard/family-trip-builder"));
+const FamilyTripView = lazy(() => import("../pages/dashboard/family-trip-view"));
+const BuyFamilyPlan = lazy(() => import("../pages/dashboard/buy-family-plan"));
 
 // HR dashboard (lazy-loaded)
 const HROverview = lazy(() => import("../pages/hr/overview"));
@@ -76,6 +80,8 @@ const ApplyAsDoctor = lazy(() => import("../pages/apply-as-doctor/index"));
 
 // Payment pages
 const PaymentCallback = lazy(() => import("../pages/payment/callback"));
+const FamilyCheckout = lazy(() => import("../pages/family-checkout"));
+const FamilyPaymentCallback = lazy(() => import("../pages/family-payment-callback"));
 
 // Company onboarding pages
 const CompanyOnboarding = lazy(() => import("../pages/company-onboarding/company-onboarding"));
@@ -85,6 +91,11 @@ const CompanyOnboardingCallback = lazy(() => import("../pages/company-onboarding
 const NotFound = lazy(() => import("../pages/not-found/not-found"));
 const ServerError = lazy(() => import("../pages/not-found/server-error"));
 const Unauthorized = lazy(() => import("../pages/not-found/unauthorized"));
+
+// Family member pages
+const FamilyLogin = lazy(() => import("../pages/family/login"));
+const FamilyDashboard = lazy(() => import("../pages/family/dashboard"));
+const FamilyPlanDetail = lazy(() => import("../pages/family/plan-detail"));
 
 
 const router = createBrowserRouter([
@@ -165,6 +176,16 @@ const router = createBrowserRouter([
         element: <PaymentCallback />,
     },
 
+    // Family plan checkout and payment callback
+    {
+        path: "family-checkout",
+        element: <FamilyCheckout />,
+    },
+    {
+        path: "family-payment-callback",
+        element: <FamilyPaymentCallback />,
+    },
+
     // HR billing payment callback
     {
         path: "hr/billing/callback",
@@ -209,6 +230,25 @@ const router = createBrowserRouter([
             { path: "settings", element: <Settings /> },
             { path: "transactions", element: <Transactions /> },
             { path: "my-ebooks", element: <MyEbooks /> },
+            { path: "family-trip", element: <FamilyTripBuilder /> },
+            { path: "family-trip/:id", element: <FamilyTripView /> },
+            { path: "buy-family-plan", element: <BuyFamilyPlan /> },
+        ],
+    },
+
+    // Family Member dashboard
+    {
+        path: "family",
+        children: [
+            { path: "login", element: <FamilyLogin /> },
+            { 
+                path: "dashboard", 
+                element: <FamilyMemberRoute><FamilyDashboard /></FamilyMemberRoute> 
+            },
+            { 
+                path: "plans/:id", 
+                element: <FamilyMemberRoute><FamilyPlanDetail /></FamilyMemberRoute> 
+            },
         ],
     },
 

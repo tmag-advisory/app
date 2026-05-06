@@ -1,8 +1,5 @@
-import { useState } from "react";
 import { LucideArrowUpRight, LucideMail, LucideMapPin, LucidePhone } from "lucide-react";
 import { Link } from "react-router-dom";
-import Button from "../ui/Button";
-import { useNewsletterSubscribe } from "../../api/hooks";
 
 const footerLinks = [
     {
@@ -46,15 +43,6 @@ const footerLinks = [
 ];
 
 const FooterSection = () => {
-    const [newsletterEmail, setNewsletterEmail] = useState("");
-    const [destination, setDestination] = useState("");
-    const { mutate: subscribe, isPending: isSubscribing, isSuccess: isSubscribed, isError: isSubscribeError, error: subscribeError } = useNewsletterSubscribe();
-
-    const handleSubscribe = (e: React.FormEvent) => {
-        e.preventDefault();
-        subscribe({ email: newsletterEmail });
-    };
-
     return (
         <footer className="relative bg-darkest text-white min-h-screen flex flex-col overflow-hidden">
             {/* Ambient orbs */}

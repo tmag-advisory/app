@@ -1,14 +1,27 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useTravelPlans, useDashboardAnalytics } from "../../api/hooks";
+import {
+    useTravelPlans,
+    useDashboardAnalytics,
+    useFamilyPackageActive,
+} from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
 import DashboardAnalyticsCharts from "../../components/dashboard/DashboardAnalyticsCharts";
-import { LucideCoins, LucideFileText, LucidePlusCircle, LucideArrowRight, LucideLoader2 } from "lucide-react";
+import {
+    LucideCoins,
+    LucideFileText,
+    LucidePlusCircle,
+    LucideArrowRight,
+    LucideLoader2,
+    LucideUsers,
+} from "lucide-react";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 import { useEffect } from "react";
 import QuestionnaireProgressBanner from "../../components/dashboard/QuestionnaireProgressBanner";
+import { familyPlans, formatFamilyAdditionalMemberPrice, formatFamilyPlanPrice } from "../../constants/companyPlans";
+import { useCurrencyStore } from "../../stores/currencyStore";
 
 const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
 const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
@@ -24,8 +37,11 @@ const DashboardOverview = () => {
     const { data: plansData, isLoading: plansLoading } = useTravelPlans({ per_page: 5 });
     // const { data: onboardingData } = useOnboarding();
     const { data: dashboardAnalytics, isLoading: analyticsLoading } = useDashboardAnalytics(undefined);
+    const { data: activeFamilyPackage } = useFamilyPackageActive();
+    const { selectedCurrency } = useCurrencyStore();
 
     const plans = plansData?.data || [];
+    const starterFamilyPlan = familyPlans[0];
     // const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
 
     useEffect(() => {
@@ -37,7 +53,9 @@ const DashboardOverview = () => {
 
     return (
         <div>
-            <DashboardHeader title={`Welcome back, ${user?.first_name ?? ""}.`} />
+            <DashboardHeader
+                title={`Welcome back, ${user?.first_name ?? ""}.`}
+            />
 
             <QuestionnaireProgressBanner />
 
@@ -70,6 +88,48 @@ const DashboardOverview = () => {
                 </Link>
             </div>
 
+            {/* Family plan upsell — shown when no active family package */}
+            {(!activeFamilyPackage ||
+                activeFamilyPackage.status !== "ACTIVE") && (
+                <div className="my-6">
+                    <div className="rounded-3xl border border-accent/30 bg-linear-to-br from-accent/5 to-transparent p-6">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-start gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                                    <LucideUsers className="w-5 h-5 text-accent" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-heading">
+                                        Family Plan
+                                    </p>
+                                    <p className="text-xs text-muted mt-0.5">
+                                        Cover up to 6 family members in one standalone family plan
+                                    </p>
+                                    <div className="flex items-center gap-3 mt-1.5">
+                                        <span className="text-xs font-medium text-accent">
+                                            From {formatFamilyPlanPrice(starterFamilyPlan, selectedCurrency)}
+                                        </span>
+                                        <span className="text-xs text-muted">
+                                            •
+                                        </span>
+                                        <span className="text-xs text-muted">
+                                            Extra members {formatFamilyAdditionalMemberPrice(starterFamilyPlan, selectedCurrency)} each
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <Link
+                                to="/family-checkout?plan=FAMILY_ONE_TRIP"
+                                className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white font-semibold text-sm hover:bg-accent/90 transition-colors duration-200"
+                            >
+                                View Plans
+                                <LucideArrowRight className="w-4 h-4" />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <DashboardAnalyticsCharts
                 data={dashboardAnalytics}
                 isLoading={analyticsLoading}
@@ -79,18 +139,22 @@ const DashboardOverview = () => {
             {/* Recent plans */}
             <div className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
                 <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border-light/50">
-                    <h2 className="text-base font-semibold text-heading">Recent plans</h2>
-                    <Link to="/dashboard/plans" className="text-xs text-accent font-medium hover:underline flex items-center gap-1">
+                    <h2 className="text-base font-semibold text-heading">
+                        Recent plans
+                    </h2>
+                    <Link
+                        to="/dashboard/plans"
+                        className="text-xs text-accent font-medium hover:underline flex items-center gap-1"
+                    >
                         View all <LucideArrowRight className="w-3 h-3" />
                     </Link>
                 </div>
 
-                {plansLoading ? (
+                {plansLoading ?
                     <div className="flex items-center justify-center py-12">
                         <LucideLoader2 className="w-6 h-6 text-accent animate-spin" />
                     </div>
-                ) : (
-                    <div className="divide-y divide-border-light/50">
+                :   <div className="divide-y divide-border-light/50">
                         {plans.map((plan) => {
                             const riskLabel = getRiskLabel(plan.riskScore);
                             return (
@@ -104,10 +168,16 @@ const DashboardOverview = () => {
                                             {plan.destination}
                                         </p>
                                         <p className="text-xs text-muted">
-                                            {plan.country} · {plan.duration} days · {new Date(plan.createdAt).toLocaleDateString()}
+                                            {plan.country} · {plan.duration}{" "}
+                                            days ·{" "}
+                                            {new Date(
+                                                plan.createdAt,
+                                            ).toLocaleDateString()}
                                         </p>
                                     </div>
-                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${riskColors[riskLabel]} ${riskBg[riskLabel]}`}>
+                                    <span
+                                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${riskColors[riskLabel]} ${riskBg[riskLabel]}`}
+                                    >
                                         {riskLabel} risk
                                     </span>
                                 </Link>
@@ -119,9 +189,14 @@ const DashboardOverview = () => {
                                     <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
                                         <LucideFileText className="w-8 h-8 text-accent" />
                                     </div>
-                                    <p className="text-sm font-semibold text-heading mb-2">No plans yet</p>
+                                    <p className="text-sm font-semibold text-heading mb-2">
+                                        No plans yet
+                                    </p>
                                     <p className="text-xs text-muted mb-6">
-                                        Create your first travel health plan to get personalized recommendations for vaccines, medications, and safety guidance.
+                                        Create your first travel health plan to
+                                        get personalized recommendations for
+                                        vaccines, medications, and safety
+                                        guidance.
                                     </p>
                                     <Link
                                         to="/dashboard/create-plan"
@@ -134,7 +209,7 @@ const DashboardOverview = () => {
                             </div>
                         )}
                     </div>
-                )}
+                }
             </div>
         </div>
     );

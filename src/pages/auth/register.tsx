@@ -125,7 +125,7 @@ const Register = () => {
             setStage(2);
             await refreshProfile();
             toast.success("Email verified!");
-            navigate("/onboarding");
+            navigate(selectedPlan?.startsWith("FAMILY") ? "/dashboard" : "/onboarding");
         } catch (err) {
             if (err instanceof AxiosError) {
                 toast.error(err.response?.data?.error || "Invalid code. Please try again.");

@@ -55,6 +55,11 @@ const Onboarding = () => {
     const { data: onboardingData } = useOnboarding();
     const { data: myCompanies } = useMyCompanies();
 
+    if (user?.type?.toUpperCase() === "FAMILY") {
+        navigate("/dashboard", { replace: true });
+        return null;
+    }
+
     // If user was invited (has a company membership already), prefill and lock fields
     const invitedCompany = myCompanies && myCompanies.length > 0 ? myCompanies[0] : null;
     const isInvitedUser = !!invitedCompany;
