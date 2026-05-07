@@ -40,7 +40,7 @@ const FamilyPaymentCallback = () => {
             if (success === "true" && txRef) {
                 setStatus("success");
                 setPurchaseInfo({
-                    packageType: packageType || "ONE_TRIP",
+                    packageType: packageType || "STANDARD",
                     tripsAllowed: parseInt(tripsAllowed || "1", 10),
                     amount: amount || "$0",
                 });
@@ -73,9 +73,7 @@ const FamilyPaymentCallback = () => {
         handleResult();
     }, [success, txRef]);
 
-    const packageDisplayName = purchaseInfo?.packageType === "TWO_TRIP"
-        ? "Two Family Plans"
-        : "One Family Plan";
+    const packageDisplayName = "Family Plan";
 
     return (
         <div className="min-h-screen bg-background-primary flex flex-col">

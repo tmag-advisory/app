@@ -73,7 +73,7 @@ export const individualPlans: IndividualPlanDefinition[] = [
   {
     ...creditPlans[0],
     priceNote: "1 credit included at signup",
-    cta: "Start free",
+    cta: "Get Essential",
     highlighted: false,
     features: [
       "Destination health risk overview (including current alerts & outbreaks)",
@@ -85,7 +85,7 @@ export const individualPlans: IndividualPlanDefinition[] = [
   {
     ...creditPlans[1],
     priceNote: "per credit",
-    cta: "Get started",
+    cta: "Get Standard",
     highlighted: true,
     features: [
       "Destination health risk overview (including current alerts & outbreaks)",
@@ -267,7 +267,7 @@ export const enterpriseTierColors: Record<SignupRange, Record<ServiceLevel, {
 };
 
 export interface FamilyPlanDefinition {
-  id: "ONE_TRIP" | "TWO_TRIP";
+  id: "STANDARD";
   name: string;
   description: string;
   priceUsd: number;
@@ -300,16 +300,16 @@ export function formatFamilyAdditionalMemberPrice(plan: FamilyPlanDefinition, cu
 
 export const familyPlans: FamilyPlanDefinition[] = [
   {
-    id: "ONE_TRIP",
-    name: "One Family Plan",
-    description: "One standalone family travel health plan for up to 6 family members.",
+    id: "STANDARD",
+    name: "Family Plan",
+    description: "One family travel health plan for up to 6 family members. Covers everyone in a single trip.",
     priceUsd: 180,
     priceNgn: 180000,
     additionalMemberPriceUsd: 30,
     additionalMemberPriceNgn: 25000,
     priceNote: "for up to 6 family members",
-    cta: "Get One Plan",
-    highlighted: false,
+    cta: "Get Family Plan",
+    highlighted: true,
     features: [
       "Includes up to 6 family members",
       "$30 / ₦25,000 per additional family member",
@@ -319,25 +319,4 @@ export const familyPlans: FamilyPlanDefinition[] = [
       "Physician-reviewed and validated reports",
     ],
   },
-  {
-    id: "TWO_TRIP",
-    name: "Two Family Plans",
-    description: "Two standalone family travel health plans for families planning more than one trip.",
-    priceUsd: 360,
-    priceNgn: 360000,
-    additionalMemberPriceUsd: 30,
-    additionalMemberPriceNgn: 25000,
-    priceNote: "2 plans, each for up to 6 family members",
-    cta: "Get Two Plans",
-    highlighted: true,
-    features: [
-      "Covers 2 distinct family travel health plans",
-      "Each plan includes up to 6 family members",
-      "$30 / ₦25,000 per additional family member",
-      "Fully personalised health risk report for each member",
-      "Family-centric dashboard and individual member access codes",
-      "Physician-reviewed and validated reports",
-      "Priority support and review flag",
-    ],
-  }
 ];

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useInitiateFamilyPackageCheckout } from "../api/hooks";
 import FooterSection from "../components/sections/FooterSection";
 import Navbar from "../components/sections/Navbar";
@@ -13,7 +13,6 @@ import toast from "react-hot-toast";
 
 export default function FamilyCheckoutPage() {
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
     const { user } = useAuth();
     const { selectedCurrency } = useCurrencyStore();
 
@@ -47,18 +46,13 @@ export default function FamilyCheckoutPage() {
         e.preventDefault();
         if (!plan) return;
 
-        if (!user) {
-            toast.error("Please sign in to purchase a family plan.");
-            navigate(`/login?redirect=${encodeURIComponent(`/family-checkout?plan=FAMILY_${plan.id}`)}`);
-            return;
-        }
-
         if (!validate()) return;
 
         initiateCheckout(
             {
                 packageType: plan.id,
                 currency: normalizePlanCurrency(selectedCurrency),
+                ...(user ? {} : { name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim() }),
             },
             {
                 onSuccess: (data: FamilyPackageCheckoutResponse) => {
@@ -144,7 +138,7 @@ export default function FamilyCheckoutPage() {
                                                 className="text-accent hover:underline">
                                                 Sign in
                                             </Link>{" "}
-                                            to purchase a family plan.
+                                            to link this purchase to your account.
                                         </p>
                                     </div>
 

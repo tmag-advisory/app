@@ -1511,11 +1511,14 @@ export interface FamilyTripResponse {
 
 // ─── Family Package Purchase ─────────────────────────────────
 
-export type FamilyPackageType = "ONE_TRIP" | "TWO_TRIP";
+export type FamilyPackageType = "STANDARD";
 
 export interface FamilyPackageCheckoutRequest {
   packageType: FamilyPackageType;
   currency: BillingCurrency;
+  name?: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface FamilyPackageCheckoutResponse {

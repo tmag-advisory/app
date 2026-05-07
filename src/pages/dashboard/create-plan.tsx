@@ -94,7 +94,6 @@ const CreatePlan = () => {
         answers: {} as Record<string, unknown>,
         categoryIndex: 0,
         showVerify: false,
-        showIntro: true,
         riskConsentGiven: false,
         medicalDisclaimerConsentGiven: false,
     });
@@ -198,7 +197,6 @@ const CreatePlan = () => {
                 answersJson: JSON.stringify(sidebarState.answers),
                 categoryIndex: sidebarState.categoryIndex,
                 showVerify: sidebarState.showVerify,
-                showIntro: sidebarState.showIntro,
                 riskConsentGiven: sidebarState.riskConsentGiven,
             };
 
@@ -344,11 +342,6 @@ const CreatePlan = () => {
                             draftResumed ?
                                 (activeDraft?.showVerify ?? false)
                             :   false
-                        }
-                        initialShowIntro={
-                            draftResumed ?
-                                (activeDraft?.showIntro ?? true)
-                            :   true
                         }
                         initialRiskConsentGiven={
                             draftResumed ?

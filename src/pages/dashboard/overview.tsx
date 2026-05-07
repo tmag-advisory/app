@@ -3,7 +3,6 @@ import { useAuth } from "../../context/AuthContext";
 import {
     useTravelPlans,
     useDashboardAnalytics,
-    useFamilyPackageActive,
 } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
@@ -14,14 +13,12 @@ import {
     LucidePlusCircle,
     LucideArrowRight,
     LucideLoader2,
-    LucideUsers,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 import { useEffect } from "react";
 import QuestionnaireProgressBanner from "../../components/dashboard/QuestionnaireProgressBanner";
-import { familyPlans, formatFamilyAdditionalMemberPrice, formatFamilyPlanPrice } from "../../constants/companyPlans";
-import { useCurrencyStore } from "../../stores/currencyStore";
+
 
 const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
 const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
@@ -36,12 +33,9 @@ const DashboardOverview = () => {
     const { user, refreshProfile } = useAuth();
     const { data: plansData, isLoading: plansLoading } = useTravelPlans({ per_page: 5 });
     // const { data: onboardingData } = useOnboarding();
-    const { data: dashboardAnalytics, isLoading: analyticsLoading } = useDashboardAnalytics(undefined);
-    const { data: activeFamilyPackage } = useFamilyPackageActive();
-    const { selectedCurrency } = useCurrencyStore();
-
+    const { data: dashboardAnalytics, isLoading: analyticsLoading } =
+        useDashboardAnalytics(undefined);
     const plans = plansData?.data || [];
-    const starterFamilyPlan = familyPlans[0];
     // const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
 
     useEffect(() => {
@@ -88,47 +82,6 @@ const DashboardOverview = () => {
                 </Link>
             </div>
 
-            {/* Family plan upsell — shown when no active family package */}
-            {(!activeFamilyPackage ||
-                activeFamilyPackage.status !== "ACTIVE") && (
-                <div className="my-6">
-                    <div className="rounded-3xl border border-accent/30 bg-linear-to-br from-accent/5 to-transparent p-6">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                                    <LucideUsers className="w-5 h-5 text-accent" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-heading">
-                                        Family Plan
-                                    </p>
-                                    <p className="text-xs text-muted mt-0.5">
-                                        Cover up to 6 family members in one standalone family plan
-                                    </p>
-                                    <div className="flex items-center gap-3 mt-1.5">
-                                        <span className="text-xs font-medium text-accent">
-                                            From {formatFamilyPlanPrice(starterFamilyPlan, selectedCurrency)}
-                                        </span>
-                                        <span className="text-xs text-muted">
-                                            •
-                                        </span>
-                                        <span className="text-xs text-muted">
-                                            Extra members {formatFamilyAdditionalMemberPrice(starterFamilyPlan, selectedCurrency)} each
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <Link
-                                to="/family-checkout?plan=FAMILY_ONE_TRIP"
-                                className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white font-semibold text-sm hover:bg-accent/90 transition-colors duration-200"
-                            >
-                                View Plans
-                                <LucideArrowRight className="w-4 h-4" />
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <DashboardAnalyticsCharts
                 data={dashboardAnalytics}
