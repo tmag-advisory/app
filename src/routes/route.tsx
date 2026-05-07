@@ -59,6 +59,7 @@ const MyEbooks = lazy(() => import("../pages/dashboard/my-ebooks"));
 const FamilyTripBuilder = lazy(() => import("../pages/dashboard/family-trip-builder"));
 const FamilyTripView = lazy(() => import("../pages/dashboard/family-trip-view"));
 const BuyFamilyPlan = lazy(() => import("../pages/dashboard/buy-family-plan"));
+const FamilyManageMembers = lazy(() => import("../pages/dashboard/family-manage-members"));
 
 // HR dashboard (lazy-loaded)
 const HROverview = lazy(() => import("../pages/hr/overview"));
@@ -233,6 +234,7 @@ const router = createBrowserRouter([
             { path: "family-trip", element: <FamilyTripBuilder /> },
             { path: "family-trip/:id", element: <FamilyTripView /> },
             { path: "buy-family-plan", element: <BuyFamilyPlan /> },
+            { path: "family-members", element: <FamilyManageMembers /> },
         ],
     },
 

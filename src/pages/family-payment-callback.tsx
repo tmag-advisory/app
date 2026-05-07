@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 import { queryKeys } from "../api/hooks";
-import { LucideCheckCircle, LucideXCircle, LucideUsers, LucideLoader2 } from "lucide-react";
+import { LucideCheckCircle, LucideXCircle, LucideUsers, LucideLoader2, LucideMail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type PaymentStatus = "verifying" | "success" | "failed";
@@ -57,10 +57,6 @@ const FamilyPaymentCallback = () => {
                     txRef,
                     timestamp: Date.now(),
                 }));
-
-                setTimeout(() => {
-                    navigate("/dashboard", { replace: true });
-                }, 4000);
             } else {
                 setStatus("failed");
                 setErrorMessage(
@@ -138,7 +134,7 @@ const FamilyPaymentCallback = () => {
                                     transition={{ duration: 0.4, delay: 0.2, ease }}
                                     className="text-3xl md:text-4xl font-serif text-heading mb-3"
                                 >
-                                    Family Plan activated!
+                                    Family checkout complete!
                                 </motion.h1>
                                 <motion.div
                                     initial={{ opacity: 0, y: 16 }}
@@ -150,11 +146,13 @@ const FamilyPaymentCallback = () => {
                                         <LucideUsers className="w-5 h-5 text-accent" />
                                         <p className="text-lg font-serif font-semibold text-heading">{packageDisplayName}</p>
                                     </div>
-                                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">Plan includes</p>
-                                    <p className="text-2xl font-serif text-accent font-medium">
-                                        {purchaseInfo.tripsAllowed} Trip{purchaseInfo.tripsAllowed > 1 ? "s" : ""}
+                                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                                        <LucideMail className="w-6 h-6 text-accent" />
+                                    </div>
+                                    <p className="text-sm text-body leading-relaxed">
+                                        Your family plan purchase is complete. Please check your email for further instructions, family setup details, and next steps.
                                     </p>
-                                    <p className="text-sm text-muted mt-1">
+                                    <p className="text-sm text-muted mt-3">
                                         {purchaseInfo.amount} — fully paid
                                     </p>
                                 </motion.div>
@@ -164,8 +162,27 @@ const FamilyPaymentCallback = () => {
                                     transition={{ duration: 0.4, delay: 0.6, ease }}
                                     className="text-sm text-body"
                                 >
-                                    Your family plan is now active. Redirecting to your dashboard...
+                                    If you do not see the email within a few minutes, please check your spam or junk folder.
                                 </motion.p>
+                                <motion.div
+                                    initial={{ opacity: 0, y: 16 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.4, delay: 0.7, ease }}
+                                    className="mt-8 flex flex-col gap-3"
+                                >
+                                    <button
+                                        onClick={() => navigate("/dashboard")}
+                                        className="w-full py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200"
+                                    >
+                                        Go to dashboard
+                                    </button>
+                                    <Link
+                                        to="/"
+                                        className="w-full py-3 rounded-xl bg-button-secondary text-heading font-semibold text-sm cursor-pointer hover:bg-border-light transition-colors duration-200"
+                                    >
+                                        Back home
+                                    </Link>
+                                </motion.div>
                             </motion.div>
                         )}
 

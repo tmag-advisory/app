@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -13,11 +14,17 @@ import {
     LucidePlusCircle,
     LucideArrowRight,
     LucideLoader2,
+    LucideUsers,
+    LucideMapPin,
+    LucideRefreshCw,
+    LucideUserPlus,
+    LucideChevronRight,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
-import { useEffect } from "react";
 import QuestionnaireProgressBanner from "../../components/dashboard/QuestionnaireProgressBanner";
+import familyTripApi from "../../api/familyTrip";
+import type { FamilyTripResponse } from "../../api/types";
 
 
 const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
@@ -29,14 +36,173 @@ const getRiskLabel = (score: number) => {
     return "High";
 };
 
-const DashboardOverview = () => {
+
+const FamilyOverview = () => {
+    const { user } = useAuth();
+    const [trips, setTrips] = useState<FamilyTripResponse[]>([]);
+    const [tripsLoading, setTripsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchTrips();
+    }, []);
+
+    const fetchTrips = async () => {
+        setTripsLoading(true);
+        try {
+            const res = await familyTripApi.list();
+            setTrips(res.data.data ?? []);
+        } catch {
+            // silent
+        } finally {
+            setTripsLoading(false);
+        }
+    };
+
+    const totalMembers = trips.reduce((sum, t) => sum + (t.members?.length ?? 0), 0);
+    const activeTrips = trips.filter(t => t.status === "ACTIVE").length;
+
+    return (
+        <div>
+            <DashboardHeader
+                title={`Welcome back, ${user?.first_name ?? ""}.`}
+            />
+
+            {/* Family stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <StatCard
+                    label="Active trips"
+                    value={activeTrips}
+                    icon={<LucideMapPin className="w-4 h-4" />}
+                    accent
+                />
+                <StatCard
+                    label="Family members"
+                    value={totalMembers}
+                    icon={<LucideUsers className="w-4 h-4" />}
+                />
+                <Link
+                    to="/dashboard/family-trip"
+                    className="rounded-3xl border border-dark/20 bg-linear-to-br from-dark to-darkest p-6 flex flex-col justify-between text-white shadow-[0_4px_16px_-6px_rgba(10,20,18,0.18)] hover:from-darkest hover:to-darkest transition-all duration-200"
+                >
+                    <LucideUserPlus className="w-6 h-6 text-white/40 mb-6" />
+                    <div>
+                        <span className="text-sm font-semibold text-white block mb-1">
+                            Create family trip
+                        </span>
+                        <span className="text-xs text-white/40">
+                            Covered by your family plan
+                        </span>
+                    </div>
+                </Link>
+            </div>
+
+            {/* Quick actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <Link
+                    to="/dashboard/family-members"
+                    className={cn(DASHBOARD_GLASS_SURFACE, "p-5 flex items-center justify-between hover:bg-background-secondary/30 transition-colors")}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                            <LucideUsers className="w-5 h-5 text-accent" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-heading">Manage members</p>
+                            <p className="text-xs text-muted">View login codes &amp; regenerate</p>
+                        </div>
+                    </div>
+                    <LucideChevronRight className="w-4 h-4 text-muted" />
+                </Link>
+                <Link
+                    to="/dashboard/buy-family-plan"
+                    className={cn(DASHBOARD_GLASS_SURFACE, "p-5 flex items-center justify-between hover:bg-background-secondary/30 transition-colors")}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                            <LucideRefreshCw className="w-5 h-5 text-accent" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-heading">Buy family plan</p>
+                            <p className="text-xs text-muted">Purchase additional plans</p>
+                        </div>
+                    </div>
+                    <LucideChevronRight className="w-4 h-4 text-muted" />
+                </Link>
+            </div>
+
+            {/* Family trips list */}
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
+                <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border-light/50">
+                    <h2 className="text-base font-semibold text-heading">
+                        Family trips
+                    </h2>
+                </div>
+
+                {tripsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <LucideLoader2 className="w-6 h-6 text-accent animate-spin" />
+                    </div>
+                ) : trips.length > 0 ? (
+                    <div className="divide-y divide-border-light/50">
+                        {trips.map((trip) => (
+                            <Link
+                                key={trip.id}
+                                to={`/dashboard/family-trip/${trip.id}`}
+                                className="flex items-center justify-between px-4 sm:px-6 py-4 hover:bg-background-secondary/50 transition-colors duration-150 gap-3"
+                            >
+                                <div>
+                                    <p className="text-sm font-medium text-heading">
+                                        {trip.destination}
+                                    </p>
+                                    <p className="text-xs text-muted">
+                                        {trip.country} · {trip.duration} days · {trip.members?.length ?? 0} member{(trip.members?.length ?? 0) !== 1 ? "s" : ""}
+                                    </p>
+                                </div>
+                                <span className={cn(
+                                    "text-xs font-semibold px-2.5 py-1 rounded-full",
+                                    trip.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700" :
+                                    trip.status === "DRAFT" ? "bg-amber-50 text-amber-700" :
+                                    "bg-slate-100 text-muted"
+                                )}>
+                                    {trip.status}
+                                </span>
+                            </Link>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="px-6 py-12">
+                        <div className="max-w-md mx-auto text-center">
+                            <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                                <LucideUsers className="w-8 h-8 text-accent" />
+                            </div>
+                            <p className="text-sm font-semibold text-heading mb-2">
+                                No family trips yet
+                            </p>
+                            <p className="text-xs text-muted mb-6">
+                                Create your first family trip to get personalized travel health plans for every member.
+                            </p>
+                            <Link
+                                to="/dashboard/family-trip"
+                                className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-accent text-white font-semibold text-sm hover:bg-accent/90 transition-colors duration-200"
+                            >
+                                <LucidePlusCircle className="w-4 h-4" />
+                                Create a family trip
+                            </Link>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+
+const IndividualOverview = () => {
     const { user, refreshProfile } = useAuth();
     const { data: plansData, isLoading: plansLoading } = useTravelPlans({ per_page: 5 });
-    // const { data: onboardingData } = useOnboarding();
     const { data: dashboardAnalytics, isLoading: analyticsLoading } =
         useDashboardAnalytics(undefined);
     const plans = plansData?.data || [];
-    // const showQuestionnaireBanner = onboardingData && !onboardingData.questionnaireCompleted;
 
     useEffect(() => {
         async function checkAndRefreshProfile() {
@@ -166,6 +332,17 @@ const DashboardOverview = () => {
             </div>
         </div>
     );
+};
+
+const DashboardOverview = () => {
+    const { user } = useAuth();
+    const isFamily = user?.type?.toUpperCase() === "FAMILY";
+
+    if (isFamily) {
+        return <FamilyOverview />;
+    }
+
+    return <IndividualOverview />;
 };
 
 export default DashboardOverview;

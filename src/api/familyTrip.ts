@@ -22,6 +22,9 @@ export interface FamilyMemberLoginResponse {
 
 const familyTripApi = {
   // Main Applicant Endpoints
+  list: () =>
+    api.get<ApiResponse<FamilyTripResponse[]>>("/family-trips"),
+    
   preview: (data: FamilyTripRequest) =>
     api.post<ApiResponse<FamilyTripPreviewResponse>>("/family-trips/preview", data),
     

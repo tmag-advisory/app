@@ -298,6 +298,28 @@ export function formatFamilyAdditionalMemberPrice(plan: FamilyPlanDefinition, cu
     : `$${plan.additionalMemberPriceUsd.toLocaleString()}`;
 }
 
+export function calculateFamilyTotalPrice(
+  plan: FamilyPlanDefinition,
+  currency: string,
+  additionalMembers: number
+): { total: number; base: number; extra: number } {
+  const base = normalizePlanCurrency(currency) === "NGN" ? plan.priceNgn : plan.priceUsd;
+  const perMember = normalizePlanCurrency(currency) === "NGN" ? plan.additionalMemberPriceNgn : plan.additionalMemberPriceUsd;
+  const extra = additionalMembers * perMember;
+  return { total: base + extra, base, extra };
+}
+
+export function formatFamilyTotalPrice(
+  plan: FamilyPlanDefinition,
+  currency: string,
+  additionalMembers: number
+): string {
+  const { total } = calculateFamilyTotalPrice(plan, currency, additionalMembers);
+  return normalizePlanCurrency(currency) === "NGN"
+    ? `₦${total.toLocaleString()}`
+    : `$${total.toLocaleString()}`;
+}
+
 export const familyPlans: FamilyPlanDefinition[] = [
   {
     id: "STANDARD",

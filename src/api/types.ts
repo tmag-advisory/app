@@ -252,6 +252,8 @@ export interface DoctorApplicationRequest {
   profilePicture?: File;
   signature: File;
   stamp?: File;
+  practicingLicense?: File;
+  travelMedicineCertificate?: File;
   confidentialityAgreementAccepted: boolean;
   conductAgreementAccepted: boolean;
 }
@@ -263,6 +265,8 @@ export interface DoctorProfileUpdateRequest {
   medicalLicenseNumber?: string;
   signature?: File;
   stamp?: File;
+  practicingLicense?: File;
+  travelMedicineCertificate?: File;
 }
 
 export interface DoctorProfileResponse {
@@ -277,6 +281,8 @@ export interface DoctorProfileResponse {
   medicalLicenseNumber: string;
   signatureUrl: string | null;
   stampUrl: string | null;
+  practicingLicenseUrl: string | null;
+  travelMedicineCertificateUrl: string | null;
   doctorApplicationStatus: DoctorApplicationStatus;
   applicationSubmittedAt: string | null;
 }
@@ -1516,6 +1522,7 @@ export type FamilyPackageType = "STANDARD";
 export interface FamilyPackageCheckoutRequest {
   packageType: FamilyPackageType;
   currency: BillingCurrency;
+  additionalMembers: number;
   name?: string;
   email?: string;
   phone?: string;
@@ -1531,6 +1538,8 @@ export interface FamilyPackageCheckoutResponse {
   currency: BillingCurrency;
   currencySymbol: string;
   purchaseId: number;
+  additionalMembers: number;
+  totalMembers: number;
   error?: string;
   errorType?: string;
 }
@@ -1543,6 +1552,8 @@ export interface FamilyPackagePurchaseResponse {
   packageType: FamilyPackageType;
   tripsAllowed: number;
   tripsUsed: number;
+  additionalMembers: number;
+  totalMembers: number;
   amountPaidMinor: number;
   currency: string;
   paymentProvider: string | null;

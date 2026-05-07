@@ -589,7 +589,7 @@ export const familyPackagePurchaseApi = {
     api.post<ApiResponse<FamilyPackageCheckoutResponse>>("/family-package-purchases/checkout", data).then((r) => r.data.data),
 
   getActive: () =>
-    api.get<ApiResponse<FamilyPackagePurchaseResponse | null>>("/family-package-purchases/active").then((r) => r.data.data),
+    api.get<ApiResponse<FamilyPackagePurchaseResponse[]>>("/family-package-purchases/active").then((r) => r.data.data),
 
   getHistory: () =>
     api.get<ApiResponse<FamilyPackagePurchaseResponse[]>>("/family-package-purchases/history").then((r) => r.data.data),
@@ -774,6 +774,8 @@ export const doctorApi = {
     if (data.profilePicture) form.append("profilePicture", data.profilePicture);
     form.append("signature", data.signature);
     if (data.stamp) form.append("stamp", data.stamp);
+    if (data.practicingLicense) form.append("practicingLicense", data.practicingLicense);
+    if (data.travelMedicineCertificate) form.append("travelMedicineCertificate", data.travelMedicineCertificate);
     form.append("confidentialityAgreementAccepted", String(data.confidentialityAgreementAccepted));
     form.append("conductAgreementAccepted", String(data.conductAgreementAccepted));
     return api.post<ApiResponse<void>>("/doctor/apply", form, { headers: { "Content-Type": undefined } }).then((r) => r.data.data);
@@ -790,6 +792,8 @@ export const doctorApi = {
     if (data.medicalLicenseNumber) form.append("medicalLicenseNumber", data.medicalLicenseNumber);
     if (data.signature) form.append("signature", data.signature);
     if (data.stamp) form.append("stamp", data.stamp);
+    if (data.practicingLicense) form.append("practicingLicense", data.practicingLicense);
+    if (data.travelMedicineCertificate) form.append("travelMedicineCertificate", data.travelMedicineCertificate);
     return api.put<ApiResponse<DoctorProfileResponse>>("/doctor/profile", form, { headers: { "Content-Type": undefined } }).then((r) => r.data.data);
   },
 

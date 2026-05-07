@@ -45,7 +45,7 @@ const BuyFamilyPlan = () => {
                 {familyPlans.map((plan) => (
                     <div
                         key={plan.id}
-                        className="relative p-8 flex flex-col justify-between overflow-hidden rounded-3xl border border-accent/25"
+                        className="relative py-8 p-6 aspect-2/3 flex flex-col justify-between overflow-hidden min-h-150 border border-accent/25"
                     >
                         <div
                             className="absolute inset-0"

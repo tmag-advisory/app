@@ -62,18 +62,18 @@ const individualNav: NavItem[] = [
 
 const familyNav: NavItem[] = [
     {
-        label: "My Family Trips",
+        label: "Family Trips",
         href: "/dashboard",
         icon: <LucideLayoutDashboard className="w-4 h-4" />,
     },
     {
         label: "Create Family Trip",
         href: "/dashboard/family-trip",
-        icon: <LucideUsers className="w-4 h-4" />,
+        icon: <LucidePlusCircle className="w-4 h-4" />,
     },
     {
         label: "Manage Members",
-        href: "/dashboard/family-trip",
+        href: "/dashboard/family-members",
         icon: <LucideUsers className="w-4 h-4" />,
     },
     {
