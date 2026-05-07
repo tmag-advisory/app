@@ -515,6 +515,7 @@ const PlanQuestionnaireFlow = forwardRef<
         const [answers, setAnswers] = useState<Record<string, unknown>>(
             initialAnswers ?? {},
         );
+        const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
         const [categoryIndex, setCategoryIndex] =
             useState(initialCategoryIndex);
         const [showVerify, setShowVerify] = useState(initialShowVerify);
@@ -652,60 +653,67 @@ const PlanQuestionnaireFlow = forwardRef<
         };
 
         const validateCurrentPage = (): boolean => {
+            const errors = new Set<string>();
+            const toastMessages: string[] = [];
+
+            // 1. Collect all unanswered required fields
             for (const q of visibleQuestions) {
                 if (!isRequiredAnswered(q)) {
+                    errors.add(q.key);
                     if (q.type === "trip_itinerary") {
                         const d = hydrateLegacyTripItinerary(
                             answers[q.key] as TripItineraryData,
                         );
                         const missingErr = getTripItineraryMissingFieldError(d);
                         if (missingErr) {
-                            toast.error(missingErr);
-                            return false;
+                            toastMessages.push(missingErr);
                         }
                         const tripErr = validateTripItineraryDates(d);
                         if (tripErr) {
-                            toast.error(tripErr);
-                            return false;
+                            toastMessages.push(tripErr);
                         }
                     }
-                    toast.error(`Please answer: "${q.text}"`);
-                    return false;
                 }
             }
+
+            // 2. Collect all invalid-value fields
             for (const q of visibleQuestions) {
-                if (q.key === "date_of_birth" && q.required) {
-                    const v = String(answers[q.key] ?? "").trim();
-                    if (v && !isDateOfBirthPlausible(v)) {
-                        toast.error("Date of birth cannot be in the future.");
-                        return false;
-                    }
+                const v = String(answers[q.key] ?? "").trim();
+                if (q.key === "date_of_birth" && v && !isDateOfBirthPlausible(v)) {
+                    errors.add(q.key);
+                    toastMessages.push("Date of birth cannot be in the future.");
                 }
-                if (q.key === "email_address" && q.required) {
-                    const v = String(answers[q.key] ?? "").trim();
-                    if (v && !isPlausibleEmail(v)) {
-                        toast.error("Please enter a valid email address.");
-                        return false;
-                    }
+                if (q.key === "email_address" && v && !isPlausibleEmail(v)) {
+                    errors.add(q.key);
+                    toastMessages.push("Please enter a valid email address.");
                 }
                 if (
-                    q.key === "longest_flight_leg_hours" ||
-                    q.key === "total_flying_hours" ||
-                    q.key === "number_of_flight_legs"
+                    (q.key === "longest_flight_leg_hours" ||
+                     q.key === "total_flying_hours" ||
+                     q.key === "number_of_flight_legs") &&
+                    v && !isValidOptionalNonNegativeNumber(v)
                 ) {
-                    const v = String(answers[q.key] ?? "").trim();
-                    if (v && !isValidOptionalNonNegativeNumber(v)) {
-                        toast.error(
-                            `Please enter a valid non-negative number for "${q.text}"`,
-                        );
-                        return false;
-                    }
+                    errors.add(q.key);
+                    toastMessages.push(`Please enter a valid non-negative number for "${q.text}"`);
                 }
             }
+
+            if (errors.size > 0) {
+                setFieldErrors(errors);
+                if (toastMessages.length > 0) {
+                    toast.error(toastMessages[0]);
+                } else {
+                    toast.error("Please fill in all required fields.");
+                }
+                return false;
+            }
+
+            setFieldErrors(new Set());
             return true;
         };
 
         const goToNext = () => {
+            setFieldErrors(new Set());
             if (requiresMedicalDisclaimerConsent &&
                 !medicalDisclaimerConsentGiven) {
                 toast.error("Please read and agree to the Consent, Medical Disclaimer, and Privacy Policy.");
@@ -725,6 +733,7 @@ const PlanQuestionnaireFlow = forwardRef<
         };
 
         const goToPrevious = () => {
+            setFieldErrors(new Set());
             if (showVerify) {
                 setCategoryIndex(categories.length - 1);
                 setShowVerify(false);
@@ -777,6 +786,11 @@ const PlanQuestionnaireFlow = forwardRef<
 
         const setAnswer = (key: string, value: unknown) => {
             setAnswers((prev) => ({ ...prev, [key]: value }));
+            setFieldErrors((prev) => {
+                const next = new Set(prev);
+                next.delete(key);
+                return next;
+            });
         };
 
         const toggleCheckbox = (key: string, value: string) => {
@@ -789,6 +803,11 @@ const PlanQuestionnaireFlow = forwardRef<
                             current.filter((v) => v !== value)
                         :   [...current, value],
                 };
+            });
+            setFieldErrors((prev) => {
+                const next = new Set(prev);
+                next.delete(key);
+                return next;
             });
         };
 
@@ -977,22 +996,31 @@ const PlanQuestionnaireFlow = forwardRef<
                                 </div>
                             )}
 
-                            {visibleQuestions.map((question) => (
-                                <QuestionBlock
-                                    key={question.key}
-                                    question={question}
-                                    value={answers[question.key]}
-                                    answers={answers}
-                                    prefilled={PREFILLED_KEYS.has(question.key)}
-                                    isHighlighted={highlightedFieldKey === question.key}
-                                    onChange={(value) =>
-                                        setAnswer(question.key, value)
-                                    }
-                                    onToggleCheckbox={(value) =>
-                                        toggleCheckbox(question.key, value)
-                                    }
-                                />
-                            ))}
+                            {isRiskSection && !riskConsentGiven ? (
+                                <div className="rounded-2xl border-2 border-dashed border-border-light/60 bg-background-primary/30 p-8 text-center">
+                                    <p className="text-sm text-muted leading-relaxed">
+                                        Please agree to the confidentiality statement above to access and answer these questions.
+                                    </p>
+                                </div>
+                            ) : (
+                                visibleQuestions.map((question) => (
+                                    <QuestionBlock
+                                        key={question.key}
+                                        question={question}
+                                        value={answers[question.key]}
+                                        answers={answers}
+                                        prefilled={PREFILLED_KEYS.has(question.key)}
+                                        isHighlighted={highlightedFieldKey === question.key}
+                                        hasError={fieldErrors.has(question.key)}
+                                        onChange={(value) =>
+                                            setAnswer(question.key, value)
+                                        }
+                                        onToggleCheckbox={(value) =>
+                                            toggleCheckbox(question.key, value)
+                                        }
+                                    />
+                                ))
+                            )}
                         </motion.div>
                     </AnimatePresence>
                 )}
@@ -1162,21 +1190,30 @@ interface QuestionBlockProps {
     answers: Record<string, unknown>;
     prefilled: boolean;
     isHighlighted?: boolean;
+    hasError?: boolean;
     onChange: (value: unknown) => void;
     onToggleCheckbox: (value: string) => void;
 }
 
-const QuestionBlock = ({ question, value, prefilled, isHighlighted, onChange, onToggleCheckbox }: QuestionBlockProps) => {
+const QuestionBlock = ({ question, value, prefilled, isHighlighted, hasError, onChange, onToggleCheckbox }: QuestionBlockProps) => {
+    const ringClass = isHighlighted
+        ? "ring-2 ring-yellow-600/50 bg-accent/3"
+        : hasError
+            ? "ring-2 ring-red-400/60 bg-red-50/40"
+            : "";
     return (
         <div
             id={`question-field-${question.key}`}
-            className={`space-y-3 transition-all duration-500 ${isHighlighted ? "ring-2 ring-yellow-600/50 bg-accent/3 p-1.5" : ""}`}
+            className={`space-y-3 rounded-xl p-4 transition-all duration-500 ${ringClass}`}
         >
             <div>
                 <p className="text-base md:text-lg font-semibold text-heading leading-snug">
                     {question.text}
                     {question.required && <span className="text-red-500 ml-1">*</span>}
                 </p>
+                {hasError && (
+                    <p className="text-xs text-red-500 mt-1 font-medium">This field is required</p>
+                )}
                 {question.description && (
                     <p className="text-sm text-muted mt-1 leading-relaxed">{question.description}</p>
                 )}
@@ -1188,6 +1225,7 @@ const QuestionBlock = ({ question, value, prefilled, isHighlighted, onChange, on
                 question={question}
                 value={value}
                 prefilled={prefilled}
+                hasError={hasError}
                 onChange={onChange}
                 onToggleCheckbox={onToggleCheckbox}
             />
@@ -1201,16 +1239,21 @@ const QuestionInput = ({
     question,
     value,
     prefilled,
+    hasError,
     onChange,
     onToggleCheckbox,
 }: {
     question: Question;
     value: unknown;
-        prefilled: boolean;
+    prefilled: boolean;
+    hasError?: boolean;
     onChange: (value: unknown) => void;
     onToggleCheckbox: (value: string) => void;
 }) => {
     const today = todayIsoDateLocal();
+
+    const errorInputClass = hasError ? "!border-red-400/70" : "";
+    const unselectedBorderClass = hasError ? "border-red-400/70" : "border-border-light/60";
 
     switch (question.type) {
         case "radio":
@@ -1223,12 +1266,12 @@ const QuestionInput = ({
                             onClick={() => onChange(option.value)}
                             className={`text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 cursor-pointer ${value === option.value
                                 ? "border-accent bg-white shadow-sm"
-                                : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
+                                : `${unselectedBorderClass} hover:border-border bg-white/60 hover:bg-white`
                                 }`}
                         >
                             <div className="flex items-center gap-3">
                                 <div
-                                    className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${value === option.value ? "border-accent bg-accent" : "border-border"}`}
+                                    className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${value === option.value ? "border-accent bg-accent" : hasError ? "border-red-400/70" : "border-border"}`}
                                 >
                                     {value === option.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                 </div>
@@ -1253,12 +1296,12 @@ const QuestionInput = ({
                                 onClick={() => onToggleCheckbox(option.value)}
                                 className={`text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 cursor-pointer ${checked
                                     ? "border-accent bg-white shadow-sm"
-                                    : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
+                                    : `${unselectedBorderClass} hover:border-border bg-white/60 hover:bg-white`
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
                                     <div
-                                        className={`w-4 h-4 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${checked ? "border-accent bg-accent" : "border-border"}`}
+                                        className={`w-4 h-4 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${checked ? "border-accent bg-accent" : hasError ? "border-red-400/70" : "border-border"}`}
                                     >
                                         {checked && <LucideCheck className="w-2.5 h-2.5 text-white" />}
                                     </div>
@@ -1278,6 +1321,7 @@ const QuestionInput = ({
                     value={String(value ?? "")}
                     onChange={(v) => onChange(v)}
                     placeholder={question.placeholder}
+                    hasError={hasError}
                 />
             );
 
@@ -1288,7 +1332,7 @@ const QuestionInput = ({
                     value={String(value ?? "")}
                     max={question.key === "date_of_birth" ? today : undefined}
                     onChange={(e) => onChange(e.target.value)}
-                    className={baseInputClass}
+                    className={`${baseInputClass} ${errorInputClass}`}
                     readOnly={prefilled}
                 />
             );
@@ -1299,7 +1343,7 @@ const QuestionInput = ({
                     value={String(value ?? "")}
                     onChange={(name) => onChange(name)}
                     placeholder={question.placeholder ?? "Select country"}
-                    inputClassName={`${baseInputClass} pr-10`}
+                    inputClassName={`${baseInputClass} ${errorInputClass} pr-10`}
                 />
             );
 
@@ -1328,7 +1372,7 @@ const QuestionInput = ({
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={question.placeholder}
                     readOnly={prefilled}
-                    className={`${baseInputClass} ${prefilled ? "bg-background-primary/50 cursor-default" : ""}`}
+                    className={`${baseInputClass} ${errorInputClass} ${prefilled ? "bg-background-primary/50 cursor-default" : ""}`}
                 />
             );
     }
@@ -1340,10 +1384,12 @@ const ExpandableTextarea = ({
     value,
     onChange,
     placeholder,
+    hasError,
 }: {
     value: string;
     onChange: (v: string) => void;
     placeholder?: string;
+    hasError?: boolean;
 }) => {
     const [expanded, setExpanded] = useState(false);
     const hasContent = value.trim().length > 0;
@@ -1353,7 +1399,7 @@ const ExpandableTextarea = ({
             <button
                 type="button"
                 onClick={() => setExpanded(true)}
-                className="w-full flex items-center justify-between px-5 py-3.5 rounded-xl border-2 border-dashed border-border-light text-sm text-muted hover:border-accent hover:text-accent hover:bg-accent/5 transition-all duration-200"
+                className={`w-full flex items-center justify-between px-5 py-3.5 rounded-xl border-2 border-dashed text-sm transition-all duration-200 ${hasError ? "border-red-400/70 text-red-500 hover:border-red-500" : "border-border-light text-muted hover:border-accent hover:text-accent hover:bg-accent/5"}`}
             >
                 <span>{placeholder ?? "Click to add details..."}</span>
                 <LucideChevronDown className="w-4 h-4 shrink-0" />
@@ -1386,7 +1432,7 @@ const ExpandableTextarea = ({
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder}
                     rows={3}
-                    className={`${baseInputClass} min-h-24 resize-none`}
+                    className={`${baseInputClass} ${hasError ? "!border-red-400/70" : ""} min-h-24 resize-none`}
                 />
             )}
         </div>
