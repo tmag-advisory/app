@@ -131,7 +131,6 @@ const isPlanDownloadAvailable = (plan: TravelPlanListItemResponse) => {
         return false;
     }
     return (
-        !plan.doctorValidationStatus ||
         plan.doctorValidationStatus === "NOT_REQUIRED" ||
         plan.doctorValidationStatus === "APPROVED"
     );

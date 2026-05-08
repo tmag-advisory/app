@@ -1130,6 +1130,9 @@ const PlanDetails = () => {
 
   const parsedContent = parseGeneratedPlanContent(plan?.generatedPlan?.planJson ?? null);
   const useStructuredLayout = parsedContent != null && hasGeneratedPlanLayout(parsedContent);
+  const isDoctorApprovalComplete =
+    plan?.doctorValidationStatus === "APPROVED" || plan?.doctorValidationStatus === "NOT_REQUIRED";
+  const canDownloadPdfs = plan?.status === "COMPLETED" && isDoctorApprovalComplete;
 
   const [pdfLoading, setPdfLoading] = useState(false);
   const [summaryPdfLoading, setSummaryPdfLoading] = useState(false);
@@ -1164,6 +1167,10 @@ const PlanDetails = () => {
       toast.error("PDF is only available when your plan is completed.");
       return;
     }
+    if (!isDoctorApprovalComplete) {
+      toast.error("PDF downloads unlock after doctor review is complete.");
+      return;
+    }
     setPdfLoading(true);
 
     if (plan.doctorValidationStatus === "APPROVED" && plan.signedPdfUrl) {
@@ -1183,7 +1190,7 @@ const PlanDetails = () => {
     } finally {
       setPdfLoading(false);
     }
-  }, [downloadBlob, plan, planFilenameSlug]);
+  }, [downloadBlob, isDoctorApprovalComplete, plan, planFilenameSlug]);
 
   const handleDownloadSummaryPdf = useCallback(async () => {
     if (!plan) {
@@ -1195,6 +1202,10 @@ const PlanDetails = () => {
     }
     if (plan.planTier !== "STANDARD" && plan.planTier !== "PREMIUM") {
       toast.error("Summary PDF is available for standard and premium plans.");
+      return;
+    }
+    if (!isDoctorApprovalComplete) {
+      toast.error("Summary PDF downloads unlock after doctor review is complete.");
       return;
     }
 
@@ -1218,7 +1229,7 @@ const PlanDetails = () => {
     } finally {
       setSummaryPdfLoading(false);
     }
-  }, [downloadBlob, downloadSummaryPdfBlob, plan, planFilenameSlug]);
+  }, [downloadBlob, downloadSummaryPdfBlob, isDoctorApprovalComplete, plan, planFilenameSlug]);
 
   if (isLoading) {
     return (
@@ -1305,72 +1316,59 @@ const PlanDetails = () => {
 
   const needsDoctorApproval =
     plan.doctorValidationStatus === "PENDING" || plan.doctorValidationStatus === "ELEVATED" || plan.doctorValidationStatus === "REJECTED";
-
-  if (needsDoctorApproval) {
-    const isElevated = plan.doctorValidationStatus === "ELEVATED";
-    const isRejected = plan.doctorValidationStatus === "REJECTED";
-    
-    return (
-      <div>
-        <DashboardHeader title={isElevated ? "Plan Under Senior Review" : isRejected ? "Plan not approved" : "Awaiting doctor approval"} />
-        <Link
-          to="/dashboard/plans"
-          className="mb-6 inline-flex items-center gap-1 text-xs text-muted transition-colors duration-200 hover:text-heading"
-        >
-          <LucideArrowLeft className="h-3 w-3" /> Back to plans
-        </Link>
-        <motion.div
-          className={cn(
-            DASHBOARD_GLASS_SURFACE,
-            "p-6 md:p-8",
-            isElevated ? "border-blue-200/80" : isRejected ? "border-red-200/80" : "border-amber-200/80",
-          )}
-          initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 320, damping: 32 }}
-        >
-          <div className="flex items-start gap-3">
-            {isElevated ? (
-              <LucideShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden />
-            ) : isRejected ? (
-              <LucideAlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden />
-            ) : (
-              <LucideClock className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
-            )}
-            <div className="min-w-0 space-y-2">
-              <p className={`font-semibold ${isElevated ? "text-blue-900" : isRejected ? "text-red-900" : "text-amber-900"}`}>
-                {isElevated
-                  ? "Your plan has been elevated for senior review."
-                  : isRejected
-                  ? "Your plan was not approved by the reviewing doctor."
-                  : "Your plan is awaiting review by a verified travel medicine doctor."}
+  const isElevated = plan.doctorValidationStatus === "ELEVATED";
+  const isRejected = plan.doctorValidationStatus === "REJECTED";
+  const doctorReviewNotice = needsDoctorApproval ? (
+    <motion.div
+      className={cn(
+        DASHBOARD_GLASS_SURFACE,
+        "mb-6 p-6 md:p-8",
+        isElevated ? "border-blue-200/80" : isRejected ? "border-red-200/80" : "border-amber-200/80",
+      )}
+      initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 320, damping: 32 }}
+    >
+      <div className="flex items-start gap-3">
+        {isElevated ? (
+          <LucideShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden />
+        ) : isRejected ? (
+          <LucideAlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden />
+        ) : (
+          <LucideClock className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
+        )}
+        <div className="min-w-0 space-y-2">
+          <p className={`font-semibold ${isElevated ? "text-blue-900" : isRejected ? "text-red-900" : "text-amber-900"}`}>
+            {isElevated
+              ? "Your plan has been elevated for senior review."
+              : isRejected
+              ? "Your plan was not approved by the reviewing doctor."
+              : "Your plan is awaiting review by a verified travel medicine doctor."}
+          </p>
+          <p className={`text-sm ${isElevated ? "text-blue-900/85" : isRejected ? "text-red-900/85" : "text-amber-900/85"}`}>
+            {isElevated
+              ? "Your travel health plan has been escalated for further expert review by our senior medical team. You can preview the plan below while we complete the review. PDF downloads unlock once the plan is approved."
+              : isRejected
+              ? "The doctor has reviewed your plan and decided it cannot be approved in its current form. Please review the reason below. You can still preview the plan below, but PDF downloads are disabled."
+              : "You can preview the plan below while the doctor completes their review. We'll notify you once validation is complete and PDF downloads unlock."}
+          </p>
+          {(isElevated || isRejected) && plan.rejectionReason && (
+            <div className={`mt-3 rounded-lg border ${isElevated ? "border-blue-200/60 bg-blue-50/80" : "border-red-200/60 bg-red-50/80"} p-3`}>
+              <p className={`text-xs font-semibold ${isElevated ? "text-blue-700" : "text-red-700"}`}>
+                {isElevated ? "Doctor feedback:" : "Rejection reason:"}
               </p>
-              <p className={`text-sm ${isElevated ? "text-blue-900/85" : isRejected ? "text-red-900/85" : "text-amber-900/85"}`}>
-                {isElevated
-                  ? "Your travel health plan has been escalated for further expert review by our senior medical team. A travel medicine specialist will be giving your plan additional attention to ensure the most comprehensive health guidance for your trip. You will receive an update as soon as the review is complete."
-                  : isRejected
-                  ? "The doctor has reviewed your plan and decided it cannot be approved in its current form. Please review the reason below."
-                  : "You will be notified once the doctor has completed their review. The full plan details will be available after approval."}
-              </p>
-              {(isElevated || isRejected) && plan.rejectionReason && (
-                <div className={`mt-3 rounded-lg border ${isElevated ? "border-blue-200/60 bg-blue-50/80" : "border-red-200/60 bg-red-50/80"} p-3`}>
-                  <p className={`text-xs font-semibold ${isElevated ? "text-blue-700" : "text-red-700"}`}>
-                    {isElevated ? "Doctor feedback:" : "Rejection reason:"}
-                  </p>
-                  <p className={`mt-1 text-sm ${isElevated ? "text-blue-600" : "text-red-600"}`}>{plan.rejectionReason}</p>
-                </div>
-              )}
-              {isRejected && plan.validatedByName && plan.validatedAt && (
-                <p className="text-xs text-red-700/70">
-                  Reviewed by Dr. {plan.validatedByName} on {new Date(plan.validatedAt).toLocaleDateString()}
-                </p>
-              )}
+              <p className={`mt-1 text-sm ${isElevated ? "text-blue-600" : "text-red-600"}`}>{plan.rejectionReason}</p>
             </div>
-          </div>
-        </motion.div>
+          )}
+          {isRejected && plan.validatedByName && plan.validatedAt && (
+            <p className="text-xs text-red-700/70">
+              Reviewed by Dr. {plan.validatedByName} on {new Date(plan.validatedAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
       </div>
-    );
-  }
+    </motion.div>
+  ) : null;
 
   if (useStructuredLayout) {
     const riskLabel = getRiskLabel(plan.riskScore);
@@ -1384,6 +1382,8 @@ const PlanDetails = () => {
         >
           <LucideArrowLeft className="h-3 w-3" /> Back to plans
         </Link>
+
+        {doctorReviewNotice}
 
         <motion.div
           className={cn(DASHBOARD_GLASS_SURFACE, "mb-6 p-6 md:p-8")}
@@ -1402,7 +1402,8 @@ const PlanDetails = () => {
               </span>
               <button
                 type="button"
-                disabled={pdfLoading}
+                disabled={pdfLoading || !canDownloadPdfs}
+                title={!canDownloadPdfs ? "Downloads unlock after doctor review is complete." : undefined}
                 onClick={() => void handleDownloadPdf()}
                 className="flex cursor-pointer items-center gap-2 rounded-xl bg-button-secondary px-4 py-2 text-xs font-semibold text-heading transition-colors duration-200 hover:bg-border-light disabled:cursor-not-allowed disabled:opacity-55"
               >
@@ -1416,7 +1417,8 @@ const PlanDetails = () => {
               {(plan.planTier === "STANDARD" || plan.planTier === "PREMIUM") && (
                 <button
                   type="button"
-                  disabled={summaryPdfLoading}
+                  disabled={summaryPdfLoading || !canDownloadPdfs}
+                  title={!canDownloadPdfs ? "Downloads unlock after doctor review is complete." : undefined}
                   onClick={() => void handleDownloadSummaryPdf()}
                   className="flex cursor-pointer items-center gap-2 rounded-xl border border-accent/20 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent transition-colors duration-200 hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-55"
                 >
@@ -1593,6 +1595,8 @@ const PlanDetails = () => {
         <LucideArrowLeft className="h-3 w-3" /> Back to plans
       </Link>
 
+      {doctorReviewNotice}
+
       <motion.div
         className={cn(DASHBOARD_GLASS_SURFACE, "mb-6 p-6 md:p-8")}
         initial={reduceMotion ? false : { opacity: 0, y: 20 }}
@@ -1615,7 +1619,8 @@ const PlanDetails = () => {
             </span>
             <button
               type="button"
-              disabled={pdfLoading}
+              disabled={pdfLoading || !canDownloadPdfs}
+              title={!canDownloadPdfs ? "Downloads unlock after doctor review is complete." : undefined}
               onClick={() => void handleDownloadPdf()}
               className="flex cursor-pointer items-center gap-2 rounded-xl bg-button-secondary px-4 py-2 text-xs font-semibold text-heading transition-colors duration-200 hover:bg-border-light disabled:cursor-not-allowed disabled:opacity-55"
             >
@@ -1629,7 +1634,8 @@ const PlanDetails = () => {
             {(plan.planTier === "STANDARD" || plan.planTier === "PREMIUM") && (
               <button
                 type="button"
-                disabled={summaryPdfLoading}
+                disabled={summaryPdfLoading || !canDownloadPdfs}
+                title={!canDownloadPdfs ? "Downloads unlock after doctor review is complete." : undefined}
                 onClick={() => void handleDownloadSummaryPdf()}
                 className="flex cursor-pointer items-center gap-2 rounded-xl border border-accent/20 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent transition-colors duration-200 hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-55"
               >
