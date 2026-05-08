@@ -5,6 +5,7 @@ import AnimateIn from "../../components/animations/AnimateIn";
 import { LucideLoader } from "lucide-react";
 import api from "../../api/axios";
 import { getPostAuthRedirect, performRedirect } from "../../lib/roleRedirect";
+import { getAffiliateReferralCode } from "../../lib/affiliateTracking";
 
 const GoogleCallback = () => {
     const navigate = useNavigate();
@@ -36,6 +37,7 @@ const GoogleCallback = () => {
                 const res = await api.post("/auth/google/callback", {
                     code,
                     planCode: pendingPlan ?? undefined,
+                    affiliate_referral_code: getAffiliateReferralCode(),
                 });
                 const d = res.data.data;
 

@@ -77,6 +77,8 @@ export interface RegisterRequest {
   email: string;
   password: string;
   planCode?: string;
+  affiliate_referral_code?: string;
+  account_type?: string;
   billing_currency?: BillingCurrency;
 }
 
@@ -119,6 +121,8 @@ export interface GoogleAuthRequest {
 
 export interface GoogleCallbackRequest {
   code: string;
+  planCode?: string;
+  affiliate_referral_code?: string;
 }
 
 // ─── User ────────────────────────────────────────────────────
@@ -1053,6 +1057,7 @@ export interface PlanUsageLedgerResponse {
 export interface CreditPurchaseRequest {
   credits: number;
   currency: BillingCurrency;
+  affiliate_referral_code?: string;
 }
 
 export interface CreditPurchaseInitiateResponse {
@@ -1061,6 +1066,7 @@ export interface CreditPurchaseInitiateResponse {
   paymentLink: string;
   credits: number;
   basePrice: number;
+  discountAmount?: number;
   amount: number;
   currency: BillingCurrency;
   currencySymbol: string;
@@ -1080,6 +1086,9 @@ export interface CreditPurchaseResponse {
   currencySymbol: string;
   pricePerCredit: number;
   amount: number;
+  affiliateReferralCode?: string | null;
+  affiliateDiscountRate?: number | null;
+  affiliateDiscountAmount?: number | null;
   amountPaid: number | null;
   status: string;
   flutterwaveStatus: string | null;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { LucideCheck, LucideArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -19,13 +19,21 @@ import {
     type SignupRange,
     type ServiceLevel,
 } from "../../constants/companyPlans";
+import { getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 
 type Audience = "individual" | "family" | "company";
 
-function formatPrice(priceUsd: number, priceNgn: number, currency: string): string {
-    if (priceUsd === 0) return "Free";
-    if (currency === "NGN") return `₦${priceNgn.toLocaleString()}`;
-    return `$${priceUsd}`;
+function formatPrice(priceUsd: number, priceNgn: number, currency: string, discountRate = 0): string {
+    const basePrice = currency === "NGN" ? priceNgn : priceUsd;
+    if (basePrice === 0) return "Free";
+
+    const discountMultiplier = discountRate > 0 ? 1 - discountRate / 100 : 1;
+    const discountedPrice = basePrice * discountMultiplier;
+    if (currency === "NGN") return `₦${Math.round(discountedPrice).toLocaleString()}`;
+    return `$${discountedPrice.toLocaleString(undefined, {
+        maximumFractionDigits: discountedPrice % 1 === 0 ? 0 : 2,
+        minimumFractionDigits: discountedPrice % 1 === 0 ? 0 : 2,
+    })}`;
 }
 
 const PricingPage = () => {
@@ -36,7 +44,22 @@ const PricingPage = () => {
         : "individual"
     );
     const [signupRange, setSignupRange] = useState<SignupRange>("0-100");
+    const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
     const { selectedCurrency, setCurrency } = useCurrencyStore();
+
+    useEffect(() => {
+        let cancelled = false;
+        void refreshAffiliateDiscount()
+            .then((discount) => {
+                if (!cancelled && discount?.active) {
+                    setAffiliateDiscountRate(Number(discount.discount_rate));
+                }
+            })
+            .catch(() => undefined);
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     return (
         <main>
@@ -101,6 +124,14 @@ const PricingPage = () => {
                     </div>
                 </div>
             </div>
+
+            {affiliateDiscountRate > 0 && (
+                <div className="px-8 lg:px-16 max-w-7xl mx-auto mb-8">
+                    <div className="max-w-5xl mx-auto rounded-2xl border border-accent/20 bg-accent/10 px-5 py-3 text-sm font-semibold text-accent text-center">
+                        Affiliate discount active — {affiliateDiscountRate}% off paid credits at checkout.
+                    </div>
+                </div>
+            )}
 
             {/* Individual plans */}
             {audience === "individual" && (
@@ -181,6 +212,7 @@ const PricingPage = () => {
                                                     plan.priceUsd,
                                                     plan.priceNgn,
                                                     selectedCurrency,
+                                                    affiliateDiscountRate,
                                                 )}
                                             </span>
                                         </div>
@@ -287,6 +319,7 @@ const PricingPage = () => {
                                                 plan.priceUsd,
                                                 plan.priceNgn,
                                                 selectedCurrency,
+                                                affiliateDiscountRate,
                                             )}
                                         </span>
                                     </div>
@@ -410,6 +443,7 @@ const PricingPage = () => {
                                                         basePlan.priceUsd,
                                                         basePlan.priceNgn,
                                                         selectedCurrency,
+                                                        affiliateDiscountRate,
                                                     )}
                                                 </span>
                                             </div>

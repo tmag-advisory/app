@@ -28,6 +28,7 @@ const Documentation = lazy(() => import("../pages/docs/docs"));
 const Status = lazy(() => import("../pages/status/status"));
 const Community = lazy(() => import("../pages/community/community"));
 const ContactPage = lazy(() => import("../pages/contact/contact"));
+const ReferralRedirect = lazy(() => import("../pages/referral/referral-redirect"));
 
 // Shop pages (lazy-loaded)
 const ShopPage = lazy(() => import("../pages/shop/shop"));
@@ -130,6 +131,9 @@ const router = createBrowserRouter([
             { path: "apply-as-doctor", element: <ApplyAsDoctor /> },
         ],
     },
+
+    // Affiliate tracking redirect (standalone, no nav)
+    { path: "ref/:shortCode", element: <ReferralRedirect /> },
 
     // Shop checkout (standalone, no nav)
     { path: "shop/checkout", element: <CheckoutPage /> },

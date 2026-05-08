@@ -9,6 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getOnboardingCompletionRedirect, performRedirect } from "../../lib/roleRedirect";
 import { useCurrencyStore } from "../../stores/currencyStore";
 import CountryPicker from "../../components/CountryPicker";
+import { getAffiliateReferralCode, getStoredAffiliateDiscountRate } from "../../lib/affiliateTracking";
 
 // ─── Motion Variants ─────────────────────────────────────────
 
@@ -51,6 +52,7 @@ const Onboarding = () => {
     const { user, refreshProfile } = useAuth();
     const { setUserType: storeSetUserType, reset: resetOnboarding } = useOnboardingStore();
     const { selectedCurrency } = useCurrencyStore();
+    const affiliateDiscountRate = getStoredAffiliateDiscountRate();
     const [searchParams] = useSearchParams();
     const { data: onboardingData } = useOnboarding();
     const { data: myCompanies } = useMyCompanies();
@@ -259,6 +261,7 @@ const Onboarding = () => {
             const raw = await initiatePurchase.mutateAsync({
                 credits: creditsToBuy,
                 currency: (selectedCurrency || "USD") as BillingCurrency,
+                affiliate_referral_code: getAffiliateReferralCode(),
             });
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const data = (raw as any).data ?? raw;
@@ -909,10 +912,14 @@ const Onboarding = () => {
                             (() => {
                                 const plan = user?.user_credit_plan;
                                 const isPremium = plan?.code === "PREMIUM";
-                                const pricePerCredit =
+                                const basePricePerCredit =
                                     selectedCurrency === "NGN" ?
                                         (plan?.basePriceNgn ?? 0)
                                     :   (plan?.basePriceUsd ?? 0);
+                                const pricePerCredit =
+                                    affiliateDiscountRate > 0 ?
+                                        basePricePerCredit * (1 - affiliateDiscountRate / 100)
+                                    :   basePricePerCredit;
                                 const symbol =
                                     selectedCurrency === "NGN" ? "₦" : "$";
                                 const total = pricePerCredit * creditsToBuy;
@@ -1046,6 +1053,12 @@ const Onboarding = () => {
                                                 {symbol}
                                                 {pricePerCredit.toLocaleString()}{" "}
                                                 per credit
+                                                {affiliateDiscountRate > 0 && (
+                                                    <span className="text-accent font-semibold">
+                                                        {" "}
+                                                        · {affiliateDiscountRate}% affiliate discount
+                                                    </span>
+                                                )}
                                                 {creditsToBuy > 1 && (
                                                     <span className="text-heading font-semibold">
                                                         {" "}
