@@ -1,15 +1,32 @@
+import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
-import { LucideCheck } from "lucide-react";
+import { LucideCheck, LucideTag } from "lucide-react";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import Button from "../../components/ui/Button";
 import { useAuth } from "../../context/AuthContext";
 import { familyPlans, formatFamilyPlanPrice } from "../../constants/companyPlans";
 import { useCurrencyStore } from "../../stores/currencyStore";
+import { getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 
 const BuyFamilyPlan = () => {
     const { user } = useAuth();
     const { selectedCurrency, setCurrency } = useCurrencyStore();
     const isFamily = user?.type?.toUpperCase() === "FAMILY";
+    const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
+
+    useEffect(() => {
+        let cancelled = false;
+        void refreshAffiliateDiscount()
+            .then((discount) => {
+                if (!cancelled && discount?.active) {
+                    setAffiliateDiscountRate(Number(discount.discount_rate));
+                }
+            })
+            .catch(() => undefined);
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     if (!isFamily) {
         return <Navigate to="/unauthorized" replace />;
@@ -67,6 +84,26 @@ const BuyFamilyPlan = () => {
                                     {formatFamilyPlanPrice(plan, selectedCurrency)}
                                 </span>
                             </div>
+
+                            {affiliateDiscountRate > 0 && (() => {
+                                const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                const basePrice = selectedCurrency === "NGN" ? plan.priceNgn : plan.priceUsd;
+                                const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
+                                const discountedPrice = basePrice - discountAmt;
+                                return (
+                                    <div className="mt-1 mb-2">
+                                        <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1.5 w-fit">
+                                            <LucideTag className="w-3 h-3" />
+                                            <span className="font-medium">{affiliateDiscountRate}% affiliate discount</span>
+                                        </div>
+                                        <p className="text-sm text-green-700 mt-1">
+                                            <span className="line-through text-muted text-xs">{currencySymbol}{basePrice.toLocaleString()}</span>
+                                            {" "}
+                                            <span className="font-semibold">{currencySymbol}{discountedPrice.toLocaleString()}</span>
+                                        </p>
+                                    </div>
+                                );
+                            })()}
                             <p className="text-xs mb-8 text-[#2a5858]/60">
                                 {plan.priceNote}
                             </p>

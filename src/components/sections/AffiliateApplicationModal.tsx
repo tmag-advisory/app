@@ -79,14 +79,15 @@ export default function AffiliateApplicationModal({ onClose }: Props) {
         setError(null);
         try {
             await api.post("/v1/public/affiliate/apply", {
-                full_name: form.fullName,
-                company_name: form.companyName || undefined,
+                fullName: form.fullName,
+                companyName: form.companyName || undefined,
                 email: form.email,
                 phone: form.phone || undefined,
-                website_url: form.websiteUrl || undefined,
-                social_links: form.socialLinks || undefined,
-                monthly_reach: form.monthlyReach || undefined,
-                promotion_plan: form.promotionPlan,
+                websiteUrl: form.websiteUrl || undefined,
+                socialMediaLinks: form.socialLinks || undefined,
+                estimatedMonthlyReach: form.monthlyReach || undefined,
+                promoDescription: form.promotionPlan,
+                agreedToTerms: form.agreedToTerms,
             });
             setSubmitted(true);
         } catch {

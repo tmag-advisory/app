@@ -7,9 +7,10 @@ import { useAuth } from "../context/AuthContext";
 import { useCurrencyStore } from "../stores/currencyStore";
 import { familyPlans, formatFamilyAdditionalMemberPrice, formatFamilyPlanPrice, normalizePlanCurrency, calculateFamilyTotalPrice, formatFamilyTotalPrice } from "../constants/companyPlans";
 import type { BillingCurrency, FamilyPackageType, FamilyPackageCheckoutResponse } from "../api/types";
-import { LucideLoader2, LucideLock, LucideShieldCheck, LucideAlertCircle, LucideUsers, LucideCheck, LucideHeart, LucideHome, LucideGlobe, LucideShield, LucideArrowRight, LucidePlus, LucideMinus, LucideUserPlus } from "lucide-react";
+import { LucideLoader2, LucideLock, LucideShieldCheck, LucideAlertCircle, LucideUsers, LucideCheck, LucideHeart, LucideHome, LucideGlobe, LucideShield, LucideArrowRight, LucidePlus, LucideMinus, LucideUserPlus, LucideTag } from "lucide-react";
 import { cn } from "../lib/utils";
 import toast from "react-hot-toast";
+import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../lib/affiliateTracking";
 
 const BASE_INCLUDED_MEMBERS = 6;
 const MAX_ADDITIONAL_MEMBERS = 10;
@@ -30,6 +31,7 @@ export default function FamilyCheckoutPage() {
     const [form, setForm] = useState({ name: "", email: "", phone: "" });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [additionalMembers, setAdditionalMembers] = useState(0);
+    const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
 
     useEffect(() => {
         if (user) {
@@ -37,6 +39,20 @@ export default function FamilyCheckoutPage() {
             setForm({ name, email: user.email ?? "", phone: user.phone ?? "" });
         }
     }, [user]);
+
+    useEffect(() => {
+        let cancelled = false;
+        void refreshAffiliateDiscount()
+            .then((discount) => {
+                if (!cancelled && discount?.active) {
+                    setAffiliateDiscountRate(Number(discount.discount_rate));
+                }
+            })
+            .catch(() => undefined);
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     const validate = () => {
         const errs: Record<string, string> = {};
@@ -59,6 +75,7 @@ export default function FamilyCheckoutPage() {
                 packageType: plan.id,
                 currency: normalizePlanCurrency(selectedCurrency),
                 additionalMembers,
+                affiliate_referral_code: affiliateDiscountRate > 0 ? getAffiliateReferralCode() : undefined,
                 ...(user ? {} : { name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim() }),
             },
             {
@@ -105,6 +122,15 @@ export default function FamilyCheckoutPage() {
 
     const memberBasePrice = checkoutCurrency === "NGN" ? plan.additionalMemberPriceNgn : plan.additionalMemberPriceUsd;
     const currencySymbol = checkoutCurrency === "NGN" ? "₦" : "$";
+
+    // Affiliate discount calculation
+    const hasAffiliateDiscount = affiliateDiscountRate > 0;
+    const baseAmount = pricing.total;
+    const discountAmount = hasAffiliateDiscount
+        ? Math.round(baseAmount * affiliateDiscountRate / 100)
+        : 0;
+    const finalTotal = baseAmount - discountAmount;
+    const finalTotalDisplay = `${currencySymbol}${finalTotal.toLocaleString()}`;
 
     const familyPerks = [
         { icon: LucideHeart, text: "Personalised health reports for each member" },
@@ -329,7 +355,7 @@ export default function FamilyCheckoutPage() {
                                 ) : (
                                     <>
                                         <LucideLock className="w-4 h-4" />
-                                        Pay {totalPriceDisplay} &amp; Activate Family Plan
+                                        Pay {hasAffiliateDiscount ? finalTotalDisplay : totalPriceDisplay} &amp; Activate Family Plan
                                     </>
                                 )}
                             </button>
@@ -359,7 +385,14 @@ export default function FamilyCheckoutPage() {
                             {/* Price breakdown */}
                             <div className="bg-accent/5 rounded-xl border border-accent/10 p-5 mb-6">
                                 <p className="text-xs text-muted uppercase tracking-wider font-semibold mb-3 text-center">Total</p>
-                                <p className="text-4xl font-serif text-heading text-center">{totalPriceDisplay}</p>
+                                <p className="text-4xl font-serif text-heading text-center">{hasAffiliateDiscount ? finalTotalDisplay : totalPriceDisplay}</p>
+
+                                {hasAffiliateDiscount && (
+                                    <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1.5">
+                                        <LucideTag className="w-3.5 h-3.5" />
+                                        <span className="font-medium">{affiliateDiscountRate}% affiliate discount applied</span>
+                                    </div>
+                                )}
 
                                 <div className="mt-4 space-y-2 border-t border-border-light pt-4">
                                     <div className="flex items-center justify-between text-sm">
@@ -372,6 +405,12 @@ export default function FamilyCheckoutPage() {
                                             <span className="font-medium text-heading">
                                                 {currencySymbol}{pricing.extra.toLocaleString()}
                                             </span>
+                                        </div>
+                                    )}
+                                    {hasAffiliateDiscount && (
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-green-700">Affiliate discount ({affiliateDiscountRate}%)</span>
+                                            <span className="font-medium text-green-700">-{currencySymbol}{discountAmount.toLocaleString()}</span>
                                         </div>
                                     )}
                                     <div className="flex items-center justify-between text-sm border-t border-border-light pt-2">

@@ -530,7 +530,7 @@ const PlanQuestionnaireFlow = forwardRef<
             setMedicalDisclaimerConsentGiven,
         ] = useState(
             initialMedicalDisclaimerConsentGiven ??
-                (initialCategoryIndex > 0 || initialShowVerify),
+                (initialCategoryIndex > 0 || initialShowVerify || (user?.consentValid ?? false)),
         );
 
         // Track which field to highlight when navigating from verify page

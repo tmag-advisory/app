@@ -1535,6 +1535,7 @@ export interface FamilyPackageCheckoutRequest {
   name?: string;
   email?: string;
   phone?: string;
+  affiliate_referral_code?: string;
 }
 
 export interface FamilyPackageCheckoutResponse {
@@ -1544,6 +1545,8 @@ export interface FamilyPackageCheckoutResponse {
   packageType: FamilyPackageType;
   tripsAllowed: number;
   amount: number;
+  baseAmount?: number;
+  discountAmount?: number;
   currency: BillingCurrency;
   currencySymbol: string;
   purchaseId: number;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { LucideCheck, LucideArrowRight } from "lucide-react";
+import { LucideCheck, LucideArrowRight, LucideTag } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
@@ -216,6 +216,18 @@ const PricingPage = () => {
                                                 )}
                                             </span>
                                         </div>
+
+                                        {affiliateDiscountRate > 0 && (() => {
+                                            const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                            const basePrice = selectedCurrency === "NGN" ? plan.priceNgn : plan.priceUsd;
+                                            const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
+                                            return (
+                                                <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
+                                                    <LucideTag className="w-3 h-3" />
+                                                    <span className="font-medium">{affiliateDiscountRate}% off — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()}</span>
+                                                </div>
+                                            );
+                                        })()}
                                         <p
                                             className={`text-xs mb-8 ${
                                                 isHighlighted ?
@@ -323,6 +335,18 @@ const PricingPage = () => {
                                             )}
                                         </span>
                                     </div>
+
+                                    {affiliateDiscountRate > 0 && (() => {
+                                        const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                        const basePrice = selectedCurrency === "NGN" ? plan.priceNgn : plan.priceUsd;
+                                        const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
+                                        return (
+                                            <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
+                                                <LucideTag className="w-3 h-3" />
+                                                <span className="font-medium">{affiliateDiscountRate}% off — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()}</span>
+                                            </div>
+                                        );
+                                    })()}
                                     <p className="text-xs mb-8 text-[#2a5858]/60">
                                         {plan.priceNote}
                                     </p>
@@ -447,6 +471,18 @@ const PricingPage = () => {
                                                     )}
                                                 </span>
                                             </div>
+
+                                            {affiliateDiscountRate > 0 && (() => {
+                                                const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                                const basePrice = selectedCurrency === "NGN" ? basePlan.priceNgn : basePlan.priceUsd;
+                                                const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
+                                                return (
+                                                    <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
+                                                        <LucideTag className="w-3 h-3" />
+                                                        <span className="font-medium">{affiliateDiscountRate}% off per credit — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()}</span>
+                                                    </div>
+                                                );
+                                            })()}
                                             <p
                                                 className={`text-xs mb-8 ${colors.textMuted}`}
                                             >

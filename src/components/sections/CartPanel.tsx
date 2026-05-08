@@ -121,8 +121,8 @@ export default function CartPanel() {
                             </div>
                         ) : (
                             <div className="divide-y divide-border-light">
-                                {items.map((item, index) => (
-                                    <div key={`${item.ebookVersionId}-${index}`} className="flex gap-3 p-4">
+                                {items.map((item) => (
+                                    <div key={item.ebookVersionId} className="flex gap-3 p-4">
                                         <div className="w-14 h-18 rounded-lg bg-darkest flex-shrink-0 overflow-hidden">
                                             {item.coverUrl ? (
                                                 <img src={item.coverUrl} alt={item.ebookTitle} className="w-full h-full object-cover" />
