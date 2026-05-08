@@ -10,12 +10,6 @@ import {
     LucideChevronDown,
     LucideChevronUp,
     LucidePlane,
-    LucideHeartPulse,
-    LucideSyringe,
-    LucideBug,
-    LucideShieldCheck,
-    LucideSparkles,
-    LucideSkipForward,
     LucidePlus,
     LucideX,
     LucideLoader2,
@@ -131,16 +125,6 @@ const CONSENT_TEXT =
 const DATA_PROTECTION_TEXT =
     "We protect your information with encryption, multi-factor authentication, and strict security measures. We comply with the Nigeria Data Protection Act (NDPA) 2023. Your data will not be sold or shared without your permission.";
 
-// ─── Icon Map ────────────────────────────────────────────────
-
-const iconMap: Record<string, React.ReactNode> = {
-    plane: <LucidePlane className="w-12 h-12" />,
-    "heart-pulse": <LucideHeartPulse className="w-12 h-12" />,
-    syringe: <LucideSyringe className="w-12 h-12" />,
-    bug: <LucideBug className="w-12 h-12" />,
-    "shield-check": <LucideShieldCheck className="w-12 h-12" />,
-};
-
 // ─── Motion Variants ─────────────────────────────────────────
 
 const questionVariants = {
@@ -161,22 +145,6 @@ const questionVariants = {
         scale: 0.97,
         transition: { duration: 0.2, ease: "easeIn" as const },
     }),
-};
-
-const introVariants = {
-    hidden: { opacity: 0, y: 30, scale: 0.96 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        transition: { type: "spring" as const, stiffness: 280, damping: 26 },
-    },
-    exit: {
-        opacity: 0,
-        y: -24,
-        scale: 0.97,
-        transition: { duration: 0.22 },
-    },
 };
 
 // ─── shouldShowQuestion ───────────────────────────────────────
@@ -241,7 +209,6 @@ const TravelHealthQuestionnaire = () => {
     const [answers, setAnswers] = useState<Record<string, unknown>>({});
     const [categoryIndex, setCategoryIndex] = useState(0);
     const [direction, setDirection] = useState(1);
-    const [showIntro, setShowIntro] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showComplete, setShowComplete] = useState(false);
     const [showCreatePlan, setShowCreatePlan] = useState(false);
@@ -311,8 +278,6 @@ const TravelHealthQuestionnaire = () => {
                 if (catIdx > 0 || qIdx >= 0) {
                     setMedicalDisclaimerConsentGiven(true);
                 }
-                // Grouped flow: -1 or missing means section intro; legacy per-question saves used qIdx >= 0 for in-section — open questions view.
-                setShowIntro(qIdx < 0);
             }
         }
     }, [savedProgress]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -332,7 +297,7 @@ const TravelHealthQuestionnaire = () => {
     useEffect(() => {
         latestStateRef.current = { answers, categoryIndex, questionIndex: -1 };
         if (Object.keys(answers).length > 0) pendingSaveRef.current = true;
-    }, [answers, categoryIndex, showIntro]);
+    }, [answers, categoryIndex]);
 
     // Save progress every 2 minutes if dirty
     useEffect(() => {
@@ -439,13 +404,10 @@ const TravelHealthQuestionnaire = () => {
     // ─── Navigation ──────────────────────────────────────────
 
     const goNext = () => {
-        console.log(
-            "Go next clicked. Validating current answers before proceeding...",
-            showIntro,
-            visibleQuestions,
-            answers,
-        );
-        if (showIntro) return;
+        if (categoryIndex === 0 && !medicalDisclaimerConsentGiven) {
+            toast.error("Please accept the medical disclaimer to continue.");
+            return;
+        }
         if (isRiskSection && !riskConsentGiven) {
             toast.error(
                 "Please agree to answer this section before continuing.",
@@ -497,27 +459,12 @@ const TravelHealthQuestionnaire = () => {
             return;
         }
         setCategoryIndex(nextCat);
-        setShowIntro(true);
     };
 
     const goPrev = () => {
+        if (categoryIndex === 0) return;
         setDirection(-1);
-        if (showIntro) {
-            if (categoryIndex === 0) return;
-            setCategoryIndex((i) => i - 1);
-            setShowIntro(false);
-            return;
-        }
-        setShowIntro(true);
-    };
-
-    const startCategory = () => {
-        if (categoryIndex === 0 && !medicalDisclaimerConsentGiven) {
-            toast.error("Please accept the medical disclaimer to continue.");
-            return;
-        }
-        setShowIntro(false);
-        setDirection(1);
+        setCategoryIndex((i) => i - 1);
     };
 
     const skipCategory = () => {
@@ -528,7 +475,6 @@ const TravelHealthQuestionnaire = () => {
             return;
         }
         setCategoryIndex(nextCat);
-        setShowIntro(true);
     };
 
     const handleSubmit = async () => {
@@ -554,7 +500,7 @@ const TravelHealthQuestionnaire = () => {
     const progressPercent =
         totalSections > 0 ? Math.min(Math.round((categoryIndex / totalSections) * 100), 100) : 0;
 
-    const isLastSection = categoryIndex === categories.length - 1 && !showIntro;
+    const isLastSection = categoryIndex === categories.length - 1;
 
     // ─── Loading ─────────────────────────────────────────────
 
@@ -1386,9 +1332,7 @@ const TravelHealthQuestionnaire = () => {
                                     </p>
                                     {i === categoryIndex && (
                                         <p className="text-xs text-muted mt-0.5">
-                                            {showIntro ?
-                                                "Introduction"
-                                            :   "In progress"}
+                                            In progress
                                         </p>
                                     )}
                                 </div>
@@ -1452,11 +1396,8 @@ const TravelHealthQuestionnaire = () => {
                                         type="button"
                                         onClick={() => {
                                             if (i !== categoryIndex) {
-                                                setDirection(
-                                                    i > categoryIndex ? 1 : -1,
-                                                );
+                                                setDirection(i > categoryIndex ? 1 : -1);
                                                 setCategoryIndex(i);
-                                                setShowIntro(true);
                                             }
                                             setMobileAccordionOpen(false);
                                         }}
@@ -1506,193 +1447,7 @@ const TravelHealthQuestionnaire = () => {
                 <div className="w-full max-w-5xl flex justify-center">
                     <div className="w-full max-w-3xl">
                         <AnimatePresence mode="wait" custom={direction}>
-                            {showIntro ?
-                                <motion.div
-                                    key={`intro-${categoryIndex}`}
-                                    variants={introVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                    className="text-center py-8 sm:py-16"
-                                >
-                                    {/* Icon */}
-                                    <motion.div
-                                        initial={{ scale: 0, rotate: -25 }}
-                                        animate={{ scale: 1, rotate: 0 }}
-                                        transition={{
-                                            delay: 0.1,
-                                            type: "spring",
-                                            stiffness: 260,
-                                            damping: 18,
-                                        }}
-                                        className="w-24 h-24 rounded-3xl bg-accent/10 flex items-center justify-center mx-auto mb-8 text-accent"
-                                    >
-                                        {iconMap[
-                                            currentCategory.category_icon
-                                        ] || (
-                                            <LucideSparkles className="w-12 h-12" />
-                                        )}
-                                    </motion.div>
-
-                                    {/* Label */}
-                                    <motion.p
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        transition={{ delay: 0.2 }}
-                                        className="text-sm font-bold tracking-[0.14em] text-accent uppercase mb-4"
-                                    >
-                                        Section {categoryIndex + 1} of{" "}
-                                        {categories.length}
-                                    </motion.p>
-
-                                    {/* Title */}
-                                    <motion.h2
-                                        initial={{ opacity: 0, y: 14 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.25 }}
-                                        className="text-4xl sm:text-5xl font-serif text-heading mb-5 leading-tight"
-                                    >
-                                        {currentCategory.category_name}
-                                    </motion.h2>
-
-                                    {/* Description */}
-                                    <motion.p
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.32 }}
-                                        className="text-base text-muted max-w-sm mx-auto leading-relaxed mb-12"
-                                    >
-                                        {currentCategory.category_description}
-                                    </motion.p>
-
-                                    {categoryIndex === 0 && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.36 }}
-                                            className="mb-8 rounded-2xl border-2 border-border-light/60 bg-white/70 p-4 text-left"
-                                        >
-                                            <p className="text-sm text-heading font-semibold mb-2">
-                                                Before proceeding, please read
-                                                and agree:
-                                            </p>
-                                            <p className="text-xs text-heading font-semibold mb-1">
-                                                Consent
-                                            </p>
-                                            <p className="text-xs text-muted leading-relaxed mb-3">
-                                                {CONSENT_TEXT}
-                                            </p>
-                                            <p className="text-xs text-heading font-semibold mb-1">
-                                                Medical Disclaimer
-                                            </p>
-                                            <ul className="list-disc pl-4 text-xs text-muted leading-relaxed space-y-1 mb-3">
-                                                <li>
-                                                    Your plan will be generated
-                                                    using AI and reviewed and
-                                                    validated by a licensed
-                                                    medical doctor.
-                                                </li>
-                                                <li>
-                                                    This is not a substitute for
-                                                    professional medical advice,
-                                                    diagnosis, or treatment.
-                                                </li>
-                                                <li>
-                                                    It is for informational and
-                                                    educational purposes only.
-                                                </li>
-                                                <li>
-                                                    You should consult your own
-                                                    doctor or a qualified
-                                                    healthcare professional
-                                                    before making decisions
-                                                    regarding your health,
-                                                    vaccinations, medications,
-                                                    or travel, especially if you
-                                                    are pregnant, have chronic
-                                                    conditions, or take regular
-                                                    medication.
-                                                </li>
-                                            </ul>
-                                            <p className="text-xs text-heading font-semibold mb-1">
-                                                Data Protection
-                                            </p>
-                                            <p className="text-xs text-muted leading-relaxed mb-3">
-                                                {DATA_PROTECTION_TEXT}
-                                            </p>
-                                            <label className="flex items-start gap-3 cursor-pointer">
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setMedicalDisclaimerConsentGiven(
-                                                            (v) => {
-                                                                const newVal =
-                                                                    !v;
-                                                                if (newVal)
-                                                                    acceptConsent.mutate();
-                                                                return newVal;
-                                                            },
-                                                        )
-                                                    }
-                                                    className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${medicalDisclaimerConsentGiven ? "border-accent bg-accent" : "border-border"}`}
-                                                >
-                                                    {medicalDisclaimerConsentGiven && (
-                                                        <LucideCheck className="w-3 h-3 text-white" />
-                                                    )}
-                                                </button>
-                                                <span
-                                                    className="text-sm text-body font-medium leading-relaxed"
-                                                    onClick={() =>
-                                                        setMedicalDisclaimerConsentGiven(
-                                                            (v) => {
-                                                                const newVal =
-                                                                    !v;
-                                                                if (newVal)
-                                                                    acceptConsent.mutate();
-                                                                return newVal;
-                                                            },
-                                                        )
-                                                    }
-                                                >
-                                                    I have read, understood, and
-                                                    agree to the Consent,
-                                                    Medical Disclaimer, and
-                                                    Privacy Policy.
-                                                </span>
-                                            </label>
-                                        </motion.div>
-                                    )}
-
-                                    {/* Actions */}
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.4 }}
-                                        className="flex items-center justify-center gap-3"
-                                    >
-                                        <button
-                                            onClick={startCategory}
-                                            disabled={
-                                                categoryIndex === 0 &&
-                                                !medicalDisclaimerConsentGiven
-                                            }
-                                            className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl bg-dark text-white font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                                        >
-                                            Begin{" "}
-                                            <LucideArrowRight className="w-4 h-4" />
-                                        </button>
-                                        {currentCategory.is_optional && (
-                                            <button
-                                                onClick={skipCategory}
-                                                className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-white border border-border-light text-muted font-semibold text-sm cursor-pointer hover:border-border hover:text-heading transition-all duration-200"
-                                            >
-                                                <LucideSkipForward className="w-4 h-4" />
-                                                Skip
-                                            </button>
-                                        )}
-                                    </motion.div>
-                                </motion.div>
-                            :   <motion.div
+                            <motion.div
                                     key={`section-${currentCategory.category_key}`}
                                     custom={direction}
                                     variants={questionVariants}
@@ -1710,6 +1465,58 @@ const TravelHealthQuestionnaire = () => {
                                             {currentCategory.category_name}
                                         </h3>
                                     </div>
+
+                                    {categoryIndex === 0 && (
+                                        <div className="p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
+                                            <p className="text-sm text-heading font-semibold mb-2">
+                                                Before proceeding, please read and agree:
+                                            </p>
+                                            <p className="text-xs text-heading font-semibold mb-1">Consent</p>
+                                            <p className="text-xs text-muted leading-relaxed mb-3">
+                                                {CONSENT_TEXT}
+                                            </p>
+                                            <p className="text-xs text-heading font-semibold mb-1">Medical Disclaimer</p>
+                                            <ul className="list-disc pl-4 text-xs text-muted leading-relaxed space-y-1 mb-3">
+                                                <li>Your plan will be generated using AI and reviewed and validated by a licensed medical doctor.</li>
+                                                <li>This is not a substitute for professional medical advice, diagnosis, or treatment.</li>
+                                                <li>It is for informational and educational purposes only.</li>
+                                                <li>You should consult your own doctor or a qualified healthcare professional before making decisions regarding your health, vaccinations, medications, or travel, especially if you are pregnant, have chronic conditions, or take regular medication.</li>
+                                            </ul>
+                                            <p className="text-xs text-heading font-semibold mb-1">Data Protection</p>
+                                            <p className="text-xs text-muted leading-relaxed mb-3">
+                                                {DATA_PROTECTION_TEXT}
+                                            </p>
+                                            <label className="flex items-start gap-3 cursor-pointer">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setMedicalDisclaimerConsentGiven((v) => {
+                                                            const newVal = !v;
+                                                            if (newVal) acceptConsent.mutate();
+                                                            return newVal;
+                                                        })
+                                                    }
+                                                    className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${medicalDisclaimerConsentGiven ? "border-accent bg-accent" : "border-border"}`}
+                                                >
+                                                    {medicalDisclaimerConsentGiven && (
+                                                        <LucideCheck className="w-3 h-3 text-white" />
+                                                    )}
+                                                </button>
+                                                <span
+                                                    className="text-sm text-body font-medium leading-relaxed"
+                                                    onClick={() =>
+                                                        setMedicalDisclaimerConsentGiven((v) => {
+                                                            const newVal = !v;
+                                                            if (newVal) acceptConsent.mutate();
+                                                            return newVal;
+                                                        })
+                                                    }
+                                                >
+                                                    I have read, understood, and agree to the Consent, Medical Disclaimer, and Privacy Policy.
+                                                </span>
+                                            </label>
+                                        </div>
+                                    )}
 
                                     {isRiskSection && (
                                         <div className="p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
@@ -1839,15 +1646,13 @@ const TravelHealthQuestionnaire = () => {
                                         })
                                     }
                                 </motion.div>
-                            }
                         </AnimatePresence>
                     </div>
                 </div>
             </div>
 
             {/* ── Bottom Nav ───────────────────────────────── */}
-            {!showIntro && (
-                <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border-light/50 bg-background-primary/90 backdrop-blur-md px-5 sm:px-8 py-4">
+            <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border-light/50 bg-background-primary/90 backdrop-blur-md px-5 sm:px-8 py-4">
                     <div className="max-w-lg mx-auto flex items-center justify-between">
                         <button
                             onClick={goPrev}
@@ -1882,8 +1687,7 @@ const TravelHealthQuestionnaire = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+            </div>
         </div>
     );
 };

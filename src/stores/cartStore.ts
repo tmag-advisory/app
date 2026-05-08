@@ -54,7 +54,12 @@ export const useCartStore = create<CartState>()(
 
             clearCart: () => set({ items: [] }),
 
-            setItems: (items) => set({ items }),
+            setItems: (items) => set({
+                items: items.filter(
+                    (item, idx, self) =>
+                        self.findIndex(i => i.ebookVersionId === item.ebookVersionId) === idx,
+                ),
+            }),
 
             hasItem: (ebookVersionId) => {
                 return get().items.some(i => i.ebookVersionId === ebookVersionId);
