@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { LucideArrowUpRight, LucideMail, LucideMapPin, LucidePhone } from "lucide-react";
 import { Link } from "react-router-dom";
+import AffiliateApplicationModal from "./AffiliateApplicationModal";
 
 const footerLinks = [
     {
@@ -22,6 +24,7 @@ const footerLinks = [
             { label: "Apply as Doctor", href: "/apply-as-doctor" },
         ],
     },
+    // Note: "Apply as Affiliate" is rendered as a button (opens modal), not a link
     {
         heading: "Resources",
         links: [
@@ -43,7 +46,10 @@ const footerLinks = [
 ];
 
 const FooterSection = () => {
+    const [affiliateModalOpen, setAffiliateModalOpen] = useState(false);
+
     return (
+        <>
         <footer className="relative bg-darkest text-white min-h-screen flex flex-col overflow-hidden">
             {/* Ambient orbs */}
             <div
@@ -183,6 +189,16 @@ const FooterSection = () => {
                                             </Link>
                                         </li>
                                     ))}
+                                    {col.heading === "Company" && (
+                                        <li>
+                                            <button
+                                                onClick={() => setAffiliateModalOpen(true)}
+                                                className="text-sm text-teal-400/70 hover:text-teal-300 transition-colors duration-200 text-left"
+                                            >
+                                                Apply as Affiliate
+                                            </button>
+                                        </li>
+                                    )}
                                 </ul>
                             </div>
                         ))}
@@ -230,6 +246,11 @@ const FooterSection = () => {
                 </div>
             </div>
         </footer>
+
+            {affiliateModalOpen && (
+                <AffiliateApplicationModal onClose={() => setAffiliateModalOpen(false)} />
+            )}
+        </>
     );
 };
 
