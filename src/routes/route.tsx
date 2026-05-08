@@ -79,6 +79,7 @@ const DoctorValidatedPlans = lazy(() => import("../pages/doctor/validated-plans"
 const DoctorValidationDetail = lazy(() => import("../pages/doctor/validation-detail"));
 const DoctorProfile = lazy(() => import("../pages/doctor/profile"));
 const ApplyAsDoctor = lazy(() => import("../pages/apply-as-doctor/index"));
+const ApplyAsAffiliate = lazy(() => import("../pages/apply-as-affiliate/index"));
 
 // Payment pages
 const PaymentCallback = lazy(() => import("../pages/payment/callback"));
@@ -129,6 +130,7 @@ const router = createBrowserRouter([
             { path: "shop/:slug", element: <EbookDetailPage /> },
             { path: "shop/cart", element: <CartPage /> },
             { path: "apply-as-doctor", element: <ApplyAsDoctor /> },
+            { path: "apply-as-affiliate", element: <ApplyAsAffiliate /> },
         ],
     },
 

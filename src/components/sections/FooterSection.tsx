@@ -1,7 +1,5 @@
-import { useState } from "react";
 import { LucideArrowUpRight, LucideMail, LucideMapPin, LucidePhone } from "lucide-react";
 import { Link } from "react-router-dom";
-import AffiliateApplicationModal from "./AffiliateApplicationModal";
 
 const footerLinks = [
     {
@@ -46,10 +44,7 @@ const footerLinks = [
 ];
 
 const FooterSection = () => {
-    const [affiliateModalOpen, setAffiliateModalOpen] = useState(false);
-
     return (
-        <>
         <footer className="relative bg-darkest text-white min-h-screen flex flex-col overflow-hidden">
             {/* Ambient orbs */}
             <div
@@ -191,12 +186,12 @@ const FooterSection = () => {
                                     ))}
                                     {col.heading === "Company" && (
                                         <li>
-                                            <button
-                                                onClick={() => setAffiliateModalOpen(true)}
-                                                className="text-sm text-teal-400/70 hover:text-teal-300 transition-colors duration-200 text-left"
+                                            <Link
+                                                to="/apply-as-affiliate"
+                                                className="text-sm text-teal-400/70 hover:text-teal-300 transition-colors duration-200"
                                             >
                                                 Apply as Affiliate
-                                            </button>
+                                            </Link>
                                         </li>
                                     )}
                                 </ul>
@@ -246,11 +241,6 @@ const FooterSection = () => {
                 </div>
             </div>
         </footer>
-
-            {affiliateModalOpen && (
-                <AffiliateApplicationModal onClose={() => setAffiliateModalOpen(false)} />
-            )}
-        </>
     );
 };
 
