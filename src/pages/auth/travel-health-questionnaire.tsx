@@ -1699,7 +1699,7 @@ const TravelHealthQuestionnaire = () => {
                                     initial="enter"
                                     animate="center"
                                     exit="exit"
-                                    className="rounded-3xl border border-border-light/70 bg-white/80 p-5 md:p-9 space-y-8"
+                                    className="rounded-3xl border border-border-light/70 bg-white/80 p-3 md:p-7 space-y-4"
                                 >
                                     <div>
                                         <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-accent mb-1">

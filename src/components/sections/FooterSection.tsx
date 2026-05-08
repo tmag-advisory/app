@@ -20,6 +20,7 @@ const footerLinks = [
             { label: "Blog", href: "/blog" },
             { label: "Press", href: "/press" },
             { label: "Apply as Doctor", href: "/apply-as-doctor" },
+            { label: "Apply as Affiliate", href: "/apply-as-affiliate" },
         ],
     },
     // Note: "Apply as Affiliate" is rendered as a button (opens modal), not a link
@@ -184,16 +185,6 @@ const FooterSection = () => {
                                             </Link>
                                         </li>
                                     ))}
-                                    {col.heading === "Company" && (
-                                        <li>
-                                            <Link
-                                                to="/apply-as-affiliate"
-                                                className="text-sm text-teal-400/70 hover:text-teal-300 transition-colors duration-200"
-                                            >
-                                                Apply as Affiliate
-                                            </Link>
-                                        </li>
-                                    )}
                                 </ul>
                             </div>
                         ))}
