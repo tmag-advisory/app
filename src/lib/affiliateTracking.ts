@@ -7,7 +7,7 @@ const AFFILIATE_DISCOUNT_COOKIE = "affiliate_discount_rate";
 const DEFAULT_COOKIE_DAYS = 90;
 
 export interface AffiliateTrackingResponse {
-    short_code: string;
+    short_code: string | null;
     referral_code: string;
     destination_url: string;
     discount_rate: number;
