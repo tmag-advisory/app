@@ -78,7 +78,7 @@ export default function AffiliateApplicationModal({ onClose }: Props) {
         setLoading(true);
         setError(null);
         try {
-            await api.post("/v1/public/affiliate/apply", {
+            await api.post("/public/affiliate/apply", {
                 fullName: form.fullName,
                 companyName: form.companyName || undefined,
                 email: form.email,

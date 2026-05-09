@@ -1411,6 +1411,7 @@ export interface CompanyOnboardingRequest {
   teamMembers: TeamMember[];
   teamMembersCsv?: File | null;
   platformEmployees?: PlatformEmployee[];
+  affiliate_referral_code?: string;
 }
 
 export interface CompanyOnboardingResponse {
@@ -1431,6 +1432,8 @@ export interface CompanyOnboardingResponse {
   txRef: string;
   paymentStatus: string;
   paymentAmount: number;
+  baseAmount?: number;
+  discountAmount?: number;
   paymentCurrency: string;
   status: string;
   rejectionReason: string | null;

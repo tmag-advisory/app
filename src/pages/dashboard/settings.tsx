@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -24,6 +24,7 @@ import {
     LucideUsers,
     LucideArrowRight,
     LucideCheck,
+    LucideTag,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import type { BillingCurrency } from "../../api/types";
@@ -35,6 +36,7 @@ import {
     familyPlans,
     formatFamilyPlanPrice,
 } from "../../constants/companyPlans";
+import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
     USD: "$",
@@ -104,6 +106,21 @@ const Settings = () => {
     const [savingCurrency, setSavingCurrency] = useState(false);
     const [processingPayment, setProcessingPayment] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatar_url ?? "");
+    const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
+
+    useEffect(() => {
+        let cancelled = false;
+        void refreshAffiliateDiscount()
+            .then((discount) => {
+                if (!cancelled && discount?.active) {
+                    setAffiliateDiscountRate(Number(discount.discount_rate));
+                }
+            })
+            .catch(() => undefined);
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     const handleSaveCurrency = async () => {
         if (currencyForm === userBillingCurrency) return;
@@ -125,6 +142,7 @@ const Settings = () => {
             const result = await initiatePurchase.mutateAsync({
                 credits: creditCount,
                 currency: activeCurrency,
+                affiliate_referral_code: affiliateDiscountRate > 0 ? getAffiliateReferralCode() : undefined,
             });
 
             // Handle both SuccessResponse format and direct response
@@ -1105,6 +1123,10 @@ const Settings = () => {
                                         const basePrice =
                                             effectivePricing.pricePerCredit *
                                             tier.credits;
+                                        const discountAmount = affiliateDiscountRate > 0
+                                            ? Math.round(basePrice * affiliateDiscountRate / 100)
+                                            : 0;
+                                        const finalPrice = basePrice - discountAmount;
                                         const isSelected =
                                             creditCount === tier.credits;
                                         return (
@@ -1130,10 +1152,20 @@ const Settings = () => {
                                                 <div className="text-xs text-muted mb-2">
                                                     {tier.label}
                                                 </div>
-                                                <div className="text-lg font-semibold text-heading">
-                                                    {currencySymbol}
-                                                    {basePrice.toLocaleString()}
-                                                </div>
+                                                {affiliateDiscountRate > 0 ? (
+                                                    <div>
+                                                        <div className="text-sm text-muted line-through">
+                                                            {currencySymbol}{basePrice.toLocaleString()}
+                                                        </div>
+                                                        <div className="text-lg font-semibold text-heading">
+                                                            {currencySymbol}{finalPrice.toLocaleString()}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-lg font-semibold text-heading">
+                                                        {currencySymbol}{basePrice.toLocaleString()}
+                                                    </div>
+                                                )}
                                             </button>
                                         );
                                     })}
@@ -1184,15 +1216,26 @@ const Settings = () => {
                                             {effectivePricing.pricePerCredit.toLocaleString()}
                                         </span>
                                     </div>
+                                    {affiliateDiscountRate > 0 && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-green-700 font-medium flex items-center gap-1">
+                                                <LucideTag className="w-3 h-3" />
+                                                Affiliate discount ({affiliateDiscountRate}%)
+                                            </span>
+                                            <span className="text-sm font-semibold text-green-700">
+                                                -{currencySymbol}{Math.round(effectivePricing.pricePerCredit * creditCount * affiliateDiscountRate / 100).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className="pt-2 border-t border-border-light/50 flex items-center justify-between">
                                         <span className="text-xs font-semibold text-muted">
                                             Total ({activeCurrency})
                                         </span>
                                         <span className="text-lg font-bold text-heading">
                                             {currencySymbol}
-                                            {(
-                                                effectivePricing.pricePerCredit *
-                                                creditCount
+                                            {(affiliateDiscountRate > 0
+                                                ? effectivePricing.pricePerCredit * creditCount - Math.round(effectivePricing.pricePerCredit * creditCount * affiliateDiscountRate / 100)
+                                                : effectivePricing.pricePerCredit * creditCount
                                             ).toLocaleString()}
                                         </span>
                                     </div>
