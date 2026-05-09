@@ -1,18 +1,72 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import AnimateIn from "../../components/animations/AnimateIn";
 import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 import { getPostAuthRedirect, performRedirect } from "../../lib/roleRedirect";
 
+const RedirectModal = ({
+    message,
+    redirectUrl,
+    onClose,
+}: {
+    message: string;
+    redirectUrl: string;
+    onClose: () => void;
+}) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 p-8 text-center">
+            <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+            </div>
+            <h2 className="text-xl font-serif text-heading mb-3">
+                Wrong Portal
+            </h2>
+            <p className="text-sm text-body mb-6">
+                {message}
+            </p>
+            <p className="text-xs text-muted mb-6">
+                For security purposes, please always log in directly from your dedicated portal.
+            </p>
+            <div className="flex flex-col gap-3">
+                <a
+                    href={redirectUrl}
+                    className="w-full py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm hover:bg-darkest transition-colors duration-200 text-center"
+                >
+                    Go to the correct login page
+                </a>
+                <button
+                    onClick={onClose}
+                    className="w-full py-3 rounded-xl border border-border-light text-sm font-medium text-heading hover:bg-background-primary transition-colors duration-200"
+                >
+                    Stay here
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
 const Login = () => {
-    const { login } = useAuth();
+    const { login, logout } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [redirectModal, setRedirectModal] = useState<{ message: string; url: string } | null>(null);
+
+    // Logout and clean up when redirect modal is dismissed so the user session is clear
+    const handleCloseModal = useCallback(async () => {
+        setRedirectModal(null);
+        try {
+            await logout();
+        } catch {
+            // ignore
+        }
+    }, [logout]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -20,6 +74,16 @@ const Login = () => {
         setLoading(true);
         try {
             const user = await login({ email, password });
+
+            // If the backend says this user should log in from a different app, show a modal
+            if (user.redirect_to) {
+                setRedirectModal({
+                    message: user.redirect_message ?? "This account requires a different portal.",
+                    url: user.redirect_to,
+                });
+                return;
+            }
+
             const stage = user.onboarding_stage;
             const redirect = searchParams.get("redirect");
             if (redirect?.startsWith("/") && !redirect.startsWith("//")) {
@@ -45,6 +109,17 @@ const Login = () => {
             setLoading(false);
         }
     };
+
+    // Close modal on Escape key
+    useEffect(() => {
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && redirectModal) {
+                handleCloseModal();
+            }
+        };
+        window.addEventListener("keydown", handleKey);
+        return () => window.removeEventListener("keydown", handleKey);
+    }, [redirectModal, handleCloseModal]);
 
     return (
         <AnimateIn type="fade">
@@ -130,6 +205,15 @@ const Login = () => {
                     ← Back to home
                 </Link>
             </div>
+
+            {/* Redirect Modal */}
+            {redirectModal && (
+                <RedirectModal
+                    message={redirectModal.message}
+                    redirectUrl={redirectModal.url}
+                    onClose={handleCloseModal}
+                />
+            )}
         </AnimateIn>
     );
 };
