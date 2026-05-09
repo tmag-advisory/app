@@ -23,6 +23,32 @@ import { getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../
 
 type Audience = "individual" | "family" | "company";
 
+function resolvePricingSelection(searchParams: URLSearchParams): { audience: Audience; signupRange: SignupRange } {
+    const plan = searchParams.get("plan")?.trim().toUpperCase();
+    if (plan) {
+        if (plan.startsWith("FAMILY")) {
+            return { audience: "family", signupRange: "0-100" };
+        }
+
+        for (const range of Object.keys(enterprisePlanCodes) as SignupRange[]) {
+            const codes = enterprisePlanCodes[range];
+            if (Object.values(codes).includes(plan)) {
+                return { audience: "company", signupRange: range };
+            }
+        }
+
+        if (individualPlans.some((p) => p.code === plan)) {
+            return { audience: "individual", signupRange: "0-100" };
+        }
+    }
+
+    const tab = searchParams.get("tab");
+    return {
+        audience: tab === "company" ? "company" : tab === "family" ? "family" : "individual",
+        signupRange: "0-100",
+    };
+}
+
 function formatPrice(priceUsd: number, priceNgn: number, currency: string, discountRate = 0): string {
     const basePrice = currency === "NGN" ? priceNgn : priceUsd;
     if (basePrice === 0) return "Free";
@@ -38,14 +64,17 @@ function formatPrice(priceUsd: number, priceNgn: number, currency: string, disco
 
 const PricingPage = () => {
     const [searchParams] = useSearchParams();
-    const [audience, setAudience] = useState<Audience>(
-        searchParams.get("tab") === "company" ? "company"
-        : searchParams.get("tab") === "family" ? "family"
-        : "individual"
-    );
-    const [signupRange, setSignupRange] = useState<SignupRange>("0-100");
+    const initialSelection = resolvePricingSelection(searchParams);
+    const [audience, setAudience] = useState<Audience>(initialSelection.audience);
+    const [signupRange, setSignupRange] = useState<SignupRange>(initialSelection.signupRange);
     const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
     const { selectedCurrency, setCurrency } = useCurrencyStore();
+
+    useEffect(() => {
+        const selection = resolvePricingSelection(searchParams);
+        setAudience(selection.audience);
+        setSignupRange(selection.signupRange);
+    }, [searchParams]);
 
     useEffect(() => {
         let cancelled = false;
