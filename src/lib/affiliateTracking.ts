@@ -53,8 +53,8 @@ export async function trackAffiliateReferral(shortCode: string): Promise<Affilia
     return data;
 }
 
-export async function refreshAffiliateDiscount(): Promise<AffiliateDiscountResponse | null> {
-    const referralCode = getAffiliateReferralCode();
+export async function refreshAffiliateDiscount(overrideCode?: string): Promise<AffiliateDiscountResponse | null> {
+    const referralCode = overrideCode ?? getAffiliateReferralCode();
     if (!referralCode) return null;
 
     const res = await api.get<ApiResponse<AffiliateDiscountResponse>>(

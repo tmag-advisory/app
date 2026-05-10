@@ -39,6 +39,12 @@ import { todayIsoDateLocal } from "../../lib/questionnaireFieldValidation";
 
 type BuilderStep = "trip" | "members" | "questionnaire" | "review";
 type AnswerMap = Record<string, unknown>;
+type FieldErrorMap = Record<number, Set<string>>;
+
+interface ValidationIssue {
+    key: string;
+    message: string;
+}
 
 type QuestionType =
     | "radio"
@@ -106,10 +112,10 @@ const STEP_ORDER: BuilderStep[] = [
     "review",
 ];
 const STEP_LABELS: Record<BuilderStep, string> = {
-    trip: "Shared Trip",
-    members: "Dependents",
-    questionnaire: "Health Info",
-    review: "Review",
+    trip: "Shared trip",
+    members: "Member profiles",
+    questionnaire: "Health per member",
+    review: "Finalize",
 };
 
 const SHARED_CATEGORY_KEYS = [
@@ -160,6 +166,24 @@ const AGE_MONTH_OPTIONS = Array.from({ length: 12 }, (_, month) => month);
 
 const baseInputClass =
     "w-full bg-white border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors";
+
+const FAMILY_BUILDER_GUIDE = [
+    {
+        title: "Shared trip once",
+        description:
+            "Add itinerary, accommodation, activities, and preparation details one time. These answers apply to everyone travelling.",
+    },
+    {
+        title: "Separate member cards",
+        description:
+            "Open one traveller at a time. Names, age, nationality, residence, and caregiver notes stay attached to that person only.",
+    },
+    {
+        title: "Individual health answers",
+        description:
+            "Medical history, vaccines, and risk questions are completed per member so each final TravelPlan is personal.",
+    },
+] as const;
 
 // ─── Helpers ───────────────────────────────────────────────────
 
@@ -315,11 +339,11 @@ function isQuestionAnswered(question: Question, answers: AnswerMap): boolean {
     return String(value ?? "").trim().length > 0;
 }
 
-function getValidationMessages(
+function getValidationIssues(
     categories: ParsedCategory[],
     answers: AnswerMap,
-): string[] {
-    const messages: string[] = [];
+): ValidationIssue[] {
+    const issues: ValidationIssue[] = [];
 
     for (const category of categories) {
         for (const question of category.parsedQuestions.filter((q) =>
@@ -333,21 +357,33 @@ function getValidationMessages(
                     const missing =
                         getTripItineraryMissingFieldError(itinerary);
                     const invalidDates = validateTripItineraryDates(itinerary);
-                    messages.push(
-                        missing ??
+                    issues.push({
+                        key: question.key,
+                        message:
+                            missing ??
                             invalidDates ??
                             "Please complete the shared trip itinerary.",
-                    );
+                    });
                 } else {
-                    messages.push(
-                        `Please answer: ${question.text.replace(/:$/, "")}`,
-                    );
+                    issues.push({
+                        key: question.key,
+                        message: `Please answer: ${question.text.replace(/:$/, "")}`,
+                    });
                 }
             }
         }
     }
 
-    return messages;
+    return issues;
+}
+
+function getValidationMessages(
+    categories: ParsedCategory[],
+    answers: AnswerMap,
+): string[] {
+    return getValidationIssues(categories, answers).map(
+        (issue) => issue.message,
+    );
 }
 
 function getAgeFromDob(dob: string): number | null {
@@ -420,6 +456,38 @@ function memberLabel(member: FamilyTripMemberRequest, index: number): string {
     return fullName || `Member ${index + 1}`;
 }
 
+function getMemberInitials(
+    member: FamilyTripMemberRequest,
+    index: number,
+): string {
+    const first = member.firstName?.trim()[0] ?? "";
+    const last = member.lastName?.trim()[0] ?? "";
+    return `${first}${last}`.trim().toUpperCase() || String(index + 1);
+}
+
+function getRelationshipLabel(value: string): string {
+    return (
+        RELATIONSHIP_OPTIONS.find((option) => option.value === value)?.label ??
+        value
+    );
+}
+
+function getQuestionFieldId(questionKey: string, scope?: string): string {
+    return scope ? `question-field-${scope}-${questionKey}` : `question-field-${questionKey}`;
+}
+
+function getMemberProfileFieldId(index: number, field: string): string {
+    return `member-profile-${index}-${field}`;
+}
+
+function scrollToValidationTarget(id: string): void {
+    window.setTimeout(() => {
+        document
+            .getElementById(id)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+}
+
 function splitCityCountry(value: string | undefined): {
     city: string;
     country: string;
@@ -447,7 +515,7 @@ function tripDetailsJsonToItineraryData(
         const stops =
             Array.isArray(details.stops) ?
                 (details.stops as TripDetailsStop[])
-            :   [];
+                : [];
 
         if (tripType === "return") {
             const from = splitCityCountry(String(details.departureCity ?? ""));
@@ -646,21 +714,27 @@ function QuestionCard({
     question,
     value,
     answers,
+    fieldId,
+    hasError,
     onChange,
     onToggleCheckbox,
 }: {
     question: Question;
     value: unknown;
     answers: AnswerMap;
+    fieldId: string;
+    hasError?: boolean;
     onChange: (value: unknown) => void;
     onToggleCheckbox: (value: string) => void;
 }) {
     if (!shouldShowQuestion(question, answers)) return null;
 
+    const ringClass = hasError ? "ring-2 ring-red-400/60 border-red-200 bg-red-50/40" : "";
+
     return (
         <div
-            id={`question-field-${question.key}`}
-            className="space-y-3 rounded-2xl border border-border-light bg-white p-4"
+            id={fieldId}
+            className={`space-y-4 rounded-2xl border border-border-light bg-white p-5 shadow-[0_4px_18px_-14px_rgba(10,20,18,0.35)] transition-all duration-500 md:p-6 ${ringClass}`}
         >
             <div>
                 <p className="text-sm md:text-base font-semibold text-heading leading-snug">
@@ -669,6 +743,11 @@ function QuestionCard({
                         <span className="text-red-500 ml-1">*</span>
                     )}
                 </p>
+                {hasError && (
+                    <p className="text-xs text-red-500 mt-1 font-medium">
+                        This field is required
+                    </p>
+                )}
                 {question.description && (
                     <p className="text-sm text-muted mt-1 leading-relaxed">
                         {question.description}
@@ -678,6 +757,7 @@ function QuestionCard({
             <QuestionInput
                 question={question}
                 value={value}
+                hasError={hasError}
                 onChange={onChange}
                 onToggleCheckbox={onToggleCheckbox}
             />
@@ -688,14 +768,19 @@ function QuestionCard({
 function QuestionInput({
     question,
     value,
+    hasError,
     onChange,
     onToggleCheckbox,
 }: {
     question: Question;
     value: unknown;
+    hasError?: boolean;
     onChange: (value: unknown) => void;
     onToggleCheckbox: (value: string) => void;
 }) {
+    const errorInputClass = hasError ? "!border-red-400/70" : "";
+    const unselectedBorderClass = hasError ? "border-red-400/70" : "border-border-light";
+
     switch (question.type) {
         case "radio":
             return (
@@ -707,15 +792,14 @@ function QuestionInput({
                                 key={option.value}
                                 type="button"
                                 onClick={() => onChange(option.value)}
-                                className={`text-left px-4 py-3 rounded-xl border transition-colors cursor-pointer ${
-                                    selected ?
+                                className={`text-left px-4 py-3 rounded-xl border transition-colors cursor-pointer ${selected ?
                                         "border-accent bg-accent/10 text-heading"
-                                    :   "border-border-light bg-white text-body hover:border-accent/50"
-                                }`}
+                                        : `${unselectedBorderClass} bg-white text-body hover:border-accent/50`
+                                    }`}
                             >
                                 <div className="flex items-center gap-3">
                                     <span
-                                        className={`w-4 h-4 rounded-full border flex items-center justify-center ${selected ? "border-accent bg-accent" : "border-border"}`}
+                                        className={`w-4 h-4 rounded-full border flex items-center justify-center ${selected ? "border-accent bg-accent" : hasError ? "border-red-400/70" : "border-border"}`}
                                     >
                                         {selected && (
                                             <span className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -743,15 +827,14 @@ function QuestionInput({
                                 key={option.value}
                                 type="button"
                                 onClick={() => onToggleCheckbox(option.value)}
-                                className={`text-left px-4 py-3 rounded-xl border transition-colors cursor-pointer ${
-                                    checked ?
+                                className={`text-left px-4 py-3 rounded-xl border transition-colors cursor-pointer ${checked ?
                                         "border-accent bg-accent/10 text-heading"
-                                    :   "border-border-light bg-white text-body hover:border-accent/50"
-                                }`}
+                                        : `${unselectedBorderClass} bg-white text-body hover:border-accent/50`
+                                    }`}
                             >
                                 <div className="flex items-center gap-3">
                                     <span
-                                        className={`w-4 h-4 rounded-md border flex items-center justify-center ${checked ? "border-accent bg-accent" : "border-border"}`}
+                                        className={`w-4 h-4 rounded-md border flex items-center justify-center ${checked ? "border-accent bg-accent" : hasError ? "border-red-400/70" : "border-border"}`}
                                     >
                                         {checked && (
                                             <LucideCheck className="w-2.5 h-2.5 text-white" />
@@ -774,7 +857,7 @@ function QuestionInput({
                     onChange={(event) => onChange(event.target.value)}
                     rows={3}
                     placeholder={question.placeholder}
-                    className={`${baseInputClass} resize-none`}
+                    className={`${baseInputClass} ${errorInputClass} resize-none`}
                 />
             );
 
@@ -786,10 +869,10 @@ function QuestionInput({
                     max={
                         question.key === "date_of_birth" ?
                             todayIsoDateLocal()
-                        :   undefined
+                            : undefined
                     }
                     onChange={(event) => onChange(event.target.value)}
-                    className={baseInputClass}
+                    className={`${baseInputClass} ${errorInputClass}`}
                 />
             );
 
@@ -799,7 +882,7 @@ function QuestionInput({
                     value={String(value ?? "")}
                     onChange={onChange}
                     placeholder={question.placeholder ?? "Select country"}
-                    inputClassName={`${baseInputClass} pr-10`}
+                    inputClassName={`${baseInputClass} ${errorInputClass} pr-10`}
                 />
             );
 
@@ -809,6 +892,7 @@ function QuestionInput({
                     value={toEditableCountryArray(value)}
                     onChange={onChange}
                     placeholder={question.placeholder}
+                    hasError={hasError}
                 />
             );
 
@@ -831,7 +915,7 @@ function QuestionInput({
                     value={String(value ?? "")}
                     onChange={(event) => onChange(event.target.value)}
                     placeholder={question.placeholder}
-                    className={baseInputClass}
+                    className={`${baseInputClass} ${errorInputClass}`}
                 />
             );
     }
@@ -841,10 +925,12 @@ function MultiCountryInput({
     value,
     onChange,
     placeholder,
+    hasError,
 }: {
     value: string[];
     onChange: (value: unknown) => void;
     placeholder?: string;
+    hasError?: boolean;
 }) {
     const countries = value.length > 0 ? value : [""];
 
@@ -863,7 +949,7 @@ function MultiCountryInput({
                             value={country}
                             onChange={(name) => updateCountry(index, name)}
                             placeholder={placeholder ?? "Select a country"}
-                            inputClassName={`${baseInputClass} pr-10`}
+                            inputClassName={`${baseInputClass} ${hasError ? "!border-red-400/70" : ""} pr-10`}
                         />
                     </div>
                     {countries.length > 1 && (
@@ -885,7 +971,7 @@ function MultiCountryInput({
             <button
                 type="button"
                 onClick={() => onChange([...countries, ""])}
-                className="w-full py-3 rounded-xl border border-dashed border-border-light text-xs font-semibold text-muted hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors flex items-center justify-center gap-1.5"
+                className={`w-full py-3 rounded-xl border border-dashed text-xs font-semibold text-muted hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors flex items-center justify-center gap-1.5 ${hasError ? "border-red-400/70" : "border-border-light"}`}
             >
                 <LucidePlus className="w-3.5 h-3.5" /> Add Another Country
             </button>
@@ -896,11 +982,15 @@ function MultiCountryInput({
 function QuestionGroup({
     category,
     answers,
+    errorKeys,
+    fieldIdPrefix,
     onAnswer,
     onToggleCheckbox,
 }: {
     category: ParsedCategory;
     answers: AnswerMap;
+    errorKeys?: Set<string>;
+    fieldIdPrefix?: string;
     onAnswer: (key: string, value: unknown) => void;
     onToggleCheckbox: (key: string, value: string) => void;
 }) {
@@ -910,24 +1000,29 @@ function QuestionGroup({
     if (visibleQuestions.length === 0) return null;
 
     return (
-        <section className="space-y-4">
+        <section className="space-y-5">
             <div>
                 <h3 className="text-xl font-serif text-heading">
                     {category.category_name}
                 </h3>
                 {category.category_description && (
-                    <p className="text-sm text-muted mt-1">
+                    <p className="text-sm text-muted mt-1 leading-relaxed">
                         {category.category_description}
                     </p>
                 )}
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
                 {visibleQuestions.map((question) => (
                     <QuestionCard
                         key={question.key}
                         question={question}
                         value={answers[question.key]}
                         answers={answers}
+                        fieldId={getQuestionFieldId(
+                            question.key,
+                            fieldIdPrefix,
+                        )}
+                        hasError={errorKeys?.has(question.key)}
                         onChange={(value) => onAnswer(question.key, value)}
                         onToggleCheckbox={(value) =>
                             onToggleCheckbox(question.key, value)
@@ -943,12 +1038,14 @@ function MemberProfileFields({
     member,
     answers,
     index,
+    fieldErrors,
     onMemberChange,
     onAnswerChange,
 }: {
     member: FamilyTripMemberRequest;
     answers: AnswerMap;
     index: number;
+    fieldErrors?: Set<string>;
     onMemberChange: (
         index: number,
         field: keyof FamilyTripMemberRequest,
@@ -958,11 +1055,25 @@ function MemberProfileFields({
 }) {
     const dobParts = getAgePartsFromDob(member.dateOfBirth ?? "");
     const completedBy = String(answers.questionnaire_completed_by ?? "");
+    const hasFieldError = (field: string) => Boolean(fieldErrors?.has(field));
+    const fieldShellClass = (field: string) =>
+        `transition-all duration-500 ${hasFieldError(field) ? "rounded-2xl bg-red-50/40 p-3 ring-2 ring-red-400/60" : ""}`;
+    const fieldInputClass = (field: string) =>
+        `${baseInputClass} ${hasFieldError(field) ? "!border-red-400/70" : ""}`;
+    const showFieldError = (field: string) =>
+        hasFieldError(field) ?
+            <p className="text-xs text-red-500 mt-1 font-medium">
+                This field is required
+            </p>
+        :   null;
 
     return (
-        <div className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+        <div className="space-y-7">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div
+                    id={getMemberProfileFieldId(index, "relationship")}
+                    className={fieldShellClass("relationship")}
+                >
                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                         Relationship
                     </label>
@@ -975,7 +1086,7 @@ function MemberProfileFields({
                                 event.target.value,
                             )
                         }
-                        className={baseInputClass}
+                        className={fieldInputClass("relationship")}
                     >
                         {RELATIONSHIP_OPTIONS.map((option) => (
                             <option key={option.value} value={option.value}>
@@ -983,6 +1094,7 @@ function MemberProfileFields({
                             </option>
                         ))}
                     </select>
+                    {showFieldError("relationship")}
                 </div>
                 <div>
                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
@@ -1002,7 +1114,10 @@ function MemberProfileFields({
                         className={baseInputClass}
                     />
                 </div>
-                <div>
+                <div
+                    id={getMemberProfileFieldId(index, "firstName")}
+                    className={fieldShellClass("firstName")}
+                >
                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                         First Name
                     </label>
@@ -1016,10 +1131,14 @@ function MemberProfileFields({
                                 event.target.value,
                             )
                         }
-                        className={baseInputClass}
+                        className={fieldInputClass("firstName")}
                     />
+                    {showFieldError("firstName")}
                 </div>
-                <div>
+                <div
+                    id={getMemberProfileFieldId(index, "lastName")}
+                    className={fieldShellClass("lastName")}
+                >
                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                         Last Name
                     </label>
@@ -1033,10 +1152,14 @@ function MemberProfileFields({
                                 event.target.value,
                             )
                         }
-                        className={baseInputClass}
+                        className={fieldInputClass("lastName")}
                     />
+                    {showFieldError("lastName")}
                 </div>
-                <div>
+                <div
+                    id={getMemberProfileFieldId(index, "dateOfBirth")}
+                    className={fieldShellClass("dateOfBirth")}
+                >
                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                         Date of Birth
                     </label>
@@ -1051,8 +1174,9 @@ function MemberProfileFields({
                                 event.target.value,
                             )
                         }
-                        className={baseInputClass}
+                        className={fieldInputClass("dateOfBirth")}
                     />
+                    {showFieldError("dateOfBirth")}
                     {dobParts && (
                         <p className="text-xs text-muted mt-1">
                             DOB gives age {dobParts.years} year(s),{" "}
@@ -1060,7 +1184,10 @@ function MemberProfileFields({
                         </p>
                     )}
                 </div>
-                <div>
+                <div
+                    id={getMemberProfileFieldId(index, "age_years")}
+                    className={fieldShellClass("age_years")}
+                >
                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                         Age Selector
                     </label>
@@ -1074,7 +1201,7 @@ function MemberProfileFields({
                                     event.target.value,
                                 )
                             }
-                            className={baseInputClass}
+                            className={fieldInputClass("age_years")}
                         >
                             <option value="">Years</option>
                             {AGE_YEAR_OPTIONS.map((age) => (
@@ -1092,7 +1219,7 @@ function MemberProfileFields({
                                     event.target.value,
                                 )
                             }
-                            className={baseInputClass}
+                            className={fieldInputClass("age_years")}
                         >
                             <option value="">Months</option>
                             {AGE_MONTH_OPTIONS.map((month) => (
@@ -1102,13 +1229,17 @@ function MemberProfileFields({
                             ))}
                         </select>
                     </div>
+                    {showFieldError("age_years")}
                     <p className="text-xs text-muted mt-1">
                         Use this when exact DOB is not available.
                     </p>
                 </div>
             </div>
 
-            <div>
+            <div
+                id={getMemberProfileFieldId(index, "gender")}
+                className={fieldShellClass("gender")}
+            >
                 <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                     Biological sex (for health advisory purposes)
                 </label>
@@ -1126,21 +1257,26 @@ function MemberProfileFields({
                                         option.value,
                                     )
                                 }
-                                className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-colors ${
-                                    selected ?
+                                className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-colors ${selected ?
                                         "border-accent bg-accent/10 text-accent"
-                                    :   "border-border-light text-body hover:border-accent/50"
-                                }`}
+                                        : hasFieldError("gender") ?
+                                            "border-red-400/70 text-body hover:border-red-400"
+                                        :   "border-border-light text-body hover:border-accent/50"
+                                    }`}
                             >
                                 {option.label}
                             </button>
                         );
                     })}
                 </div>
+                {showFieldError("gender")}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div
+                    id={getMemberProfileFieldId(index, "nationality")}
+                    className={fieldShellClass("nationality")}
+                >
                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                         Nationality
                     </label>
@@ -1150,10 +1286,14 @@ function MemberProfileFields({
                             onAnswerChange(index, "nationality", name)
                         }
                         placeholder="Select nationality"
-                        inputClassName={`${baseInputClass} pr-10`}
+                        inputClassName={`${fieldInputClass("nationality")} pr-10`}
                     />
+                    {showFieldError("nationality")}
                 </div>
-                <div>
+                <div
+                    id={getMemberProfileFieldId(index, "current_residence_country")}
+                    className={fieldShellClass("current_residence_country")}
+                >
                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                         Country of current residence
                     </label>
@@ -1167,12 +1307,13 @@ function MemberProfileFields({
                             )
                         }
                         placeholder="Select residence country"
-                        inputClassName={`${baseInputClass} pr-10`}
+                        inputClassName={`${fieldInputClass("current_residence_country")} pr-10`}
                     />
+                    {showFieldError("current_residence_country")}
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-accent/15 bg-accent/5 p-4 space-y-4">
+            <div className="rounded-2xl border border-accent/15 bg-accent/5 p-5 md:p-6 space-y-5">
                 <div>
                     <h4 className="font-serif text-heading text-lg">
                         Dependent details
@@ -1200,11 +1341,10 @@ function MemberProfileFields({
                                             option.value,
                                         )
                                     }
-                                    className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${
-                                        selected ?
+                                    className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${selected ?
                                             "border-accent bg-white text-accent"
-                                        :   "border-border-light bg-white/70 text-body hover:border-accent/50"
-                                    }`}
+                                            : "border-border-light bg-white/70 text-body hover:border-accent/50"
+                                        }`}
                                 >
                                     {option.label}
                                 </button>
@@ -1232,11 +1372,10 @@ function MemberProfileFields({
                                             option.value,
                                         )
                                     }
-                                    className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${
-                                        selected ?
+                                    className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${selected ?
                                             "border-accent bg-white text-accent"
-                                        :   "border-border-light bg-white/70 text-body hover:border-accent/50"
-                                    }`}
+                                            : "border-border-light bg-white/70 text-body hover:border-accent/50"
+                                        }`}
                                 >
                                     {option.label}
                                 </button>
@@ -1245,7 +1384,7 @@ function MemberProfileFields({
                     </div>
                 </div>
                 {completedBy !== "self" && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                                 Guardian / caregiver name
@@ -1358,7 +1497,7 @@ function CostBreakdown({
                     <p className="text-lg font-serif text-heading">
                         {previewData.activePackageAllowance ?
                             `${previewData.activePackageAllowance.tripsRemaining} Trip(s)`
-                        :   "No active package"}
+                            : "No active package"}
                     </p>
                 </div>
             </div>
@@ -1368,6 +1507,56 @@ function CostBreakdown({
                     {(previewData.totalFiatCost / 100).toLocaleString()}.
                 </div>
             )}
+        </section>
+    );
+}
+
+function BuilderIntroPanel() {
+    return (
+        <section className="rounded-3xl border border-accent/15 bg-gradient-to-br from-accent/10 via-white to-background-secondary p-5 md:p-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-2xl">
+                    <span className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent shadow-sm">
+                        Family plan workspace
+                    </span>
+                    <h2 className="mt-3 text-2xl md:text-3xl font-serif text-heading">
+                        Build one shared trip, then manage each traveller
+                        separately.
+                    </h2>
+                    <p className="mt-2 text-sm text-muted leading-relaxed">
+                        Start with the itinerary everyone shares. After that,
+                        open each member card on its own so personal details,
+                        caregiver context, medical history, and vaccine answers
+                        do not blend together.
+                    </p>
+                </div>
+                <div className="rounded-2xl border border-white/80 bg-white/80 p-4 text-sm text-body shadow-sm lg:max-w-xs">
+                    <p className="font-semibold text-heading">
+                        Finalizing this family trip will submit it to the
+                        server and queue an individual TravelPlan for every
+                        completed member.
+                    </p>
+                </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+                {FAMILY_BUILDER_GUIDE.map((item, index) => (
+                    <div
+                        key={item.title}
+                        className="rounded-2xl border border-white/80 bg-white/85 p-4 shadow-sm"
+                    >
+                        <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs font-bold text-white">
+                            {index + 1}
+                        </div>
+                        <h3 className="font-serif text-lg text-heading">
+                            {item.title}
+                        </h3>
+                        <p className="mt-1 text-sm leading-relaxed text-muted">
+                            {item.description}
+                        </p>
+                    </div>
+                ))}
+            </div>
         </section>
     );
 }
@@ -1384,6 +1573,13 @@ export default function FamilyTripBuilder() {
     const [isPreviewing, setIsPreviewing] = useState(false);
     const [previewData, setPreviewData] =
         useState<FamilyTripPreviewResponse | null>(null);
+    const [sharedFieldErrors, setSharedFieldErrors] = useState<Set<string>>(
+        new Set(),
+    );
+    const [memberProfileErrors, setMemberProfileErrors] =
+        useState<FieldErrorMap>({});
+    const [memberQuestionnaireErrors, setMemberQuestionnaireErrors] =
+        useState<FieldErrorMap>({});
 
     const [request, setRequest] = useState<FamilyTripRequest>({
         packageType: "STANDARD",
@@ -1461,7 +1657,7 @@ export default function FamilyTripBuilder() {
                     members:
                         members.length > 0 ?
                             members
-                        :   [defaultMember("SPOUSE")],
+                            : [defaultMember("SPOUSE")],
                 });
 
                 const itinerary = tripDetailsJsonToItineraryData(
@@ -1477,7 +1673,7 @@ export default function FamilyTripBuilder() {
                 setMemberAnswers(
                     (members.length > 0 ?
                         members
-                    :   [defaultMember("SPOUSE")]
+                        : [defaultMember("SPOUSE")]
                     ).map((member) => ({
                         ...defaultMemberAnswers(member.relationship),
                         age_years:
@@ -1504,8 +1700,44 @@ export default function FamilyTripBuilder() {
         [normalizedSharedAnswers],
     );
 
+    const clearSharedFieldError = (key: string) => {
+        setSharedFieldErrors((prev) => {
+            if (!prev.has(key)) return prev;
+            const next = new Set(prev);
+            next.delete(key);
+            return next;
+        });
+    };
+
+    const clearMemberProfileError = (index: number, key: string) => {
+        setMemberProfileErrors((prev) => {
+            const current = prev[index];
+            if (!current?.has(key)) return prev;
+            const nextSet = new Set(current);
+            nextSet.delete(key);
+            const next = { ...prev };
+            if (nextSet.size > 0) next[index] = nextSet;
+            else delete next[index];
+            return next;
+        });
+    };
+
+    const clearMemberQuestionnaireError = (index: number, key: string) => {
+        setMemberQuestionnaireErrors((prev) => {
+            const current = prev[index];
+            if (!current?.has(key)) return prev;
+            const nextSet = new Set(current);
+            nextSet.delete(key);
+            const next = { ...prev };
+            if (nextSet.size > 0) next[index] = nextSet;
+            else delete next[index];
+            return next;
+        });
+    };
+
     const setSharedAnswer = (key: string, value: unknown) => {
         setSharedAnswers((prev) => ({ ...prev, [key]: value }));
+        clearSharedFieldError(key);
     };
 
     const toggleSharedCheckbox = (key: string, value: string) => {
@@ -1519,6 +1751,7 @@ export default function FamilyTripBuilder() {
                     :   [...current, value],
             };
         });
+        clearSharedFieldError(key);
     };
 
     const handleMemberChange = (
@@ -1532,6 +1765,8 @@ export default function FamilyTripBuilder() {
                 memberIndex === index ? { ...member, [field]: value } : member,
             ),
         }));
+        clearMemberProfileError(index, field);
+        if (field === "dateOfBirth") clearMemberProfileError(index, "age_years");
 
         if (field === "relationship") {
             setMemberAnswers((prev) =>
@@ -1548,7 +1783,7 @@ export default function FamilyTripBuilder() {
                                 defaultMemberAnswers(value)
                                     .can_complete_own_questionnaire,
                         }
-                    :   answers,
+                        : answers,
                 ),
             );
         }
@@ -1564,6 +1799,9 @@ export default function FamilyTripBuilder() {
                 memberIndex === index ? { ...answers, [key]: value } : answers,
             ),
         );
+        clearMemberProfileError(index, key);
+        if (key === "age_years") clearMemberProfileError(index, "dateOfBirth");
+        clearMemberQuestionnaireError(index, key);
     };
 
     const toggleMemberCheckbox = (
@@ -1584,6 +1822,7 @@ export default function FamilyTripBuilder() {
                 };
             }),
         );
+        clearMemberQuestionnaireError(index, key);
     };
 
     const addMember = () => {
@@ -1610,6 +1849,15 @@ export default function FamilyTripBuilder() {
         setMemberAnswers((prev) =>
             prev.filter((_, memberIndex) => memberIndex !== index),
         );
+        const reindexErrors = (prev: FieldErrorMap): FieldErrorMap =>
+            Object.entries(prev).reduce<FieldErrorMap>((next, [key, value]) => {
+                const memberIndex = Number(key);
+                if (memberIndex < index) next[memberIndex] = value;
+                if (memberIndex > index) next[memberIndex - 1] = value;
+                return next;
+            }, {});
+        setMemberProfileErrors(reindexErrors);
+        setMemberQuestionnaireErrors(reindexErrors);
         setExpandedMember((current) => {
             if (current === null) return null;
             if (current === index) return null;
@@ -1654,20 +1902,25 @@ export default function FamilyTripBuilder() {
             return false;
         }
 
-        const messages = getValidationMessages(
+        const issues = getValidationIssues(
             sharedCategories,
             normalizedSharedAnswers,
         );
-        if (messages.length > 0) {
-            toast.error(messages[0]);
+        if (issues.length > 0) {
+            setSharedFieldErrors(new Set(issues.map((issue) => issue.key)));
+            scrollToValidationTarget(getQuestionFieldId(issues[0].key));
+            toast.error(issues[0].message);
             return false;
         }
 
         if (!buildPlanPayloadFromAnswers(normalizedSharedAnswers)) {
+            setSharedFieldErrors(new Set(["trip_itinerary"]));
+            scrollToValidationTarget(getQuestionFieldId("trip_itinerary"));
             toast.error("Complete the shared trip itinerary first");
             return false;
         }
 
+        setSharedFieldErrors(new Set());
         return true;
     };
 
@@ -1677,59 +1930,111 @@ export default function FamilyTripBuilder() {
             return false;
         }
 
+        const nextErrors: FieldErrorMap = {};
+        let firstInvalidIndex: number | null = null;
+        let firstInvalidField = "";
+        let firstMessage = "";
+
         for (let index = 0; index < request.members.length; index++) {
             const member = request.members[index];
             const answers = memberAnswers[index] ?? {};
-            if (!member.firstName?.trim() || !member.lastName?.trim()) {
-                toast.error(
-                    `Enter first and last name for ${memberLabel(member, index)}`,
-                );
-                return false;
+            const errors = new Set<string>();
+            const messages: string[] = [];
+
+            if (!member.relationship?.trim()) {
+                errors.add("relationship");
+                messages.push(`Select relationship for ${memberLabel(member, index)}`);
+            }
+            if (!member.firstName?.trim()) {
+                errors.add("firstName");
+                messages.push(`Enter first name for ${memberLabel(member, index)}`);
+            }
+            if (!member.lastName?.trim()) {
+                errors.add("lastName");
+                messages.push(`Enter last name for ${memberLabel(member, index)}`);
             }
             if (
                 !member.dateOfBirth?.trim() &&
                 numberFromAnswer(answers.age_years) === null
             ) {
-                toast.error(
+                errors.add("dateOfBirth");
+                errors.add("age_years");
+                messages.push(
                     `Select age or date of birth for ${memberLabel(member, index)}`,
                 );
-                return false;
             }
             if (!String(answers.gender ?? "").trim()) {
-                toast.error(
+                errors.add("gender");
+                messages.push(
                     `Select biological sex for ${memberLabel(member, index)}`,
                 );
-                return false;
             }
             if (!String(answers.nationality ?? "").trim()) {
-                toast.error(
-                    `Select nationality for ${memberLabel(member, index)}`,
-                );
-                return false;
+                errors.add("nationality");
+                messages.push(`Select nationality for ${memberLabel(member, index)}`);
             }
             if (!String(answers.current_residence_country ?? "").trim()) {
-                toast.error(
+                errors.add("current_residence_country");
+                messages.push(
                     `Select current residence country for ${memberLabel(member, index)}`,
                 );
-                return false;
+            }
+
+            if (errors.size > 0) {
+                nextErrors[index] = errors;
+                if (firstInvalidIndex === null) {
+                    firstInvalidIndex = index;
+                    firstInvalidField = errors.values().next().value ?? "firstName";
+                    firstMessage = messages[0] ?? "Please fill in all required member details.";
+                }
             }
         }
 
+        if (firstInvalidIndex !== null) {
+            setMemberProfileErrors(nextErrors);
+            setExpandedMember(firstInvalidIndex);
+            scrollToValidationTarget(
+                getMemberProfileFieldId(firstInvalidIndex, firstInvalidField),
+            );
+            toast.error(firstMessage);
+            return false;
+        }
+
+        setMemberProfileErrors({});
         return true;
     };
 
     const validateMemberQuestionnaires = (): boolean => {
+        const nextErrors: FieldErrorMap = {};
+        let firstInvalidIndex: number | null = null;
+        let firstInvalidKey = "";
+        let firstMessage = "";
+
         for (let index = 0; index < request.members.length; index++) {
             const member = request.members[index];
             const answers = memberAnswers[index] ?? {};
-            const messages = getValidationMessages(memberCategories, answers);
-            if (messages.length > 0) {
-                setExpandedMember(index);
-                toast.error(`${memberLabel(member, index)}: ${messages[0]}`);
-                return false;
+            const issues = getValidationIssues(memberCategories, answers);
+            if (issues.length > 0) {
+                nextErrors[index] = new Set(issues.map((issue) => issue.key));
+                if (firstInvalidIndex === null) {
+                    firstInvalidIndex = index;
+                    firstInvalidKey = issues[0].key;
+                    firstMessage = `${memberLabel(member, index)}: ${issues[0].message}`;
+                }
             }
         }
 
+        if (firstInvalidIndex !== null) {
+            setMemberQuestionnaireErrors(nextErrors);
+            setExpandedMember(firstInvalidIndex);
+            scrollToValidationTarget(
+                getQuestionFieldId(firstInvalidKey, `member-${firstInvalidIndex}`),
+            );
+            toast.error(firstMessage);
+            return false;
+        }
+
+        setMemberQuestionnaireErrors({});
         return true;
     };
 
@@ -1774,12 +2079,18 @@ export default function FamilyTripBuilder() {
     };
 
     const handleSubmit = async () => {
-        if (
-            !validateSharedStep() ||
-            !validateMembersStep() ||
-            !validateMemberQuestionnaires()
-        )
+        if (!validateSharedStep()) {
+            setStep("trip");
             return;
+        }
+        if (!validateMembersStep()) {
+            setStep("members");
+            return;
+        }
+        if (!validateMemberQuestionnaires()) {
+            setStep("questionnaire");
+            return;
+        }
         const payload = buildRequestWithQuestionnaires();
         if (!payload) return;
 
@@ -1787,11 +2098,14 @@ export default function FamilyTripBuilder() {
         try {
             const draftRes = await familyTripApi.saveDraft(payload);
             const tripId = draftRes.data.data.id;
-            toast.success("Family trip created! Access codes sent to members.");
+            await familyTripApi.submit(tripId);
+            toast.success(
+                "Family trip submitted. Travel plans are being generated for each member.",
+            );
             navigate(`/dashboard/family-trip/${tripId}`);
         } catch (err: unknown) {
             toast.error(
-                getApiErrorMessage(err, "Failed to create family trip"),
+                getApiErrorMessage(err, "Failed to finalize family trip"),
             );
         } finally {
             setIsSubmitting(false);
@@ -1801,7 +2115,7 @@ export default function FamilyTripBuilder() {
     const currentStepIndex = STEP_ORDER.indexOf(step);
 
     const stepIndicator = (
-        <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-border-light bg-background-secondary/60 p-3">
             {STEP_ORDER.map((stepKey, index) => {
                 const active = stepKey === step;
                 const done = index < currentStepIndex;
@@ -1811,18 +2125,16 @@ export default function FamilyTripBuilder() {
                         className="flex items-center gap-2 shrink-0"
                     >
                         <div
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                                active ? "bg-accent text-white"
-                                : done ? "bg-accent/15 text-accent"
-                                : "bg-background-secondary text-muted"
-                            }`}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${active ? "bg-accent text-white"
+                                    : done ? "bg-accent/15 text-accent"
+                                        : "bg-background-secondary text-muted"
+                                }`}
                         >
                             <span
-                                className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                                    active ? "bg-white text-accent"
-                                    : done ? "bg-accent text-white"
-                                    : "bg-muted/20 text-muted"
-                                }`}
+                                className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${active ? "bg-white text-accent"
+                                        : done ? "bg-accent text-white"
+                                            : "bg-muted/20 text-muted"
+                                    }`}
                             >
                                 {index + 1}
                             </span>
@@ -1842,23 +2154,25 @@ export default function FamilyTripBuilder() {
             <DashboardAmbientBackground />
             <DashboardHeader title="Family Trip Builder" />
 
-            <div className="relative z-10 max-w-5xl pb-14 pt-8">
-                <div className="bg-white rounded-3xl border border-border-light overflow-hidden">
-                    <div className="p-6 md:p-8 space-y-8">
+            <div className="relative z-10 mx-auto max-w-6xl px-3 pb-14 pt-8 md:px-10">
+                <div className="bg-white/95 rounded-3xl border border-border-light overflow-hidden">
+                    <div className="p-5 md:p-8 space-y-10">
+                        <BuilderIntroPanel />
                         {stepIndicator}
 
                         {step === "trip" && (
                             <>
-                                <section className="rounded-2xl border border-accent/15 bg-accent/5 p-5">
+                                <section className="rounded-2xl border border-accent/15 bg-accent/5 p-5 md:p-6">
                                     <h2 className="text-2xl font-serif text-heading mb-2">
-                                        Shared family trip questionnaire
+                                        Step 1: shared trip details
                                     </h2>
                                     <p className="text-sm text-muted leading-relaxed">
-                                        These itinerary, accommodation,
-                                        activity, and preparation answers apply
-                                        to every family member. Personal medical
-                                        answers are collected separately for
-                                        each dependent/member.
+                                        Keep this section about the journey only:
+                                        itinerary, accommodation, planned
+                                        activities, and preparation. We will ask
+                                        for each traveller's identity and health
+                                        information in separate member cards
+                                        next.
                                     </p>
                                 </section>
 
@@ -1869,7 +2183,7 @@ export default function FamilyTripBuilder() {
                                             Loading questionnaire...
                                         </p>
                                     </div>
-                                :   <div className="space-y-8">
+                                    : <div className="space-y-8">
                                         {sharedCategories.map((category) => (
                                             <QuestionGroup
                                                 key={category.category_key}
@@ -1877,6 +2191,7 @@ export default function FamilyTripBuilder() {
                                                 answers={
                                                     normalizedSharedAnswers
                                                 }
+                                                errorKeys={sharedFieldErrors}
                                                 onAnswer={setSharedAnswer}
                                                 onToggleCheckbox={
                                                     toggleSharedCheckbox
@@ -1900,7 +2215,7 @@ export default function FamilyTripBuilder() {
                                         }}
                                         className="bg-dark text-background-primary hover:bg-darkest"
                                     >
-                                        Continue to Dependents
+                                        Continue to Member Profiles
                                     </Button>
                                 </div>
                             </>
@@ -1908,30 +2223,83 @@ export default function FamilyTripBuilder() {
 
                         {step === "members" && (
                             <>
-                                <section>
-                                    <div className="flex items-start justify-between gap-4 mb-4">
-                                        <div>
-                                            <h2 className="text-2xl font-serif text-heading">
-                                                Family members & dependent
-                                                details
-                                            </h2>
-                                            <p className="text-sm text-muted mt-1">
-                                                Add each traveller and provide
-                                                personal details that map to the
-                                                onboarding questionnaire.
-                                            </p>
+                                <section className="space-y-6">
+                                    <div className="rounded-3xl border border-accent/15 bg-accent/5 p-5 md:p-6">
+                                        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                                            <div>
+                                                <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+                                                    Step 2
+                                                </span>
+                                                <h2 className="mt-1 text-2xl font-serif text-heading">
+                                                    Set up one member profile at
+                                                    a time
+                                                </h2>
+                                                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+                                                    Each card below belongs to
+                                                    one traveller. Expand only
+                                                    the person you are editing,
+                                                    then add their identity,
+                                                    age, nationality,
+                                                    residence, and caregiver
+                                                    context before moving to
+                                                    medical questions.
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={addMember}
+                                                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-accent shadow-sm ring-1 ring-accent/15 transition-colors hover:bg-accent/10"
+                                            >
+                                                <LucidePlus className="w-4 h-4" />
+                                                Add Member
+                                            </button>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={addMember}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-accent bg-accent/10 rounded-lg hover:bg-accent/20 transition-colors uppercase tracking-wider shrink-0"
-                                        >
-                                            <LucidePlus className="w-4 h-4" />{" "}
-                                            Add Member
-                                        </button>
+
+                                        <div className="mt-5 grid gap-3 md:grid-cols-3">
+                                            <div className="rounded-2xl bg-white/80 p-4 text-sm text-muted ring-1 ring-white">
+                                                <p className="font-semibold text-heading">
+                                                    Shared details stay shared
+                                                </p>
+                                                <p className="mt-1">
+                                                    Do not repeat itinerary
+                                                    answers here.
+                                                </p>
+                                            </div>
+                                            <div className="rounded-2xl bg-white/80 p-4 text-sm text-muted ring-1 ring-white">
+                                                <p className="font-semibold text-heading">
+                                                    One profile per traveller
+                                                </p>
+                                                <p className="mt-1">
+                                                    Adult, child, and dependent
+                                                    data are kept separate.
+                                                </p>
+                                            </div>
+                                            <div className="rounded-2xl bg-white/80 p-4 text-sm text-muted ring-1 ring-white">
+                                                <p className="font-semibold text-heading">
+                                                    Health comes next
+                                                </p>
+                                                <p className="mt-1">
+                                                    Medical answers are asked
+                                                    after these profile basics.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-4">
+                                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                        <div>
+                                            <h3 className="text-xl font-serif text-heading">
+                                                Travellers ({request.members.length})
+                                            </h3>
+                                            <p className="text-sm text-muted">
+                                                Complete the open card, collapse
+                                                it, then move to the next
+                                                traveller.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-5">
                                         {request.members.map(
                                             (member, index) => {
                                                 const answers =
@@ -1945,64 +2313,201 @@ export default function FamilyTripBuilder() {
                                                 );
                                                 const isAdult =
                                                     age !== null && age >= 18;
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="p-5 md:p-6 border border-border-light rounded-2xl bg-background-secondary relative"
-                                                    >
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                removeMember(
-                                                                    index,
-                                                                )
-                                                            }
-                                                            className="absolute top-4 right-4 text-muted hover:text-red-500 transition-colors"
-                                                            aria-label="Remove member"
-                                                        >
-                                                            <LucideTrash className="w-5 h-5" />
-                                                        </button>
+                                                const isExpanded =
+                                                    expandedMember === index;
+                                                const profileComplete =
+                                                    isMemberProfileComplete(
+                                                        member,
+                                                        answers,
+                                                    );
+                                                const hasProfileErrors = Boolean(
+                                                    memberProfileErrors[index]
+                                                        ?.size,
+                                                );
 
-                                                        <div className="mb-4 pr-8 flex flex-wrap items-center gap-2">
-                                                            <h3 className="text-xl font-serif text-heading">
-                                                                {memberLabel(
-                                                                    member,
-                                                                    index,
-                                                                )}
-                                                            </h3>
-                                                            <span
-                                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                                                    (
-                                                                        age ===
-                                                                        null
-                                                                    ) ?
-                                                                        "bg-muted/10 text-muted"
-                                                                    : isAdult ?
-                                                                        "bg-accent/10 text-accent"
-                                                                    :   "bg-amber-50 text-amber-700 border border-amber-200"
-                                                                }`}
-                                                            >
-                                                                {age === null ?
-                                                                    "Age pending"
-                                                                : isAdult ?
-                                                                    `Adult · ${getMemberAgeLabel(member, answers)}`
-                                                                :   `Dependent/child · ${getMemberAgeLabel(member, answers)}`
-                                                                }
-                                                            </span>
+                                                return (
+                                                    <article
+                                                        key={index}
+                                                        className={`overflow-hidden rounded-3xl border transition-all ${hasProfileErrors ?
+                                                                "border-red-300 bg-red-50/30 ring-2 ring-red-400/40"
+                                                            : isExpanded ?
+                                                                "border-accent/40 bg-white shadow-[0_18px_45px_-35px_rgba(42,122,106,0.65)]"
+                                                            :   "border-border-light bg-background-secondary/70"
+                                                            }`}
+                                                    >
+                                                        <div className="p-5 md:p-6">
+                                                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        setExpandedMember(
+                                                                            isExpanded ?
+                                                                                null
+                                                                                : index,
+                                                                        )
+                                                                    }
+                                                                    className="min-w-0 flex-1 text-left"
+                                                                >
+                                                                    <div className="flex items-start gap-4">
+                                                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-sm font-bold text-accent">
+                                                                            {getMemberInitials(
+                                                                                member,
+                                                                                index,
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                                <h4 className="text-xl font-serif text-heading">
+                                                                                    {memberLabel(
+                                                                                        member,
+                                                                                        index,
+                                                                                    )}
+                                                                                </h4>
+                                                                                <span
+                                                                                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${profileComplete ?
+                                                                                            "bg-emerald-50 text-emerald-700"
+                                                                                        : hasProfileErrors ?
+                                                                                            "bg-red-50 text-red-700"
+                                                                                        :   "bg-amber-50 text-amber-700"
+                                                                                        }`}
+                                                                                >
+                                                                                    {profileComplete ?
+                                                                                        "Profile ready"
+                                                                                    : hasProfileErrors ?
+                                                                                        "Required fields missing"
+                                                                                    :   "Needs profile details"}
+                                                                                </span>
+                                                                            </div>
+                                                                            <p className="mt-1 text-sm text-muted">
+                                                                                {getRelationshipLabel(
+                                                                                    member.relationship,
+                                                                                )}{" "}
+                                                                                ·{" "}
+                                                                                {age ===
+                                                                                null ?
+                                                                                    "Age pending"
+                                                                                : isAdult ?
+                                                                                    `Adult · ${getMemberAgeLabel(member, answers)}`
+                                                                                :   `Dependent/child · ${getMemberAgeLabel(member, answers)}`}
+                                                                            </p>
+                                                                            <p className="mt-2 text-sm leading-relaxed text-muted">
+                                                                                These profile answers will stay attached to this traveller's final plan.
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                </button>
+
+                                                                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            removeMember(
+                                                                                index,
+                                                                            )
+                                                                        }
+                                                                        className="inline-flex items-center gap-1.5 rounded-xl border border-border-light bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                                                        aria-label="Remove member"
+                                                                    >
+                                                                        <LucideTrash className="w-4 h-4" />
+                                                                        Remove
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            setExpandedMember(
+                                                                                isExpanded ?
+                                                                                    null
+                                                                                    : index,
+                                                                            )
+                                                                        }
+                                                                        className="inline-flex items-center gap-1.5 rounded-xl border border-accent/20 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-accent transition-colors hover:bg-accent/10"
+                                                                    >
+                                                                        {isExpanded ?
+                                                                            "Collapse"
+                                                                            : "Edit details"}
+                                                                        <LucideChevronDown
+                                                                            className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                                                                        />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            {!isExpanded && (
+                                                                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                                                                    <div className="rounded-2xl bg-white p-4 text-sm ring-1 ring-border-light">
+                                                                        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+                                                                            Identity
+                                                                        </p>
+                                                                        <p className="mt-1 font-medium text-heading">
+                                                                            {member.firstName?.trim() &&
+                                                                                member.lastName?.trim() ?
+                                                                                "Name added"
+                                                                                : "Name needed"}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="rounded-2xl bg-white p-4 text-sm ring-1 ring-border-light">
+                                                                        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+                                                                            Age
+                                                                        </p>
+                                                                        <p className="mt-1 font-medium text-heading">
+                                                                            {getMemberAgeLabel(
+                                                                                member,
+                                                                                answers,
+                                                                            )}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="rounded-2xl bg-white p-4 text-sm ring-1 ring-border-light">
+                                                                        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+                                                                            Residence
+                                                                        </p>
+                                                                        <p className="mt-1 font-medium text-heading">
+                                                                            {String(
+                                                                                answers.current_residence_country ??
+                                                                                "",
+                                                                            ).trim() ||
+                                                                                "Residence needed"}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
 
-                                                        <MemberProfileFields
-                                                            member={member}
-                                                            answers={answers}
-                                                            index={index}
-                                                            onMemberChange={
-                                                                handleMemberChange
-                                                            }
-                                                            onAnswerChange={
-                                                                handleMemberAnswerChange
-                                                            }
-                                                        />
-                                                    </div>
+                                                        {isExpanded && (
+                                                            <div className="border-t border-border-light bg-white p-5 md:p-6">
+                                                                <div className="mb-6 rounded-2xl border border-border-light bg-background-secondary p-4 text-sm text-muted">
+                                                                    <span className="font-semibold text-heading">
+                                                                        Editing {memberLabel(
+                                                                            member,
+                                                                            index,
+                                                                        )}
+                                                                    </span>{" "}
+                                                                    — complete these profile basics, then use the next step for medical history and vaccines.
+                                                                </div>
+                                                                <MemberProfileFields
+                                                                    member={
+                                                                        member
+                                                                    }
+                                                                    answers={
+                                                                        answers
+                                                                    }
+                                                                    index={
+                                                                        index
+                                                                    }
+                                                                    fieldErrors={
+                                                                        memberProfileErrors[
+                                                                            index
+                                                                        ]
+                                                                    }
+                                                                    onMemberChange={
+                                                                        handleMemberChange
+                                                                    }
+                                                                    onAnswerChange={
+                                                                        handleMemberAnswerChange
+                                                                    }
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </article>
                                                 );
                                             },
                                         )}
@@ -2030,7 +2535,7 @@ export default function FamilyTripBuilder() {
                                         >
                                             {isPreviewing ?
                                                 "Calculating..."
-                                            :   "Preview Cost"}
+                                                : "Preview Cost"}
                                         </Button>
                                         <Button
                                             variant="secondary"
@@ -2056,7 +2561,7 @@ export default function FamilyTripBuilder() {
                                             }}
                                             className="flex-1 md:flex-none bg-dark text-background-primary hover:bg-darkest"
                                         >
-                                            Continue to Health Info
+                                            Continue to Per-Member Health Info
                                         </Button>
                                     </div>
                                 </section>
@@ -2068,16 +2573,23 @@ export default function FamilyTripBuilder() {
                         {step === "questionnaire" && (
                             <>
                                 <div>
-                                    <h2 className="text-2xl font-serif text-heading mb-1">
-                                        Member medical questionnaire
-                                    </h2>
-                                    <p className="text-sm text-muted mb-6">
-                                        Answer the seeded medical, vaccination,
-                                        travel history, and confidential risk
-                                        questions for each family member.
-                                    </p>
+                                    <section className="mb-7 rounded-3xl border border-accent/15 bg-accent/5 p-5 md:p-6">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+                                            Step 3
+                                        </span>
+                                        <h2 className="mt-1 text-2xl font-serif text-heading">
+                                            Complete health answers per member
+                                        </h2>
+                                        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+                                            Open one traveller, answer only that
+                                            person's medical history,
+                                            vaccination, travel history, and
+                                            risk questions, then collapse the
+                                            card and move to the next member.
+                                        </p>
+                                    </section>
 
-                                    <div className="space-y-3">
+                                    <div className="space-y-5">
                                         {request.members.map(
                                             (member, index) => {
                                                 const answers =
@@ -2100,12 +2612,18 @@ export default function FamilyTripBuilder() {
                                                 const memberComplete =
                                                     profileComplete &&
                                                     questionMessages.length ===
-                                                        0;
+                                                    0;
+                                                const hasQuestionnaireErrors =
+                                                    Boolean(
+                                                        memberQuestionnaireErrors[
+                                                            index
+                                                        ]?.size,
+                                                    );
 
                                                 return (
                                                     <div
                                                         key={index}
-                                                        className="border border-border-light rounded-2xl overflow-hidden"
+                                                        className={`border rounded-3xl overflow-hidden bg-white shadow-[0_8px_30px_-24px_rgba(10,20,18,0.45)] transition-all duration-500 ${hasQuestionnaireErrors ? "border-red-300 ring-2 ring-red-400/40" : "border-border-light"}`}
                                                     >
                                                         <button
                                                             type="button"
@@ -2113,19 +2631,18 @@ export default function FamilyTripBuilder() {
                                                                 setExpandedMember(
                                                                     isExpanded ?
                                                                         null
-                                                                    :   index,
+                                                                        : index,
                                                                 )
                                                             }
-                                                            className="w-full flex items-center justify-between px-5 py-4 bg-background-secondary hover:bg-accent/5 transition-colors text-left"
+                                                            className="w-full flex items-center justify-between gap-4 px-5 py-5 md:px-6 bg-background-secondary hover:bg-accent/5 transition-colors text-left"
                                                         >
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
+                                                                <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center">
                                                                     <span className="text-accent text-xs font-bold">
-                                                                        {(
-                                                                            member
-                                                                                .firstName?.[0] ??
-                                                                            "?"
-                                                                        ).toUpperCase()}
+                                                                        {getMemberInitials(
+                                                                            member,
+                                                                            index,
+                                                                        )}
                                                                     </span>
                                                                 </div>
                                                                 <div>
@@ -2147,20 +2664,18 @@ export default function FamilyTripBuilder() {
                                                             </div>
                                                             <div className="flex items-center gap-2">
                                                                 <span
-                                                                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                                                                        (
-                                                                            memberComplete
-                                                                        ) ?
+                                                                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${memberComplete ?
                                                                             "text-emerald-700 bg-emerald-50"
+                                                                        : hasQuestionnaireErrors ?
+                                                                            "text-red-700 bg-red-50"
                                                                         :   "text-amber-700 bg-amber-50"
-                                                                    }`}
+                                                                        }`}
                                                                 >
-                                                                    {(
-                                                                        memberComplete
-                                                                    ) ?
+                                                                    {memberComplete ?
                                                                         "Complete"
-                                                                    :   "Needs answers"
-                                                                    }
+                                                                    : hasQuestionnaireErrors ?
+                                                                        "Required answers missing"
+                                                                    :   "Needs answers"}
                                                                 </span>
                                                                 <LucideChevronDown
                                                                     className={`w-4 h-4 text-muted transition-transform ${isExpanded ? "rotate-180" : ""}`}
@@ -2169,7 +2684,7 @@ export default function FamilyTripBuilder() {
                                                         </button>
 
                                                         {isExpanded && (
-                                                            <div className="p-5 space-y-8 bg-white border-t border-border-light">
+                                                            <div className="p-5 md:p-6 space-y-9 bg-white border-t border-border-light">
                                                                 {memberCategories.map(
                                                                     (
                                                                         category,
@@ -2182,6 +2697,12 @@ export default function FamilyTripBuilder() {
                                                                             answers={
                                                                                 answers
                                                                             }
+                                                                            errorKeys={
+                                                                                memberQuestionnaireErrors[
+                                                                                    index
+                                                                                ]
+                                                                            }
+                                                                            fieldIdPrefix={`member-${index}`}
                                                                             onAnswer={(
                                                                                 key,
                                                                                 value,
@@ -2251,7 +2772,7 @@ export default function FamilyTripBuilder() {
                                             }}
                                             className="bg-dark text-background-primary hover:bg-darkest"
                                         >
-                                            Review & Submit
+                                            Review & Finalize
                                         </Button>
                                     </div>
                                 </div>
@@ -2264,10 +2785,12 @@ export default function FamilyTripBuilder() {
                                     <h2 className="text-2xl font-serif text-heading mb-1">
                                         Review Your Family Trip
                                     </h2>
-                                    <p className="text-sm text-muted mb-6">
-                                        Confirm shared itinerary and each
-                                        member's questionnaire status before
-                                        creating the family trip.
+                                    <p className="text-sm text-muted mb-6 leading-relaxed">
+                                        Confirm the shared itinerary and each
+                                        member's questionnaire status. When you
+                                        finalize, the family trip is submitted
+                                        and the server queues a separate
+                                        TravelPlan for every completed member.
                                     </p>
 
                                     <div className="bg-background-secondary rounded-2xl p-5 mb-5 space-y-2 text-sm">
@@ -2278,7 +2801,7 @@ export default function FamilyTripBuilder() {
                                             <span className="text-heading font-medium text-right">
                                                 {derivedTripPayload ?
                                                     `${derivedTripPayload.destination}, ${derivedTripPayload.country}`
-                                                :   "Not set"}
+                                                    : "Not set"}
                                             </span>
                                         </div>
                                         <div className="flex justify-between gap-4">
@@ -2348,15 +2871,14 @@ export default function FamilyTripBuilder() {
                                                             </p>
                                                         </div>
                                                         <span
-                                                            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                                                                memberComplete ?
+                                                            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${memberComplete ?
                                                                     "bg-emerald-50 text-emerald-700"
-                                                                :   "bg-amber-50 text-amber-700"
-                                                            }`}
+                                                                    : "bg-amber-50 text-amber-700"
+                                                                }`}
                                                         >
                                                             {memberComplete ?
                                                                 "Questionnaire complete"
-                                                            :   "Questionnaire missing"
+                                                                : "Questionnaire missing"
                                                             }
                                                         </span>
                                                     </div>
@@ -2388,8 +2910,8 @@ export default function FamilyTripBuilder() {
                                         className="bg-dark text-background-primary hover:bg-darkest"
                                     >
                                         {isSubmitting ?
-                                            "Creating..."
-                                        :   "Create Family Trip"}
+                                            "Finalizing..."
+                                            : "Finalize & Create Plans"}
                                     </Button>
                                 </div>
                             </>

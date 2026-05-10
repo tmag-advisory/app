@@ -19,7 +19,7 @@ import {
     type SignupRange,
     type ServiceLevel,
 } from "../../constants/companyPlans";
-import { getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
+import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 
 type Audience = "individual" | "family" | "company";
 
@@ -393,7 +393,11 @@ const PricingPage = () => {
                                 </div>
                                 <Button
                                     variant="primary"
-                                    link={`/family-checkout?plan=FAMILY_${plan.id}`}
+                                    link={(() => {
+                                        const referralCode = getAffiliateReferralCode();
+                                        const base = `/family-checkout?plan=FAMILY_${plan.id}`;
+                                        return referralCode ? `${base}&ref=${encodeURIComponent(referralCode)}` : base;
+                                    })()}
                                     className="relative z-10 self-stretch bg-accent text-white! hover:bg-[#246858] text-center justify-center flex"
                                 >
                                     {plan.cta}

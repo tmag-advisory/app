@@ -26,6 +26,10 @@ export default function FamilyCheckoutPage() {
     const planId = searchParams.get("plan")?.replace("FAMILY_", "") as FamilyPackageType | null;
     const plan = planId ? familyPlans.find((p: { id: string }) => p.id === planId) : null;
 
+    // Referral code: prefer URL param (forwarded from pricing page) then fall back to cookie.
+    const urlRef = searchParams.get("ref") ?? undefined;
+    const resolvedReferralCode = urlRef ?? getAffiliateReferralCode() ?? undefined;
+
     const { mutate: initiateCheckout, isPending } = useInitiateFamilyPackageCheckout();
 
     const [form, setForm] = useState({ name: "", email: "", phone: "" });
@@ -42,16 +46,23 @@ export default function FamilyCheckoutPage() {
 
     useEffect(() => {
         let cancelled = false;
-        void refreshAffiliateDiscount()
+        // Use the resolved referral code (URL param preferred) for the discount refresh.
+        const codeForRefresh = resolvedReferralCode;
+        void refreshAffiliateDiscount(codeForRefresh)
             .then((discount) => {
                 if (!cancelled && discount?.active) {
                     setAffiliateDiscountRate(Number(discount.discount_rate));
+                } else if (!cancelled) {
+                    // If the referral is no longer active, clear the displayed rate
+                    // so the checkout total matches what Flutterwave will actually charge.
+                    setAffiliateDiscountRate(0);
                 }
             })
             .catch(() => undefined);
         return () => {
             cancelled = true;
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const validate = () => {
@@ -70,12 +81,16 @@ export default function FamilyCheckoutPage() {
         if (!plan) return;
         if (!validate()) return;
 
+        // Always forward the resolved referral code (URL param preferred over cookie)
+        // so the backend can apply the discount even when cookies are out of sync.
+        const referralCode = resolvedReferralCode;
+
         initiateCheckout(
             {
                 packageType: plan.id,
                 currency: normalizePlanCurrency(selectedCurrency),
                 additionalMembers,
-                affiliate_referral_code: affiliateDiscountRate > 0 ? getAffiliateReferralCode() : undefined,
+                affiliate_referral_code: referralCode,
                 ...(user ? {} : { name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim() }),
             },
             {
