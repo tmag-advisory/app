@@ -232,7 +232,7 @@ export default function FamilyManageMembers() {
                                                     </span>
                                                 </div>
                                                 {member.memberEmail && (
-                                                    <span className="text-xs text-muted ring flex items-center gap-1 mt-1">
+                                                    <span className="text-xs text-muted flex items-center gap-1 mt-1">
                                                         <LucideMail className="w-3 h-3" />
                                                         {member.memberEmail}
                                                     </span>
