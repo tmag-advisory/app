@@ -39,6 +39,9 @@ export interface AuthUser {
     user_credit_plan?: import("../api/types").CreditPlan | null;
     settings?: import("../api/types").UserSettingResponse;
     consentValid?: boolean;
+    type?: string | null;
+    redirect_to?: string | null;
+    redirect_message?: string | null;
 }
 
 
@@ -191,6 +194,9 @@ function buildAuthUser(d: Record<string, unknown>): AuthUser {
         consentValid: !!(settings?.consentAcceptedByVersion != null
             && settings?.consentVersion != null
             && settings.consentAcceptedByVersion >= settings.consentVersion),
+        type: (d.type as string | null) ?? null,
+        redirect_to: (d.redirect_to as string | null) ?? null,
+        redirect_message: (d.redirect_message as string | null) ?? null,
     };
 }
 
@@ -222,6 +228,9 @@ function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
         consentValid: !!(settings?.consentAcceptedByVersion != null
             && settings?.consentVersion != null
             && settings.consentAcceptedByVersion >= settings.consentVersion),
+        type: (d.type as string | null) ?? null,
+        redirect_to: (d.redirect_to as string | null) ?? null,
+        redirect_message: (d.redirect_message as string | null) ?? null,
     };
 }
 

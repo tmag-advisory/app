@@ -1,73 +1,97 @@
-# React + TypeScript + Vite
+# TMAG Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The TMAG Client is the main public and user-facing React application. It serves the marketing website, authentication flows, individual travel plan dashboard, HR/company user flows, doctor review workspace, family plan flows, ebook shop, and payment callbacks.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19 + TypeScript
+- Vite
+- Tailwind CSS 4
+- React Router 7
+- TanStack Query
+- Zustand
+- Axios
+- Framer Motion, GSAP, Recharts, Lucide React
 
-## React Compiler
+## Local URL
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+`bun run dev` starts Vite on port `3000`:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+http://localhost:3000
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Setup
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd client
+bun install
 ```
+
+Create a local `.env` file:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api
+VITE_API_KEY=<same-value-as-backend-APP_API_KEY>
+
+# Optional role-based redirects after login/onboarding
+VITE_SUPER_ADMIN_DASHBOARD_URL=http://localhost:3001/admin
+VITE_ADMIN_DASHBOARD_URL=http://localhost:3002/admin
+```
+
+Do not commit `.env` files or real secrets.
+
+## Scripts
+
+| Command | Description |
+| --- | --- |
+| `bun run dev` | Start the development server on port `3000`. |
+| `bun run build` | Run TypeScript project build and create the Vite production bundle. |
+| `bun run lint` | Run ESLint. |
+| `bun run preview` | Preview the production build locally. |
+
+## Main route areas
+
+- `/` marketing home page.
+- `/pricing`, `/for-companies`, `/about`, `/faq`, `/blog`, `/contact`, and legal/support content pages.
+- `/login`, `/register`, `/forgot-password`, `/reset-password`, and verification callbacks.
+- `/dashboard/*` individual user travel plans, family plans, transactions, ebooks, and settings.
+- `/hr/*` HR/company user tools for employees, billing, reports, and credit requests.
+- `/doctor/*` doctor plan validation workflow.
+- `/family/*` family member portal.
+- `/shop/*` ebook catalog, cart, checkout, and order confirmation.
+- `/payment/callback`, `/family-payment-callback`, and `/hr/billing/callback` payment return routes.
+- `/ref/:shortCode` affiliate tracking redirect.
+
+## Project structure
+
+```text
+client/
+├── src/
+│   ├── api/          # Axios client, API functions, hooks, and types
+│   ├── components/   # Reusable UI, dashboard, auth, doctor, payment, plan, and marketing components
+│   ├── constants/    # Static plan and product constants
+│   ├── context/      # Auth, countries, health profile, and onboarding contexts
+│   ├── layouts/      # Home, auth, user, HR, doctor, and dashboard layouts
+│   ├── lib/          # Query client, role redirects, PDF helpers, validation, utilities
+│   ├── pages/        # Route pages
+│   ├── routes/       # React Router configuration
+│   └── stores/       # Zustand stores
+├── public/           # Static assets
+├── package.json
+└── vite.config.ts
+```
+
+## API integration
+
+- API base defaults to `http://localhost:8080/api` when `VITE_API_BASE_URL` is not set.
+- Requests send `X-Api-Key: VITE_API_KEY`.
+- Auth stores the user JWT in the `access_token` cookie and attaches it as `Authorization: Bearer <token>`.
+- Most backend resources are under `/api/v1`; client API helpers include the versioned path where needed.
+
+## Development workflow
+
+1. Start `spring-server` on port `8080` with a matching `APP_API_KEY`.
+2. Start this app with `bun run dev`.
+3. Run `bun run build` before handing off or deploying.
+4. Run `bun run lint` after TypeScript or React changes.

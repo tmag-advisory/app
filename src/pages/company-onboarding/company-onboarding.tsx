@@ -28,6 +28,7 @@ import {
 } from "../../constants/companyPlans";
 import toast, { Toaster } from "react-hot-toast";
 import Navbar from "../../components/sections/Navbar";
+import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 
 const steps = [
     { id: 1, title: "Plan & Needs", icon: <LucideBuilding2 className="w-4 h-4" /> },
@@ -127,6 +128,7 @@ const CompanyOnboarding = () => {
     const [creditCount, setCreditCount] = useState<string>("10");
     const [sampleRequest, setSampleRequest] = useState("");
     const [billingCurrency, setBillingCurrency] = useState("USD");
+    const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
 
     // Step 2 state
     const [companyName, setCompanyName] = useState("");
@@ -154,6 +156,20 @@ const CompanyOnboarding = () => {
     useEffect(() => {
         setBillingCurrency(selectedCurrency || "USD");
     }, [selectedCurrency]);
+
+    useEffect(() => {
+        let cancelled = false;
+        void refreshAffiliateDiscount()
+            .then((discount) => {
+                if (!cancelled && discount?.active) {
+                    setAffiliateDiscountRate(Number(discount.discount_rate));
+                }
+            })
+            .catch(() => undefined);
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     const enterprisePlans = useMemo(
         () => plans?.filter((p) => p.isCompanyPlan) ?? [],
@@ -195,13 +211,26 @@ const CompanyOnboarding = () => {
         return null;
     };
 
+    const getAffiliateDiscountInfo = () => {
+        if (affiliateDiscountRate <= 0) return null;
+        return { label: `${affiliateDiscountRate}% affiliate discount`, pct: affiliateDiscountRate };
+    };
+
     const getEstimatedTotal = () => {
         const plan = getSelectedPlanData();
         if (!plan || plan.basePriceUsd === 0) return null;
         const volumePricing = getVolumePricing();
-        if (volumePricing) return volumePricing.totalAmount;
-        if (billingCurrency === "NGN") return (plan.basePriceNgn ?? 0) * numericCreditCount;
-        return plan.basePriceUsd * numericCreditCount;
+        let baseTotal: number;
+        if (volumePricing) {
+            baseTotal = volumePricing.totalAmount;
+        } else {
+            baseTotal = billingCurrency === "NGN" ? (plan.basePriceNgn ?? 0) * numericCreditCount : plan.basePriceUsd * numericCreditCount;
+        }
+        // Apply affiliate discount on top of volume pricing
+        if (affiliateDiscountRate > 0) {
+            return Math.round(baseTotal * (1 - affiliateDiscountRate / 100));
+        }
+        return baseTotal;
     };
 
     const formatTotal = (total: number | null) => {
@@ -316,6 +345,7 @@ const CompanyOnboarding = () => {
                 teamMembers,
                 teamMembersCsv,
                 platformEmployees: platformEmployees.filter((e) => e.email.trim()),
+                affiliate_referral_code: affiliateDiscountRate > 0 ? getAffiliateReferralCode() : undefined,
             });
             setOnboardingResult(result);
             goToStep(4);
@@ -702,6 +732,12 @@ const CompanyOnboarding = () => {
                                                                         }
                                                                     </span>
                                                                 )}
+                                                                {getAffiliateDiscountInfo() && (
+                                                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                                                                        <LucideTag className="w-3 h-3" />
+                                                                        {getAffiliateDiscountInfo()!.label}
+                                                                    </span>
+                                                                )}
                                                             </span>
                                                         }
                                                     </div>
@@ -879,6 +915,24 @@ const CompanyOnboarding = () => {
                                                                             numericCreditCount
                                                                         }{" "}
                                                                         credits
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                    {/* Affiliate discount celebration */}
+                                                    {getAffiliateDiscountInfo() &&
+                                                        !isContactSalesRequired && (
+                                                            <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
+                                                                <div className="p-1.5 bg-emerald-100 rounded-lg shrink-0">
+                                                                    <LucideTag className="w-4 h-4 text-emerald-600" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-xs font-semibold text-emerald-800">
+                                                                        {getAffiliateDiscountInfo()!.label} applied!
+                                                                    </p>
+                                                                    <p className="text-xs text-emerald-600">
+                                                                        Referral discount on top of any volume pricing
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -1261,6 +1315,12 @@ const CompanyOnboarding = () => {
                                                                 {
                                                                     discountInfo.label
                                                                 }
+                                                            </span>
+                                                        )}
+                                                        {getAffiliateDiscountInfo() && (
+                                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full mt-1">
+                                                                <LucideTag className="w-3 h-3" />
+                                                                {getAffiliateDiscountInfo()!.label}
                                                             </span>
                                                         )}
                                                     </div>

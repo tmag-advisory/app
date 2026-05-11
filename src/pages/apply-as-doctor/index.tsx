@@ -1,4 +1,4 @@
-import { useRef, useState, type UIEvent } from "react";
+import { useRef, useState, useEffect, type UIEvent } from "react";
 import { Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -15,6 +15,10 @@ import {
     LucideStar,
     LucideFileText,
     LucideCheckCircle2,
+    LucideX,
+    LucideFile,
+    LucideImage,
+    LucideFileJson,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useApplyAsDoctor } from "../../api/hooks";
@@ -69,18 +73,147 @@ const FileField = ({
     accept?: string;
 }) => {
     const ref = useRef<HTMLInputElement>(null);
+    const [preview, setPreview] = useState<string | null>(null);
+    const [isDragOver, setIsDragOver] = useState(false);
+
+    useEffect(() => {
+        if (file && file.type.startsWith("image/")) {
+            const url = URL.createObjectURL(file);
+            setPreview(url);
+            return () => URL.revokeObjectURL(url);
+        }
+        setPreview(null);
+    }, [file]);
+
+    const formatSize = (bytes: number) => {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+    };
+
+    const isImage = file?.type.startsWith("image/");
+    const isPdf = file?.type === "application/pdf";
+    const isDoc =
+        file?.type ===
+            "application/msword" ||
+        file?.type ===
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+    const fileIcon = isImage ?
+        <LucideImage className="w-5 h-5" />
+    : isPdf ?
+        <LucideFileJson className="w-5 h-5" />
+    :   <LucideFile className="w-5 h-5" />;
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const dropped = e.dataTransfer.files?.[0];
+        if (dropped) onChange(dropped);
+    };
+
+    if (file) {
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="group"
+            >
+                <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                    {label}{" "}
+                    {required && <span className="text-red-500">*</span>}
+                </label>
+                <div className="relative flex items-start gap-4 p-4 rounded-2xl border-2 border-accent/30 bg-accent/5 transition-all duration-200">
+                    {/* Preview */}
+                    <div className="w-16 h-16 shrink-0 rounded-xl overflow-hidden bg-white border border-border-light/60 flex items-center justify-center">
+                        {isImage && preview ?
+                            <img
+                                src={preview}
+                                alt="Preview"
+                                className="w-full h-full object-cover"
+                            />
+                        :   <div className="text-muted/60">{fileIcon}</div>
+                        }
+                    </div>
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-heading truncate">
+                            {file.name}
+                        </p>
+                        <p className="text-xs text-muted mt-0.5">
+                            {formatSize(file.size)}
+                            {isImage && " · Image"}
+                            {isPdf && " · PDF"}
+                            {isDoc && " · Document"}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => ref.current?.click()}
+                            className="mt-2 text-xs text-accent font-medium hover:underline transition-colors"
+                        >
+                            Change file
+                        </button>
+                    </div>
+                    {/* Remove */}
+                    <button
+                        type="button"
+                        onClick={() => onChange(undefined)}
+                        className="shrink-0 w-7 h-7 rounded-full bg-white/80 border border-border-light/60 flex items-center justify-center text-muted/50 hover:text-red-500 hover:border-red-200 transition-all duration-200"
+                        title="Remove"
+                    >
+                        <LucideX className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+                <input
+                    ref={ref}
+                    type="file"
+                    accept={accept}
+                    className="hidden"
+                    onChange={(e) => onChange(e.target.files?.[0])}
+                />
+            </motion.div>
+        );
+    }
+
     return (
-        <div>
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+        >
             <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                {label} {required && <span className="text-red-500">*</span>}
+                {label}{" "}
+                {required && <span className="text-red-500">*</span>}
             </label>
             <button
                 type="button"
                 onClick={() => ref.current?.click()}
-                className="w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl border-2 border-border-light/60 bg-white text-base text-muted hover:text-heading hover:border-border transition-colors text-left"
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={handleDrop}
+                className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl border-2 border-dashed text-sm transition-all duration-200 text-left cursor-pointer group
+                    ${isDragOver
+                        ? "border-accent bg-accent/10 text-accent"
+                        : "border-border-light/60 text-muted hover:border-accent/50 hover:text-heading hover:bg-accent/5"
+                    }`}
             >
-                <LucideUpload className="w-4 h-4 shrink-0" />
-                <span className="truncate">{file ? file.name : `Upload ${label}`}</span>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
+                    isDragOver
+                        ? "bg-accent/20 text-accent"
+                        : "bg-button-secondary text-muted group-hover:bg-accent/10 group-hover:text-accent"
+                }`}>
+                    <LucideUpload className="w-4.5 h-4.5" />
+                </div>
+                <div className="flex-1">
+                    <span className="font-medium">
+                        {isDragOver ? "Drop file here" : `Upload ${label}`}
+                    </span>
+                    <p className="text-[11px] text-muted/60 mt-0.5">
+                        PNG, JPG, PDF, DOC up to 10MB
+                    </p>
+                </div>
             </button>
             <input
                 ref={ref}
@@ -89,7 +222,7 @@ const FileField = ({
                 className="hidden"
                 onChange={(e) => onChange(e.target.files?.[0])}
             />
-        </div>
+        </motion.div>
     );
 };
 
@@ -183,6 +316,8 @@ const ApplyAsDoctor = () => {
     const [profilePicture, setProfilePicture] = useState<File | undefined>();
     const [signature, setSignature] = useState<File | undefined>();
     const [stamp, setStamp] = useState<File | undefined>();
+    const [practicingLicense, setPracticingLicense] = useState<File | undefined>();
+    const [travelMedicineCertificate, setTravelMedicineCertificate] = useState<File | undefined>();
     const [confidentialityAccepted, setConfidentialityAccepted] = useState(false);
     const [conductAccepted, setConductAccepted] = useState(false);
 
@@ -218,6 +353,8 @@ const ApplyAsDoctor = () => {
             profilePicture,
             signature,
             stamp,
+            practicingLicense,
+            travelMedicineCertificate,
             confidentialityAgreementAccepted: confidentialityAccepted,
             conductAgreementAccepted: conductAccepted,
         });
@@ -646,6 +783,16 @@ const ApplyAsDoctor = () => {
                                                 file={stamp}
                                                 onChange={setStamp}
                                             />
+                                            <FileField
+                                                label="Practicing License for the Year"
+                                                file={practicingLicense}
+                                                onChange={setPracticingLicense}
+                                            />
+                                            <FileField
+                                                label="Travel Medicine Recent Certificate"
+                                                file={travelMedicineCertificate}
+                                                onChange={setTravelMedicineCertificate}
+                                            />
                                         </motion.div>
 
                                         <div className="flex items-center gap-3 mt-8">
@@ -808,6 +955,50 @@ const ApplyAsDoctor = () => {
                                                     {stamp ?
                                                         <p className="text-sm text-heading font-medium truncate">
                                                             {stamp.name}
+                                                        </p>
+                                                    :   <p className="text-sm text-muted italic">
+                                                            Not provided
+                                                        </p>
+                                                    }
+                                                </div>
+                                                <button
+                                                    onClick={() => goTo(1)}
+                                                    className="text-xs text-accent font-medium hover:underline shrink-0 ml-4"
+                                                >
+                                                    Edit
+                                                </button>
+                                            </div>
+
+                                            <div className="flex items-start justify-between p-4 rounded-2xl border border-border-light/60 bg-background-primary">
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-0.5">
+                                                        Practicing License
+                                                    </p>
+                                                    {practicingLicense ?
+                                                        <p className="text-sm text-heading font-medium truncate">
+                                                            {practicingLicense.name}
+                                                        </p>
+                                                    :   <p className="text-sm text-muted italic">
+                                                            Not provided
+                                                        </p>
+                                                    }
+                                                </div>
+                                                <button
+                                                    onClick={() => goTo(1)}
+                                                    className="text-xs text-accent font-medium hover:underline shrink-0 ml-4"
+                                                >
+                                                    Edit
+                                                </button>
+                                            </div>
+
+                                            <div className="flex items-start justify-between p-4 rounded-2xl border border-border-light/60 bg-background-primary">
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-0.5">
+                                                        Travel Medicine Certificate
+                                                    </p>
+                                                    {travelMedicineCertificate ?
+                                                        <p className="text-sm text-heading font-medium truncate">
+                                                            {travelMedicineCertificate.name}
                                                         </p>
                                                     :   <p className="text-sm text-muted italic">
                                                             Not provided

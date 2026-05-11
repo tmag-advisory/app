@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useState, type ReactNode } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     LucideArrowLeft,
@@ -83,7 +83,6 @@ interface PlanQuestionnaireFlowProps {
     /** Pre-populated category index (for draft resume) */
     initialCategoryIndex?: number;
     initialShowVerify?: boolean;
-    initialShowIntro?: boolean;
     initialRiskConsentGiven?: boolean;
     initialMedicalDisclaimerConsentGiven?: boolean;
     onSaveDraft?: () => void | Promise<void>;
@@ -93,7 +92,6 @@ interface PlanQuestionnaireFlowProps {
         answers: Record<string, unknown>;
         categoryIndex: number;
         showVerify: boolean;
-        showIntro: boolean;
         riskConsentGiven: boolean;
         medicalDisclaimerConsentGiven: boolean;
     }) => void;
@@ -501,7 +499,6 @@ const PlanQuestionnaireFlow = forwardRef<
             initialAnswers,
             initialCategoryIndex = 0,
             initialShowVerify = false,
-            initialShowIntro,
             initialRiskConsentGiven = false,
             initialMedicalDisclaimerConsentGiven,
             onSaveDraft,
@@ -518,13 +515,9 @@ const PlanQuestionnaireFlow = forwardRef<
         const [answers, setAnswers] = useState<Record<string, unknown>>(
             initialAnswers ?? {},
         );
+        const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
         const [categoryIndex, setCategoryIndex] =
             useState(initialCategoryIndex);
-        const [showIntro, setShowIntro] = useState(
-            initialShowIntro !== undefined ? initialShowIntro : (
-                initialCategoryIndex === 0
-            ),
-        );
         const [showVerify, setShowVerify] = useState(initialShowVerify);
         const [wantsDoctorSelection, setWantsDoctorSelection] = useState(false);
         const [selectedDoctorIds, setSelectedDoctorIds] = useState<number[]>([]);
@@ -537,8 +530,11 @@ const PlanQuestionnaireFlow = forwardRef<
             setMedicalDisclaimerConsentGiven,
         ] = useState(
             initialMedicalDisclaimerConsentGiven ??
-                (initialCategoryIndex > 0 || initialShowVerify),
+                (initialCategoryIndex > 0 || initialShowVerify || (user?.consentValid ?? false)),
         );
+
+        // Track which field to highlight when navigating from verify page
+        const [highlightedFieldKey, setHighlightedFieldKey] = useState<string | null>(null);
 
         // Notify parent of state changes (for sidebar sync / draft save)
         useEffect(() => {
@@ -546,7 +542,6 @@ const PlanQuestionnaireFlow = forwardRef<
                 answers,
                 categoryIndex,
                 showVerify,
-                showIntro,
                 riskConsentGiven,
                 medicalDisclaimerConsentGiven,
             });
@@ -554,7 +549,6 @@ const PlanQuestionnaireFlow = forwardRef<
             answers,
             categoryIndex,
             showVerify,
-            showIntro,
             riskConsentGiven,
             medicalDisclaimerConsentGiven,
             onStateChange,
@@ -578,6 +572,22 @@ const PlanQuestionnaireFlow = forwardRef<
             }));
         }, [user]);
 
+        // Scroll to highlighted field when navigating from verify page
+        useEffect(() => {
+            if (!highlightedFieldKey) return;
+            const rafId = requestAnimationFrame(() => {
+                const el = document.getElementById(`question-field-${highlightedFieldKey}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            });
+            const timer = setTimeout(() => setHighlightedFieldKey(null), 4000);
+            return () => {
+                cancelAnimationFrame(rafId);
+                clearTimeout(timer);
+            };
+        }, [highlightedFieldKey]);
+
         const categories = useMemo(
             () =>
                 ((categoriesRaw as QuestionCategory[] | undefined) ?? []).map(
@@ -591,6 +601,17 @@ const PlanQuestionnaireFlow = forwardRef<
             [categoriesRaw],
         );
 
+        // Map question keys to their category indices for verify-page navigation
+        const questionKeyToCategoryIndex = useMemo(() => {
+            const map = new Map<string, number>();
+            categories.forEach((cat, idx) => {
+                cat.parsedQuestions.forEach((q: Question) => {
+                    map.set(q.key, idx);
+                });
+            });
+            return map;
+        }, [categories]);
+
         useImperativeHandle(
             ref,
             () => ({
@@ -598,12 +619,10 @@ const PlanQuestionnaireFlow = forwardRef<
                     if (index < 0 || index >= categories.length) return;
                     setCategoryIndex(index);
                     setShowVerify(false);
-                    setShowIntro(true);
                 },
                 goToVerify: () => {
                     if (categories.length === 0) return;
                     setShowVerify(true);
-                    setShowIntro(false);
                 },
             }),
             [categories.length],
@@ -634,88 +653,94 @@ const PlanQuestionnaireFlow = forwardRef<
         };
 
         const validateCurrentPage = (): boolean => {
+            const errors = new Set<string>();
+            const toastMessages: string[] = [];
+
+            // 1. Collect all unanswered required fields
             for (const q of visibleQuestions) {
                 if (!isRequiredAnswered(q)) {
+                    errors.add(q.key);
                     if (q.type === "trip_itinerary") {
                         const d = hydrateLegacyTripItinerary(
                             answers[q.key] as TripItineraryData,
                         );
                         const missingErr = getTripItineraryMissingFieldError(d);
                         if (missingErr) {
-                            toast.error(missingErr);
-                            return false;
+                            toastMessages.push(missingErr);
                         }
                         const tripErr = validateTripItineraryDates(d);
                         if (tripErr) {
-                            toast.error(tripErr);
-                            return false;
+                            toastMessages.push(tripErr);
                         }
                     }
-                    toast.error(`Please answer: "${q.text}"`);
-                    return false;
                 }
             }
+
+            // 2. Collect all invalid-value fields
             for (const q of visibleQuestions) {
-                if (q.key === "date_of_birth" && q.required) {
-                    const v = String(answers[q.key] ?? "").trim();
-                    if (v && !isDateOfBirthPlausible(v)) {
-                        toast.error("Date of birth cannot be in the future.");
-                        return false;
-                    }
+                const v = String(answers[q.key] ?? "").trim();
+                if (q.key === "date_of_birth" && v && !isDateOfBirthPlausible(v)) {
+                    errors.add(q.key);
+                    toastMessages.push("Date of birth cannot be in the future.");
                 }
-                if (q.key === "email_address" && q.required) {
-                    const v = String(answers[q.key] ?? "").trim();
-                    if (v && !isPlausibleEmail(v)) {
-                        toast.error("Please enter a valid email address.");
-                        return false;
-                    }
+                if (q.key === "email_address" && v && !isPlausibleEmail(v)) {
+                    errors.add(q.key);
+                    toastMessages.push("Please enter a valid email address.");
                 }
                 if (
-                    q.key === "longest_flight_leg_hours" ||
-                    q.key === "total_flying_hours" ||
-                    q.key === "number_of_flight_legs"
+                    (q.key === "longest_flight_leg_hours" ||
+                     q.key === "total_flying_hours" ||
+                     q.key === "number_of_flight_legs") &&
+                    v && !isValidOptionalNonNegativeNumber(v)
                 ) {
-                    const v = String(answers[q.key] ?? "").trim();
-                    if (v && !isValidOptionalNonNegativeNumber(v)) {
-                        toast.error(
-                            `Please enter a valid non-negative number for "${q.text}"`,
-                        );
-                        return false;
-                    }
+                    errors.add(q.key);
+                    toastMessages.push(`Please enter a valid non-negative number for "${q.text}"`);
                 }
             }
+
+            if (errors.size > 0) {
+                setFieldErrors(errors);
+                if (toastMessages.length > 0) {
+                    toast.error(toastMessages[0]);
+                } else {
+                    toast.error("Please fill in all required fields.");
+                }
+                return false;
+            }
+
+            setFieldErrors(new Set());
             return true;
         };
 
         const goToNext = () => {
+            setFieldErrors(new Set());
+            if (requiresMedicalDisclaimerConsent &&
+                !medicalDisclaimerConsentGiven) {
+                toast.error("Please read and agree to the Consent, Medical Disclaimer, and Privacy Policy.");
+                return;
+            }
+            if (isRiskSection && !riskConsentGiven) {
+                toast.error("Please agree to answer this section before continuing.");
+                return;
+            }
             if (!validateCurrentPage()) return;
             const nextCategory = categoryIndex + 1;
             if (nextCategory < categories.length) {
                 setCategoryIndex(nextCategory);
-                setShowIntro(true);
                 return;
             }
             setShowVerify(true);
         };
 
         const goToPrevious = () => {
+            setFieldErrors(new Set());
             if (showVerify) {
                 setCategoryIndex(categories.length - 1);
-                setShowIntro(false);
                 setShowVerify(false);
                 return;
             }
-            if (showIntro) {
-                if (categoryIndex === 0) return;
-                setCategoryIndex((idx) => idx - 1);
-                setShowIntro(false);
-                return;
-            }
-            setShowIntro(true);
-        };
-
-        const startCategory = () => {
-            setShowIntro(false);
+            if (categoryIndex === 0) return;
+            setCategoryIndex((idx) => idx - 1);
         };
 
         const handleGeneratePlan = async () => {
@@ -750,8 +775,22 @@ const PlanQuestionnaireFlow = forwardRef<
             });
         };
 
+        const handleVerifyItemClick = useCallback((questionKey: string) => {
+            const idx = questionKeyToCategoryIndex.get(questionKey);
+            if (idx !== undefined) {
+                setCategoryIndex(idx);
+                setShowVerify(false);
+                setHighlightedFieldKey(questionKey);
+            }
+        }, [questionKeyToCategoryIndex]);
+
         const setAnswer = (key: string, value: unknown) => {
             setAnswers((prev) => ({ ...prev, [key]: value }));
+            setFieldErrors((prev) => {
+                const next = new Set(prev);
+                next.delete(key);
+                return next;
+            });
         };
 
         const toggleCheckbox = (key: string, value: string) => {
@@ -764,6 +803,11 @@ const PlanQuestionnaireFlow = forwardRef<
                             current.filter((v) => v !== value)
                         :   [...current, value],
                 };
+            });
+            setFieldErrors((prev) => {
+                const next = new Set(prev);
+                next.delete(key);
+                return next;
             });
         };
 
@@ -791,7 +835,7 @@ const PlanQuestionnaireFlow = forwardRef<
                 })),
         );
 
-        const isBackDisabled = categoryIndex === 0 && showIntro && !showVerify;
+        const isBackDisabled = categoryIndex === 0 && !showVerify;
 
         return (
             <div className="space-y-8">
@@ -813,29 +857,33 @@ const PlanQuestionnaireFlow = forwardRef<
                 {/* ── Sidebar slot (replaces internal stepper when provided) ── */}
                 {sidebarSlot}
 
-                {/* ── Section intro card ───────────────────────────────── */}
-                {!showVerify && showIntro && (
+                {/* ── Questions page (all questions for this section) ───── */}
+                {!showVerify && (
                     <AnimatePresence mode="wait">
                         <motion.div
-                            key={`intro-${currentCategory.category_key}`}
+                            key={`questions-${currentCategory.category_key}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="rounded-3xl border border-border-light/70 bg-white/80 p-7 md:p-9"
+                            className="rounded-3xl border border-border-light/70 bg-white/80 p-5 py-7 md:p-9 space-y-8"
                         >
-                            <p className="text-xs text-accent font-semibold uppercase tracking-wider mb-2">
-                                Section {categoryIndex + 1} of{" "}
-                                {categories.length}
-                            </p>
-                            <h3 className="text-3xl md:text-4xl font-serif text-heading mb-3 leading-tight">
-                                {currentCategory.category_name}
-                            </h3>
-                            <p className="text-sm md:text-base text-muted mb-7 max-w-2xl leading-relaxed">
-                                {currentCategory.category_description}
-                            </p>
+                            <div>
+                                <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-accent mb-1">
+                                    Section {categoryIndex + 1} of{" "}
+                                    {categories.length}
+                                </p>
+                                <h3 className="text-2xl md:text-3xl font-serif text-heading leading-snug">
+                                    {currentCategory.category_name}
+                                </h3>
+                                {currentCategory.category_description && (
+                                    <p className="text-sm md:text-base text-muted mt-3 max-w-2xl leading-relaxed">
+                                        {currentCategory.category_description}
+                                    </p>
+                                )}
+                            </div>
 
                             {requiresMedicalDisclaimerConsent && (
-                                <div className="mb-6 p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
+                                <div className="p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
                                     <p className="text-sm text-heading font-semibold mb-2">
                                         Before proceeding, please read and
                                         agree:
@@ -918,9 +966,8 @@ const PlanQuestionnaireFlow = forwardRef<
                                 </div>
                             )}
 
-                            {/* Consent checkbox for Personal Health & Risk Behaviours */}
                             {isRiskSection && (
-                                <div className="mb-6 p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
+                                <div className="p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
                                     <p className="text-sm text-heading font-semibold mb-3">
                                         Your responses are confidential and used
                                         only to provide accurate health advice.
@@ -949,57 +996,31 @@ const PlanQuestionnaireFlow = forwardRef<
                                 </div>
                             )}
 
-                            <button
-                                type="button"
-                                onClick={startCategory}
-                                disabled={
-                                    (requiresMedicalDisclaimerConsent &&
-                                        !medicalDisclaimerConsentGiven) ||
-                                    (isRiskSection && !riskConsentGiven)
-                                }
-                                className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-dark text-white text-sm font-semibold hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                            >
-                                Begin <LucideArrowRight className="w-4 h-4" />
-                            </button>
-                        </motion.div>
-                    </AnimatePresence>
-                )}
-
-                {/* ── Questions page (all questions for this section) ───── */}
-                {!showVerify && !showIntro && (
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={`questions-${currentCategory.category_key}`}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="rounded-3xl border border-border-light/70 bg-white/80 p-5 py-7 md:p-9 space-y-8"
-                        >
-                            <div>
-                                <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-accent mb-1">
-                                    Section {categoryIndex + 1} of{" "}
-                                    {categories.length}
-                                </p>
-                                <h3 className="text-2xl md:text-3xl font-serif text-heading leading-snug">
-                                    {currentCategory.category_name}
-                                </h3>
-                            </div>
-
-                            {visibleQuestions.map((question) => (
-                                <QuestionBlock
-                                    key={question.key}
-                                    question={question}
-                                    value={answers[question.key]}
-                                    answers={answers}
-                                    prefilled={PREFILLED_KEYS.has(question.key)}
-                                    onChange={(value) =>
-                                        setAnswer(question.key, value)
-                                    }
-                                    onToggleCheckbox={(value) =>
-                                        toggleCheckbox(question.key, value)
-                                    }
-                                />
-                            ))}
+                            {isRiskSection && !riskConsentGiven ? (
+                                <div className="rounded-2xl border-2 border-dashed border-border-light/60 bg-background-primary/30 p-8 text-center">
+                                    <p className="text-sm text-muted leading-relaxed">
+                                        Please agree to the confidentiality statement above to access and answer these questions.
+                                    </p>
+                                </div>
+                            ) : (
+                                visibleQuestions.map((question) => (
+                                    <QuestionBlock
+                                        key={question.key}
+                                        question={question}
+                                        value={answers[question.key]}
+                                        answers={answers}
+                                        prefilled={PREFILLED_KEYS.has(question.key)}
+                                        isHighlighted={highlightedFieldKey === question.key}
+                                        hasError={fieldErrors.has(question.key)}
+                                        onChange={(value) =>
+                                            setAnswer(question.key, value)
+                                        }
+                                        onToggleCheckbox={(value) =>
+                                            toggleCheckbox(question.key, value)
+                                        }
+                                    />
+                                ))
+                            )}
                         </motion.div>
                     </AnimatePresence>
                 )}
@@ -1020,9 +1041,11 @@ const PlanQuestionnaireFlow = forwardRef<
                         <div className="space-y-3 max-h-105 overflow-y-auto pr-1">
                             {allVisibleQuestions.map(
                                 ({ categoryName, question }) => (
-                                    <div
+                                    <button
                                         key={question.key}
-                                        className="rounded-xl border border-border-light/60 bg-background-primary/60 p-3.5"
+                                        type="button"
+                                        onClick={() => handleVerifyItemClick(question.key)}
+                                        className="w-full text-left rounded-xl border border-border-light/60 bg-background-primary/60 p-3.5 hover:border-accent/30 hover:bg-accent/[0.02] transition-colors cursor-pointer group"
                                     >
                                         <p className="text-[11px] uppercase tracking-wider font-semibold text-accent mb-1">
                                             {categoryName}
@@ -1036,7 +1059,10 @@ const PlanQuestionnaireFlow = forwardRef<
                                                 answers[question.key],
                                             )}
                                         </p>
-                                    </div>
+                                        <p className="text-[10px] text-accent/60 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            Click to edit this answer
+                                        </p>
+                                    </button>
                                 ),
                             )}
                         </div>
@@ -1138,7 +1164,7 @@ const PlanQuestionnaireFlow = forwardRef<
                     >
                         <LucideArrowLeft className="w-4 h-4" /> Back
                     </button>
-                    {!showIntro && !showVerify && (
+                    {!showVerify && (
                         <button
                             type="button"
                             onClick={goToNext}
@@ -1163,18 +1189,31 @@ interface QuestionBlockProps {
     value: unknown;
     answers: Record<string, unknown>;
     prefilled: boolean;
+    isHighlighted?: boolean;
+    hasError?: boolean;
     onChange: (value: unknown) => void;
     onToggleCheckbox: (value: string) => void;
 }
 
-const QuestionBlock = ({ question, value, prefilled, onChange, onToggleCheckbox }: QuestionBlockProps) => {
+const QuestionBlock = ({ question, value, prefilled, isHighlighted, hasError, onChange, onToggleCheckbox }: QuestionBlockProps) => {
+    const ringClass = isHighlighted
+        ? "ring-2 ring-yellow-600/50 bg-accent/3"
+        : hasError
+            ? "ring ring-red-400"
+            : "";
     return (
-        <div className="space-y-3">
+        <div
+            id={`question-field-${question.key}`}
+            className={`space-y-3 rounded-xl p-4 transition-all duration-500 ${ringClass}`}
+        >
             <div>
                 <p className="text-base md:text-lg font-semibold text-heading leading-snug">
                     {question.text}
                     {question.required && <span className="text-red-500 ml-1">*</span>}
                 </p>
+                {hasError && (
+                    <p className="text-xs text-red-500 mt-1 font-medium">This field is required</p>
+                )}
                 {question.description && (
                     <p className="text-sm text-muted mt-1 leading-relaxed">{question.description}</p>
                 )}
@@ -1186,6 +1225,7 @@ const QuestionBlock = ({ question, value, prefilled, onChange, onToggleCheckbox 
                 question={question}
                 value={value}
                 prefilled={prefilled}
+                hasError={hasError}
                 onChange={onChange}
                 onToggleCheckbox={onToggleCheckbox}
             />
@@ -1199,16 +1239,21 @@ const QuestionInput = ({
     question,
     value,
     prefilled,
+    hasError,
     onChange,
     onToggleCheckbox,
 }: {
     question: Question;
     value: unknown;
-        prefilled: boolean;
+    prefilled: boolean;
+    hasError?: boolean;
     onChange: (value: unknown) => void;
     onToggleCheckbox: (value: string) => void;
 }) => {
     const today = todayIsoDateLocal();
+
+    const errorInputClass = hasError ? "!border-red-400/70" : "";
+    const unselectedBorderClass = hasError ? "border-red-400/70" : "border-border-light/60";
 
     switch (question.type) {
         case "radio":
@@ -1221,12 +1266,12 @@ const QuestionInput = ({
                             onClick={() => onChange(option.value)}
                             className={`text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 cursor-pointer ${value === option.value
                                 ? "border-accent bg-white shadow-sm"
-                                : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
+                                : `${unselectedBorderClass} hover:border-border bg-white/60 hover:bg-white`
                                 }`}
                         >
                             <div className="flex items-center gap-3">
                                 <div
-                                    className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${value === option.value ? "border-accent bg-accent" : "border-border"}`}
+                                    className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${value === option.value ? "border-accent bg-accent" : hasError ? "border-red-400/70" : "border-border"}`}
                                 >
                                     {value === option.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                 </div>
@@ -1251,12 +1296,12 @@ const QuestionInput = ({
                                 onClick={() => onToggleCheckbox(option.value)}
                                 className={`text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 cursor-pointer ${checked
                                     ? "border-accent bg-white shadow-sm"
-                                    : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
+                                    : `${unselectedBorderClass} hover:border-border bg-white/60 hover:bg-white`
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
                                     <div
-                                        className={`w-4 h-4 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${checked ? "border-accent bg-accent" : "border-border"}`}
+                                        className={`w-4 h-4 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${checked ? "border-accent bg-accent" : hasError ? "border-red-400/70" : "border-border"}`}
                                     >
                                         {checked && <LucideCheck className="w-2.5 h-2.5 text-white" />}
                                     </div>
@@ -1276,6 +1321,7 @@ const QuestionInput = ({
                     value={String(value ?? "")}
                     onChange={(v) => onChange(v)}
                     placeholder={question.placeholder}
+                    hasError={hasError}
                 />
             );
 
@@ -1286,7 +1332,7 @@ const QuestionInput = ({
                     value={String(value ?? "")}
                     max={question.key === "date_of_birth" ? today : undefined}
                     onChange={(e) => onChange(e.target.value)}
-                    className={baseInputClass}
+                    className={`${baseInputClass} ${errorInputClass}`}
                     readOnly={prefilled}
                 />
             );
@@ -1297,7 +1343,7 @@ const QuestionInput = ({
                     value={String(value ?? "")}
                     onChange={(name) => onChange(name)}
                     placeholder={question.placeholder ?? "Select country"}
-                    inputClassName={`${baseInputClass} pr-10`}
+                    inputClassName={`${baseInputClass} ${errorInputClass} pr-10`}
                 />
             );
 
@@ -1326,7 +1372,7 @@ const QuestionInput = ({
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={question.placeholder}
                     readOnly={prefilled}
-                    className={`${baseInputClass} ${prefilled ? "bg-background-primary/50 cursor-default" : ""}`}
+                    className={`${baseInputClass} ${errorInputClass} ${prefilled ? "bg-background-primary/50 cursor-default" : ""}`}
                 />
             );
     }
@@ -1338,10 +1384,12 @@ const ExpandableTextarea = ({
     value,
     onChange,
     placeholder,
+    hasError,
 }: {
     value: string;
     onChange: (v: string) => void;
     placeholder?: string;
+    hasError?: boolean;
 }) => {
     const [expanded, setExpanded] = useState(false);
     const hasContent = value.trim().length > 0;
@@ -1351,7 +1399,7 @@ const ExpandableTextarea = ({
             <button
                 type="button"
                 onClick={() => setExpanded(true)}
-                className="w-full flex items-center justify-between px-5 py-3.5 rounded-xl border-2 border-dashed border-border-light text-sm text-muted hover:border-accent hover:text-accent hover:bg-accent/5 transition-all duration-200"
+                className={`w-full flex items-center justify-between px-5 py-3.5 rounded-xl border-2 border-dashed text-sm transition-all duration-200 ${hasError ? "border-red-400/70 text-red-500 hover:border-red-500" : "border-border-light text-muted hover:border-accent hover:text-accent hover:bg-accent/5"}`}
             >
                 <span>{placeholder ?? "Click to add details..."}</span>
                 <LucideChevronDown className="w-4 h-4 shrink-0" />
@@ -1384,7 +1432,7 @@ const ExpandableTextarea = ({
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder}
                     rows={3}
-                    className={`${baseInputClass} min-h-24 resize-none`}
+                    className={`${baseInputClass} ${hasError ? "!border-red-400/70" : ""} min-h-24 resize-none`}
                 />
             )}
         </div>

@@ -36,7 +36,6 @@ const HRCreatePlan = () => {
         answers: {} as Record<string, unknown>,
         categoryIndex: 0,
         showVerify: false,
-        showIntro: true,
         riskConsentGiven: false,
         medicalDisclaimerConsentGiven: false,
     });

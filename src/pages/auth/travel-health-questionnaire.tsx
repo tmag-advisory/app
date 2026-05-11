@@ -10,12 +10,6 @@ import {
     LucideChevronDown,
     LucideChevronUp,
     LucidePlane,
-    LucideHeartPulse,
-    LucideSyringe,
-    LucideBug,
-    LucideShieldCheck,
-    LucideSparkles,
-    LucideSkipForward,
     LucidePlus,
     LucideX,
     LucideLoader2,
@@ -131,16 +125,6 @@ const CONSENT_TEXT =
 const DATA_PROTECTION_TEXT =
     "We protect your information with encryption, multi-factor authentication, and strict security measures. We comply with the Nigeria Data Protection Act (NDPA) 2023. Your data will not be sold or shared without your permission.";
 
-// ─── Icon Map ────────────────────────────────────────────────
-
-const iconMap: Record<string, React.ReactNode> = {
-    plane: <LucidePlane className="w-12 h-12" />,
-    "heart-pulse": <LucideHeartPulse className="w-12 h-12" />,
-    syringe: <LucideSyringe className="w-12 h-12" />,
-    bug: <LucideBug className="w-12 h-12" />,
-    "shield-check": <LucideShieldCheck className="w-12 h-12" />,
-};
-
 // ─── Motion Variants ─────────────────────────────────────────
 
 const questionVariants = {
@@ -161,22 +145,6 @@ const questionVariants = {
         scale: 0.97,
         transition: { duration: 0.2, ease: "easeIn" as const },
     }),
-};
-
-const introVariants = {
-    hidden: { opacity: 0, y: 30, scale: 0.96 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        transition: { type: "spring" as const, stiffness: 280, damping: 26 },
-    },
-    exit: {
-        opacity: 0,
-        y: -24,
-        scale: 0.97,
-        transition: { duration: 0.22 },
-    },
 };
 
 // ─── shouldShowQuestion ───────────────────────────────────────
@@ -241,12 +209,13 @@ const TravelHealthQuestionnaire = () => {
     const [answers, setAnswers] = useState<Record<string, unknown>>({});
     const [categoryIndex, setCategoryIndex] = useState(0);
     const [direction, setDirection] = useState(1);
-    const [showIntro, setShowIntro] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showComplete, setShowComplete] = useState(false);
     const [showCreatePlan, setShowCreatePlan] = useState(false);
     const [medicalDisclaimerConsentGiven, setMedicalDisclaimerConsentGiven] =
         useState(false);
+    const [riskConsentGiven, setRiskConsentGiven] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
     const [planForm, setPlanForm] = useState({
         destination: "",
         country: "",
@@ -281,6 +250,8 @@ const TravelHealthQuestionnaire = () => {
         });
 
     const currentCategory = categories[categoryIndex];
+    const isRiskSection =
+        currentCategory?.category_key === "personal_health_risk_behaviours";
     const visibleQuestions =
         currentCategory?.parsedQuestions.filter(
             (q) => shouldShowQuestion(q, answers)
@@ -307,8 +278,6 @@ const TravelHealthQuestionnaire = () => {
                 if (catIdx > 0 || qIdx >= 0) {
                     setMedicalDisclaimerConsentGiven(true);
                 }
-                // Grouped flow: -1 or missing means section intro; legacy per-question saves used qIdx >= 0 for in-section — open questions view.
-                setShowIntro(qIdx < 0);
             }
         }
     }, [savedProgress]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -328,7 +297,7 @@ const TravelHealthQuestionnaire = () => {
     useEffect(() => {
         latestStateRef.current = { answers, categoryIndex, questionIndex: -1 };
         if (Object.keys(answers).length > 0) pendingSaveRef.current = true;
-    }, [answers, categoryIndex, showIntro]);
+    }, [answers, categoryIndex]);
 
     // Save progress every 2 minutes if dirty
     useEffect(() => {
@@ -367,10 +336,16 @@ const TravelHealthQuestionnaire = () => {
 
     // ─── Handlers ────────────────────────────────────────────
 
-    const setAnswer = (key: string, value: unknown) =>
+    const setAnswer = (key: string, value: unknown) => {
         setAnswers((prev) => ({ ...prev, [key]: value }));
+        setFieldErrors((prev) => {
+            const next = new Set(prev);
+            next.delete(key);
+            return next;
+        });
+    };
 
-    const toggleCheckbox = (key: string, value: string) =>
+    const toggleCheckbox = (key: string, value: string) => {
         setAnswers((prev) => {
             const current = (prev[key] as string[]) || [];
             return {
@@ -380,6 +355,12 @@ const TravelHealthQuestionnaire = () => {
                     : [...current, value],
             };
         });
+        setFieldErrors((prev) => {
+            const next = new Set(prev);
+            next.delete(key);
+            return next;
+        });
+    };
 
     const setVaccineStatus = (
         vaccineId: string,
@@ -423,54 +404,54 @@ const TravelHealthQuestionnaire = () => {
     // ─── Navigation ──────────────────────────────────────────
 
     const goNext = () => {
-        console.log(
-            "Go next clicked. Validating current answers before proceeding...",
-            showIntro,
-            visibleQuestions,
-            answers,
-        );
-        if (showIntro) return;
+        if (categoryIndex === 0 && !medicalDisclaimerConsentGiven) {
+            toast.error("Please accept the medical disclaimer to continue.");
+            return;
+        }
+        if (isRiskSection && !riskConsentGiven) {
+            toast.error(
+                "Please agree to answer this section before continuing.",
+            );
+            return;
+        }
+        const errors = new Set<string>();
+        const toastMessages: string[] = [];
         for (const q of visibleQuestions) {
             if (!isQuestionAnswered(q, answers)) {
+                errors.add(q.key);
                 if (q.type === "trip_itinerary") {
                     const d = hydrateLegacyTripItinerary(answers[q.key] as TripItineraryData);
                     const tripErr = validateTripItineraryDates(d);
-                    if (tripErr) {
-                        toast.error(tripErr);
-                        return;
-                    }
+                    if (tripErr) toastMessages.push(tripErr);
                 }
-                toast.error(`Please answer: "${q.text}"`);
-                return;
             }
         }
         for (const q of visibleQuestions) {
-            if (q.key === "date_of_birth" && q.required) {
-                const v = String(answers[q.key] ?? "").trim();
-                if (v && !isDateOfBirthPlausible(v)) {
-                    toast.error("Date of birth cannot be in the future.");
-                    return;
-                }
+            const v = String(answers[q.key] ?? "").trim();
+            if (q.key === "date_of_birth" && v && !isDateOfBirthPlausible(v)) {
+                errors.add(q.key);
+                toastMessages.push("Date of birth cannot be in the future.");
             }
-            if (q.key === "email_address" && q.required) {
-                const v = String(answers[q.key] ?? "").trim();
-                if (v && !isPlausibleEmail(v)) {
-                    toast.error("Please enter a valid email address.");
-                    return;
-                }
+            if (q.key === "email_address" && v && !isPlausibleEmail(v)) {
+                errors.add(q.key);
+                toastMessages.push("Please enter a valid email address.");
             }
             if (
-                q.key === "longest_flight_leg_hours" ||
-                q.key === "total_flying_hours" ||
-                q.key === "number_of_flight_legs"
+                (q.key === "longest_flight_leg_hours" ||
+                 q.key === "total_flying_hours" ||
+                 q.key === "number_of_flight_legs") &&
+                v && !isValidOptionalNonNegativeNumber(v)
             ) {
-                const v = String(answers[q.key] ?? "").trim();
-                if (v && !isValidOptionalNonNegativeNumber(v)) {
-                    toast.error(`Please enter a valid non-negative number for "${q.text}"`);
-                    return;
-                }
+                errors.add(q.key);
+                toastMessages.push(`Please enter a valid non-negative number for "${q.text}"`);
             }
         }
+        if (errors.size > 0) {
+            setFieldErrors(errors);
+            toast.error(toastMessages.length > 0 ? toastMessages[0] : "Please fill in all required fields.");
+            return;
+        }
+        setFieldErrors(new Set());
         setDirection(1);
         const nextCat = categoryIndex + 1;
         if (nextCat >= categories.length) {
@@ -478,27 +459,12 @@ const TravelHealthQuestionnaire = () => {
             return;
         }
         setCategoryIndex(nextCat);
-        setShowIntro(true);
     };
 
     const goPrev = () => {
+        if (categoryIndex === 0) return;
         setDirection(-1);
-        if (showIntro) {
-            if (categoryIndex === 0) return;
-            setCategoryIndex((i) => i - 1);
-            setShowIntro(false);
-            return;
-        }
-        setShowIntro(true);
-    };
-
-    const startCategory = () => {
-        if (categoryIndex === 0 && !medicalDisclaimerConsentGiven) {
-            toast.error("Please accept the medical disclaimer to continue.");
-            return;
-        }
-        setShowIntro(false);
-        setDirection(1);
+        setCategoryIndex((i) => i - 1);
     };
 
     const skipCategory = () => {
@@ -509,7 +475,6 @@ const TravelHealthQuestionnaire = () => {
             return;
         }
         setCategoryIndex(nextCat);
-        setShowIntro(true);
     };
 
     const handleSubmit = async () => {
@@ -535,7 +500,7 @@ const TravelHealthQuestionnaire = () => {
     const progressPercent =
         totalSections > 0 ? Math.min(Math.round((categoryIndex / totalSections) * 100), 100) : 0;
 
-    const isLastSection = categoryIndex === categories.length - 1 && !showIntro;
+    const isLastSection = categoryIndex === categories.length - 1;
 
     // ─── Loading ─────────────────────────────────────────────
 
@@ -713,12 +678,16 @@ const TravelHealthQuestionnaire = () => {
             <div className="min-h-screen bg-background-primary flex items-center justify-center px-6">
                 <div className="w-full max-w-lg">
                     <AnimatePresence mode="wait">
-                        {!showCreatePlan ? (
+                        {!showCreatePlan ?
                             <motion.div
                                 key="complete"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20, transition: { duration: 0.2 } }}
+                                exit={{
+                                    opacity: 0,
+                                    y: -20,
+                                    transition: { duration: 0.2 },
+                                }}
                                 className="max-w-sm mx-auto"
                             >
                                 <motion.div
@@ -750,9 +719,10 @@ const TravelHealthQuestionnaire = () => {
                                     transition={{ delay: 0.3 }}
                                     className="text-sm text-muted leading-relaxed mb-8 text-center"
                                 >
-                                    Your health profile is complete. We will use the trip you
-                                    entered at the start of the questionnaire to generate your
-                                    first advisory.
+                                    Your travel health questionnaire is
+                                    complete. We'll use the trip details you
+                                    provided to generate your initial travel
+                                    plan.
                                 </motion.p>
 
                                 {!isFreePlan && reviewers.length > 0 && (
@@ -766,7 +736,10 @@ const TravelHealthQuestionnaire = () => {
                                             type="button"
                                             onClick={() => {
                                                 setWantsDoctorSelection((v) => {
-                                                    if (v) setSelectedDoctorIds([]);
+                                                    if (v)
+                                                        setSelectedDoctorIds(
+                                                            [],
+                                                        );
                                                     return !v;
                                                 });
                                             }}
@@ -776,51 +749,91 @@ const TravelHealthQuestionnaire = () => {
                                                 <p className="text-sm font-semibold text-heading flex items-center gap-1.5">
                                                     <LucideUsers className="h-4 w-4 text-accent" />
                                                     Choose a reviewing doctor
-                                                    <span className="text-xs font-normal text-muted ml-1">(optional)</span>
+                                                    <span className="text-xs font-normal text-muted ml-1">
+                                                        (optional)
+                                                    </span>
                                                 </p>
                                                 <p className="text-xs text-muted mt-0.5">
-                                                    {wantsDoctorSelection
-                                                        ? "Select one or more doctors to review your plan."
-                                                        : "By default, any verified doctor can review your plan."}
+                                                    {wantsDoctorSelection ?
+                                                        "Select one or more doctors to review your plan."
+                                                    :   "By default, any verified doctor can review your plan."
+                                                    }
                                                 </p>
                                             </div>
-                                            {wantsDoctorSelection ? (
+                                            {wantsDoctorSelection ?
                                                 <LucideChevronUp className="h-4 w-4 shrink-0 text-muted" />
-                                            ) : (
-                                                <LucideChevronDown className="h-4 w-4 shrink-0 text-muted" />
-                                            )}
+                                            :   <LucideChevronDown className="h-4 w-4 shrink-0 text-muted" />
+                                            }
                                         </button>
                                         {wantsDoctorSelection && (
                                             <div className="grid gap-2 pt-1">
                                                 {reviewers.map((doctor) => {
-                                                    const checked = selectedDoctorIds.includes(doctor.userId);
-                                                    const name = `${doctor.firstName ?? ""} ${doctor.lastName ?? ""}`.trim() || doctor.email;
+                                                    const checked =
+                                                        selectedDoctorIds.includes(
+                                                            doctor.userId,
+                                                        );
+                                                    const name =
+                                                        `${doctor.firstName ?? ""} ${doctor.lastName ?? ""}`.trim() ||
+                                                        doctor.email;
                                                     return (
                                                         <button
                                                             key={doctor.userId}
                                                             type="button"
                                                             onClick={() =>
-                                                                setSelectedDoctorIds((ids) =>
-                                                                    ids.includes(doctor.userId)
-                                                                        ? ids.filter((id) => id !== doctor.userId)
-                                                                        : [...ids, doctor.userId],
+                                                                setSelectedDoctorIds(
+                                                                    (ids) =>
+                                                                        (
+                                                                            ids.includes(
+                                                                                doctor.userId,
+                                                                            )
+                                                                        ) ?
+                                                                            ids.filter(
+                                                                                (
+                                                                                    id,
+                                                                                ) =>
+                                                                                    id !==
+                                                                                    doctor.userId,
+                                                                            )
+                                                                        :   [
+                                                                                ...ids,
+                                                                                doctor.userId,
+                                                                            ],
                                                                 )
                                                             }
                                                             className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors cursor-pointer ${checked ? "border-accent bg-accent/5" : "border-border-light bg-white hover:border-border"}`}
                                                         >
-                                                            {doctor.profilePictureUrl ? (
-                                                                <img src={doctor.profilePictureUrl} alt="" className="h-9 w-9 rounded-full object-cover shrink-0" />
-                                                            ) : (
-                                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                                                            {(
+                                                                doctor.profilePictureUrl
+                                                            ) ?
+                                                                <img
+                                                                    src={
+                                                                        doctor.profilePictureUrl
+                                                                    }
+                                                                    alt=""
+                                                                    className="h-9 w-9 rounded-full object-cover shrink-0"
+                                                                />
+                                                            :   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
                                                                     <LucideUsers className="h-4 w-4" />
                                                                 </div>
-                                                            )}
+                                                            }
                                                             <div className="min-w-0 flex-1">
-                                                                <p className="text-sm font-semibold text-heading">{name}</p>
-                                                                {doctor.bio && <p className="mt-0.5 line-clamp-1 text-xs text-muted">{doctor.bio}</p>}
+                                                                <p className="text-sm font-semibold text-heading">
+                                                                    {name}
+                                                                </p>
+                                                                {doctor.bio && (
+                                                                    <p className="mt-0.5 line-clamp-1 text-xs text-muted">
+                                                                        {
+                                                                            doctor.bio
+                                                                        }
+                                                                    </p>
+                                                                )}
                                                             </div>
-                                                            <div className={`h-4 w-4 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${checked ? "border-accent bg-accent" : "border-border"}`}>
-                                                                {checked && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                                                            <div
+                                                                className={`h-4 w-4 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${checked ? "border-accent bg-accent" : "border-border"}`}
+                                                            >
+                                                                {checked && (
+                                                                    <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                                                                )}
                                                             </div>
                                                         </button>
                                                     );
@@ -841,13 +854,21 @@ const TravelHealthQuestionnaire = () => {
                                     }}
                                     type="button"
                                     onClick={() => void handlePlanFirstTrip()}
-                                    disabled={credits === 0 || createPlan.isPending || (wantsDoctorSelection && selectedDoctorIds.length === 0)}
+                                    disabled={
+                                        credits === 0 ||
+                                        createPlan.isPending ||
+                                        (wantsDoctorSelection &&
+                                            selectedDoctorIds.length === 0)
+                                    }
                                     className="w-full mb-3 p-7 rounded-3xl outline-dark/20 outline-2 relative overflow-hidden group cursor-pointer text-left disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <div className="absolute inset-0 bg-linear-to-br from-accent/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
                                     <motion.div
-                                        animate={{ x: [0, 6, 0], y: [0, -3, 0] }}
+                                        animate={{
+                                            x: [0, 6, 0],
+                                            y: [0, -3, 0],
+                                        }}
                                         transition={{
                                             duration: 2.8,
                                             repeat: Infinity,
@@ -861,22 +882,17 @@ const TravelHealthQuestionnaire = () => {
                                     <p className="text-xl font-serif mb-1">
                                         Generate your travel health plan
                                     </p>
-                                    <p className="text-xs mb-5 leading-relaxed">
-                                        Uses your questionnaire trip, dates, and purpose — one
-                                        credit, no extra forms.
-                                    </p>
-                                    <span className="inline-flex items-center gap-1.5 text-accent text-xs font-semibold">
-                                        Generate plan{" "}
-                                        <LucideArrowRight className="w-3.5 h-3.5" />
-                                    </span>
                                 </motion.button>
 
                                 {credits === 0 && (
                                     <p className="text-center text-xs text-muted mb-3">
-                                        You need at least one credit to generate a plan.{" "}
+                                        You need at least one credit to generate
+                                        a plan.{" "}
                                         <button
                                             type="button"
-                                            onClick={() => navigate(dashboardPath)}
+                                            onClick={() =>
+                                                navigate(dashboardPath)
+                                            }
                                             className="text-accent font-medium hover:underline cursor-pointer"
                                         >
                                             Go to dashboard
@@ -884,29 +900,6 @@ const TravelHealthQuestionnaire = () => {
                                         to purchase credits.
                                     </p>
                                 )}
-
-                                <motion.button
-                                    type="button"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: 0.55 }}
-                                    onClick={() => {
-                                        const d = buildPlanPayloadFromAnswers(answers);
-                                        if (d) {
-                                            setPlanForm({
-                                                destination: d.destination,
-                                                country: d.country,
-                                                duration: d.duration != null ? String(d.duration) : "",
-                                                purpose: d.purpose,
-                                                medicalConsiderations: d.medicalConsiderations,
-                                            });
-                                        }
-                                        setShowCreatePlan(true);
-                                    }}
-                                    className="w-full py-2.5 text-xs text-muted font-medium hover:text-heading transition-colors cursor-pointer"
-                                >
-                                    Enter trip details manually instead
-                                </motion.button>
 
                                 <motion.button
                                     initial={{ opacity: 0 }}
@@ -918,12 +911,15 @@ const TravelHealthQuestionnaire = () => {
                                     Take me to the dashboard
                                 </motion.button>
                             </motion.div>
-                        ) : (
-                            <motion.div
+                        :   <motion.div
                                 key="create-plan"
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                                transition={{
+                                    type: "spring",
+                                    stiffness: 300,
+                                    damping: 28,
+                                }}
                             >
                                 <button
                                     type="button"
@@ -935,8 +931,15 @@ const TravelHealthQuestionnaire = () => {
 
                                 <div className="flex items-center gap-3 mb-2">
                                     <motion.div
-                                        animate={{ x: [0, 4, 0], y: [0, -2, 0] }}
-                                        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                                        animate={{
+                                            x: [0, 4, 0],
+                                            y: [0, -2, 0],
+                                        }}
+                                        transition={{
+                                            duration: 2.8,
+                                            repeat: Infinity,
+                                            ease: "easeInOut",
+                                        }}
                                     >
                                         <LucidePlane className="w-6 h-6 text-accent" />
                                     </motion.div>
@@ -945,7 +948,8 @@ const TravelHealthQuestionnaire = () => {
                                     </h1>
                                 </div>
                                 <p className="text-sm text-muted mb-8 leading-relaxed">
-                                    Tell us about your trip and we'll generate a personalised health advisory.
+                                    Tell us about your trip and we'll generate a
+                                    personalised health advisory.
                                 </p>
 
                                 {credits === 0 && (
@@ -954,7 +958,9 @@ const TravelHealthQuestionnaire = () => {
                                             You have no credits remaining.{" "}
                                             <button
                                                 type="button"
-                                                onClick={() => navigate(dashboardPath)}
+                                                onClick={() =>
+                                                    navigate(dashboardPath)
+                                                }
                                                 className="text-accent cursor-pointer hover:underline"
                                             >
                                                 Go to dashboard
@@ -964,7 +970,10 @@ const TravelHealthQuestionnaire = () => {
                                     </div>
                                 )}
 
-                                <form onSubmit={handleCreatePlan} className="space-y-5">
+                                <form
+                                    onSubmit={handleCreatePlan}
+                                    className="space-y-5"
+                                >
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
@@ -973,7 +982,12 @@ const TravelHealthQuestionnaire = () => {
                                             <input
                                                 type="text"
                                                 value={planForm.destination}
-                                                onChange={(e) => updatePlanForm("destination", e.target.value)}
+                                                onChange={(e) =>
+                                                    updatePlanForm(
+                                                        "destination",
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 placeholder="e.g. Bogota & Cartagena"
                                                 className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
                                                 required
@@ -985,7 +999,12 @@ const TravelHealthQuestionnaire = () => {
                                             </label>
                                             <CountryPicker
                                                 value={planForm.country}
-                                                onChange={(name) => updatePlanForm("country", name)}
+                                                onChange={(name) =>
+                                                    updatePlanForm(
+                                                        "country",
+                                                        name,
+                                                    )
+                                                }
                                                 inputClassName="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 pr-10 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
                                                 placeholder="e.g. Colombia"
                                             />
@@ -1000,7 +1019,12 @@ const TravelHealthQuestionnaire = () => {
                                             <input
                                                 type="number"
                                                 value={planForm.duration}
-                                                onChange={(e) => updatePlanForm("duration", e.target.value)}
+                                                onChange={(e) =>
+                                                    updatePlanForm(
+                                                        "duration",
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 placeholder="e.g. 10"
                                                 className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
                                                 required
@@ -1012,7 +1036,12 @@ const TravelHealthQuestionnaire = () => {
                                             </label>
                                             <select
                                                 value={planForm.purpose}
-                                                onChange={(e) => updatePlanForm("purpose", e.target.value)}
+                                                onChange={(e) =>
+                                                    updatePlanForm(
+                                                        "purpose",
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
                                             >
                                                 <option>Leisure</option>
@@ -1026,11 +1055,21 @@ const TravelHealthQuestionnaire = () => {
 
                                     <div>
                                         <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                            Medical considerations <span className="text-muted font-normal normal-case">(optional)</span>
+                                            Medical considerations{" "}
+                                            <span className="text-muted font-normal normal-case">
+                                                (optional)
+                                            </span>
                                         </label>
                                         <textarea
-                                            value={planForm.medicalConsiderations}
-                                            onChange={(e) => updatePlanForm("medicalConsiderations", e.target.value)}
+                                            value={
+                                                planForm.medicalConsiderations
+                                            }
+                                            onChange={(e) =>
+                                                updatePlanForm(
+                                                    "medicalConsiderations",
+                                                    e.target.value,
+                                                )
+                                            }
                                             placeholder="e.g. I take blood thinners, have asthma, or am pregnant"
                                             rows={3}
                                             className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200 resize-none"
@@ -1042,62 +1081,112 @@ const TravelHealthQuestionnaire = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    setWantsDoctorSelection((v) => {
-                                                        if (v) setSelectedDoctorIds([]);
-                                                        return !v;
-                                                    });
+                                                    setWantsDoctorSelection(
+                                                        (v) => {
+                                                            if (v)
+                                                                setSelectedDoctorIds(
+                                                                    [],
+                                                                );
+                                                            return !v;
+                                                        },
+                                                    );
                                                 }}
                                                 className="flex w-full items-center justify-between gap-4 text-left cursor-pointer"
                                             >
                                                 <div>
                                                     <p className="text-sm font-semibold text-heading flex items-center gap-1.5">
                                                         <LucideUsers className="h-4 w-4 text-accent" />
-                                                        Choose a reviewing doctor
-                                                        <span className="text-xs font-normal text-muted ml-1">(optional)</span>
+                                                        Choose a reviewing
+                                                        doctor
+                                                        <span className="text-xs font-normal text-muted ml-1">
+                                                            (optional)
+                                                        </span>
                                                     </p>
                                                     <p className="text-xs text-muted mt-0.5">
-                                                        {wantsDoctorSelection
-                                                            ? "Select one or more doctors to review your plan."
-                                                            : "By default, any verified doctor can review your plan."}
+                                                        {wantsDoctorSelection ?
+                                                            "Select one or more doctors to review your plan."
+                                                        :   "By default, any verified doctor can review your plan."
+                                                        }
                                                     </p>
                                                 </div>
-                                                {wantsDoctorSelection ? (
+                                                {wantsDoctorSelection ?
                                                     <LucideChevronUp className="h-4 w-4 shrink-0 text-muted" />
-                                                ) : (
-                                                    <LucideChevronDown className="h-4 w-4 shrink-0 text-muted" />
-                                                )}
+                                                :   <LucideChevronDown className="h-4 w-4 shrink-0 text-muted" />
+                                                }
                                             </button>
                                             {wantsDoctorSelection && (
                                                 <div className="grid gap-2 pt-1">
                                                     {reviewers.map((doctor) => {
-                                                        const checked = selectedDoctorIds.includes(doctor.userId);
-                                                        const name = `${doctor.firstName ?? ""} ${doctor.lastName ?? ""}`.trim() || doctor.email;
+                                                        const checked =
+                                                            selectedDoctorIds.includes(
+                                                                doctor.userId,
+                                                            );
+                                                        const name =
+                                                            `${doctor.firstName ?? ""} ${doctor.lastName ?? ""}`.trim() ||
+                                                            doctor.email;
                                                         return (
                                                             <button
-                                                                key={doctor.userId}
+                                                                key={
+                                                                    doctor.userId
+                                                                }
                                                                 type="button"
                                                                 onClick={() =>
-                                                                    setSelectedDoctorIds((ids) =>
-                                                                        ids.includes(doctor.userId)
-                                                                            ? ids.filter((id) => id !== doctor.userId)
-                                                                            : [...ids, doctor.userId],
+                                                                    setSelectedDoctorIds(
+                                                                        (
+                                                                            ids,
+                                                                        ) =>
+                                                                            (
+                                                                                ids.includes(
+                                                                                    doctor.userId,
+                                                                                )
+                                                                            ) ?
+                                                                                ids.filter(
+                                                                                    (
+                                                                                        id,
+                                                                                    ) =>
+                                                                                        id !==
+                                                                                        doctor.userId,
+                                                                                )
+                                                                            :   [
+                                                                                    ...ids,
+                                                                                    doctor.userId,
+                                                                                ],
                                                                     )
                                                                 }
                                                                 className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors cursor-pointer ${checked ? "border-accent bg-accent/5" : "border-border-light bg-white hover:border-border"}`}
                                                             >
-                                                                {doctor.profilePictureUrl ? (
-                                                                    <img src={doctor.profilePictureUrl} alt="" className="h-9 w-9 rounded-full object-cover shrink-0" />
-                                                                ) : (
-                                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                                                                {(
+                                                                    doctor.profilePictureUrl
+                                                                ) ?
+                                                                    <img
+                                                                        src={
+                                                                            doctor.profilePictureUrl
+                                                                        }
+                                                                        alt=""
+                                                                        className="h-9 w-9 rounded-full object-cover shrink-0"
+                                                                    />
+                                                                :   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
                                                                         <LucideUsers className="h-4 w-4" />
                                                                     </div>
-                                                                )}
+                                                                }
                                                                 <div className="min-w-0 flex-1">
-                                                                    <p className="text-sm font-semibold text-heading">{name}</p>
-                                                                    {doctor.bio && <p className="mt-0.5 line-clamp-1 text-xs text-muted">{doctor.bio}</p>}
+                                                                    <p className="text-sm font-semibold text-heading">
+                                                                        {name}
+                                                                    </p>
+                                                                    {doctor.bio && (
+                                                                        <p className="mt-0.5 line-clamp-1 text-xs text-muted">
+                                                                            {
+                                                                                doctor.bio
+                                                                            }
+                                                                        </p>
+                                                                    )}
                                                                 </div>
-                                                                <div className={`h-4 w-4 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${checked ? "border-accent bg-accent" : "border-border"}`}>
-                                                                    {checked && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                                                                <div
+                                                                    className={`h-4 w-4 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${checked ? "border-accent bg-accent" : "border-border"}`}
+                                                                >
+                                                                    {checked && (
+                                                                        <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                                                                    )}
                                                                 </div>
                                                             </button>
                                                         );
@@ -1109,14 +1198,25 @@ const TravelHealthQuestionnaire = () => {
 
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-border-light/40">
                                         <p className="text-xs text-muted">
-                                            This will use <strong className="text-heading">1 credit</strong>. You have {credits} remaining.
+                                            This will use{" "}
+                                            <strong className="text-heading">
+                                                1 credit
+                                            </strong>
+                                            . You have {credits} remaining.
                                         </p>
                                         <button
                                             type="submit"
-                                            disabled={credits === 0 || createPlan.isPending || (wantsDoctorSelection && selectedDoctorIds.length === 0)}
+                                            disabled={
+                                                credits === 0 ||
+                                                createPlan.isPending ||
+                                                (wantsDoctorSelection &&
+                                                    selectedDoctorIds.length ===
+                                                        0)
+                                            }
                                             className="py-3.5 px-8 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
                                         >
-                                            Generate plan <LucideArrowRight className="w-4 h-4" />
+                                            Generate plan{" "}
+                                            <LucideArrowRight className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </form>
@@ -1129,7 +1229,7 @@ const TravelHealthQuestionnaire = () => {
                                     Skip — take me to the dashboard
                                 </button>
                             </motion.div>
-                        )}
+                        }
                     </AnimatePresence>
                 </div>
             </div>
@@ -1232,9 +1332,7 @@ const TravelHealthQuestionnaire = () => {
                                     </p>
                                     {i === categoryIndex && (
                                         <p className="text-xs text-muted mt-0.5">
-                                            {showIntro ?
-                                                "Introduction"
-                                            :   "In progress"}
+                                            In progress
                                         </p>
                                     )}
                                 </div>
@@ -1298,11 +1396,8 @@ const TravelHealthQuestionnaire = () => {
                                         type="button"
                                         onClick={() => {
                                             if (i !== categoryIndex) {
-                                                setDirection(
-                                                    i > categoryIndex ? 1 : -1,
-                                                );
+                                                setDirection(i > categoryIndex ? 1 : -1);
                                                 setCategoryIndex(i);
-                                                setShowIntro(true);
                                             }
                                             setMobileAccordionOpen(false);
                                         }}
@@ -1352,200 +1447,14 @@ const TravelHealthQuestionnaire = () => {
                 <div className="w-full max-w-5xl flex justify-center">
                     <div className="w-full max-w-3xl">
                         <AnimatePresence mode="wait" custom={direction}>
-                            {showIntro ?
-                                <motion.div
-                                    key={`intro-${categoryIndex}`}
-                                    variants={introVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                    className="text-center py-8 sm:py-16"
-                                >
-                                    {/* Icon */}
-                                    <motion.div
-                                        initial={{ scale: 0, rotate: -25 }}
-                                        animate={{ scale: 1, rotate: 0 }}
-                                        transition={{
-                                            delay: 0.1,
-                                            type: "spring",
-                                            stiffness: 260,
-                                            damping: 18,
-                                        }}
-                                        className="w-24 h-24 rounded-3xl bg-accent/10 flex items-center justify-center mx-auto mb-8 text-accent"
-                                    >
-                                        {iconMap[
-                                            currentCategory.category_icon
-                                        ] || (
-                                            <LucideSparkles className="w-12 h-12" />
-                                        )}
-                                    </motion.div>
-
-                                    {/* Label */}
-                                    <motion.p
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        transition={{ delay: 0.2 }}
-                                        className="text-sm font-bold tracking-[0.14em] text-accent uppercase mb-4"
-                                    >
-                                        Section {categoryIndex + 1} of{" "}
-                                        {categories.length}
-                                    </motion.p>
-
-                                    {/* Title */}
-                                    <motion.h2
-                                        initial={{ opacity: 0, y: 14 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.25 }}
-                                        className="text-4xl sm:text-5xl font-serif text-heading mb-5 leading-tight"
-                                    >
-                                        {currentCategory.category_name}
-                                    </motion.h2>
-
-                                    {/* Description */}
-                                    <motion.p
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.32 }}
-                                        className="text-base text-muted max-w-sm mx-auto leading-relaxed mb-12"
-                                    >
-                                        {currentCategory.category_description}
-                                    </motion.p>
-
-                                    {categoryIndex === 0 && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.36 }}
-                                            className="mb-8 rounded-2xl border-2 border-border-light/60 bg-white/70 p-4 text-left"
-                                        >
-                                            <p className="text-sm text-heading font-semibold mb-2">
-                                                Before proceeding, please read
-                                                and agree:
-                                            </p>
-                                            <p className="text-xs text-heading font-semibold mb-1">
-                                                Consent
-                                            </p>
-                                            <p className="text-xs text-muted leading-relaxed mb-3">
-                                                {CONSENT_TEXT}
-                                            </p>
-                                            <p className="text-xs text-heading font-semibold mb-1">
-                                                Medical Disclaimer
-                                            </p>
-                                            <ul className="list-disc pl-4 text-xs text-muted leading-relaxed space-y-1 mb-3">
-                                                <li>
-                                                    Your plan will be generated
-                                                    using AI and reviewed and
-                                                    validated by a licensed
-                                                    medical doctor.
-                                                </li>
-                                                <li>
-                                                    This is not a substitute for
-                                                    professional medical advice,
-                                                    diagnosis, or treatment.
-                                                </li>
-                                                <li>
-                                                    It is for informational and
-                                                    educational purposes only.
-                                                </li>
-                                                <li>
-                                                    You should consult your own
-                                                    doctor or a qualified
-                                                    healthcare professional
-                                                    before making decisions
-                                                    regarding your health,
-                                                    vaccinations, medications,
-                                                    or travel, especially if you
-                                                    are pregnant, have chronic
-                                                    conditions, or take regular
-                                                    medication.
-                                                </li>
-                                            </ul>
-                                            <p className="text-xs text-heading font-semibold mb-1">
-                                                Data Protection
-                                            </p>
-                                            <p className="text-xs text-muted leading-relaxed mb-3">
-                                                {DATA_PROTECTION_TEXT}
-                                            </p>
-                                            <label className="flex items-start gap-3 cursor-pointer">
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setMedicalDisclaimerConsentGiven(
-                                                            (v) => {
-                                                                const newVal =
-                                                                    !v;
-                                                                if (newVal)
-                                                                    acceptConsent.mutate();
-                                                                return newVal;
-                                                            },
-                                                        )
-                                                    }
-                                                    className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${medicalDisclaimerConsentGiven ? "border-accent bg-accent" : "border-border"}`}
-                                                >
-                                                    {medicalDisclaimerConsentGiven && (
-                                                        <LucideCheck className="w-3 h-3 text-white" />
-                                                    )}
-                                                </button>
-                                                <span
-                                                    className="text-sm text-body font-medium leading-relaxed"
-                                                    onClick={() =>
-                                                        setMedicalDisclaimerConsentGiven(
-                                                            (v) => {
-                                                                const newVal =
-                                                                    !v;
-                                                                if (newVal)
-                                                                    acceptConsent.mutate();
-                                                                return newVal;
-                                                            },
-                                                        )
-                                                    }
-                                                >
-                                                    I have read, understood, and
-                                                    agree to the Consent,
-                                                    Medical Disclaimer, and
-                                                    Privacy Policy.
-                                                </span>
-                                            </label>
-                                        </motion.div>
-                                    )}
-
-                                    {/* Actions */}
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.4 }}
-                                        className="flex items-center justify-center gap-3"
-                                    >
-                                        <button
-                                            onClick={startCategory}
-                                            disabled={
-                                                categoryIndex === 0 &&
-                                                !medicalDisclaimerConsentGiven
-                                            }
-                                            className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl bg-dark text-white font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                                        >
-                                            Begin{" "}
-                                            <LucideArrowRight className="w-4 h-4" />
-                                        </button>
-                                        {currentCategory.is_optional && (
-                                            <button
-                                                onClick={skipCategory}
-                                                className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-white border border-border-light text-muted font-semibold text-sm cursor-pointer hover:border-border hover:text-heading transition-all duration-200"
-                                            >
-                                                <LucideSkipForward className="w-4 h-4" />
-                                                Skip
-                                            </button>
-                                        )}
-                                    </motion.div>
-                                </motion.div>
-                            :   <motion.div
+                            <motion.div
                                     key={`section-${currentCategory.category_key}`}
                                     custom={direction}
                                     variants={questionVariants}
                                     initial="enter"
                                     animate="center"
                                     exit="exit"
-                                    className="rounded-3xl border border-border-light/70 bg-white/80 p-5 md:p-9 space-y-8"
+                                    className="rounded-3xl border border-border-light/70 bg-white/80 p-3 md:p-7 space-y-4"
                                 >
                                     <div>
                                         <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-accent mb-1">
@@ -1557,82 +1466,193 @@ const TravelHealthQuestionnaire = () => {
                                         </h3>
                                     </div>
 
-                                    {visibleQuestions.map((question) => {
-                                        const prefilled = PREFILLED_KEYS.has(
-                                            question.key,
-                                        );
-                                        return (
-                                            <div
-                                                key={question.key}
-                                                className="space-y-3"
-                                            >
-                                                <div>
-                                                    <p className="text-base md:text-lg font-semibold text-heading leading-snug">
-                                                        {question.text}
-                                                        {question.required && (
-                                                            <span className="text-red-500 ml-1">
-                                                                *
-                                                            </span>
-                                                        )}
-                                                    </p>
-                                                    {question.description && (
-                                                        <p className="text-sm text-muted mt-1 leading-relaxed">
-                                                            {
-                                                                question.description
-                                                            }
-                                                        </p>
+                                    {categoryIndex === 0 && (
+                                        <div className="p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
+                                            <p className="text-sm text-heading font-semibold mb-2">
+                                                Before proceeding, please read and agree:
+                                            </p>
+                                            <p className="text-xs text-heading font-semibold mb-1">Consent</p>
+                                            <p className="text-xs text-muted leading-relaxed mb-3">
+                                                {CONSENT_TEXT}
+                                            </p>
+                                            <p className="text-xs text-heading font-semibold mb-1">Medical Disclaimer</p>
+                                            <ul className="list-disc pl-4 text-xs text-muted leading-relaxed space-y-1 mb-3">
+                                                <li>Your plan will be generated using AI and reviewed and validated by a licensed medical doctor.</li>
+                                                <li>This is not a substitute for professional medical advice, diagnosis, or treatment.</li>
+                                                <li>It is for informational and educational purposes only.</li>
+                                                <li>You should consult your own doctor or a qualified healthcare professional before making decisions regarding your health, vaccinations, medications, or travel, especially if you are pregnant, have chronic conditions, or take regular medication.</li>
+                                            </ul>
+                                            <p className="text-xs text-heading font-semibold mb-1">Data Protection</p>
+                                            <p className="text-xs text-muted leading-relaxed mb-3">
+                                                {DATA_PROTECTION_TEXT}
+                                            </p>
+                                            <label className="flex items-start gap-3 cursor-pointer">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setMedicalDisclaimerConsentGiven((v) => {
+                                                            const newVal = !v;
+                                                            if (newVal) acceptConsent.mutate();
+                                                            return newVal;
+                                                        })
+                                                    }
+                                                    className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${medicalDisclaimerConsentGiven ? "border-accent bg-accent" : "border-border"}`}
+                                                >
+                                                    {medicalDisclaimerConsentGiven && (
+                                                        <LucideCheck className="w-3 h-3 text-white" />
                                                     )}
-                                                    {prefilled && (
-                                                        <p className="text-xs text-accent mt-1">
-                                                            Pre-filled from your
-                                                            profile
-                                                        </p>
+                                                </button>
+                                                <span
+                                                    className="text-sm text-body font-medium leading-relaxed"
+                                                    onClick={() =>
+                                                        setMedicalDisclaimerConsentGiven((v) => {
+                                                            const newVal = !v;
+                                                            if (newVal) acceptConsent.mutate();
+                                                            return newVal;
+                                                        })
+                                                    }
+                                                >
+                                                    I have read, understood, and agree to the Consent, Medical Disclaimer, and Privacy Policy.
+                                                </span>
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {isRiskSection && (
+                                        <div className="p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
+                                            <p className="text-sm text-heading font-semibold mb-3">
+                                                Your responses are confidential
+                                                and used only to provide
+                                                accurate health advice.
+                                            </p>
+                                            <label className="flex items-start gap-3 cursor-pointer">
+                                                <div
+                                                    onClick={() =>
+                                                        setRiskConsentGiven(
+                                                            (v) => !v,
+                                                        )
+                                                    }
+                                                    className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${riskConsentGiven ? "border-accent bg-accent" : "border-border"}`}
+                                                >
+                                                    {riskConsentGiven && (
+                                                        <LucideCheck className="w-3 h-3 text-white" />
                                                     )}
                                                 </div>
-                                                <QuestionInput
-                                                    question={question}
-                                                    value={
-                                                        answers[question.key]
-                                                    }
-                                                    prefilled={prefilled}
-                                                    onChange={(val) =>
-                                                        setAnswer(
-                                                            question.key,
-                                                            val,
+                                                <span
+                                                    className="text-sm text-body font-medium leading-relaxed"
+                                                    onClick={() =>
+                                                        setRiskConsentGiven(
+                                                            (v) => !v,
                                                         )
                                                     }
-                                                    onToggleCheckbox={(val) =>
-                                                        toggleCheckbox(
-                                                            question.key,
+                                                >
+                                                    I understand and agree to
+                                                    answer this section
+                                                </span>
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {isRiskSection && !riskConsentGiven ?
+                                        <div className="rounded-2xl border-2 border-dashed border-border-light/60 bg-background-primary/30 p-8 text-center">
+                                            <p className="text-sm text-muted leading-relaxed">
+                                                Please agree to the
+                                                confidentiality statement above
+                                                to access and answer these
+                                                questions.
+                                            </p>
+                                        </div>
+                                    :   visibleQuestions.map((question) => {
+                                            const prefilled =
+                                                PREFILLED_KEYS.has(
+                                                    question.key,
+                                                );
+                                            const hasError =
+                                                fieldErrors.has(question.key);
+                                            const ringClass = hasError
+                                                ? "ring ring-red-400"
+                                                : "";
+                                            return (
+                                                <div
+                                                    key={question.key}
+                                                    className={`space-y-3 rounded-xl p-4 transition-all duration-500 ${ringClass}`}
+                                                >
+                                                    <div>
+                                                        <p className="text-base md:text-lg font-semibold text-heading leading-snug">
+                                                            {question.text}
+                                                            {question.required && (
+                                                                <span className="text-red-500 ml-1">
+                                                                    *
+                                                                </span>
+                                                            )}
+                                                        </p>
+                                                        {hasError && (
+                                                            <p className="text-xs text-red-500 mt-1 font-medium">
+                                                                This field is required
+                                                            </p>
+                                                        )}
+                                                        {question.description && (
+                                                            <p className="text-sm text-muted mt-1 leading-relaxed">
+                                                                {
+                                                                    question.description
+                                                                }
+                                                            </p>
+                                                        )}
+                                                        {prefilled && (
+                                                            <p className="text-xs text-accent mt-1">
+                                                                Pre-filled from
+                                                                your profile
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <QuestionInput
+                                                        question={question}
+                                                        value={
+                                                            answers[
+                                                                question.key
+                                                            ]
+                                                        }
+                                                        prefilled={prefilled}
+                                                        hasError={hasError}
+                                                        onChange={(val) =>
+                                                            setAnswer(
+                                                                question.key,
+                                                                val,
+                                                            )
+                                                        }
+                                                        onToggleCheckbox={(
                                                             val,
-                                                        )
-                                                    }
-                                                    onSetVaccineStatus={
-                                                        setVaccineStatus
-                                                    }
-                                                    vaccineStatuses={
-                                                        (answers.vaccine_status as Record<
-                                                            string,
-                                                            Record<
+                                                        ) =>
+                                                            toggleCheckbox(
+                                                                question.key,
+                                                                val,
+                                                            )
+                                                        }
+                                                        onSetVaccineStatus={
+                                                            setVaccineStatus
+                                                        }
+                                                        vaccineStatuses={
+                                                            (answers.vaccine_status as Record<
                                                                 string,
-                                                                string
-                                                            >
-                                                        >) || {}
-                                                    }
-                                                />
-                                            </div>
-                                        );
-                                    })}
+                                                                Record<
+                                                                    string,
+                                                                    string
+                                                                >
+                                                            >) || {}
+                                                        }
+                                                    />
+                                                </div>
+                                            );
+                                        })
+                                    }
                                 </motion.div>
-                            }
                         </AnimatePresence>
                     </div>
                 </div>
             </div>
 
             {/* ── Bottom Nav ───────────────────────────────── */}
-            {!showIntro && (
-                <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border-light/50 bg-background-primary/90 backdrop-blur-md px-5 sm:px-8 py-4">
+            <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border-light/50 bg-background-primary/90 backdrop-blur-md px-5 sm:px-8 py-4">
                     <div className="max-w-lg mx-auto flex items-center justify-between">
                         <button
                             onClick={goPrev}
@@ -1667,8 +1687,7 @@ const TravelHealthQuestionnaire = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+            </div>
         </div>
     );
 };
@@ -1739,6 +1758,7 @@ interface QuestionInputProps {
     question: Question;
     value: unknown;
     prefilled?: boolean;
+    hasError?: boolean;
     onChange: (val: unknown) => void;
     onToggleCheckbox: (val: string) => void;
     onSetVaccineStatus: (
@@ -1753,12 +1773,16 @@ const QuestionInput = ({
     question,
     value,
     prefilled = false,
+    hasError,
     onChange,
     onToggleCheckbox,
     onSetVaccineStatus,
     vaccineStatuses,
 }: QuestionInputProps) => {
     const todayLocal = todayIsoDateLocal();
+    const errorInputClass = hasError ? "!border-red-400/70" : "";
+    const unselectedBorderClass = hasError ? "border-red-400/70" : "border-border-light/60";
+
     switch (question.type) {
         case "radio":
             return (
@@ -1778,14 +1802,14 @@ const QuestionInput = ({
                             onClick={() => onChange(opt.value)}
                             className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${value === opt.value
                                 ? "border-accent bg-white shadow-sm"
-                                : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
+                                : `${unselectedBorderClass} hover:border-border bg-white/60 hover:bg-white`
                                 }`}
                         >
                             <div className="flex items-center gap-3.5">
                                 <div
                                     className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${value === opt.value
                                         ? "border-accent bg-accent"
-                                        : "border-border"
+                                        : hasError ? "border-red-400/70" : "border-border"
                                         }`}
                                 >
                                     {value === opt.value && (
@@ -1828,14 +1852,14 @@ const QuestionInput = ({
                                 onClick={() => onToggleCheckbox(opt.value)}
                                 className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${checked
                                     ? "border-accent bg-white shadow-sm"
-                                    : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
+                                    : `${unselectedBorderClass} hover:border-border bg-white/60 hover:bg-white`
                                     }`}
                             >
                                 <div className="flex items-center gap-3.5">
                                     <div
                                         className={`w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${checked
                                             ? "border-accent bg-accent"
-                                            : "border-border"
+                                            : hasError ? "border-red-400/70" : "border-border"
                                             }`}
                                     >
                                         {checked && (
@@ -1865,7 +1889,7 @@ const QuestionInput = ({
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={question.placeholder}
                     readOnly={prefilled}
-                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium ${
+                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium ${errorInputClass} ${
                         prefilled ? "bg-background-primary/50 cursor-default" : "bg-white"
                     }`}
                 />
@@ -1881,7 +1905,7 @@ const QuestionInput = ({
                     placeholder={question.placeholder}
                     rows={4}
                     readOnly={prefilled}
-                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 resize-none font-medium ${
+                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 resize-none font-medium ${errorInputClass} ${
                         prefilled ? "bg-background-primary/50 cursor-default" : "bg-white"
                     }`}
                 />
@@ -1897,7 +1921,7 @@ const QuestionInput = ({
                     max={question.key === "date_of_birth" ? todayLocal : undefined}
                     onChange={(e) => onChange(e.target.value)}
                     readOnly={prefilled}
-                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading outline-none focus:border-accent transition-all duration-200 font-medium ${
+                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading outline-none focus:border-accent transition-all duration-200 font-medium ${errorInputClass} ${
                         prefilled ? "bg-background-primary/50 cursor-default" : "bg-white"
                     }`}
                 />
@@ -1985,7 +2009,7 @@ const QuestionInput = ({
                     <CountryPicker
                         value={(value as string) || ""}
                         onChange={(name) => onChange(name)}
-                        inputClassName="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 pr-10 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium"
+                        inputClassName={`w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 pr-10 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium ${errorInputClass}`}
                         placeholder={question.placeholder ?? "Select a country"}
                     />
                 </motion.div>

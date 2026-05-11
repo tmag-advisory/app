@@ -28,12 +28,64 @@ interface NavItem {
 }
 
 const individualNav: NavItem[] = [
-    { label: "Dashboard", href: "/dashboard", icon: <LucideLayoutDashboard className="w-4 h-4" /> },
-    { label: "Create Plan", href: "/dashboard/create-plan", icon: <LucidePlusCircle className="w-4 h-4" /> },
-    { label: "My Plans", href: "/dashboard/plans", icon: <LucideFileText className="w-4 h-4" /> },
-    { label: "Transactions", href: "/dashboard/transactions", icon: <LucideReceipt className="w-4 h-4" /> },
-    { label: "My Ebooks", href: "/dashboard/my-ebooks", icon: <LucideBookOpen className="w-4 h-4" /> },
-    { label: "Settings", href: "/dashboard/settings", icon: <LucideSettings className="w-4 h-4" /> },
+    {
+        label: "Dashboard",
+        href: "/dashboard",
+        icon: <LucideLayoutDashboard className="w-4 h-4" />,
+    },
+    {
+        label: "Create Plan",
+        href: "/dashboard/create-plan",
+        icon: <LucidePlusCircle className="w-4 h-4" />,
+    },
+    {
+        label: "My Plans",
+        href: "/dashboard/plans",
+        icon: <LucideFileText className="w-4 h-4" />,
+    },
+    {
+        label: "Transactions",
+        href: "/dashboard/transactions",
+        icon: <LucideReceipt className="w-4 h-4" />,
+    },
+    {
+        label: "My Ebooks",
+        href: "/dashboard/my-ebooks",
+        icon: <LucideBookOpen className="w-4 h-4" />,
+    },
+    {
+        label: "Settings",
+        href: "/dashboard/settings",
+        icon: <LucideSettings className="w-4 h-4" />,
+    },
+];
+
+const familyNav: NavItem[] = [
+    {
+        label: "Family Trips",
+        href: "/dashboard",
+        icon: <LucideLayoutDashboard className="w-4 h-4" />,
+    },
+    {
+        label: "Create Family Trip",
+        href: "/dashboard/family-trip",
+        icon: <LucidePlusCircle className="w-4 h-4" />,
+    },
+    {
+        label: "Manage Members",
+        href: "/dashboard/family-members",
+        icon: <LucideUsers className="w-4 h-4" />,
+    },
+    {
+        label: "Buy Family Plan",
+        href: "/dashboard/buy-family-plan",
+        icon: <LucideCreditCard className="w-4 h-4" />,
+    },
+    {
+        label: "Settings",
+        href: "/dashboard/settings",
+        icon: <LucideSettings className="w-4 h-4" />,
+    },
 ];
 
 const hrNav: NavItem[] = [
@@ -133,7 +185,8 @@ const Sidebar = () => {
     const { companies, selectedCompanyId, selectCompany, setCompanies } = usePlanStore();
 
     const isHR = canAccessHR(user);
-    const navItems = isHR ? hrNav : individualNav;
+    const isFamily = user?.type?.toUpperCase() === "FAMILY";
+    const navItems = isHR ? hrNav : isFamily ? familyNav : individualNav;
 
     const { data: myCompanies, isSuccess } = useMyCompanies({ enabled: isHR });
 

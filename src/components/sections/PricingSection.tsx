@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { LucideCheck, LucideArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { LucideCheck, LucideArrowRight, LucideTag } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../ui/Button";
 import AnimateIn from "../animations/AnimateIn";
@@ -14,22 +14,45 @@ import {
     signupRanges,
     enterpriseTierColors,
     individualPlanFeatures,
+    familyPlans,
     type SignupRange,
     type ServiceLevel,
 } from "../../constants/companyPlans";
+import { getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 
-type Audience = "individual" | "company";
+type Audience = "individual" | "family" | "company";
 
-function formatPrice(priceUsd: number, priceNgn: number, currency: string): string {
+function formatPrice(priceUsd: number, priceNgn: number, currency: string, discountRate = 0): string {
     if (priceUsd === 0) return "Free";
-    if (currency === "NGN") return `₦${priceNgn.toLocaleString()}`;
-    return `$${priceUsd}`;
+    const basePrice = currency === "NGN" ? priceNgn : priceUsd;
+    const discountedPrice = discountRate > 0 ? basePrice * (1 - discountRate / 100) : basePrice;
+    const displayPrice = currency === "NGN" ? Math.round(discountedPrice) : discountedPrice;
+    if (currency === "NGN") return `₦${displayPrice.toLocaleString()}`;
+    return `$${displayPrice.toLocaleString(undefined, {
+        maximumFractionDigits: displayPrice % 1 === 0 ? 0 : 2,
+        minimumFractionDigits: displayPrice % 1 === 0 ? 0 : 2,
+    })}`;
 }
 
 const PricingSection = () => {
     const [audience, setAudience] = useState<Audience>("individual");
     const [signupRange, setSignupRange] = useState<SignupRange>("0-100");
     const { selectedCurrency, setCurrency } = useCurrencyStore();
+    const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
+
+    useEffect(() => {
+        let cancelled = false;
+        void refreshAffiliateDiscount()
+            .then((discount) => {
+                if (!cancelled && discount?.active) {
+                    setAffiliateDiscountRate(Number(discount.discount_rate));
+                }
+            })
+            .catch(() => undefined);
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     return (
         <div className="bg-background-secondary">
@@ -51,7 +74,7 @@ const PricingSection = () => {
                 <AnimateIn className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-10">
                     {/* Audience pill */}
                     <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
-                        {(["individual", "company"] as Audience[]).map((tab) => (
+                        {(["individual", "family", "company"] as Audience[]).map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setAudience(tab)}
@@ -60,7 +83,7 @@ const PricingSection = () => {
                                     : "text-muted hover:text-heading"
                                     }`}
                             >
-                                {tab === "individual" ? "Individuals" : "Company"}
+                                {tab === "individual" ? "Individuals" : tab === "family" ? "Family" : "Company"}
                             </button>
                         ))}
                     </div>
@@ -81,6 +104,12 @@ const PricingSection = () => {
                         ))}
                     </div>
                 </AnimateIn>
+
+                {affiliateDiscountRate > 0 && (
+                    <div className="max-w-5xl mx-auto rounded-2xl border border-accent/20 bg-accent/10 px-5 py-3 text-sm font-semibold text-accent text-center mb-10">
+                        Affiliate discount active — {affiliateDiscountRate}% off paid plans at checkout.
+                    </div>
+                )}
 
                 {/* Individual plans */}
                 {audience === "individual" && (
@@ -135,9 +164,21 @@ const PricingSection = () => {
                                         <div className="flex items-baseline gap-1.5 mb-1">
                                             <span className={`text-4xl font-serif ${isHighlighted ? "text-[#1a5c52]" : isPremium ? "text-[#9a7020]" : "text-stone-800"
                                                 }`}>
-                                                {formatPrice(plan.priceUsd, plan.priceNgn, selectedCurrency)}
+                                                {formatPrice(plan.priceUsd, plan.priceNgn, selectedCurrency, affiliateDiscountRate)}
                                             </span>
                                         </div>
+
+                                        {affiliateDiscountRate > 0 && (() => {
+                                            const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                            const basePrice = selectedCurrency === "NGN" ? plan.priceNgn : plan.priceUsd;
+                                            const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
+                                            return (
+                                                <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
+                                                    <LucideTag className="w-3 h-3" />
+                                                    <span className="font-medium">{affiliateDiscountRate}% off — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()}</span>
+                                                </div>
+                                            );
+                                        })()}
                                         <p className={`text-xs mb-8 ${isHighlighted ? "text-[#2a5858]/60" : "text-stone-400"
                                             }`}>
                                             {plan.priceNote}
@@ -186,6 +227,76 @@ const PricingSection = () => {
                                 </motion.div>
                             );
                         })}
+                    </StaggerGroup>
+                )}
+
+                {/* Family plans */}
+                {audience === "family" && (
+                    <StaggerGroup className="max-w-md mx-auto" stagger={0.12}>
+                        {familyPlans.map((plan) => (
+                            <motion.div
+                                variants={staggerItem}
+                                key={plan.id}
+                                className="relative p-8 flex flex-col justify-between overflow-hidden border border-[#2a7a6a]/25"
+                            >
+                                <div
+                                    className="absolute inset-0"
+                                    style={{
+                                        background: "linear-gradient(145deg, #eaf7f4 0%, #dff2ee 45%, #e6f5f1 100%)",
+                                    }}
+                                />
+                                <div className="absolute top-0 left-0 w-full h-1 bg-[#2a7a6a]" />
+                                <span className="absolute top-6 right-6 text-xs font-semibold text-white bg-[#2a7a6a] px-3 py-1 rounded-full">
+                                    Best value
+                                </span>
+                                <div className="relative z-10">
+                                    <h3 className="text-xl font-semibold mb-2 text-[#1a3c38]">
+                                        {plan.name}
+                                    </h3>
+                                    <p className="text-sm mb-6 text-[#2a5858]/80">
+                                        {plan.description}
+                                    </p>
+                                    <div className="flex items-baseline gap-1.5 mb-1">
+                                        <span className="text-4xl font-serif text-[#1a5c52]">
+                                            {formatPrice(plan.priceUsd, plan.priceNgn, selectedCurrency, affiliateDiscountRate)}
+                                        </span>
+                                    </div>
+
+                                    {affiliateDiscountRate > 0 && (() => {
+                                        const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                        const basePrice = selectedCurrency === "NGN" ? plan.priceNgn : plan.priceUsd;
+                                        const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
+                                        return (
+                                            <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
+                                                <LucideTag className="w-3 h-3" />
+                                                <span className="font-medium">{affiliateDiscountRate}% off — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()}</span>
+                                            </div>
+                                        );
+                                    })()}
+                                    <p className="text-xs mb-8 text-[#2a5858]/60">
+                                        {plan.priceNote}
+                                    </p>
+                                    <ul className="space-y-3 mb-8">
+                                        {plan.features.map((f) => (
+                                            <li
+                                                key={f}
+                                                className="flex items-start gap-3 text-sm text-[#1a3c38]"
+                                            >
+                                                <LucideCheck className="w-4 h-4 mt-0.5 shrink-0 text-[#2a7a6a]" />
+                                                {f}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <Button
+                                    variant="primary"
+                                    link={`/family-checkout?plan=FAMILY_${plan.id}`}
+                                    className="relative z-10 self-stretch text-center justify-center flex bg-[#2a7a6a] text-white! hover:bg-[#246858]"
+                                >
+                                    {plan.cta}
+                                </Button>
+                            </motion.div>
+                        ))}
                     </StaggerGroup>
                 )}
 
@@ -248,9 +359,21 @@ const PricingSection = () => {
                                             </p>
                                             <div className="flex items-baseline gap-1.5 mb-1">
                                                 <span className={`text-4xl font-serif ${colors.textPrimary}`}>
-                                                    {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency)}
+                                                    {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency, affiliateDiscountRate)}
                                                 </span>
                                             </div>
+
+                                            {affiliateDiscountRate > 0 && (() => {
+                                                const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                                const basePrice = selectedCurrency === "NGN" ? basePlan.priceNgn : basePlan.priceUsd;
+                                                const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
+                                                return (
+                                                    <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
+                                                        <LucideTag className="w-3 h-3" />
+                                                        <span className="font-medium">{affiliateDiscountRate}% off — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()} per credit</span>
+                                                    </div>
+                                                );
+                                            })()}
                                             <p className={`text-xs mb-8 ${colors.textMuted}`}>
                                                 per credit
                                             </p>

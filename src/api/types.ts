@@ -15,11 +15,15 @@ export interface CreditPlan {
   description: string;
   isDefault: boolean;
   isCompanyPlan: boolean;
+  isFamilyPlan: boolean;
   signupRangeLabel: string | null;
   serviceLevel: "STANDARD" | "PREMIUM" | null;
   visibility?: "PUBLIC" | "CUSTOM";
   assignedCompanyId?: number | null;
   planCount?: number | null;
+  includedFamilyMembers?: number | null;
+  additionalMemberPriceUsd?: number | null;
+  additionalMemberPriceNgn?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -73,6 +77,8 @@ export interface RegisterRequest {
   email: string;
   password: string;
   planCode?: string;
+  affiliate_referral_code?: string;
+  account_type?: string;
   billing_currency?: BillingCurrency;
 }
 
@@ -115,6 +121,8 @@ export interface GoogleAuthRequest {
 
 export interface GoogleCallbackRequest {
   code: string;
+  planCode?: string;
+  affiliate_referral_code?: string;
 }
 
 // ─── User ────────────────────────────────────────────────────
@@ -248,6 +256,8 @@ export interface DoctorApplicationRequest {
   profilePicture?: File;
   signature: File;
   stamp?: File;
+  practicingLicense?: File;
+  travelMedicineCertificate?: File;
   confidentialityAgreementAccepted: boolean;
   conductAgreementAccepted: boolean;
 }
@@ -259,6 +269,8 @@ export interface DoctorProfileUpdateRequest {
   medicalLicenseNumber?: string;
   signature?: File;
   stamp?: File;
+  practicingLicense?: File;
+  travelMedicineCertificate?: File;
 }
 
 export interface DoctorProfileResponse {
@@ -273,6 +285,8 @@ export interface DoctorProfileResponse {
   medicalLicenseNumber: string;
   signatureUrl: string | null;
   stampUrl: string | null;
+  practicingLicenseUrl: string | null;
+  travelMedicineCertificateUrl: string | null;
   doctorApplicationStatus: DoctorApplicationStatus;
   applicationSubmittedAt: string | null;
 }
@@ -1043,6 +1057,7 @@ export interface PlanUsageLedgerResponse {
 export interface CreditPurchaseRequest {
   credits: number;
   currency: BillingCurrency;
+  affiliate_referral_code?: string;
 }
 
 export interface CreditPurchaseInitiateResponse {
@@ -1051,6 +1066,7 @@ export interface CreditPurchaseInitiateResponse {
   paymentLink: string;
   credits: number;
   basePrice: number;
+  discountAmount?: number;
   amount: number;
   currency: BillingCurrency;
   currencySymbol: string;
@@ -1070,6 +1086,9 @@ export interface CreditPurchaseResponse {
   currencySymbol: string;
   pricePerCredit: number;
   amount: number;
+  affiliateReferralCode?: string | null;
+  affiliateDiscountRate?: number | null;
+  affiliateDiscountAmount?: number | null;
   amountPaid: number | null;
   status: string;
   flutterwaveStatus: string | null;
@@ -1392,6 +1411,7 @@ export interface CompanyOnboardingRequest {
   teamMembers: TeamMember[];
   teamMembersCsv?: File | null;
   platformEmployees?: PlatformEmployee[];
+  affiliate_referral_code?: string;
 }
 
 export interface CompanyOnboardingResponse {
@@ -1412,6 +1432,8 @@ export interface CompanyOnboardingResponse {
   txRef: string;
   paymentStatus: string;
   paymentAmount: number;
+  baseAmount?: number;
+  discountAmount?: number;
   paymentCurrency: string;
   status: string;
   rejectionReason: string | null;
@@ -1427,4 +1449,168 @@ export interface OnboardingPaymentInitiate {
   paymentLink: string;
   amount: number;
   currency: string;
+}
+
+// ============ Family Plan ============
+
+export interface FamilyTripMemberRequest {
+  relationship: string;
+  firstName: string;
+  lastName: string;
+  memberEmail?: string;
+  dateOfBirth?: string;
+  questionnaireResponses?: string;
+}
+
+export interface FamilyTripRequest {
+  packageType?: string;
+  destination: string;
+  country: string;
+  duration: number;
+  purpose: string;
+  tripType: string;
+  tripDetailsJson?: string;
+  members: FamilyTripMemberRequest[];
+}
+
+export interface ActivePackageAllowanceDto {
+  type: string;
+  tripsRemaining: number;
+}
+
+export interface PaymentBreakdownItem {
+  label: string;
+  minor: number;
+  satisfiedBy: string;
+}
+
+export interface FamilyTripPreviewResponse {
+  includedMembers: number;
+  additionalMembers: number;
+  baseFiatCost: number;
+  extraFiatCost: number;
+  totalFiatCost: number;
+  currency: string;
+  availableCredits: number;
+  activePackageAllowance?: ActivePackageAllowanceDto;
+  paymentRequired: boolean;
+  paymentBreakdown: PaymentBreakdownItem[];
+}
+
+export interface FamilyTripMemberResponse {
+  id: number;
+  relationship: string;
+  firstName: string;
+  lastName: string;
+  memberEmail?: string;
+  dateOfBirth?: string;
+  ageAtDeparture?: number;
+  includedInBase?: boolean;
+  questionnaireStatus: string;
+  travelPlanId?: number;
+  loginCode?: string;
+}
+
+export interface FamilyTripResponse {
+  id: number;
+  status: string;
+  destination: string;
+  country: string;
+  duration: number;
+  purpose: string;
+  tripType: string;
+  tripDetailsJson?: string;
+  baseFiatCost: number;
+  extraMemberCount: number;
+  totalFiatCost: number;
+  currency: string;
+  familyPlanId?: number | null;
+  members: FamilyTripMemberResponse[];
+}
+
+export interface FamilyMemberPlanResponse {
+  destination: string;
+  country: string;
+  status: string;
+  tripSummary: string;
+  generalVaccinations: string[];
+  memberSection: {
+    memberId: number;
+    memberName: string;
+    relationship: string;
+    ageAtDeparture: number;
+    executiveSummary: string;
+    vaccinations: Array<{
+      name: string;
+      recommendation: string;
+      rationale: string;
+      timing: string;
+    }>;
+    medications: Array<{
+      name: string;
+      indication: string;
+      dosage: string;
+      notes: string;
+    }>;
+    healthConsiderations: Array<{
+      category: string;
+      advice: string;
+    }>;
+    travellerSpecific: string;
+    hardStop: boolean;
+  };
+}
+
+// ─── Family Package Purchase ─────────────────────────────────
+
+export type FamilyPackageType = "STANDARD";
+
+export interface FamilyPackageCheckoutRequest {
+  packageType: FamilyPackageType;
+  currency: BillingCurrency;
+  additionalMembers: number;
+  name?: string;
+  email?: string;
+  phone?: string;
+  affiliate_referral_code?: string;
+}
+
+export interface FamilyPackageCheckoutResponse {
+  success: boolean;
+  txRef: string;
+  paymentLink: string;
+  packageType: FamilyPackageType;
+  tripsAllowed: number;
+  amount: number;
+  baseAmount?: number;
+  discountAmount?: number;
+  currency: BillingCurrency;
+  currencySymbol: string;
+  purchaseId: number;
+  additionalMembers: number;
+  totalMembers: number;
+  error?: string;
+  errorType?: string;
+}
+
+export interface FamilyPackagePurchaseResponse {
+  id: number;
+  txRef: string;
+  flwRef: string | null;
+  userId: number;
+  packageType: FamilyPackageType;
+  tripsAllowed: number;
+  tripsUsed: number;
+  additionalMembers: number;
+  totalMembers: number;
+  amountPaidMinor: number;
+  currency: string;
+  paymentProvider: string | null;
+  paymentReference: string | null;
+  status: "PENDING" | "ACTIVE" | "EXHAUSTED" | "REFUNDED";
+  expiresAt: string | null;
+  paidAt: string | null;
+  flutterwaveStatus: string | null;
+  failedReason: string | null;
+  createdAt: string;
 }

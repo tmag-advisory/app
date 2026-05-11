@@ -2,6 +2,11 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { travelPlansApi } from "../../api/api";
 import type { TravelPlanListItemResponse } from "../../api/types";
+import {
+    canDownloadTravelPlanPdf,
+    canDownloadTravelPlanSummaryPdf,
+    isPaidTravelPlanTier,
+} from "../../lib/travel-plan-pdf";
 import { useTravelPlans, useTravelPlanSummaryPdf } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import {
@@ -15,9 +20,10 @@ import {
     LucideLoader2,
     LucideSearch,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
+import PaginationFooter from "../../components/dashboard/PaginationFooter";
 
 const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
 const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
@@ -126,16 +132,11 @@ const planFilenameSlug = (destination: string | null | undefined) => {
     );
 };
 
-const isPlanDownloadAvailable = (plan: TravelPlanListItemResponse) => {
-    if (plan.status !== "COMPLETED") {
-        return false;
-    }
-    return (
-        !plan.doctorValidationStatus ||
-        plan.doctorValidationStatus === "NOT_REQUIRED" ||
-        plan.doctorValidationStatus === "APPROVED"
-    );
-};
+const isPlanDownloadAvailable = (plan: TravelPlanListItemResponse) =>
+    canDownloadTravelPlanPdf(plan.status);
+
+const isPlanSummaryDownloadAvailable = (plan: TravelPlanListItemResponse) =>
+    canDownloadTravelPlanSummaryPdf(plan.status, plan.planTier);
 
 const getPlanDisplayStatus = (plan: TravelPlanListItemResponse) => {
     if (
@@ -150,13 +151,24 @@ const getPlanDisplayStatus = (plan: TravelPlanListItemResponse) => {
 
 const PlanHistory = () => {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
   const [downloadingAction, setDownloadingAction] = useState<string | null>(
       null,
   );
-  const { data: plansData, isLoading } = useTravelPlans({ search: search || undefined });
+  const { data: plansData, isLoading } = useTravelPlans({
+      search: search || undefined,
+      page,
+      per_page: perPage,
+  });
   const { mutateAsync: downloadSummaryPdfBlob } = useTravelPlanSummaryPdf();
 
+  useEffect(() => {
+      setPage(1);
+  }, [search, perPage]);
+
   const plans = plansData?.data || [];
+  const pagination = plansData?.pagination;
   const sortedPlans = useMemo(
       () =>
           [...plans].sort(
@@ -170,7 +182,7 @@ const PlanHistory = () => {
   const handleDownloadPdf = useCallback(async (plan: TravelPlanListItemResponse) => {
       if (!isPlanDownloadAvailable(plan)) {
           toast.error(
-              "PDF is only available after required doctor approval.",
+              "PDF is only available when your plan is completed.",
           );
           return;
       }
@@ -202,14 +214,11 @@ const PlanHistory = () => {
       async (plan: TravelPlanListItemResponse) => {
           if (!isPlanDownloadAvailable(plan)) {
               toast.error(
-                  "Summary PDF is only available after required doctor approval.",
+                  "Summary PDF is only available when your plan is completed.",
               );
               return;
           }
-          if (plan.planTier !== "STANDARD" && plan.planTier !== "PREMIUM") {
-              toast.error(
-                  "Summary PDF is available for standard and premium plans.",
-              );
+          if (!isPaidTravelPlanTier(plan.planTier)) {
               return;
           }
 
@@ -300,6 +309,8 @@ const PlanHistory = () => {
                                   );
                                   const canDownload =
                                       isPlanDownloadAvailable(plan);
+                                  const canDownloadSummary =
+                                      isPlanSummaryDownloadAvailable(plan);
                                   return (
                                       <tr
                                           key={plan.id}
@@ -383,28 +394,30 @@ const PlanHistory = () => {
                                                                   }
                                                                   Full PDF
                                                               </button>
-                                                              <button
-                                                                  type="button"
-                                                                  onClick={() =>
-                                                                      void handleDownloadSummaryPdf(
-                                                                          plan,
-                                                                      )
-                                                                  }
-                                                                  disabled={
-                                                                      downloadingAction ===
-                                                                      `${plan.id}:summary`
-                                                                  }
-                                                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-heading transition-colors hover:bg-background-secondary disabled:cursor-not-allowed disabled:opacity-60"
-                                                              >
-                                                                  {(
-                                                                      downloadingAction ===
-                                                                      `${plan.id}:summary`
-                                                                  ) ?
-                                                                      <LucideLoader2 className="h-3.5 w-3.5 animate-spin" />
-                                                                  :   <LucideFileText className="h-3.5 w-3.5" />
-                                                                  }
-                                                                  Summary PDF
-                                                              </button>
+                                                              {canDownloadSummary && (
+                                                                  <button
+                                                                      type="button"
+                                                                      onClick={() =>
+                                                                          void handleDownloadSummaryPdf(
+                                                                              plan,
+                                                                          )
+                                                                      }
+                                                                      disabled={
+                                                                          downloadingAction ===
+                                                                          `${plan.id}:summary`
+                                                                      }
+                                                                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-heading transition-colors hover:bg-background-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                                                                  >
+                                                                      {(
+                                                                          downloadingAction ===
+                                                                          `${plan.id}:summary`
+                                                                      ) ?
+                                                                          <LucideLoader2 className="h-3.5 w-3.5 animate-spin" />
+                                                                      :   <LucideFileText className="h-3.5 w-3.5" />
+                                                                      }
+                                                                      Summary PDF
+                                                                  </button>
+                                                              )}
                                                           </div>
                                                       </details>
                                                   )}
@@ -421,6 +434,16 @@ const PlanHistory = () => {
                   <div className="px-6 py-12 text-center">
                       <p className="text-sm text-muted">No plans found.</p>
                   </div>
+              )}
+              {pagination && pagination.total > 0 && (
+                  <PaginationFooter
+                      page={pagination.page}
+                      pageSize={pagination.pageSize}
+                      total={pagination.total}
+                      totalPages={pagination.totalPages}
+                      onPageChange={setPage}
+                      onPageSizeChange={setPerPage}
+                  />
               )}
           </div>
       </div>

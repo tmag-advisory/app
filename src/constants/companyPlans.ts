@@ -73,7 +73,7 @@ export const individualPlans: IndividualPlanDefinition[] = [
   {
     ...creditPlans[0],
     priceNote: "1 credit included at signup",
-    cta: "Start free",
+    cta: "Get Essential",
     highlighted: false,
     features: [
       "Destination health risk overview (including current alerts & outbreaks)",
@@ -85,7 +85,7 @@ export const individualPlans: IndividualPlanDefinition[] = [
   {
     ...creditPlans[1],
     priceNote: "per credit",
-    cta: "Get started",
+    cta: "Get Standard",
     highlighted: true,
     features: [
       "Destination health risk overview (including current alerts & outbreaks)",
@@ -265,3 +265,80 @@ export const enterpriseTierColors: Record<SignupRange, Record<ServiceLevel, {
     },
   },
 };
+
+export interface FamilyPlanDefinition {
+  id: "STANDARD";
+  name: string;
+  description: string;
+  priceUsd: number;
+  priceNgn: number;
+  additionalMemberPriceUsd: number;
+  additionalMemberPriceNgn: number;
+  priceNote: string;
+  cta: string;
+  highlighted: boolean;
+  features: string[];
+}
+
+export type PlanCurrency = "USD" | "NGN";
+
+export function normalizePlanCurrency(currency: string): PlanCurrency {
+  return currency === "NGN" ? "NGN" : "USD";
+}
+
+export function formatFamilyPlanPrice(plan: FamilyPlanDefinition, currency: string): string {
+  return normalizePlanCurrency(currency) === "NGN"
+    ? `₦${plan.priceNgn.toLocaleString()}`
+    : `$${plan.priceUsd.toLocaleString()}`;
+}
+
+export function formatFamilyAdditionalMemberPrice(plan: FamilyPlanDefinition, currency: string): string {
+  return normalizePlanCurrency(currency) === "NGN"
+    ? `₦${plan.additionalMemberPriceNgn.toLocaleString()}`
+    : `$${plan.additionalMemberPriceUsd.toLocaleString()}`;
+}
+
+export function calculateFamilyTotalPrice(
+  plan: FamilyPlanDefinition,
+  currency: string,
+  additionalMembers: number
+): { total: number; base: number; extra: number } {
+  const base = normalizePlanCurrency(currency) === "NGN" ? plan.priceNgn : plan.priceUsd;
+  const perMember = normalizePlanCurrency(currency) === "NGN" ? plan.additionalMemberPriceNgn : plan.additionalMemberPriceUsd;
+  const extra = additionalMembers * perMember;
+  return { total: base + extra, base, extra };
+}
+
+export function formatFamilyTotalPrice(
+  plan: FamilyPlanDefinition,
+  currency: string,
+  additionalMembers: number
+): string {
+  const { total } = calculateFamilyTotalPrice(plan, currency, additionalMembers);
+  return normalizePlanCurrency(currency) === "NGN"
+    ? `₦${total.toLocaleString()}`
+    : `$${total.toLocaleString()}`;
+}
+
+export const familyPlans: FamilyPlanDefinition[] = [
+  {
+    id: "STANDARD",
+    name: "Family Plan",
+    description: "One family travel health plan for up to 6 family members. Covers everyone in a single trip.",
+    priceUsd: 180,
+    priceNgn: 180000,
+    additionalMemberPriceUsd: 30,
+    additionalMemberPriceNgn: 25000,
+    priceNote: "for up to 6 family members",
+    cta: "Get Family Plan",
+    highlighted: true,
+    features: [
+      "Includes up to 6 family members",
+      "$30 / ₦25,000 per additional family member",
+      "Fully personalised health risk report for each member",
+      "Family-centric dashboard and individual member access codes",
+      "Emergency contacts and local clinic directory",
+      "Physician-reviewed and validated reports",
+    ],
+  },
+];

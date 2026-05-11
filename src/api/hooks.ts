@@ -34,6 +34,7 @@ import {
   doctorApi,
   adminDoctorApi,
   settingsApi,
+  familyPackagePurchaseApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -79,6 +80,7 @@ import type {
   DoctorApplicationRequest,
   DoctorProfileUpdateRequest,
   ValidatePlanRequest,
+  FamilyPackageCheckoutRequest,
 } from "./types";
 
 // ─── Query Keys ──────────────────────────────────────────────
@@ -218,6 +220,11 @@ export const queryKeys = {
     all: ["company-admin-credits"] as const,
     history: (companyId?: number) => [...["company-admin-credits"], "history", companyId] as const,
     pricing: (companyId: number) => [...["company-admin-credits"], "pricing", companyId] as const,
+  },
+  familyPackagePurchases: {
+    all: ["family-package-purchases"] as const,
+    active: () => [...["family-package-purchases"], "active"] as const,
+    history: () => [...["family-package-purchases"], "history"] as const,
   },
   planUsageLedgers: {
     all: ["plan-usage-ledgers"] as const,
@@ -1104,6 +1111,33 @@ export function useCreditPurchaseHistory() {
   return useQuery({
     queryKey: queryKeys.creditPurchases.history(),
     queryFn: () => creditPurchaseApi.history(),
+  });
+}
+
+// ─── Family Package Purchase Hooks ─────────────────────────────────
+
+export function useInitiateFamilyPackageCheckout() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: FamilyPackageCheckoutRequest) => familyPackagePurchaseApi.checkout(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.profile.all });
+      qc.invalidateQueries({ queryKey: queryKeys.familyPackagePurchases.all });
+    },
+  });
+}
+
+export function useFamilyPackageActive() {
+  return useQuery({
+    queryKey: queryKeys.familyPackagePurchases.active(),
+    queryFn: () => familyPackagePurchaseApi.getActive(),
+  });
+}
+
+export function useFamilyPackageHistory() {
+  return useQuery({
+    queryKey: queryKeys.familyPackagePurchases.history(),
+    queryFn: () => familyPackagePurchaseApi.getHistory(),
   });
 }
 

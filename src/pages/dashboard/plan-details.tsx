@@ -4,6 +4,11 @@ import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion, LayoutGroup } from "framer-motion";
 import { travelPlansApi } from "../../api/api";
 import { cn } from "../../lib/utils";
+import {
+  canDownloadTravelPlanPdf,
+  canDownloadTravelPlanSummaryPdf,
+  isPaidTravelPlanTier,
+} from "../../lib/travel-plan-pdf";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 import { isTravelPlanGeneratingStatus, useTravelPlan, useTravelPlanSummaryPdf } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
@@ -429,10 +434,22 @@ const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold
 const validationStatusColors: Record<string, { text: string; bg: string }> = {
   PENDING: { text: "text-amber-700", bg: "bg-amber-50" },
   APPROVED: { text: "text-emerald-700", bg: "bg-emerald-50" },
-  REJECTED: { text: "text-red-700", bg: "bg-red-50" },
+  REJECTED: { text: "text-amber-700", bg: "bg-amber-50" },
   ELEVATED: { text: "text-blue-700", bg: "bg-blue-50" },
   NOT_REQUIRED: { text: "text-gray-700", bg: "bg-gray-50" },
 };
+
+const validationStatusLabels: Record<string, string> = {
+  PENDING: "Doctor review: In progress",
+  APPROVED: "Doctor review: Validated",
+  REJECTED: "Doctor review: Support follow-up",
+  ELEVATED: "Doctor review: Senior review",
+  NOT_REQUIRED: "Doctor review",
+};
+
+const SUPPORT_CONTACT_PATH = "/contact?type=SUPPORT";
+const PLAN_NOT_READY_MESSAGE = "Your plan is still being prepared. Please check back shortly.";
+const DOWNLOAD_SUPPORT_MESSAGE = "We couldn't prepare that download right now. Please contact support and we'll help.";
 
 function DoctorAssignmentIndicator({ assignedDoctors, openToAllDoctors }: {
   assignedDoctors?: { firstName?: string; lastName?: string; email?: string }[];
@@ -457,11 +474,10 @@ function DoctorAssignmentIndicator({ assignedDoctors, openToAllDoctors }: {
   return null;
 }
 
-function ValidationStatusBadge({ status, validatedAt, validatedByName, rejectionReason }: {
+function ValidationStatusBadge({ status, validatedAt, validatedByName }: {
   status?: string;
   validatedAt?: string | null;
   validatedByName?: string | null;
-  rejectionReason?: string | null;
 }) {
   if (!status || status === "NOT_REQUIRED") return null;
   const colors = validationStatusColors[status] ?? validationStatusColors.NOT_REQUIRED;
@@ -478,7 +494,7 @@ function ValidationStatusBadge({ status, validatedAt, validatedByName, rejection
           <LucideAlertTriangle className="h-4 w-4 text-red-600" />
         )}
         <span className={`text-xs font-semibold uppercase tracking-wider ${colors.text}`}>
-          Doctor Validation: {status}
+          {validationStatusLabels[status] ?? "Doctor review"}
         </span>
       </div>
       {status === "APPROVED" && validatedAt && (
@@ -486,16 +502,18 @@ function ValidationStatusBadge({ status, validatedAt, validatedByName, rejection
           Approved by Dr. {validatedByName} on {new Date(validatedAt).toLocaleDateString()}
         </p>
       )}
-      {status === "ELEVATED" && rejectionReason && (
-        <div className="mt-2 p-2.5 rounded-lg bg-blue-50">
-          <p className="text-xs text-blue-700 font-medium">Doctor feedback:</p>
-          <p className="text-xs text-blue-600">{rejectionReason}</p>
+      {status === "ELEVATED" && (
+        <div className="mt-2 rounded-lg bg-blue-50 p-2.5">
+          <p className="text-xs text-blue-700">
+            Our medical team is taking another look and will update you when the review is complete.
+          </p>
         </div>
       )}
-      {status === "REJECTED" && rejectionReason && (
-        <div className="mt-2 p-2.5 rounded-lg bg-red-50">
-          <p className="text-xs text-red-700 font-medium">Rejection reason:</p>
-          <p className="text-xs text-red-600">{rejectionReason}</p>
+      {status === "REJECTED" && (
+        <div className="mt-2 rounded-lg bg-amber-50 p-2.5">
+          <p className="text-xs text-amber-700">
+            Our support team can help with the next steps for this review.
+          </p>
         </div>
       )}
       {status === "PENDING" && (
@@ -512,8 +530,8 @@ const planStatusConfig: Record<string, { label: string; text: string; bg: string
   PROCESSING: { label: "Processing", text: "text-amber-700", bg: "bg-amber-50", icon: LucideLoader2 },
   QUEUED: { label: "Queued", text: "text-gray-600", bg: "bg-gray-100", icon: LucideClock },
   PENDING: { label: "Pending", text: "text-amber-700", bg: "bg-amber-50", icon: LucideClock },
-  FAILED: { label: "Failed", text: "text-red-700", bg: "bg-red-50", icon: LucideAlertTriangle },
-  ERROR: { label: "Failed", text: "text-red-700", bg: "bg-red-50", icon: LucideAlertTriangle },
+  FAILED: { label: "Needs attention", text: "text-amber-700", bg: "bg-amber-50", icon: LucideAlertTriangle },
+  ERROR: { label: "Needs attention", text: "text-amber-700", bg: "bg-amber-50", icon: LucideAlertTriangle },
 };
 
 function PlanStatusBadge({ status }: { status: string }) {
@@ -1130,6 +1148,9 @@ const PlanDetails = () => {
 
   const parsedContent = parseGeneratedPlanContent(plan?.generatedPlan?.planJson ?? null);
   const useStructuredLayout = parsedContent != null && hasGeneratedPlanLayout(parsedContent);
+  const canDownloadPdf = canDownloadTravelPlanPdf(plan?.status);
+  const canDownloadSummaryPdf = canDownloadTravelPlanSummaryPdf(plan?.status, plan?.planTier);
+  const showSummaryPdfButton = isPaidTravelPlanTier(plan?.planTier);
 
   const [pdfLoading, setPdfLoading] = useState(false);
   const [summaryPdfLoading, setSummaryPdfLoading] = useState(false);
@@ -1161,7 +1182,7 @@ const PlanDetails = () => {
       return;
     }
     if (plan.status !== "COMPLETED") {
-      toast.error("PDF is only available when your plan is completed.");
+      toast(PLAN_NOT_READY_MESSAGE);
       return;
     }
     setPdfLoading(true);
@@ -1179,7 +1200,7 @@ const PlanDetails = () => {
       toast.success("Travel health plan downloaded");
     } catch (err) {
       console.error(err);
-      toast.error("Could not download PDF. Please try again.");
+      toast(DOWNLOAD_SUPPORT_MESSAGE);
     } finally {
       setPdfLoading(false);
     }
@@ -1190,11 +1211,10 @@ const PlanDetails = () => {
       return;
     }
     if (plan.status !== "COMPLETED") {
-      toast.error("Summary PDF is only available when your plan is completed.");
+      toast(PLAN_NOT_READY_MESSAGE);
       return;
     }
-    if (plan.planTier !== "STANDARD" && plan.planTier !== "PREMIUM") {
-      toast.error("Summary PDF is available for standard and premium plans.");
+    if (!isPaidTravelPlanTier(plan.planTier)) {
       return;
     }
 
@@ -1214,7 +1234,7 @@ const PlanDetails = () => {
       toast.success("Travel health summary downloaded");
     } catch (err) {
       console.error(err);
-      toast.error("Could not download summary PDF. Please try again.");
+      toast(DOWNLOAD_SUPPORT_MESSAGE);
     } finally {
       setSummaryPdfLoading(false);
     }
@@ -1268,7 +1288,7 @@ const PlanDetails = () => {
   if (plan.status === "FAILED") {
     return (
       <div>
-        <DashboardHeader title="Plan generation failed" />
+        <DashboardHeader title="Plan needs attention" />
         <Link
           to="/dashboard/plans"
           className="mb-6 inline-flex items-center gap-1 text-xs text-muted transition-colors duration-200 hover:text-heading"
@@ -1276,26 +1296,37 @@ const PlanDetails = () => {
           <LucideArrowLeft className="h-3 w-3" /> Back to plans
         </Link>
         <motion.div
-          className="rounded-2xl border border-red-200/80 bg-red-50/90 p-6 shadow-sm"
+          className="rounded-2xl border border-amber-200/80 bg-amber-50/90 p-6 shadow-sm"
           initial={reduceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 320, damping: 32 }}
         >
           <div className="flex items-start gap-3">
-            <LucideAlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden />
-            <div className="min-w-0 space-y-2">
-              <p className="font-semibold text-red-900">
-                We couldn&apos;t generate this travel health plan.
-              </p>
-              <p className="text-sm text-red-900/85">
-                Your credit was already used when the request started. Try creating a new plan, or
-                contact support if this keeps happening.
-              </p>
-              {plan.generatedPlan?.errorMessage ? (
-                <pre className="mt-3 max-h-48 overflow-auto rounded-lg border border-red-200/60 bg-white/80 p-3 font-mono text-[11px] leading-relaxed text-red-950/90 whitespace-pre-wrap">
-                  {plan.generatedPlan.errorMessage}
-                </pre>
-              ) : null}
+            <LucideShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
+            <div className="min-w-0 space-y-3">
+              <div className="space-y-2">
+                <p className="font-semibold text-amber-950">
+                  We&apos;re taking a closer look at this plan.
+                </p>
+                <p className="text-sm text-amber-900/85">
+                  Something didn&apos;t finish as expected, but you don&apos;t need to troubleshoot it here.
+                  Our support team can help get this sorted.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3 pt-1">
+                <Link
+                  to={SUPPORT_CONTACT_PATH}
+                  className="inline-flex items-center rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-white transition-colors duration-200 hover:bg-accent-dark"
+                >
+                  Contact support
+                </Link>
+                <Link
+                  to="/dashboard/plans"
+                  className="inline-flex items-center rounded-xl border border-amber-200 bg-white/75 px-4 py-2 text-xs font-semibold text-amber-900 transition-colors duration-200 hover:bg-white"
+                >
+                  View all plans
+                </Link>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -1305,72 +1336,60 @@ const PlanDetails = () => {
 
   const needsDoctorApproval =
     plan.doctorValidationStatus === "PENDING" || plan.doctorValidationStatus === "ELEVATED" || plan.doctorValidationStatus === "REJECTED";
-
-  if (needsDoctorApproval) {
-    const isElevated = plan.doctorValidationStatus === "ELEVATED";
-    const isRejected = plan.doctorValidationStatus === "REJECTED";
-    
-    return (
-      <div>
-        <DashboardHeader title={isElevated ? "Plan Under Senior Review" : isRejected ? "Plan not approved" : "Awaiting doctor approval"} />
-        <Link
-          to="/dashboard/plans"
-          className="mb-6 inline-flex items-center gap-1 text-xs text-muted transition-colors duration-200 hover:text-heading"
-        >
-          <LucideArrowLeft className="h-3 w-3" /> Back to plans
-        </Link>
-        <motion.div
-          className={cn(
-            DASHBOARD_GLASS_SURFACE,
-            "p-6 md:p-8",
-            isElevated ? "border-blue-200/80" : isRejected ? "border-red-200/80" : "border-amber-200/80",
-          )}
-          initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 320, damping: 32 }}
-        >
-          <div className="flex items-start gap-3">
-            {isElevated ? (
-              <LucideShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden />
-            ) : isRejected ? (
-              <LucideAlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden />
-            ) : (
-              <LucideClock className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
-            )}
-            <div className="min-w-0 space-y-2">
-              <p className={`font-semibold ${isElevated ? "text-blue-900" : isRejected ? "text-red-900" : "text-amber-900"}`}>
+  const isElevated = plan.doctorValidationStatus === "ELEVATED";
+  const isRejected = plan.doctorValidationStatus === "REJECTED";
+  const doctorReviewNotice = needsDoctorApproval ? (
+    <motion.div
+      className={cn(
+        DASHBOARD_GLASS_SURFACE,
+        "mb-6 p-6 md:p-8",
+        isElevated ? "border-blue-200/80" : isRejected ? "border-red-200/80" : "border-amber-200/80",
+      )}
+      initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 320, damping: 32 }}
+    >
+      <div className="flex items-start gap-3">
+        {isElevated ? (
+          <LucideShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden />
+        ) : isRejected ? (
+          <LucideAlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden />
+        ) : (
+          <LucideClock className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
+        )}
+        <div className="min-w-0 space-y-2">
+          <p className={`font-semibold ${isElevated ? "text-blue-900" : isRejected ? "text-red-900" : "text-amber-900"}`}>
+            {isElevated
+              ? "Your plan has been elevated for senior review."
+              : isRejected
+              ? "Your plan needs support follow-up."
+              : "Your plan is awaiting review by a verified travel medicine doctor."}
+          </p>
+          <p className={`text-sm ${isElevated ? "text-blue-900/85" : isRejected ? "text-red-900/85" : "text-amber-900/85"}`}>
+            {isElevated
+              ? "Your travel health plan has been escalated for further expert review by our senior medical team. You can preview and download the current plan below while we complete the review."
+              : isRejected
+              ? "The reviewing doctor asked our team to help with next steps. You can still preview and download the current plan below while we support you."
+              : "You can preview and download the plan below while the doctor completes their review. We'll notify you once validation is complete."}
+          </p>
+          {(isElevated || isRejected) && (
+            <div className={`mt-3 rounded-lg border ${isElevated ? "border-blue-200/60 bg-blue-50/80" : "border-amber-200/60 bg-amber-50/80"} p-3`}>
+              <p className={`text-sm ${isElevated ? "text-blue-700" : "text-amber-700"}`}>
                 {isElevated
-                  ? "Your plan has been elevated for senior review."
-                  : isRejected
-                  ? "Your plan was not approved by the reviewing doctor."
-                  : "Your plan is awaiting review by a verified travel medicine doctor."}
+                  ? "Our medical team is taking another look and will update you when the review is complete."
+                  : "Our support team can walk you through the next steps for this review."}
               </p>
-              <p className={`text-sm ${isElevated ? "text-blue-900/85" : isRejected ? "text-red-900/85" : "text-amber-900/85"}`}>
-                {isElevated
-                  ? "Your travel health plan has been escalated for further expert review by our senior medical team. A travel medicine specialist will be giving your plan additional attention to ensure the most comprehensive health guidance for your trip. You will receive an update as soon as the review is complete."
-                  : isRejected
-                  ? "The doctor has reviewed your plan and decided it cannot be approved in its current form. Please review the reason below."
-                  : "You will be notified once the doctor has completed their review. The full plan details will be available after approval."}
-              </p>
-              {(isElevated || isRejected) && plan.rejectionReason && (
-                <div className={`mt-3 rounded-lg border ${isElevated ? "border-blue-200/60 bg-blue-50/80" : "border-red-200/60 bg-red-50/80"} p-3`}>
-                  <p className={`text-xs font-semibold ${isElevated ? "text-blue-700" : "text-red-700"}`}>
-                    {isElevated ? "Doctor feedback:" : "Rejection reason:"}
-                  </p>
-                  <p className={`mt-1 text-sm ${isElevated ? "text-blue-600" : "text-red-600"}`}>{plan.rejectionReason}</p>
-                </div>
-              )}
-              {isRejected && plan.validatedByName && plan.validatedAt && (
-                <p className="text-xs text-red-700/70">
-                  Reviewed by Dr. {plan.validatedByName} on {new Date(plan.validatedAt).toLocaleDateString()}
-                </p>
-              )}
             </div>
-          </div>
-        </motion.div>
+          )}
+          {isRejected && plan.validatedByName && plan.validatedAt && (
+            <p className="text-xs text-red-700/70">
+              Reviewed by Dr. {plan.validatedByName} on {new Date(plan.validatedAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
       </div>
-    );
-  }
+    </motion.div>
+  ) : null;
 
   if (useStructuredLayout) {
     const riskLabel = getRiskLabel(plan.riskScore);
@@ -1384,6 +1403,8 @@ const PlanDetails = () => {
         >
           <LucideArrowLeft className="h-3 w-3" /> Back to plans
         </Link>
+
+        {doctorReviewNotice}
 
         <motion.div
           className={cn(DASHBOARD_GLASS_SURFACE, "mb-6 p-6 md:p-8")}
@@ -1402,7 +1423,8 @@ const PlanDetails = () => {
               </span>
               <button
                 type="button"
-                disabled={pdfLoading}
+                disabled={pdfLoading || !canDownloadPdf}
+                title={!canDownloadPdf ? "Download is available when your plan is completed." : undefined}
                 onClick={() => void handleDownloadPdf()}
                 className="flex cursor-pointer items-center gap-2 rounded-xl bg-button-secondary px-4 py-2 text-xs font-semibold text-heading transition-colors duration-200 hover:bg-border-light disabled:cursor-not-allowed disabled:opacity-55"
               >
@@ -1413,10 +1435,11 @@ const PlanDetails = () => {
                 )}
                 {pdfLoading ? "Preparing PDF…" : "Download PDF"}
               </button>
-              {(plan.planTier === "STANDARD" || plan.planTier === "PREMIUM") && (
+              {showSummaryPdfButton && (
                 <button
                   type="button"
-                  disabled={summaryPdfLoading}
+                  disabled={summaryPdfLoading || !canDownloadSummaryPdf}
+                  title={!canDownloadPdf ? "Summary download is available when your plan is completed." : undefined}
                   onClick={() => void handleDownloadSummaryPdf()}
                   className="flex cursor-pointer items-center gap-2 rounded-xl border border-accent/20 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent transition-colors duration-200 hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-55"
                 >
@@ -1442,7 +1465,6 @@ const PlanDetails = () => {
             status={plan.doctorValidationStatus}
             validatedAt={plan.validatedAt}
             validatedByName={plan.validatedByName}
-            rejectionReason={plan.rejectionReason}
           />
           <DoctorAssignmentIndicator
             assignedDoctors={plan.assignedDoctors}
@@ -1593,6 +1615,8 @@ const PlanDetails = () => {
         <LucideArrowLeft className="h-3 w-3" /> Back to plans
       </Link>
 
+      {doctorReviewNotice}
+
       <motion.div
         className={cn(DASHBOARD_GLASS_SURFACE, "mb-6 p-6 md:p-8")}
         initial={reduceMotion ? false : { opacity: 0, y: 20 }}
@@ -1615,7 +1639,8 @@ const PlanDetails = () => {
             </span>
             <button
               type="button"
-              disabled={pdfLoading}
+              disabled={pdfLoading || !canDownloadPdf}
+              title={!canDownloadPdf ? "Download is available when your plan is completed." : undefined}
               onClick={() => void handleDownloadPdf()}
               className="flex cursor-pointer items-center gap-2 rounded-xl bg-button-secondary px-4 py-2 text-xs font-semibold text-heading transition-colors duration-200 hover:bg-border-light disabled:cursor-not-allowed disabled:opacity-55"
             >
@@ -1626,10 +1651,11 @@ const PlanDetails = () => {
               )}
               {pdfLoading ? "Preparing PDF…" : "Download PDF"}
             </button>
-            {(plan.planTier === "STANDARD" || plan.planTier === "PREMIUM") && (
+            {showSummaryPdfButton && (
               <button
                 type="button"
-                disabled={summaryPdfLoading}
+                disabled={summaryPdfLoading || !canDownloadSummaryPdf}
+                title={!canDownloadPdf ? "Summary download is available when your plan is completed." : undefined}
                 onClick={() => void handleDownloadSummaryPdf()}
                 className="flex cursor-pointer items-center gap-2 rounded-xl border border-accent/20 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent transition-colors duration-200 hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-55"
               >
@@ -1652,7 +1678,6 @@ const PlanDetails = () => {
           status={plan.doctorValidationStatus}
           validatedAt={plan.validatedAt}
           validatedByName={plan.validatedByName}
-          rejectionReason={plan.rejectionReason}
         />
         <DoctorAssignmentIndicator
           assignedDoctors={plan.assignedDoctors}

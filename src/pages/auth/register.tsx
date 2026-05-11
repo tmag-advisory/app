@@ -9,6 +9,7 @@ import { AxiosError } from "axios";
 import { LucideLoader, LucideArrowLeft } from "lucide-react";
 import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 import type { BillingCurrency } from "../../api";
+import { getAffiliateReferralCode } from "../../lib/affiliateTracking";
 
 const planLabels: Record<string, { name: string; color: string }> = {
     ESSENTIAL: { name: "Essential", color: "bg-gray-100 text-gray-700" },
@@ -64,6 +65,7 @@ const Register = () => {
                     form.email.split("@")[0] + form.firstName
                 ).toLowerCase(),
                 planCode: selectedPlan ?? undefined,
+                affiliate_referral_code: getAffiliateReferralCode(),
                 billing_currency: selectedCurrency as BillingCurrency,
             });
             setRegisteredEmail(form.email);
@@ -125,7 +127,7 @@ const Register = () => {
             setStage(2);
             await refreshProfile();
             toast.success("Email verified!");
-            navigate("/onboarding");
+            navigate(selectedPlan?.startsWith("FAMILY") ? "/dashboard" : "/onboarding");
         } catch (err) {
             if (err instanceof AxiosError) {
                 toast.error(err.response?.data?.error || "Invalid code. Please try again.");

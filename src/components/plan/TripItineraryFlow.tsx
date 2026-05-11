@@ -365,7 +365,7 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
                             />
                         </div>
                         <div>
-                            <label className={fieldLabelCls}>Flight number</label>
+                            <label className={fieldLabelCls}>Flight number <span className="text-muted font-normal normal-case">(optional)</span></label>
                             <input
                                 type="text"
                                 value={data.oneFlightNumber ?? ""}
@@ -469,7 +469,7 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
                                 />
                             </div>
                             <div>
-                                <label className={fieldLabelCls}>Outbound flight number</label>
+                                <label className={fieldLabelCls}>Outbound flight number <span className="text-muted font-normal normal-case">(optional)</span></label>
                                 <input
                                     type="text"
                                     value={data.outboundFlightNumber ?? ""}
@@ -521,7 +521,7 @@ const TripItineraryFlow = ({ value, onChange }: TripItineraryFlowProps) => {
                                 :   null}
                             </div>
                             <div>
-                                <label className={fieldLabelCls}>Return flight number</label>
+                                <label className={fieldLabelCls}>Return flight number <span className="text-muted font-normal normal-case">(optional)</span></label>
                                 <input
                                     type="text"
                                     value={data.returnFlightNumber ?? ""}
