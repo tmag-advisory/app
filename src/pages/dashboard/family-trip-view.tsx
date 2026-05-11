@@ -222,7 +222,7 @@ export default function FamilyTripView() {
                                         {member.loginCode && (
                                             <>
                                                 <div className="h-10 w-px bg-border-light" />
-                                                <div className="flex flex-col items-end gap-1">
+                                                {/*<div className="flex flex-col items-end gap-1">
                                                     <p className="text-[10px] uppercase tracking-wider text-muted font-semibold">Access Code</p>
                                                     <div className="flex items-center gap-1.5">
                                                         <span className="font-mono text-sm font-semibold text-heading bg-background-secondary border border-border-light px-2.5 py-1 rounded-lg tracking-widest">
@@ -243,19 +243,19 @@ export default function FamilyTripView() {
                                                             <LucideCopy className="w-3.5 h-3.5" />
                                                         </button>
                                                     </div>
-                                                </div>
+                                                </div>*/}
                                             </>
                                         )}
 
-                                        <div className="h-10 w-px bg-border-light" />
+                                        {/*<div className="h-10 w-px bg-border-light" />*/}
 
-                                        <button
+                                        {/*<button
                                             onClick={() => handleRegenerateCode(member.id)}
                                             className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-heading bg-white border border-border-light rounded-xl hover:bg-background-secondary transition-colors group-hover:border-accent/30"
                                         >
                                             <LucideRefreshCw className="w-4 h-4 text-muted group-hover:text-accent" />
                                             Regenerate Code
-                                        </button>
+                                        </button>*/}
 
                                         {!trip.familyPlanId && member.travelPlanId && (
                                             <Button

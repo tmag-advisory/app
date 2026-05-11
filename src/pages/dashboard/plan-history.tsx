@@ -2,6 +2,11 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { travelPlansApi } from "../../api/api";
 import type { TravelPlanListItemResponse } from "../../api/types";
+import {
+    canDownloadTravelPlanPdf,
+    canDownloadTravelPlanSummaryPdf,
+    isPaidTravelPlanTier,
+} from "../../lib/travel-plan-pdf";
 import { useTravelPlans, useTravelPlanSummaryPdf } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import {
@@ -127,15 +132,11 @@ const planFilenameSlug = (destination: string | null | undefined) => {
     );
 };
 
-const isPlanDownloadAvailable = (plan: TravelPlanListItemResponse) => {
-    if (plan.status !== "COMPLETED") {
-        return false;
-    }
-    return (
-        plan.doctorValidationStatus === "NOT_REQUIRED" ||
-        plan.doctorValidationStatus === "APPROVED"
-    );
-};
+const isPlanDownloadAvailable = (plan: TravelPlanListItemResponse) =>
+    canDownloadTravelPlanPdf(plan.status);
+
+const isPlanSummaryDownloadAvailable = (plan: TravelPlanListItemResponse) =>
+    canDownloadTravelPlanSummaryPdf(plan.status, plan.planTier);
 
 const getPlanDisplayStatus = (plan: TravelPlanListItemResponse) => {
     if (
@@ -181,7 +182,7 @@ const PlanHistory = () => {
   const handleDownloadPdf = useCallback(async (plan: TravelPlanListItemResponse) => {
       if (!isPlanDownloadAvailable(plan)) {
           toast.error(
-              "PDF is only available after required doctor approval.",
+              "PDF is only available when your plan is completed.",
           );
           return;
       }
@@ -213,14 +214,11 @@ const PlanHistory = () => {
       async (plan: TravelPlanListItemResponse) => {
           if (!isPlanDownloadAvailable(plan)) {
               toast.error(
-                  "Summary PDF is only available after required doctor approval.",
+                  "Summary PDF is only available when your plan is completed.",
               );
               return;
           }
-          if (plan.planTier !== "STANDARD" && plan.planTier !== "PREMIUM") {
-              toast.error(
-                  "Summary PDF is available for standard and premium plans.",
-              );
+          if (!isPaidTravelPlanTier(plan.planTier)) {
               return;
           }
 
@@ -311,6 +309,8 @@ const PlanHistory = () => {
                                   );
                                   const canDownload =
                                       isPlanDownloadAvailable(plan);
+                                  const canDownloadSummary =
+                                      isPlanSummaryDownloadAvailable(plan);
                                   return (
                                       <tr
                                           key={plan.id}
@@ -394,28 +394,30 @@ const PlanHistory = () => {
                                                                   }
                                                                   Full PDF
                                                               </button>
-                                                              <button
-                                                                  type="button"
-                                                                  onClick={() =>
-                                                                      void handleDownloadSummaryPdf(
-                                                                          plan,
-                                                                      )
-                                                                  }
-                                                                  disabled={
-                                                                      downloadingAction ===
-                                                                      `${plan.id}:summary`
-                                                                  }
-                                                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-heading transition-colors hover:bg-background-secondary disabled:cursor-not-allowed disabled:opacity-60"
-                                                              >
-                                                                  {(
-                                                                      downloadingAction ===
-                                                                      `${plan.id}:summary`
-                                                                  ) ?
-                                                                      <LucideLoader2 className="h-3.5 w-3.5 animate-spin" />
-                                                                  :   <LucideFileText className="h-3.5 w-3.5" />
-                                                                  }
-                                                                  Summary PDF
-                                                              </button>
+                                                              {canDownloadSummary && (
+                                                                  <button
+                                                                      type="button"
+                                                                      onClick={() =>
+                                                                          void handleDownloadSummaryPdf(
+                                                                              plan,
+                                                                          )
+                                                                      }
+                                                                      disabled={
+                                                                          downloadingAction ===
+                                                                          `${plan.id}:summary`
+                                                                      }
+                                                                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-heading transition-colors hover:bg-background-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                                                                  >
+                                                                      {(
+                                                                          downloadingAction ===
+                                                                          `${plan.id}:summary`
+                                                                      ) ?
+                                                                          <LucideLoader2 className="h-3.5 w-3.5 animate-spin" />
+                                                                      :   <LucideFileText className="h-3.5 w-3.5" />
+                                                                      }
+                                                                      Summary PDF
+                                                                  </button>
+                                                              )}
                                                           </div>
                                                       </details>
                                                   )}

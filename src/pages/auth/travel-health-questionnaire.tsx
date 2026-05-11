@@ -1570,7 +1570,7 @@ const TravelHealthQuestionnaire = () => {
                                             const hasError =
                                                 fieldErrors.has(question.key);
                                             const ringClass = hasError
-                                                ? "ring-2 ring-red-400/60 bg-red-50/40"
+                                                ? "ring ring-red-400"
                                                 : "";
                                             return (
                                                 <div

@@ -1199,7 +1199,7 @@ const QuestionBlock = ({ question, value, prefilled, isHighlighted, hasError, on
     const ringClass = isHighlighted
         ? "ring-2 ring-yellow-600/50 bg-accent/3"
         : hasError
-            ? "ring-2 ring-red-400/60 bg-red-50/40"
+            ? "ring ring-red-400"
             : "";
     return (
         <div

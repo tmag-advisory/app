@@ -235,7 +235,7 @@ export default function FamilyManageMembers() {
                                                     </span>
                                                 </div>
                                                 {member.memberEmail && (
-                                                    <span className="text-xs text-muted flex items-center gap-1 mt-1">
+                                                    <span className="text-xs text-muted ring flex items-center gap-1 mt-1">
                                                         <LucideMail className="w-3 h-3" />
                                                         {member.memberEmail}
                                                     </span>
@@ -244,7 +244,7 @@ export default function FamilyManageMembers() {
                                         </div>
 
                                         {/* Login code */}
-                                        <div className="flex items-center gap-2 shrink-0 md:pl-4">
+                                        {/*<div className="flex items-center gap-2 shrink-0 md:pl-4">
                                             {member.loginCode ? (
                                                 <>
                                                     <div className="flex flex-col items-end">
@@ -286,7 +286,7 @@ export default function FamilyManageMembers() {
                                                     Generate code
                                                 </button>
                                             )}
-                                        </div>
+                                        </div>*/}
                                     </div>
                                     );
                                 })}

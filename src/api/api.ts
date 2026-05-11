@@ -265,7 +265,7 @@ export const travelPlansApi = {
   downloadPdfBlob: (id: number) =>
     api.get<Blob>(`/travel-plans/${id}/pdf`, { responseType: "blob" }).then((r) => r.data),
 
-  /** Condensed server-generated PDF. Available for completed standard and premium plans. */
+  /** Condensed server-generated PDF. Available for completed paid travel plans. */
   downloadSummaryPdfBlob: (id: number) =>
     api.get<Blob>(`/travel-plans/${id}/summary-pdf`, { responseType: "blob" }).then((r) => r.data),
 };

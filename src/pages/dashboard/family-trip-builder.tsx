@@ -734,7 +734,7 @@ function QuestionCard({
 }) {
     if (!shouldShowQuestion(question, answers)) return null;
 
-    const ringClass = hasError ? "ring-2 ring-red-400/60 border-red-200 bg-red-50/40" : "";
+    const ringClass = hasError ? "ring ring-red-400/60 border-red-200 bg-red-50" : "";
 
     return (
         <div
@@ -1062,7 +1062,7 @@ function MemberProfileFields({
     const completedBy = String(answers.questionnaire_completed_by ?? "");
     const hasFieldError = (field: string) => Boolean(fieldErrors?.has(field));
     const fieldShellClass = (field: string) =>
-        `transition-all duration-500 ${hasFieldError(field) ? "rounded-2xl bg-red-50/40 p-3 ring-2 ring-red-400/60" : ""}`;
+        `transition-all duration-500 ${hasFieldError(field) ? "rounded-2xl p-3 ring ring-red-400/60" : ""}`;
     const fieldInputClass = (field: string) =>
         `${baseInputClass} ${hasFieldError(field) ? "!border-red-400/70" : ""}`;
     const showFieldError = (field: string) =>
