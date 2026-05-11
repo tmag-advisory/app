@@ -1,9 +1,9 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import type { ReactNode } from "react";
-import { canAccessHR, canAccessDashboard } from "../../lib/canAccessHr";
+import { canAccessHR, canAccessDashboard, canAccessDoctor } from "../../lib/canAccessHr";
 
-type AllowedSection = "dashboard" | "hr";
+type AllowedSection = "dashboard" | "hr" | "doctor";
 
 interface RoleGuardProps {
     children: ReactNode;
@@ -18,9 +18,14 @@ const RoleGuard = ({ children, section, redirectTo }: RoleGuardProps) => {
 
     const canUseDashboard = canAccessDashboard(user);
     const canUseHR = canAccessHR(user);
+    const canUseDoctor = canAccessDoctor(user);
+
+    console.log("RoleGuard: canUseDashboard:", canUseDashboard);
+    console.log("RoleGuard: canUseHR:", canUseHR);
+    console.log("RoleGuard: canUseDoctor:", canUseDoctor);
 
     // Prevent redirect ping-pong when role is missing/unknown.
-    if (!canUseDashboard && !canUseHR) {
+    if (!canUseDashboard && !canUseHR && !canUseDoctor) {
         return <Navigate to="/unauthorized" replace />;
     }
 
@@ -30,6 +35,10 @@ const RoleGuard = ({ children, section, redirectTo }: RoleGuardProps) => {
 
     if (section === "hr" && !canUseHR) {
         return <Navigate to={redirectTo ?? (canUseDashboard ? "/dashboard" : "/unauthorized")} replace />;
+    }
+
+    if (section === "doctor" && !canUseDoctor) {
+        return <Navigate to={redirectTo ?? "/unauthorized"} replace />;
     }
 
     return <>{children}</>;

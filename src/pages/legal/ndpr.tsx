@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { LucideShieldCheck } from "lucide-react";
 import AnimateIn from "../../components/animations/AnimateIn";
 
-const HIPAACompliance = () => {
+const NDPRCompliance = () => {
     return (
         <main>
             <section className="px-8 lg:px-16 pt-20 pb-24 max-w-4xl mx-auto">
@@ -11,7 +11,7 @@ const HIPAACompliance = () => {
                         Legal
                     </span>
                     <h1 className="text-4xl md:text-5xl text-heading font-serif leading-[1.1] mb-4">
-                        HIPAA Compliance
+                        NDPR Compliance
                     </h1>
                     <p className="text-sm text-muted mb-12">
                         Last updated: February 2026
@@ -25,8 +25,8 @@ const HIPAACompliance = () => {
                             <LucideShieldCheck className="w-5 h-5" />
                         </div>
                         <p className="text-sm text-heading leading-relaxed font-medium">
-                            TMAG follows HIPAA-compliant practices for handling
-                            protected health information (PHI). We implement
+                            TMAG follows NDPR-aligned practices for handling
+                            personal health information. We implement
                             administrative, physical, and technical safeguards to
                             protect the confidentiality, integrity, and
                             availability of your health data.
@@ -42,12 +42,9 @@ const HIPAACompliance = () => {
                             </h2>
                             <p>
                                 TMAG is committed to maintaining the privacy and
-                                security of your protected health information in
-                                accordance with the Health Insurance Portability
-                                and Accountability Act (HIPAA). While TMAG is
-                                not a covered entity under HIPAA, we voluntarily
-                                adopt HIPAA-compliant practices as a standard for
-                                data protection.
+                                security of your personal health information in
+                                accordance with Nigeria Data Protection Regulation
+                                principles and related data protection standards.
                             </p>
                         </section>
 
@@ -59,7 +56,7 @@ const HIPAACompliance = () => {
                                 <strong className="text-heading">
                                     Security officer:
                                 </strong>{" "}
-                                A designated security officer oversees all HIPAA
+                                A designated security officer oversees all NDPR
                                 compliance activities and data protection
                                 policies.
                             </p>
@@ -67,7 +64,7 @@ const HIPAACompliance = () => {
                                 <strong className="text-heading">
                                     Employee training:
                                 </strong>{" "}
-                                All team members complete HIPAA awareness training
+                                All team members complete NDPR awareness training
                                 and annual refresher courses on data handling
                                 procedures.
                             </p>
@@ -75,7 +72,7 @@ const HIPAACompliance = () => {
                                 <strong className="text-heading">
                                     Access controls:
                                 </strong>{" "}
-                                Access to PHI is restricted to authorized
+                                Access to personal health information is restricted to authorized
                                 personnel on a need-to-know basis, with
                                 role-based permissions and regular access reviews.
                             </p>
@@ -111,7 +108,7 @@ const HIPAACompliance = () => {
                                 <strong className="text-heading">
                                     Audit logging:
                                 </strong>{" "}
-                                All access to PHI is logged with timestamps, user
+                                All access to personal health information is logged with timestamps, user
                                 identification, and action details for audit
                                 purposes.
                             </p>
@@ -131,7 +128,7 @@ const HIPAACompliance = () => {
                             <p>
                                 Our infrastructure is hosted with cloud providers
                                 that maintain SOC 2 Type II, ISO 27001, and
-                                HIPAA compliance certifications. Physical access
+                                relevant security and privacy certifications. Physical access
                                 to data centers is restricted with multi-layer
                                 security controls including biometric access,
                                 24/7 surveillance, and environmental protections.
@@ -157,11 +154,11 @@ const HIPAACompliance = () => {
                                 6. Business Associate Agreements
                             </h2>
                             <p>
-                                We maintain Business Associate Agreements (BAAs)
-                                with all third-party service providers who may
-                                have access to PHI. These agreements ensure that
-                                our partners maintain the same level of data
-                                protection that we commit to.
+                                We maintain data protection agreements with
+                                third-party service providers who may process
+                                personal health information. These agreements
+                                require appropriate confidentiality, security,
+                                and lawful processing controls.
                             </p>
                         </section>
 
@@ -170,10 +167,10 @@ const HIPAACompliance = () => {
                                 7. Breach Notification
                             </h2>
                             <p>
-                                In the event of a data breach involving PHI, we
-                                will notify affected individuals within 60 days
-                                of discovery, as required by the HIPAA Breach
-                                Notification Rule. Notification will include a
+                                In the event of a data breach involving personal
+                                health information, we will notify affected
+                                individuals and regulators where required by
+                                applicable data protection law. Notification will include a
                                 description of the breach, the types of
                                 information involved, and steps individuals can
                                 take to protect themselves.
@@ -188,7 +185,7 @@ const HIPAACompliance = () => {
                                 You have the right to: access your health
                                 information held by TMAG; request corrections to
                                 inaccurate data; request deletion of your data;
-                                receive an accounting of disclosures of your PHI;
+                                receive an accounting of disclosures of your personal health information;
                                 and request restrictions on certain uses of your
                                 information.
                             </p>
@@ -199,13 +196,13 @@ const HIPAACompliance = () => {
                                 Contact
                             </h2>
                             <p>
-                                For HIPAA-related inquiries or to exercise your
+                                For NDPR-related inquiries or to exercise your
                                 rights, contact our security officer at{" "}
                                 <a
-                                    href="mailto:hipaa@tmag.health"
+                                    href="mailto:privacy@tmag.health"
                                     className="text-accent underline"
                                 >
-                                    hipaa@tmag.health
+                                    privacy@tmag.health
                                 </a>
                                 . Also see our{" "}
                                 <Link
@@ -231,4 +228,4 @@ const HIPAACompliance = () => {
     );
 };
 
-export default HIPAACompliance;
+export default NDPRCompliance;

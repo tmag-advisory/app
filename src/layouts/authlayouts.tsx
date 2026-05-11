@@ -11,7 +11,9 @@ const AuthLayout = () => {
                 {/* Trust bar */}
                 <div className="border-y border-border-light py-2.5 px-8 text-center pt-20">
                     <p className="text-xs text-muted">
-                        <span className="font-medium text-heading">HIPAA-compliant</span>
+                        <span className="font-medium text-heading">
+                            NDPR-compliant
+                        </span>
                         {" · "}
                         No credit card required
                         {" · "}

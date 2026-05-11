@@ -7,8 +7,8 @@ import {
     useMemo,
     type ReactNode,
 } from "react";
-import type { BillingCurrency, LoginRequest, RegisterRequest } from "../api/types";
-import { canAccessHR } from "../lib/canAccessHr";
+import type { BillingCurrency, LoginRequest, ProfilePictureOption, RegisterRequest } from "../api/types";
+import { canAccessHR, canAccessDoctor } from "../lib/canAccessHr";
 import api, { getAuthCookie, removeAuthCookie, setAuthCookie } from "../api/axios";
 import { queryclient } from "../lib/queryclient";
 
@@ -29,6 +29,7 @@ export interface AuthUser {
     phone: string;
     email: string;
     avatar_url: string;
+    profile_picture_option?: ProfilePictureOption | null;
     last_login: string;
     onboarding_stage: number;
     is_verified: boolean;
@@ -36,6 +37,11 @@ export interface AuthUser {
     billing_currency: BillingCurrency;
     extend: AuthRole;
     user_credit_plan?: import("../api/types").CreditPlan | null;
+    settings?: import("../api/types").UserSettingResponse;
+    consentValid?: boolean;
+    type?: string | null;
+    redirect_to?: string | null;
+    redirect_message?: string | null;
 }
 
 
@@ -49,6 +55,7 @@ interface AuthContextValue {
     setAuthFromResponse: (data: Record<string, unknown>) => AuthUser;
     logout: () => Promise<void>;
     canAccessHR: boolean;
+    canAccessDoctor: boolean;
     refreshProfile: () => Promise<void>;
 }
 
@@ -139,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthFromResponse,
         logout,
         canAccessHR: canAccessHR(user),
+        canAccessDoctor: canAccessDoctor(user),
         refreshProfile,
     }), [user, isLoading, login, register, setAuthFromResponse, logout, refreshProfile]);
 
@@ -161,6 +169,7 @@ export const useAuth = (): AuthContextValue => {
 
 function buildAuthUser(d: Record<string, unknown>): AuthUser {
     const extend = extractRole(d);
+    const settings = d.settings as import("../api/types").UserSettingResponse | undefined;
 
     return {
         id: d.id as number,
@@ -174,18 +183,27 @@ function buildAuthUser(d: Record<string, unknown>): AuthUser {
         credits: (d.credits as number) ?? 0,
         billing_currency: ((d.billing_currency as BillingCurrency) ?? "NGN"),
         avatar_url: (d.avatar_url as string) ?? "",
+        profile_picture_option: (d.profile_picture_option as ProfilePictureOption | null) ?? null,
         last_login: (d.last_login as string) ?? "",
         extend: {
             role_id: extend?.role_id ?? 0,
             role_name: extend?.role_name ?? "",
         },
         user_credit_plan: (d.userCreditPlan ?? d.user_credit_plan) as import("../api/types").CreditPlan | null ?? null,
+        settings: settings ?? undefined,
+        consentValid: !!(settings?.consentAcceptedByVersion != null
+            && settings?.consentVersion != null
+            && settings.consentAcceptedByVersion >= settings.consentVersion),
+        type: (d.type as string | null) ?? null,
+        redirect_to: (d.redirect_to as string | null) ?? null,
+        redirect_message: (d.redirect_message as string | null) ?? null,
     };
 }
 
 // Login/register responses include extend.role
 function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
     const extend = extractRole(d);
+    const settings = d.settings as import("../api/types").UserSettingResponse | undefined;
 
     return {
         id: d.id as number,
@@ -199,12 +217,20 @@ function buildAuthUserFromLogin(d: Record<string, unknown>): AuthUser {
         credits: (d.credits as number) ?? 0,
         billing_currency: ((d.billing_currency as BillingCurrency) ?? "NGN"),
         avatar_url: (d.avatar_url as string) ?? "",
+        profile_picture_option: (d.profile_picture_option as ProfilePictureOption | null) ?? null,
         last_login: (d.last_login as string) ?? "",
         extend: {
             role_id: extend?.role_id ?? 0,
             role_name: extend?.role_name ?? "",
         },
         user_credit_plan: (d.userCreditPlan ?? d.user_credit_plan) as import("../api/types").CreditPlan | null ?? null,
+        settings: settings ?? undefined,
+        consentValid: !!(settings?.consentAcceptedByVersion != null
+            && settings?.consentVersion != null
+            && settings.consentAcceptedByVersion >= settings.consentVersion),
+        type: (d.type as string | null) ?? null,
+        redirect_to: (d.redirect_to as string | null) ?? null,
+        redirect_message: (d.redirect_message as string | null) ?? null,
     };
 }
 

@@ -12,6 +12,7 @@ import {
 } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { DashboardAmbientBackground } from "../../components/dashboard/dashboardChrome";
+import QuestionnaireProgressBanner from "../../components/dashboard/QuestionnaireProgressBanner";
 import toast from "react-hot-toast";
 import PlanQuestionnaireFlow from "../../components/plan/PlanQuestionnaireFlow";
 import type { QuestionnairePlanPayload } from "../../components/plan/PlanQuestionnaireFlow";
@@ -93,8 +94,8 @@ const CreatePlan = () => {
         answers: {} as Record<string, unknown>,
         categoryIndex: 0,
         showVerify: false,
-        showIntro: true,
         riskConsentGiven: false,
+        medicalDisclaimerConsentGiven: false,
     });
     const [modalOpen, setModalOpen] = useState(false);
 
@@ -139,12 +140,13 @@ const CreatePlan = () => {
             const result = await createPlan.mutateAsync({
                 destination: payload.destination,
                 country: payload.country,
-                duration: payload.duration,
+                duration: payload.duration ?? undefined,
                 purpose: payload.purpose,
                 tripType: payload.tripType,
                 tripDetailsJson: payload.tripDetailsJson,
                 medicalConsiderations: payload.medicalConsiderations,
                 questionnaireResponses: JSON.stringify(payload.questionnaireResponses),
+                selectedDoctorIds: payload.selectedDoctorIds,
                 userId: user?.id,
                 status: "completed",
                 riskScore: 1,
@@ -195,7 +197,6 @@ const CreatePlan = () => {
                 answersJson: JSON.stringify(sidebarState.answers),
                 categoryIndex: sidebarState.categoryIndex,
                 showVerify: sidebarState.showVerify,
-                showIntro: sidebarState.showIntro,
                 riskConsentGiven: sidebarState.riskConsentGiven,
             };
 
@@ -233,14 +234,27 @@ const CreatePlan = () => {
                     <div className="bg-gold/10 border border-gold/20 rounded-2xl p-5 md:p-6">
                         <div className="flex items-start gap-3">
                             <div className="w-9 h-9 rounded-xl bg-gold/20 flex items-center justify-center shrink-0 mt-0.5">
-                                <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <svg
+                                    className="w-4 h-4 text-amber-600"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
                                 </svg>
                             </div>
                             <div className="flex-1">
-                                <p className="text-sm font-semibold text-heading mb-1">No credits remaining</p>
+                                <p className="text-sm font-semibold text-heading mb-1">
+                                    No credits remaining
+                                </p>
                                 <p className="text-sm text-muted">
-                                    Purchase more credits to generate a new plan.
+                                    Purchase more credits to generate a new
+                                    plan.
                                 </p>
                             </div>
                         </div>
@@ -258,16 +272,21 @@ const CreatePlan = () => {
                             Build your traveller profile
                         </h2>
                         <p className="text-sm md:text-base text-muted leading-relaxed max-w-2xl">
-                            Save your progress at any point and continue later when you are ready to generate a plan.
+                            Save your progress at any point and continue later
+                            when you are ready to generate a plan.
                         </p>
                     </div>
                 </div>
 
                 <div className="max-w-5xl mx-auto px-6 pb-14 md:px-12">
-                    {activeDraft && !draftsLoading ? (
-                        <DraftBanner draft={activeDraft} onResume={handleResumeDraft} onDiscard={() => void handleStartFresh()} />
-                    ) : (
-                        <button
+                    <QuestionnaireProgressBanner />
+                    {activeDraft && !draftsLoading ?
+                        <DraftBanner
+                            draft={activeDraft}
+                            onResume={handleResumeDraft}
+                            onDiscard={() => void handleStartFresh()}
+                        />
+                    :   <button
                             type="button"
                             onClick={() => {
                                 setDraftResumed(false);
@@ -277,7 +296,7 @@ const CreatePlan = () => {
                         >
                             Start plan
                         </button>
-                    )}
+                    }
                 </div>
             </div>
 
@@ -316,10 +335,24 @@ const CreatePlan = () => {
                         onSaveDraft={handleSaveDraft}
                         isSavingDraft={savingDraft}
                         initialAnswers={draftResumed ? draftAnswers : undefined}
-                        initialCategoryIndex={draftResumed ? (activeDraft?.categoryIndex ?? 0) : 0}
-                        initialShowVerify={draftResumed ? (activeDraft?.showVerify ?? false) : false}
-                        initialShowIntro={draftResumed ? (activeDraft?.showIntro ?? true) : true}
-                        initialRiskConsentGiven={draftResumed ? (activeDraft?.riskConsentGiven ?? false) : false}
+                        initialCategoryIndex={
+                            draftResumed ? (activeDraft?.categoryIndex ?? 0) : 0
+                        }
+                        initialShowVerify={
+                            draftResumed ?
+                                (activeDraft?.showVerify ?? false)
+                            :   false
+                        }
+                        initialRiskConsentGiven={
+                            draftResumed ?
+                                (activeDraft?.riskConsentGiven ?? false)
+                            :   false
+                        }
+                        initialMedicalDisclaimerConsentGiven={
+                            draftResumed ?
+                                (activeDraft?.categoryIndex ?? 0) > 0
+                            :   false
+                        }
                         onStateChange={handleStateChange}
                     />
                 </div>

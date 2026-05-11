@@ -1,67 +1,59 @@
-import {
-    LucideGlobe,
-    LucideHeart,
-    LucideRocket,
-    LucideShieldCheck,
-    LucideArrowRight,
-} from "lucide-react";
 import { motion } from "framer-motion";
+import {
+    LucideStethoscope,
+    LucideHandshake,
+    LucideArrowRight,
+    LucideShieldCheck,
+    LucideStar,
+    LucideFileText,
+    LucidePercent,
+    LucideTrendingUp,
+    LucideUsers,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 import Button from "../../components/ui/Button";
 
-const perks = [
+const doctorBenefits = [
     {
-        icon: <LucideGlobe className="w-6 h-6" />,
-        title: "Remote-first",
+        icon: <LucideShieldCheck className="w-5 h-5" />,
+        title: "Validate Travel Plans",
         description:
-            "Work from anywhere in the world. We're a distributed team across multiple time zones.",
+            "Review and approve AI-generated travel medicine recommendations with your medical expertise.",
     },
     {
-        icon: <LucideHeart className="w-6 h-6" />,
-        title: "Health-first culture",
+        icon: <LucideStar className="w-5 h-5" />,
+        title: "Impact Global Health",
         description:
-            "Comprehensive health coverage, mental health support, and generous PTO—because we practice what we preach.",
+            "Help millions of travellers stay safe by providing professional medical oversight on every plan.",
     },
     {
-        icon: <LucideRocket className="w-6 h-6" />,
-        title: "Growth budget",
+        icon: <LucideFileText className="w-5 h-5" />,
+        title: "Structured Onboarding",
         description:
-            "Annual learning stipend for conferences, courses, and books. We invest in your professional development.",
-    },
-    {
-        icon: <LucideShieldCheck className="w-6 h-6" />,
-        title: "Meaningful work",
-        description:
-            "Help millions of travelers stay safe. Your work directly impacts people's health and well-being.",
+            "Get up to speed quickly with platform guides, review protocols, and clear SLAs.",
     },
 ];
 
-const openings = [
+const affiliateBenefits = [
     {
-        title: "Senior Full-Stack Engineer",
-        team: "Engineering",
-        location: "Remote",
+        icon: <LucidePercent className="w-5 h-5" />,
+        title: "Competitive Commission",
+        description:
+            "Earn recurring commissions on every traveller you refer to TMAG.",
     },
     {
-        title: "ML Engineer — Health Data",
-        team: "Data & Intelligence",
-        location: "Remote",
+        icon: <LucideTrendingUp className="w-5 h-5" />,
+        title: "Real-Time Analytics",
+        description:
+            "Track referrals, conversions, and payouts from your affiliate dashboard.",
     },
     {
-        title: "Product Designer",
-        team: "Design",
-        location: "Remote",
-    },
-    {
-        title: "Head of Partnerships",
-        team: "Business",
-        location: "Remote / San Francisco",
-    },
-    {
-        title: "Technical Writer",
-        team: "Content",
-        location: "Remote",
+        icon: <LucideUsers className="w-5 h-5" />,
+        title: "Grow Your Audience",
+        description:
+            "Offer your community a trusted travel health resource they'll appreciate.",
     },
 ];
 
@@ -69,99 +61,149 @@ const Careers = () => {
     return (
         <main>
             {/* Hero */}
-            <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
+            <AnimateIn
+                as="section"
+                className="flex flex-col items-center text-center pt-20 pb-12 px-6"
+            >
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                     Careers
                 </span>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading font-serif max-w-3xl">
-                    Build the future of{" "}
-                    <span className="italic">travel health.</span>
+                    Join the TMAG{" "}
+                    <span className="italic">team.</span>
                 </h1>
                 <p className="sm:text-lg text-body mt-6 max-w-xl leading-relaxed">
-                    Join a mission-driven team making travel health advice
-                    accessible to everyone, everywhere.
+                    Whether you're a medical professional or a content creator,
+                    there's a way to partner with us and make travel health
+                    accessible to everyone.
                 </p>
             </AnimateIn>
 
-            {/* Perks */}
-            <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
-                <AnimateIn className="text-center mb-14">
-                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                        Why TMAG
-                    </span>
-                    <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
-                        Perks that <span className="italic">matter.</span>
-                    </h2>
-                </AnimateIn>
-                <StaggerGroup stagger={0.12} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {perks.map((perk) => (
-                        <motion.div
-                            key={perk.title}
-                            variants={staggerItem}
-                            className="bg-button-secondary rounded-2xl p-8 md:p-10"
-                        >
-                            <div className="w-12 h-12 rounded-xl bg-dark text-background-primary flex items-center justify-center mb-6">
-                                {perk.icon}
-                            </div>
-                            <h3 className="text-xl font-serif text-heading mb-3">
-                                {perk.title}
-                            </h3>
-                            <p className="text-sm text-body leading-relaxed">
-                                {perk.description}
-                            </p>
-                        </motion.div>
-                    ))}
-                </StaggerGroup>
+            {/* Doctor pathway */}
+            <section className="px-8 lg:px-16 py-16 max-w-7xl mx-auto">
+                <div className="bg-background-secondary rounded-3xl p-8 md:p-12 lg:p-16">
+                    <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center">
+                        <div className="lg:w-1/2">
+                            <AnimateIn>
+                                <div className="w-14 h-14 rounded-2xl bg-accent/10 text-accent flex items-center justify-center mb-5">
+                                    <LucideStethoscope className="w-7 h-7" />
+                                </div>
+                                <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-4">
+                                    Apply as a{" "}
+                                    <span className="italic">Doctor</span>
+                                </h2>
+                                <p className="text-sm text-body leading-relaxed mb-6">
+                                    Use your medical expertise to review and
+                                    validate AI-generated travel health plans.
+                                    Help travellers worldwide get reliable,
+                                    professional sign-off on their health
+                                    preparations.
+                                </p>
+                                <Link to="/apply-as-doctor">
+                                    <Button variant="primary" icon={<LucideArrowRight />}>
+                                        Apply as a Doctor
+                                    </Button>
+                                </Link>
+                            </AnimateIn>
+                        </div>
+                        <div className="lg:w-1/2 w-full">
+                            <StaggerGroup
+                                stagger={0.1}
+                                className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+                            >
+                                {doctorBenefits.map((benefit) => (
+                                    <motion.div
+                                        key={benefit.title}
+                                        variants={staggerItem}
+                                        className="bg-background-primary rounded-2xl p-5"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center mb-3">
+                                            {benefit.icon}
+                                        </div>
+                                        <h3 className="text-sm font-semibold text-heading mb-1.5">
+                                            {benefit.title}
+                                        </h3>
+                                        <p className="text-xs text-body leading-relaxed">
+                                            {benefit.description}
+                                        </p>
+                                    </motion.div>
+                                ))}
+                            </StaggerGroup>
+                        </div>
+                    </div>
+                </div>
             </section>
 
-            {/* Open positions */}
-            <div className="bg-background-secondary">
-                <section className="px-8 lg:px-16 py-24 max-w-4xl mx-auto">
-                    <AnimateIn className="text-center mb-14">
-                        <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                            Open roles
-                        </span>
-                        <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
-                            Current <span className="italic">openings.</span>
-                        </h2>
-                    </AnimateIn>
-                    <StaggerGroup stagger={0.08} className="space-y-3">
-                        {openings.map((job) => (
-                            <motion.div
-                                key={job.title}
-                                variants={staggerItem}
-                                className="bg-background-primary rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                            >
-                                <div>
-                                    <h3 className="text-sm font-semibold text-heading">
-                                        {job.title}
-                                    </h3>
-                                    <p className="text-xs text-muted mt-1">
-                                        {job.team} · {job.location}
-                                    </p>
+            {/* Affiliate pathway */}
+            <section className="px-8 lg:px-16 py-16 max-w-7xl mx-auto">
+                <div className="bg-button-secondary rounded-3xl p-8 md:p-12 lg:p-16">
+                    <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center">
+                        <div className="lg:w-1/2">
+                            <AnimateIn>
+                                <div className="w-14 h-14 rounded-2xl bg-dark text-background-primary flex items-center justify-center mb-5">
+                                    <LucideHandshake className="w-7 h-7" />
                                 </div>
-                                <Button variant="secondary"  icon={<LucideArrowRight />}>
-                                    View role
-                                </Button>
-                            </motion.div>
-                        ))}
-                    </StaggerGroup>
-                </section>
-            </div>
+                                <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-4">
+                                    Apply as an{" "}
+                                    <span className="italic">Affiliate</span>
+                                </h2>
+                                <p className="text-sm text-body leading-relaxed mb-6">
+                                    Partner with TMAG and earn commissions by
+                                    sharing travel health advice with your
+                                    audience. Whether you run a blog, newsletter,
+                                    or social channel, we make it easy to
+                                    promote a service your followers will love.
+                                </p>
+                                <Link to="/apply-as-affiliate">
+                                    <Button variant="primary" icon={<LucideArrowRight />}>
+                                        Apply as an Affiliate
+                                    </Button>
+                                </Link>
+                            </AnimateIn>
+                        </div>
+                        <div className="lg:w-1/2 w-full">
+                            <StaggerGroup
+                                stagger={0.1}
+                                className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+                            >
+                                {affiliateBenefits.map((benefit) => (
+                                    <motion.div
+                                        key={benefit.title}
+                                        variants={staggerItem}
+                                        className="bg-background-primary rounded-2xl p-5"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl bg-dark text-background-primary flex items-center justify-center mb-3">
+                                            {benefit.icon}
+                                        </div>
+                                        <h3 className="text-sm font-semibold text-heading mb-1.5">
+                                            {benefit.title}
+                                        </h3>
+                                        <p className="text-xs text-body leading-relaxed">
+                                            {benefit.description}
+                                        </p>
+                                    </motion.div>
+                                ))}
+                            </StaggerGroup>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* CTA */}
             <section className="px-8 lg:px-16 py-24 max-w-4xl mx-auto text-center">
                 <AnimateIn type="fade">
                     <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-4">
-                        Don't see the right role?
+                        Not sure which path fits?
                     </h2>
                     <p className="text-sm text-body leading-relaxed max-w-md mx-auto mb-8">
-                        We're always looking for talented people. Send us your resume
-                        and we'll keep you in mind for future openings.
+                        Reach out to our team and we'll help you find the right
+                        way to partner with TMAG.
                     </p>
-                    <Button variant="primary">
-                        Send open application
-                    </Button>
+                    <Link to="/contact">
+                        <Button variant="secondary" icon={<LucideArrowRight />}>
+                            Contact us
+                        </Button>
+                    </Link>
                 </AnimateIn>
             </section>
         </main>

@@ -13,6 +13,7 @@ import {
     DASHBOARD_GLASS_SURFACE,
 } from "../components/dashboard/dashboardChrome";
 import { cn } from "../lib/utils";
+import DashboardFooter from "../components/dashboard/DashboardFooter";
 
 const HRDashboardLayout = () => {
     const { canAccessHR } = useAuth();
@@ -98,6 +99,7 @@ const HRDashboardLayout = () => {
             <main className="relative z-10 lg:ml-64 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 max-w-7xl">
                 <Outlet />
             </main>
+            <DashboardFooter />
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import type { NavigateFunction } from "react-router-dom";
 import type { AuthUser } from "../context/AuthContext";
-import { canAccessDashboard, canAccessHR } from "./canAccessHr";
+import { canAccessDashboard, canAccessHR, canAccessDoctor } from "./canAccessHr";
 
 type RedirectDestination =
     | { type: "external"; url: string }
@@ -33,12 +33,16 @@ export function getPostAuthRedirect(user: AuthUser): RedirectDestination {
         return externalRedirect;
     }
 
-    if (canAccessHR(user)) {
-        return { type: "internal", path: "/hr" };
+    if (canAccessDoctor(user)) {
+        return { type: "internal", path: "/doctor" };
     }
 
     if (canAccessDashboard(user)) {
         return { type: "internal", path: "/dashboard" };
+    }
+
+    if (canAccessHR(user)) {
+        return { type: "internal", path: "/hr" };
     }
 
     return { type: "internal", path: "/unauthorized" };
@@ -55,8 +59,8 @@ export function getOnboardingCompletionRedirect(
         return externalRedirect;
     }
 
-    if (canAccessHR(user)) {
-        return { type: "internal", path: "/hr" };
+    if (canAccessDoctor(user)) {
+        return { type: "internal", path: "/doctor" };
     }
 
     return { type: "internal", path: userType === "company" ? "/hr" : "/onboarding/questionnaire" };

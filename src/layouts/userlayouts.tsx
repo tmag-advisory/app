@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast";
 import Sidebar from "../components/dashboard/Sidebar";
 import { usePaymentSuccessModal, PaymentSuccessModal } from "../components/payment/PaymentSuccessModal";
 import { AnimatePresence } from "framer-motion";
+import DashboardFooter from "../components/dashboard/DashboardFooter";
 
 const UserDashboardLayout = () => {
     const { showModal, closeModal } = usePaymentSuccessModal();
@@ -14,6 +15,7 @@ const UserDashboardLayout = () => {
             <main className="relative z-10 lg:ml-64 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 max-w-6xl">
                 <Outlet />
             </main>
+            <DashboardFooter />
 
             {/* Payment success modal */}
             <AnimatePresence>

@@ -16,7 +16,10 @@ export default function CartPanel() {
     const { data: serverCart } = useCart(isAuthenticated && panelOpen);
     const { mutate: syncCart } = useSyncCart();
 
-    // Sync local cart to server when user becomes authenticated
+    // Sync local cart to server when user becomes authenticated.
+    // Intentionally only fires on auth change to avoid infinite loop
+    // (serverCart update would re-trigger this if it were in deps).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (isAuthenticated && items.length > 0 && !serverCart) {
             syncCart(
@@ -41,9 +44,10 @@ export default function CartPanel() {
                 }
             );
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // When server cart loads, update local store
+    // When server cart loads, replace local store with server state.
+    // Deduplication is handled inside setItems in the cart store.
     useEffect(() => {
         if (isAuthenticated && serverCart) {
             setItems(serverCart.map(si => ({
@@ -95,7 +99,7 @@ export default function CartPanel() {
                                 </span>
                             )}
                         </div>
-                        <button onClick={closePanel} className="p-2 hover:bg-background-primary rounded-lg transition-colors">
+                        <button type="button" onClick={closePanel} className="p-2 hover:bg-background-primary rounded-lg transition-colors">
                             <LucideX className="w-5 h-5 text-muted" />
                         </button>
                     </div>
@@ -117,7 +121,7 @@ export default function CartPanel() {
                             </div>
                         ) : (
                             <div className="divide-y divide-border-light">
-                                {items.map(item => (
+                                {items.map((item) => (
                                     <div key={item.ebookVersionId} className="flex gap-3 p-4">
                                         <div className="w-14 h-18 rounded-lg bg-darkest flex-shrink-0 overflow-hidden">
                                             {item.coverUrl ? (
@@ -141,6 +145,7 @@ export default function CartPanel() {
                                             </p>
                                         </div>
                                         <button
+                                            type="button"
                                             onClick={() => handleRemove(item.ebookVersionId)}
                                             className="self-start p-1.5 hover:bg-red-50 rounded-lg transition-colors"
                                         >

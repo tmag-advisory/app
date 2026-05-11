@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { LucideCheck, LucideArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { LucideCheck, LucideArrowRight, LucideTag } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
@@ -14,27 +15,88 @@ import {
     signupRanges,
     enterpriseTierColors,
     individualPlanFeatures,
+    familyPlans,
     type SignupRange,
     type ServiceLevel,
 } from "../../constants/companyPlans";
+import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 
-type Audience = "individual" | "company";
+type Audience = "individual" | "family" | "company";
 
-function formatPrice(priceUsd: number, priceNgn: number, currency: string): string {
-    if (priceUsd === 0) return "Free";
-    if (currency === "NGN") return `₦${priceNgn.toLocaleString()}`;
-    return `$${priceUsd}`;
+function resolvePricingSelection(searchParams: URLSearchParams): { audience: Audience; signupRange: SignupRange } {
+    const plan = searchParams.get("plan")?.trim().toUpperCase();
+    if (plan) {
+        if (plan.startsWith("FAMILY")) {
+            return { audience: "family", signupRange: "0-100" };
+        }
+
+        for (const range of Object.keys(enterprisePlanCodes) as SignupRange[]) {
+            const codes = enterprisePlanCodes[range];
+            if (Object.values(codes).includes(plan)) {
+                return { audience: "company", signupRange: range };
+            }
+        }
+
+        if (individualPlans.some((p) => p.code === plan)) {
+            return { audience: "individual", signupRange: "0-100" };
+        }
+    }
+
+    const tab = searchParams.get("tab");
+    return {
+        audience: tab === "company" ? "company" : tab === "family" ? "family" : "individual",
+        signupRange: "0-100",
+    };
+}
+
+function formatPrice(priceUsd: number, priceNgn: number, currency: string, discountRate = 0): string {
+    const basePrice = currency === "NGN" ? priceNgn : priceUsd;
+    if (basePrice === 0) return "Free";
+
+    const discountMultiplier = discountRate > 0 ? 1 - discountRate / 100 : 1;
+    const discountedPrice = basePrice * discountMultiplier;
+    if (currency === "NGN") return `₦${Math.round(discountedPrice).toLocaleString()}`;
+    return `$${discountedPrice.toLocaleString(undefined, {
+        maximumFractionDigits: discountedPrice % 1 === 0 ? 0 : 2,
+        minimumFractionDigits: discountedPrice % 1 === 0 ? 0 : 2,
+    })}`;
 }
 
 const PricingPage = () => {
-    const [audience, setAudience] = useState<Audience>("individual");
-    const [signupRange, setSignupRange] = useState<SignupRange>("0-100");
+    const [searchParams] = useSearchParams();
+    const initialSelection = resolvePricingSelection(searchParams);
+    const [audience, setAudience] = useState<Audience>(initialSelection.audience);
+    const [signupRange, setSignupRange] = useState<SignupRange>(initialSelection.signupRange);
+    const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
     const { selectedCurrency, setCurrency } = useCurrencyStore();
+
+    useEffect(() => {
+        const selection = resolvePricingSelection(searchParams);
+        setAudience(selection.audience);
+        setSignupRange(selection.signupRange);
+    }, [searchParams]);
+
+    useEffect(() => {
+        let cancelled = false;
+        void refreshAffiliateDiscount()
+            .then((discount) => {
+                if (!cancelled && discount?.active) {
+                    setAffiliateDiscountRate(Number(discount.discount_rate));
+                }
+            })
+            .catch(() => undefined);
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     return (
         <main>
             {/* Hero */}
-            <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
+            <AnimateIn
+                as="section"
+                className="flex flex-col items-center text-center pt-20 pb-12 px-6"
+            >
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
                     Pricing
                 </span>
@@ -42,8 +104,8 @@ const PricingPage = () => {
                     Simple, <span className="italic">honest</span> pricing.
                 </h1>
                 <p className="sm:text-lg text-body mt-6 max-w-xl leading-relaxed">
-                    Whether you&apos;re planning a single trip or managing travel for an entire company,
-                    we&apos;ve got a plan for you.
+                    Whether you&apos;re planning a single trip or managing
+                    travel for an entire company, we&apos;ve got a plan for you.
                 </p>
             </AnimateIn>
 
@@ -52,30 +114,38 @@ const PricingPage = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     {/* Audience pill */}
                     <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
-                        {(["individual", "company"] as Audience[]).map((tab) => (
+                        {(
+                            ["individual", "family", "company"] as Audience[]
+                        ).map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setAudience(tab)}
-                                className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${audience === tab
-                                    ? "bg-white shadow-sm text-heading"
-                                    : "text-muted hover:text-heading"
-                                    }`}
+                                className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                                    audience === tab ?
+                                        "bg-white shadow-sm text-heading"
+                                    :   "text-muted hover:text-heading"
+                                }`}
                             >
-                                {tab === "individual" ? "For individuals" : "For companies"}
+                                {tab === "individual" ?
+                                    "Individuals"
+                                : tab === "family" ?
+                                    "Family"
+                                :   "Company"}
                             </button>
                         ))}
                     </div>
 
                     {/* Currency toggle */}
                     <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
-                        {(["USD", "NGN"] as const).map((cur) => (
+                        {(["NGN", "USD"] as const).map((cur) => (
                             <button
                                 key={cur}
                                 onClick={() => setCurrency(cur)}
-                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${selectedCurrency === cur
-                                    ? "bg-white shadow-sm text-heading"
-                                    : "text-muted hover:text-heading"
-                                    }`}
+                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                                    selectedCurrency === cur ?
+                                        "bg-white shadow-sm text-heading"
+                                    :   "text-muted hover:text-heading"
+                                }`}
                             >
                                 {cur === "USD" ? "$ USD" : "₦ NGN"}
                             </button>
@@ -84,10 +154,21 @@ const PricingPage = () => {
                 </div>
             </div>
 
+            {affiliateDiscountRate > 0 && (
+                <div className="px-8 lg:px-16 max-w-7xl mx-auto mb-8">
+                    <div className="max-w-5xl mx-auto rounded-2xl border border-accent/20 bg-accent/10 px-5 py-3 text-sm font-semibold text-accent text-center">
+                        Affiliate discount active — {affiliateDiscountRate}% off paid credits at checkout.
+                    </div>
+                </div>
+            )}
+
             {/* Individual plans */}
             {audience === "individual" && (
                 <section className="px-8 lg:px-16 pb-24 max-w-7xl mx-auto">
-                    <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 max-w-5xl mx-auto" stagger={0.12}>
+                    <StaggerGroup
+                        className="grid grid-cols-1 md:grid-cols-3 max-w-5xl mx-auto"
+                        stagger={0.12}
+                    >
                         {individualPlans.map((plan) => {
                             const isHighlighted = plan.highlighted;
                             const isPremium = plan.tier === "premium";
@@ -96,20 +177,22 @@ const PricingPage = () => {
                                 <motion.div
                                     variants={staggerItem}
                                     key={plan.name}
-                                    className={`relative p-8 flex flex-col justify-between overflow-hidden ${isEssential
-                                        ? "bg-white border border-stone-200"
-                                        : isHighlighted
-                                            ? "border border-accent/25"
-                                            : "border border-gold/35"
-                                        }`}
+                                    className={`relative p-8 flex flex-col justify-between overflow-hidden ${
+                                        isEssential ?
+                                            "bg-white border border-stone-200"
+                                        : isHighlighted ?
+                                            "border border-accent/25"
+                                        :   "border border-gold/35"
+                                    }`}
                                 >
                                     {(isHighlighted || isPremium) && (
                                         <div
                                             className="absolute inset-0"
                                             style={{
-                                                background: isHighlighted
-                                                    ? "linear-gradient(145deg, #eaf7f4 0%, #dff2ee 45%, #e6f5f1 100%)"
-                                                    : "linear-gradient(145deg, #fdf8f0 0%, #faf3e4 45%, #fdf7ee 100%)",
+                                                background:
+                                                    isHighlighted ?
+                                                        "linear-gradient(145deg, #eaf7f4 0%, #dff2ee 45%, #e6f5f1 100%)"
+                                                    :   "linear-gradient(145deg, #fdf8f0 0%, #faf3e4 45%, #fdf7ee 100%)",
                                             }}
                                         />
                                     )}
@@ -127,39 +210,87 @@ const PricingPage = () => {
                                         </span>
                                     )}
                                     <div className="relative z-10">
-                                        <h3 className={`text-lg font-semibold mb-1 ${isHighlighted ? "text-[#1a3c38]" : "text-stone-800"
-                                            }`}>
+                                        <h3
+                                            className={`text-lg font-semibold mb-1 ${
+                                                isHighlighted ? "text-[#1a3c38]"
+                                                :   "text-stone-800"
+                                            }`}
+                                        >
                                             {plan.name}
                                         </h3>
-                                        <p className={`text-sm mb-6 ${isHighlighted ? "text-[#2a5858]/80" : "text-stone-500"
-                                            }`}>
+                                        <p
+                                            className={`text-sm mb-6 ${
+                                                isHighlighted ?
+                                                    "text-[#2a5858]/80"
+                                                :   "text-stone-500"
+                                            }`}
+                                        >
                                             {plan.description}
                                         </p>
                                         <div className="flex items-baseline gap-1.5 mb-1">
-                                            <span className={`text-4xl font-serif ${isHighlighted ? "text-[#1a5c52]" : isPremium ? "text-[#9a7020]" : "text-stone-800"
-                                                }`}>
-                                                {formatPrice(plan.priceUsd, plan.priceNgn, selectedCurrency)}
+                                            <span
+                                                className={`text-4xl font-serif ${
+                                                    isHighlighted ?
+                                                        "text-[#1a5c52]"
+                                                    : isPremium ?
+                                                        "text-[#9a7020]"
+                                                    :   "text-stone-800"
+                                                }`}
+                                            >
+                                                {formatPrice(
+                                                    plan.priceUsd,
+                                                    plan.priceNgn,
+                                                    selectedCurrency,
+                                                    affiliateDiscountRate,
+                                                )}
                                             </span>
                                         </div>
-                                        <p className={`text-xs mb-8 ${isHighlighted ? "text-[#2a5858]/60" : "text-stone-400"
-                                            }`}>
+
+                                        {affiliateDiscountRate > 0 && (() => {
+                                            const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                            const basePrice = selectedCurrency === "NGN" ? plan.priceNgn : plan.priceUsd;
+                                            const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
+                                            return (
+                                                <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
+                                                    <LucideTag className="w-3 h-3" />
+                                                    <span className="font-medium">{affiliateDiscountRate}% off — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()}</span>
+                                                </div>
+                                            );
+                                        })()}
+                                        <p
+                                            className={`text-xs mb-8 ${
+                                                isHighlighted ?
+                                                    "text-[#2a5858]/60"
+                                                :   "text-stone-400"
+                                            }`}
+                                        >
                                             {plan.priceNote}
                                         </p>
                                         <ul className="space-y-3 mb-8">
                                             {plan.features.map((f) => (
                                                 <li
                                                     key={f}
-                                                    className={`flex items-start gap-3 text-sm ${isHighlighted ? "text-[#1a3c38]" : "text-stone-700"
-                                                        }`}
+                                                    className={`flex items-start gap-3 text-sm ${
+                                                        isHighlighted ?
+                                                            "text-[#1a3c38]"
+                                                        :   "text-stone-700"
+                                                    }`}
                                                 >
-                                                    <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${isEssential ? "text-emerald-600" : isPremium ? "text-gold" : "text-accent"
-                                                        }`} />
+                                                    <LucideCheck
+                                                        className={`w-4 h-4 mt-0.5 shrink-0 ${
+                                                            isEssential ?
+                                                                "text-emerald-600"
+                                                            : isPremium ?
+                                                                "text-gold"
+                                                            :   "text-accent"
+                                                        }`}
+                                                    />
                                                     {f}
                                                 </li>
                                             ))}
                                         </ul>
                                     </div>
-                                    {isHighlighted ? (
+                                    {isHighlighted ?
                                         <Button
                                             variant="primary"
                                             link={`/register?plan=${plan.code}`}
@@ -167,7 +298,7 @@ const PricingPage = () => {
                                         >
                                             {plan.cta}
                                         </Button>
-                                    ) : isPremium ? (
+                                    : isPremium ?
                                         <Button
                                             variant="secondary"
                                             icon={<LucideArrowRight />}
@@ -176,8 +307,7 @@ const PricingPage = () => {
                                         >
                                             {plan.cta}
                                         </Button>
-                                    ) : (
-                                        <Button
+                                    :   <Button
                                             variant="secondary"
                                             icon={<LucideArrowRight />}
                                             link={`/register?plan=${plan.code}`}
@@ -185,10 +315,95 @@ const PricingPage = () => {
                                         >
                                             {plan.cta}
                                         </Button>
-                                    )}
+                                    }
                                 </motion.div>
                             );
                         })}
+                    </StaggerGroup>
+                </section>
+            )}
+
+            {/* Family plans */}
+            {audience === "family" && (
+                <section className="px-8 lg:px-16 pb-24 max-w-7xl mx-auto">
+                    <StaggerGroup
+                        className="max-w-md mx-auto"
+                        stagger={0.12}
+                    >
+                        {familyPlans.map((plan) => (
+                            <motion.div
+                                variants={staggerItem}
+                                key={plan.id}
+                                className="relative p-8 flex flex-col justify-between overflow-hidden border border-accent/25"
+                            >
+                                <div
+                                    className="absolute inset-0"
+                                    style={{
+                                        background:
+                                            "linear-gradient(145deg, #eaf7f4 0%, #dff2ee 45%, #e6f5f1 100%)",
+                                    }}
+                                />
+                                <div className="absolute top-0 left-0 w-full h-0.5 bg-accent" />
+                                <span className="absolute top-6 right-6 text-xs font-semibold text-white bg-accent px-3 py-1 rounded-full">
+                                    Best value
+                                </span>
+                                <div className="relative z-10">
+                                    <h3 className="text-lg font-semibold mb-1 text-[#1a3c38]">
+                                        {plan.name}
+                                    </h3>
+                                    <p className="text-sm mb-6 text-[#2a5858]/80">
+                                        {plan.description}
+                                    </p>
+                                    <div className="flex items-baseline gap-1.5 mb-1">
+                                        <span className="text-4xl font-serif text-[#1a5c52]">
+                                            {formatPrice(
+                                                plan.priceUsd,
+                                                plan.priceNgn,
+                                                selectedCurrency,
+                                                affiliateDiscountRate,
+                                            )}
+                                        </span>
+                                    </div>
+
+                                    {affiliateDiscountRate > 0 && (() => {
+                                        const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                        const basePrice = selectedCurrency === "NGN" ? plan.priceNgn : plan.priceUsd;
+                                        const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
+                                        return (
+                                            <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
+                                                <LucideTag className="w-3 h-3" />
+                                                <span className="font-medium">{affiliateDiscountRate}% off — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()}</span>
+                                            </div>
+                                        );
+                                    })()}
+                                    <p className="text-xs mb-8 text-[#2a5858]/60">
+                                        {plan.priceNote}
+                                    </p>
+                                    <ul className="space-y-3 mb-8">
+                                        {plan.features.map((f) => (
+                                            <li
+                                                key={f}
+                                                className="flex items-start gap-3 text-sm text-[#1a3c38]"
+                                            >
+                                                <LucideCheck className="w-4 h-4 mt-0.5 shrink-0 text-accent" />
+                                                {f}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <Button
+                                    variant="primary"
+                                    link={(() => {
+                                        const referralCode = getAffiliateReferralCode();
+                                        const base = `/family-checkout?plan=FAMILY_${plan.id}`;
+                                        return referralCode ? `${base}&ref=${encodeURIComponent(referralCode)}` : base;
+                                    })()}
+                                    className="relative z-10 self-stretch bg-accent text-white! hover:bg-[#246858] text-center justify-center flex"
+                                >
+                                    {plan.cta}
+                                </Button>
+                            </motion.div>
+                        ))}
                     </StaggerGroup>
                 </section>
             )}
@@ -203,95 +418,152 @@ const PricingPage = () => {
                                 <button
                                     key={r.value}
                                     onClick={() => setSignupRange(r.value)}
-                                    className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${signupRange === r.value
-                                        ? "bg-white shadow-sm text-heading"
-                                        : "text-muted hover:text-heading"
-                                        }`}
+                                    className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                                        signupRange === r.value ?
+                                            "bg-white shadow-sm text-heading"
+                                        :   "text-muted hover:text-heading"
+                                    }`}
                                 >
-                                    {r.label} <span className="text-muted font-normal">signups</span>
+                                    {r.label}{" "}
+                                    <span className="text-muted font-normal">
+                                        signups
+                                    </span>
                                 </button>
                             ))}
                         </div>
                     </div>
 
                     {/* Two enterprise cards */}
-                    <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto" stagger={0.12}>
-                        {(["standard", "premium"] as ServiceLevel[]).map((level) => {
-                            const tierName = enterpriseTiers[signupRange][level];
-                            const colors = enterpriseTierColors[signupRange][level];
-                            const features = level === "standard"
-                                ? individualPlanFeatures.standard
-                                : individualPlanFeatures.premium;
-                            const basePlan = creditPlans.find((p) => p.tier === level)!;
+                    <StaggerGroup
+                        className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto"
+                        stagger={0.12}
+                    >
+                        {(["standard", "premium"] as ServiceLevel[]).map(
+                            (level) => {
+                                const tierName =
+                                    enterpriseTiers[signupRange][level];
+                                const colors =
+                                    enterpriseTierColors[signupRange][level];
+                                const features =
+                                    level === "standard" ?
+                                        individualPlanFeatures.standard
+                                    :   individualPlanFeatures.premium;
+                                const basePlan = creditPlans.find(
+                                    (p) => p.tier === level,
+                                )!;
 
-                            return (
-                                <motion.div
-                                    variants={staggerItem}
-                                    key={level}
-                                    className={`relative p-8 flex flex-col justify-between overflow-hidden ${colors.border}`}
-                                >
-                                    <div
-                                        className="absolute inset-0"
-                                        style={{ background: colors.gradient }}
-                                    />
-                                    <div
-                                        className={`absolute top-0 left-0 w-1 h-full ${colors.sideAccent}`}
-                                    />
-                                    <span className={`absolute top-6 right-6 text-xs font-semibold ${colors.badgeBg} ${colors.badgeText} px-3 py-1 rounded-full`}>
-                                        {level === "standard" ? "Most popular" : "Best report"}
-                                    </span>
-                                    <div className="relative z-10">
-                                        <h3 className={`text-lg font-semibold mb-0.5 ${colors.textPrimary}`}>
-                                            {tierName}
-                                        </h3>
-                                        <p className={`text-xs mb-6 font-medium uppercase tracking-wide ${colors.textMuted}`}>
-                                            {level === "standard" ? "Standard service" : "Premium service"}
-                                        </p>
-                                        <p className={`text-sm mb-6 ${colors.textSecondary}`}>
-                                            {basePlan.description}
-                                        </p>
-                                        <div className="flex items-baseline gap-1.5 mb-1">
-                                            <span className={`text-4xl font-serif ${colors.textPrimary}`}>
-                                                {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency)}
-                                            </span>
-                                        </div>
-                                        <p className={`text-xs mb-8 ${colors.textMuted}`}>
-                                            per credit
-                                        </p>
-                                        <ul className="space-y-3 mb-8">
-                                            {features.map((f) => (
-                                                <li
-                                                    key={f}
-                                                    className={`flex items-start gap-3 text-sm ${colors.textPrimary}`}
-                                                >
-                                                    <LucideCheck className={`w-4 h-4 mt-0.5 shrink-0 ${colors.checkColor}`} />
-                                                    {f}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                    <Button
-                                        variant="primary"
-                                        link={`/company-onboarding?plan=${enterprisePlanCodes[signupRange][level]}`}
-                                        className={`relative z-10 self-stretch text-center justify-center flex ${level === "premium"
-                                            ? "bg-gold text-white! hover:bg-[#b07a22]"
-                                            : "bg-stone-900 text-white! hover:bg-stone-800"
-                                            }`}
+                                return (
+                                    <motion.div
+                                        variants={staggerItem}
+                                        key={level}
+                                        className={`relative p-8 flex flex-col justify-between overflow-hidden ${colors.border}`}
                                     >
-                                        Get started
-                                    </Button>
-                                </motion.div>
-                            );
-                        })}
+                                        <div
+                                            className="absolute inset-0"
+                                            style={{
+                                                background: colors.gradient,
+                                            }}
+                                        />
+                                        <div
+                                            className={`absolute top-0 left-0 w-1 h-full ${colors.sideAccent}`}
+                                        />
+                                        <span
+                                            className={`absolute top-6 right-6 text-xs font-semibold ${colors.badgeBg} ${colors.badgeText} px-3 py-1 rounded-full`}
+                                        >
+                                            {level === "standard" ?
+                                                "Most popular"
+                                            :   "Best report"}
+                                        </span>
+                                        <div className="relative z-10">
+                                            <h3
+                                                className={`text-lg font-semibold mb-0.5 ${colors.textPrimary}`}
+                                            >
+                                                {tierName}
+                                            </h3>
+                                            <p
+                                                className={`text-xs mb-6 font-medium uppercase tracking-wide ${colors.textMuted}`}
+                                            >
+                                                {level === "standard" ?
+                                                    "Standard service"
+                                                :   "Premium service"}
+                                            </p>
+                                            <p
+                                                className={`text-sm mb-6 ${colors.textSecondary}`}
+                                            >
+                                                {basePlan.description}
+                                            </p>
+                                            <div className="flex items-baseline gap-1.5 mb-1">
+                                                <span
+                                                    className={`text-4xl font-serif ${colors.textPrimary}`}
+                                                >
+                                                    {formatPrice(
+                                                        basePlan.priceUsd,
+                                                        basePlan.priceNgn,
+                                                        selectedCurrency,
+                                                        affiliateDiscountRate,
+                                                    )}
+                                                </span>
+                                            </div>
+
+                                            {affiliateDiscountRate > 0 && (() => {
+                                                const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                                const basePrice = selectedCurrency === "NGN" ? basePlan.priceNgn : basePlan.priceUsd;
+                                                const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
+                                                return (
+                                                    <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
+                                                        <LucideTag className="w-3 h-3" />
+                                                        <span className="font-medium">{affiliateDiscountRate}% off per credit — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()}</span>
+                                                    </div>
+                                                );
+                                            })()}
+                                            <p
+                                                className={`text-xs mb-8 ${colors.textMuted}`}
+                                            >
+                                                per credit
+                                            </p>
+                                            <ul className="space-y-3 mb-8">
+                                                {features.map((f) => (
+                                                    <li
+                                                        key={f}
+                                                        className={`flex items-start gap-3 text-sm ${colors.textPrimary}`}
+                                                    >
+                                                        <LucideCheck
+                                                            className={`w-4 h-4 mt-0.5 shrink-0 ${colors.checkColor}`}
+                                                        />
+                                                        {f}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                        <Button
+                                            variant="primary"
+                                            link={`/company-onboarding?plan=${enterprisePlanCodes[signupRange][level]}`}
+                                            className={`relative z-10 self-stretch text-center justify-center flex ${
+                                                level === "premium" ?
+                                                    "bg-gold text-white! hover:bg-[#b07a22]"
+                                                :   "bg-stone-900 text-white! hover:bg-stone-800"
+                                            }`}
+                                        >
+                                            Get started
+                                        </Button>
+                                    </motion.div>
+                                );
+                            },
+                        )}
                     </StaggerGroup>
 
                     {/* Premium extras callout */}
                     <AnimateIn className="mt-10 max-w-3xl mx-auto">
                         <div className="bg-[#fdf9f0] border border-gold/30 p-8">
-                            <h3 className="text-xl font-serif text-heading mb-5">Exclusive to Premium</h3>
+                            <h3 className="text-xl font-serif text-heading mb-5">
+                                Exclusive to Premium
+                            </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {premiumFeatures.map((feature) => (
-                                    <div key={feature} className="flex items-start gap-3 text-sm text-heading">
+                                    <div
+                                        key={feature}
+                                        className="flex items-start gap-3 text-sm text-heading"
+                                    >
                                         <LucideCheck className="w-4 h-4 mt-0.5 text-amber-600 shrink-0" />
                                         {feature}
                                     </div>
@@ -310,7 +582,10 @@ const PricingPage = () => {
                             Common questions about pricing.
                         </h2>
                     </AnimateIn>
-                    <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6" stagger={0.1}>
+                    <StaggerGroup
+                        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                        stagger={0.1}
+                    >
                         {[
                             {
                                 q: "How do credits work?",
@@ -337,7 +612,11 @@ const PricingPage = () => {
                                 a: "Yes. Every new account receives 1 free Essential credit — a destination health education report with no personal data required. Upgrade to Standard or Premium for a fully personalised plan.",
                             },
                         ].map((item) => (
-                            <motion.div variants={staggerItem} key={item.q} className="bg-background-primary rounded-2xl p-6">
+                            <motion.div
+                                variants={staggerItem}
+                                key={item.q}
+                                className="bg-background-primary rounded-2xl p-6"
+                            >
                                 <h4 className="text-sm font-semibold text-heading mb-2">
                                     {item.q}
                                 </h4>
@@ -348,7 +627,11 @@ const PricingPage = () => {
                         ))}
                     </StaggerGroup>
                     <div className="text-center mt-10">
-                        <Button variant="secondary" icon={<LucideArrowRight />} link="/faq">
+                        <Button
+                            variant="secondary"
+                            icon={<LucideArrowRight />}
+                            link="/faq"
+                        >
                             View all FAQs
                         </Button>
                     </div>

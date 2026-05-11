@@ -36,8 +36,8 @@ const HRCreatePlan = () => {
         answers: {} as Record<string, unknown>,
         categoryIndex: 0,
         showVerify: false,
-        showIntro: true,
         riskConsentGiven: false,
+        medicalDisclaimerConsentGiven: false,
     });
 
     const selectedEmployee = employees.find((e) => String(e.id) === employeeId);
@@ -80,12 +80,13 @@ const HRCreatePlan = () => {
             await createPlan.mutateAsync({
                 destination: payload.destination,
                 country: payload.country,
-                duration: payload.duration,
+                duration: payload.duration ?? undefined,
                 purpose: payload.purpose,
                 tripType: payload.tripType,
                 tripDetailsJson: payload.tripDetailsJson,
                 medicalConsiderations: payload.medicalConsiderations,
                 questionnaireResponses: JSON.stringify(payload.questionnaireResponses),
+                selectedDoctorIds: payload.selectedDoctorIds,
                 companyId: companyIdNum,
                 employeeId: parseInt(employeeId, 10),
                 status: "completed",
@@ -113,42 +114,61 @@ const HRCreatePlan = () => {
         <div className="relative min-h-screen">
             <DashboardAmbientBackground />
             <DashboardHeader title="Create plan for employee" />
-            {!employeeId ? (
-                <div className={`relative z-10 max-w-2xl mx-auto px-6 ${DASHBOARD_GLASS_SURFACE} p-8 md:p-10`}>
+            {!employeeId ?
+                <div
+                    className={`relative z-10 max-w-2xl mx-auto px-6 ${DASHBOARD_GLASS_SURFACE} p-8 md:p-10`}
+                >
                     <div className="mb-8">
-                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-accent mb-2">Employee Selection</p>
-                        <h2 className="text-3xl md:text-4xl font-serif text-heading mb-3 tracking-tight">Who is this plan for?</h2>
+                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-accent mb-2">
+                            Employee Selection
+                        </p>
+                        <h2 className="text-3xl md:text-4xl font-serif text-heading mb-3 tracking-tight">
+                            Who is this plan for?
+                        </h2>
                         <p className="text-sm md:text-base text-muted leading-relaxed">
-                            Choose an active employee first. After selection, open the questionnaire to complete the same detailed flow used on the dashboard.
+                            Choose an active employee first. After selection,
+                            open the questionnaire to complete the same detailed
+                            flow used on the dashboard.
                         </p>
                     </div>
                     <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                        {employees.length === 0 ? (
-                            <p className="text-sm text-muted py-6 text-center">No active employees found.</p>
-                        ) : (
-                            employees.map((emp) => (
+                        {employees.length === 0 ?
+                            <p className="text-sm text-muted py-6 text-center">
+                                No active employees found.
+                            </p>
+                        :   employees.map((emp) => (
                                 <button
                                     key={emp.id}
                                     type="button"
-                                    onClick={() => setEmployeeId(String(emp.id))}
-                                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer ${employeeId === String(emp.id)
-                                            ? "border-accent bg-accent/5"
-                                            : "border-border-light bg-background-primary hover:border-border-light/80"
-                                        }`}
+                                    onClick={() =>
+                                        setEmployeeId(String(emp.id))
+                                    }
+                                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer ${
+                                        employeeId === String(emp.id) ?
+                                            "border-accent bg-accent/5"
+                                        :   "border-border-light bg-background-primary hover:border-border-light/80"
+                                    }`}
                                 >
                                     <div
-                                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${employeeId === String(emp.id) ? "bg-accent/10" : "bg-border-light/30"
-                                            }`}
+                                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                                            employeeId === String(emp.id) ?
+                                                "bg-accent/10"
+                                            :   "bg-border-light/30"
+                                        }`}
                                     >
                                         <LucideUserCircle
                                             className={`w-5 h-5 ${employeeId === String(emp.id) ? "text-accent" : "text-muted"}`}
                                         />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className={`text-sm font-semibold truncate ${employeeId === String(emp.id) ? "text-heading" : "text-body"}`}>
+                                        <p
+                                            className={`text-sm font-semibold truncate ${employeeId === String(emp.id) ? "text-heading" : "text-body"}`}
+                                        >
                                             {emp.name} ({emp.email})
                                         </p>
-                                        <p className="text-xs text-muted truncate">{emp.department}</p>
+                                        <p className="text-xs text-muted truncate">
+                                            {emp.department}
+                                        </p>
                                     </div>
                                     {employeeId === String(emp.id) && (
                                         <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center shrink-0">
@@ -157,23 +177,30 @@ const HRCreatePlan = () => {
                                     )}
                                 </button>
                             ))
-                        )}
+                        }
                     </div>
                 </div>
-            ) : (
-                <div className="relative z-10 max-w-5xl mx-auto space-y-8 px-4 sm:px-6">
+            :   <div className="relative z-10 max-w-5xl mx-auto space-y-8 px-4 sm:px-6">
                     <div className={`${DASHBOARD_GLASS_SURFACE} p-8 md:p-10`}>
-                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-accent mb-2">HR Advisory Builder</p>
+                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-accent mb-2">
+                            HR Advisory Builder
+                        </p>
                         <h2 className="text-3xl md:text-4xl font-serif text-heading leading-tight mb-3">
                             Prepare a high-context plan for this traveller
                         </h2>
                         <p className="text-sm md:text-base text-muted leading-relaxed mb-6">
-                            {selectedEmployee ? (
+                            {selectedEmployee ?
                                 <>
-                                    Selected: <strong className="text-heading">{selectedEmployee.name}</strong> ({selectedEmployee.email}).
+                                    Selected:{" "}
+                                    <strong className="text-heading">
+                                        {selectedEmployee.name}
+                                    </strong>{" "}
+                                    ({selectedEmployee.email}).
                                 </>
-                            ) : null}{" "}
-                            Open the questionnaire when you are ready. Categories and verify step match the dashboard create-plan experience.
+                            :   null}{" "}
+                            Open the questionnaire when you are ready.
+                            Categories and verify step match the dashboard
+                            create-plan experience.
                         </p>
                         <div className="flex flex-wrap items-center gap-3">
                             <button
@@ -196,7 +223,7 @@ const HRCreatePlan = () => {
                         </div>
                     </div>
                 </div>
-            )}
+            }
 
             <PlanQuestionnaireModalShell
                 open={modalOpen}
@@ -221,6 +248,9 @@ const HRCreatePlan = () => {
                         verifyTopSlot={verifyTopSlot}
                         isSubmitting={createPlan.isPending}
                         onSubmitPlan={handleSubmit}
+                        initialMedicalDisclaimerConsentGiven={
+                            flowState.categoryIndex > 0
+                        }
                         onStateChange={handleStateChange}
                     />
                 </div>

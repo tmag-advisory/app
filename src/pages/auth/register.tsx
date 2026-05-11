@@ -8,6 +8,8 @@ import { toast } from "react-hot-toast";
 import { AxiosError } from "axios";
 import { LucideLoader, LucideArrowLeft } from "lucide-react";
 import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
+import type { BillingCurrency } from "../../api";
+import { getAffiliateReferralCode } from "../../lib/affiliateTracking";
 
 const planLabels: Record<string, { name: string; color: string }> = {
     ESSENTIAL: { name: "Essential", color: "bg-gray-100 text-gray-700" },
@@ -41,7 +43,8 @@ const Register = () => {
     }, [setStage]);
 
     const [form, setForm] = useState({
-        name: "",
+        firstName: "",
+        lastName: "",
         email: "",
         password: "",
         showPassword: false,
@@ -56,13 +59,14 @@ const Register = () => {
             await register({
                 email: form.email,
                 password: form.password,
-                first_name: form.name.split(" ")[0],
-                last_name: form.name.split(" ")[1] ?? form.name,
+                first_name: form.firstName,
+                last_name: form.lastName,
                 username: String(
-                    form.email.split("@")[0] + form.name.split(" ")[0]
+                    form.email.split("@")[0] + form.firstName
                 ).toLowerCase(),
                 planCode: selectedPlan ?? undefined,
-                billing_currency: selectedCurrency,
+                affiliate_referral_code: getAffiliateReferralCode(),
+                billing_currency: selectedCurrency as BillingCurrency,
             });
             setRegisteredEmail(form.email);
             toast.success("Check your email for a verification code!", { id: toastkey });
@@ -123,7 +127,7 @@ const Register = () => {
             setStage(2);
             await refreshProfile();
             toast.success("Email verified!");
-            navigate("/onboarding");
+            navigate(selectedPlan?.startsWith("FAMILY") ? "/dashboard" : "/onboarding");
         } catch (err) {
             if (err instanceof AxiosError) {
                 toast.error(err.response?.data?.error || "Invalid code. Please try again.");
@@ -252,18 +256,33 @@ const Register = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                        Full name
-                    </label>
-                    <input
-                        type="text"
-                        value={form.name}
-                        onChange={(e) => update("name", e.target.value)}
-                        placeholder="Sarah Kimani"
-                        className="w-full bg-white border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
-                        required
-                    />
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                            First name
+                        </label>
+                        <input
+                            type="text"
+                            value={form.firstName}
+                            onChange={(e) => update("firstName", e.target.value)}
+                            placeholder="Sarah"
+                            className="w-full bg-white border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                            Last name
+                        </label>
+                        <input
+                            type="text"
+                            value={form.lastName}
+                            onChange={(e) => update("lastName", e.target.value)}
+                            placeholder="Kimani"
+                            className="w-full bg-white border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
+                            required
+                        />
+                    </div>
                 </div>
                 <div>
                     <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">

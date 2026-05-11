@@ -31,6 +31,10 @@ import {
   exchangeRatesApi,
   publicPlansApi,
   companyOnboardingApi,
+  doctorApi,
+  adminDoctorApi,
+  settingsApi,
+  familyPackagePurchaseApi,
 } from "./api";
 import type {
   LoginRequest,
@@ -73,6 +77,10 @@ import type {
   NewsletterSubscribeRequest,
   EbookCheckoutRequest,
   CartCheckoutRequest,
+  DoctorApplicationRequest,
+  DoctorProfileUpdateRequest,
+  ValidatePlanRequest,
+  FamilyPackageCheckoutRequest,
 } from "./types";
 
 // ─── Query Keys ──────────────────────────────────────────────
@@ -213,10 +221,28 @@ export const queryKeys = {
     history: (companyId?: number) => [...["company-admin-credits"], "history", companyId] as const,
     pricing: (companyId: number) => [...["company-admin-credits"], "pricing", companyId] as const,
   },
+  familyPackagePurchases: {
+    all: ["family-package-purchases"] as const,
+    active: () => [...["family-package-purchases"], "active"] as const,
+    history: () => [...["family-package-purchases"], "history"] as const,
+  },
   planUsageLedgers: {
     all: ["plan-usage-ledgers"] as const,
     mine: () => [...["plan-usage-ledgers"], "mine"] as const,
     byEmployee: (employeeId: number) => [...["plan-usage-ledgers"], "employee", employeeId] as const,
+  },
+  doctor: {
+    all: ["doctor"] as const,
+    profile: () => [...["doctor"], "profile"] as const,
+    dashboard: () => [...["doctor"], "dashboard"] as const,
+    pending: (params?: PaginationParams) => [...["doctor"], "pending", params] as const,
+    validated: (params?: PaginationParams) => [...["doctor"], "validated", params] as const,
+    planDetail: (planId: number) => [...["doctor"], "plan", planId] as const,
+  },
+  adminDoctor: {
+    all: ["admin-doctors"] as const,
+    applications: (status?: string) => [...["admin-doctors"], "applications", status] as const,
+    doctors: (params?: PaginationParams) => [...["admin-doctors"], "list", params] as const,
   },
 };
 
@@ -453,6 +479,12 @@ export function useTravelPlan(id: number) {
       const status = query.state.data?.status;
       return isTravelPlanGeneratingStatus(status) ? 3000 : false;
     },
+  });
+}
+
+export function useTravelPlanSummaryPdf() {
+  return useMutation({
+    mutationFn: (id: number) => travelPlansApi.downloadSummaryPdfBlob(id),
   });
 }
 
@@ -910,6 +942,14 @@ export function useUpdateProfilePassword() {
   });
 }
 
+export function useUpgradeUserPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (planCode: string) => profileApi.upgradePlan(planCode),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.profile.all }),
+  });
+}
+
 export function useResendVerificationEmail() {
   return useMutation({
     mutationFn: (data: ResendVerificationRequest) => authApi.resendVerificationEmail(data),
@@ -980,6 +1020,18 @@ export function useGetQuestionnaireProgress() {
   });
 }
 
+// ─── Settings / Consent Hooks ─────────────────────────────────────
+
+export function useAcceptQuestionnaireConsent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => settingsApi.acceptQuestionnaireConsent(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["profile"] });
+    },
+  });
+}
+
 // ─── Draft Plan Hooks ─────────────────────────────────────────
 
 export function useDraftPlans() {
@@ -1046,7 +1098,8 @@ export function useInitiateCreditPurchase() {
 export function useVerifyCreditPurchase() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (txRef: string) => creditPurchaseApi.verify(txRef),
+    mutationFn: ({ txRef, transactionId }: { txRef: string; transactionId?: string }) =>
+      creditPurchaseApi.verify(txRef, transactionId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.profile.all });
       qc.invalidateQueries({ queryKey: queryKeys.creditPurchases.all });
@@ -1058,6 +1111,33 @@ export function useCreditPurchaseHistory() {
   return useQuery({
     queryKey: queryKeys.creditPurchases.history(),
     queryFn: () => creditPurchaseApi.history(),
+  });
+}
+
+// ─── Family Package Purchase Hooks ─────────────────────────────────
+
+export function useInitiateFamilyPackageCheckout() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: FamilyPackageCheckoutRequest) => familyPackagePurchaseApi.checkout(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.profile.all });
+      qc.invalidateQueries({ queryKey: queryKeys.familyPackagePurchases.all });
+    },
+  });
+}
+
+export function useFamilyPackageActive() {
+  return useQuery({
+    queryKey: queryKeys.familyPackagePurchases.active(),
+    queryFn: () => familyPackagePurchaseApi.getActive(),
+  });
+}
+
+export function useFamilyPackageHistory() {
+  return useQuery({
+    queryKey: queryKeys.familyPackagePurchases.history(),
+    queryFn: () => familyPackagePurchaseApi.getHistory(),
   });
 }
 
@@ -1311,6 +1391,127 @@ export function usePublicPlan(id: number) {
   });
 }
 
+// ─── Doctor Hooks ────────────────────────────────────────────
+
+export function useDoctorProfile() {
+  return useQuery({
+    queryKey: queryKeys.doctor.profile(),
+    queryFn: () => doctorApi.getProfile(),
+  });
+}
+
+export function useDoctorReviewers() {
+  return useQuery({
+    queryKey: [...queryKeys.doctor.all, "reviewers"],
+    queryFn: () => doctorApi.getReviewers(),
+  });
+}
+
+export function useDoctorDashboardStats() {
+  return useQuery({
+    queryKey: queryKeys.doctor.dashboard(),
+    queryFn: () => doctorApi.getDashboardStats(),
+  });
+}
+
+export function useDoctorPendingValidations(params?: PaginationParams) {
+  return useQuery({
+    queryKey: queryKeys.doctor.pending(params),
+    queryFn: () => doctorApi.getPendingValidations(params),
+  });
+}
+
+export function useDoctorValidatedPlans(params?: PaginationParams) {
+  return useQuery({
+    queryKey: queryKeys.doctor.validated(params),
+    queryFn: () => doctorApi.getValidatedPlans(params),
+  });
+}
+
+export function useDoctorValidationDetail(planId: number) {
+  return useQuery({
+    queryKey: queryKeys.doctor.planDetail(planId),
+    queryFn: () => doctorApi.getValidationDetail(planId),
+    enabled: planId > 0,
+  });
+}
+
+export function useApplyAsDoctor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: DoctorApplicationRequest) => doctorApi.apply(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.doctor.all }),
+  });
+}
+
+export function useUpdateDoctorProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: DoctorProfileUpdateRequest) => doctorApi.updateProfile(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.doctor.profile() }),
+  });
+}
+
+export function useUpdateDoctorProfileAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => doctorApi.updateAvatar(file),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.doctor.profile() }),
+  });
+}
+
+export function useValidatePlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: ValidatePlanRequest) => doctorApi.validatePlan(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.doctor.all });
+      qc.invalidateQueries({ queryKey: queryKeys.travelPlans.all });
+    },
+  });
+}
+
+// ─── Admin Doctor Hooks ──────────────────────────────────────
+
+export function useAdminDoctorApplications(status?: string) {
+  return useQuery({
+    queryKey: queryKeys.adminDoctor.applications(status),
+    queryFn: () => adminDoctorApi.getApplications(status),
+  });
+}
+
+export function useAdminDoctors(params?: PaginationParams) {
+  return useQuery({
+    queryKey: queryKeys.adminDoctor.doctors(params),
+    queryFn: () => adminDoctorApi.getDoctors(params),
+  });
+}
+
+export function useApproveDoctorApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: number) => adminDoctorApi.approveApplication(userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.adminDoctor.all }),
+  });
+}
+
+export function useRejectDoctorApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, reason }: { userId: number; reason: string }) =>
+      adminDoctorApi.rejectApplication(userId, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.adminDoctor.all }),
+  });
+}
+
+export function useRevokeDoctor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: number) => adminDoctorApi.revokeDoctor(userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.adminDoctor.all }),
+  });
+}
+
 // ─── Company Onboarding Hooks ─────────────────────────────────
 
 export function useSubmitCompanyOnboarding() {
@@ -1342,5 +1543,14 @@ export function useOnboardingStatus(id: number) {
       const data = query.state.data as import("./types").CompanyOnboardingResponse | undefined;
       return data?.status === "pending_approval" ? 5000 : false;
     },
+  });
+}
+
+export function useOnboardingPricingPreview(credits: number) {
+  return useQuery({
+    queryKey: ["company-onboarding-pricing", credits],
+    queryFn: () => companyOnboardingApi.getPricingPreview(credits),
+    enabled: credits > 0,
+    staleTime: 60_000,
   });
 }
