@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import {useEffect, useState} from "react";
+import {useNavigate, useParams} from "react-router-dom";
 import familyTripApi from "../../api/familyTrip";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
-import { DashboardAmbientBackground } from "../../components/dashboard/dashboardChrome";
-import type { FamilyTripResponse } from "../../api/types";
+import {DashboardAmbientBackground} from "../../components/dashboard/dashboardChrome";
+import type {FamilyTripResponse} from "../../api/types";
 import {
-    LucideUsers,
-    LucideMapPin,
+    LucideArrowRight,
     LucideCalendar,
     LucideCreditCard,
-    LucideArrowRight,
     LucideDownload,
     LucideLoader2,
+    LucideMapPin,
+    LucideUsers
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "../../components/ui/Button";
@@ -21,13 +21,8 @@ export default function FamilyTripView() {
     const navigate = useNavigate();
     const [trip, setTrip] = useState<FamilyTripResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    // const [visibleCodes, setVisibleCodes] = useState<Record<number, boolean>>(
-    //     {},
-    // );
-    const [familyPlan, setFamilyPlan] = useState<{
-        id: number;
-        status: string;
-    } | null>(null);
+    // const [visibleCodes, setVisibleCodes] = useState<Record<number, boolean>>({});
+    const [familyPlan, setFamilyPlan] = useState<{ id: number; status: string } | null>(null);
     const [familyPlanLoading, setFamilyPlanLoading] = useState(false);
     const [downloadingPdf, setDownloadingPdf] = useState(false);
 
@@ -102,11 +97,11 @@ export default function FamilyTripView() {
     //         toast.error("Failed to regenerate code");
     //     }
     // };
-
+    //
     // const toggleCodeVisibility = (memberId: number) => {
     //     setVisibleCodes((prev) => ({ ...prev, [memberId]: !prev[memberId] }));
     // };
-
+    //
     // const copyCode = (code: string) => {
     //     navigator.clipboard.writeText(code);
     //     toast.success("Code copied to clipboard");

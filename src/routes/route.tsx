@@ -1,13 +1,15 @@
 import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
-import HomeLayout from "../layouts/homelayouts";
-import AuthLayout from "../layouts/authlayouts";
-import UserDashboardLayout from "../layouts/userlayouts";
-import HRDashboardLayout from "../layouts/hrlayouts";
-import DoctorDashboardLayout from "../layouts/doctorlayouts";
 import ProtectedRoute from "../components/guards/ProtectedRoute";
 import RoleGuard from "../components/guards/RoleGuard";
 import FamilyMemberRoute from "../components/guards/FamilyMemberRoute";
+
+// Layouts (lazy-loaded so dashboard/admin chrome does not ship with the initial route)
+const HomeLayout = lazy(() => import("../layouts/homelayouts"));
+const AuthLayout = lazy(() => import("../layouts/authlayouts"));
+const UserDashboardLayout = lazy(() => import("../layouts/userlayouts"));
+const HRDashboardLayout = lazy(() => import("../layouts/hrlayouts"));
+const DoctorDashboardLayout = lazy(() => import("../layouts/doctorlayouts"));
 
 // Marketing pages (lazy-loaded)
 const Home = lazy(() => import("../pages/home/home"));

@@ -39,10 +39,7 @@ export default function FamilyManageMembers() {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [isLoading, setIsLoading] = useState(true);
-    // const [regeneratingId] = useState<{
-    //     tripId: number;
-    //     memberId: number;
-    // } | null>(null);
+    // const [regeneratingId, setRegeneratingId] = useState<{ tripId: number; memberId: number } | null>(null);
     // const [copiedId, setCopiedId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -80,7 +77,7 @@ export default function FamilyManageMembers() {
     //         setRegeneratingId(null);
     //     }
     // };
-
+    //
     // const copyToClipboard = async (text: string, id: string) => {
     //     try {
     //         await navigator.clipboard.writeText(text);
@@ -257,70 +254,42 @@ export default function FamilyManageMembers() {
                                     </div>
                                 </div>
 
-                                {/* Members list */}
-                                <div className="divide-y divide-border-light/30">
-                                    {trip.members.map((member) => {
-                                        const initials =
-                                            `${member.firstName.charAt(0)}${member.lastName.charAt(0)}`.toUpperCase();
-                                        // const regenerating =
-                                        //     regeneratingId?.tripId ===
-                                        //         trip.id &&
-                                        //     regeneratingId?.memberId ===
-                                        //         member.id;
-                                        return (
-                                            <div
-                                                key={member.id}
-                                                className="px-5 py-4 md:px-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-background-secondary/30 transition-colors"
-                                            >
-                                                <div className="flex items-start gap-3 flex-1 min-w-0">
-                                                    <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                                                        <span className="text-accent font-serif font-bold text-xs">
-                                                            {initials}
-                                                        </span>
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <p className="text-sm font-semibold text-heading">
-                                                                {
-                                                                    member.firstName
-                                                                }{" "}
-                                                                {
-                                                                    member.lastName
-                                                                }
-                                                            </p>
-                                                            <span className="text-[10px] text-muted capitalize bg-slate-100 px-2 py-0.5 rounded-full">
-                                                                {member.relationship.toLowerCase()}
-                                                            </span>
-                                                            <span
-                                                                className={cn(
-                                                                    "text-[10px] font-medium px-2 py-0.5 rounded-full",
-                                                                    (
-                                                                        member.questionnaireStatus ===
-                                                                            "COMPLETE"
-                                                                    ) ?
-                                                                        "bg-emerald-50 text-emerald-700"
-                                                                    :   "bg-amber-50 text-amber-700",
-                                                                )}
-                                                            >
-                                                                {(
-                                                                    member.questionnaireStatus ===
-                                                                    "COMPLETE"
-                                                                ) ?
-                                                                    "Health info complete"
-                                                                :   "Health info pending"
-                                                                }
-                                                            </span>
-                                                        </div>
-                                                        {member.memberEmail && (
-                                                            <span className="text-xs text-muted ring flex items-center gap-1 mt-1">
-                                                                <LucideMail className="w-3 h-3" />
-                                                                {
-                                                                    member.memberEmail
-                                                                }
-                                                            </span>
-                                                        )}
-                                                    </div>
+                            {/* Members list */}
+                            <div className="divide-y divide-border-light/30">
+                                {trip.members.map((member) => {
+                                    const initials = `${member.firstName.charAt(0)}${member.lastName.charAt(0)}`.toUpperCase();
+                                    // const regenerating = regeneratingId?.tripId === trip.id && regeneratingId?.memberId === member.id;
+                                    return (
+                                    <div key={member.id} className="px-5 py-4 md:px-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-background-secondary/30 transition-colors">
+                                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                                            <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                                                <span className="text-accent font-serif font-bold text-xs">{initials}</span>
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <p className="text-sm font-semibold text-heading">
+                                                        {member.firstName} {member.lastName}
+                                                    </p>
+                                                    <span className="text-[10px] text-muted capitalize bg-slate-100 px-2 py-0.5 rounded-full">
+                                                        {member.relationship.toLowerCase()}
+                                                    </span>
+                                                    <span className={cn(
+                                                        "text-[10px] font-medium px-2 py-0.5 rounded-full",
+                                                        member.questionnaireStatus === "COMPLETE"
+                                                            ? "bg-emerald-50 text-emerald-700"
+                                                            : "bg-amber-50 text-amber-700"
+                                                    )}>
+                                                        {member.questionnaireStatus === "COMPLETE" ? "Health info complete" : "Health info pending"}
+                                                    </span>
                                                 </div>
+                                                {member.memberEmail && (
+                                                    <span className="text-xs text-muted flex items-center gap-1 mt-1">
+                                                        <LucideMail className="w-3 h-3" />
+                                                        {member.memberEmail}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
 
                                                 {/* Login code */}
                                                 {/*<div className="flex items-center gap-2 shrink-0 md:pl-4">
