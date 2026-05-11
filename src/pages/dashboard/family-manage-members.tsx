@@ -8,9 +8,6 @@ import type { FamilyTripResponse, Pagination } from "../../api/types";
 import {
     LucideUsers,
     LucideLoader2,
-    LucideCopy,
-    LucideCheck,
-    LucideRefreshCw,
     LucideMail,
     LucideArrowRight,
     LucideMapPin,
@@ -42,8 +39,8 @@ export default function FamilyManageMembers() {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [isLoading, setIsLoading] = useState(true);
-    const [regeneratingId, setRegeneratingId] = useState<{ tripId: number; memberId: number } | null>(null);
-    const [copiedId, setCopiedId] = useState<string | null>(null);
+    // const [regeneratingId, setRegeneratingId] = useState<{ tripId: number; memberId: number } | null>(null);
+    // const [copiedId, setCopiedId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchTrips();
@@ -64,32 +61,32 @@ export default function FamilyManageMembers() {
         }
     };
 
-    const handleRegenerateCode = async (tripId: number, memberId: number) => {
-        setRegeneratingId({ tripId, memberId });
-        try {
-            const res = await familyTripApi.regenerateCode(tripId, memberId);
-            const newCode = res.data.data?.loginCode;
-            if (newCode) {
-                toast.success("New login code generated");
-                // Refresh to get updated codes
-                await fetchTrips();
-            }
-        } catch (err) {
-            toast.error("Failed to regenerate code");
-        } finally {
-            setRegeneratingId(null);
-        }
-    };
-
-    const copyToClipboard = async (text: string, id: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            setCopiedId(id);
-            setTimeout(() => setCopiedId(null), 2000);
-        } catch {
-            toast.error("Failed to copy");
-        }
-    };
+    // const handleRegenerateCode = async (tripId: number, memberId: number) => {
+    //     setRegeneratingId({ tripId, memberId });
+    //     try {
+    //         const res = await familyTripApi.regenerateCode(tripId, memberId);
+    //         const newCode = res.data.data?.loginCode;
+    //         if (newCode) {
+    //             toast.success("New login code generated");
+    //             // Refresh to get updated codes
+    //             await fetchTrips();
+    //         }
+    //     } catch (err) {
+    //         toast.error("Failed to regenerate code");
+    //     } finally {
+    //         setRegeneratingId(null);
+    //     }
+    // };
+    //
+    // const copyToClipboard = async (text: string, id: string) => {
+    //     try {
+    //         await navigator.clipboard.writeText(text);
+    //         setCopiedId(id);
+    //         setTimeout(() => setCopiedId(null), 2000);
+    //     } catch {
+    //         toast.error("Failed to copy");
+    //     }
+    // };
 
     const allMembers = trips.flatMap(trip =>
         trip.members.map(member => ({
@@ -210,7 +207,7 @@ export default function FamilyManageMembers() {
                             <div className="divide-y divide-border-light/30">
                                 {trip.members.map((member) => {
                                     const initials = `${member.firstName.charAt(0)}${member.lastName.charAt(0)}`.toUpperCase();
-                                    const regenerating = regeneratingId?.tripId === trip.id && regeneratingId?.memberId === member.id;
+                                    // const regenerating = regeneratingId?.tripId === trip.id && regeneratingId?.memberId === member.id;
                                     return (
                                     <div key={member.id} className="px-5 py-4 md:px-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-background-secondary/30 transition-colors">
                                         <div className="flex items-start gap-3 flex-1 min-w-0">
