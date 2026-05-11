@@ -88,32 +88,38 @@ export default function FamilyManageMembers() {
     //     }
     // };
 
-    const allMembers = trips.flatMap(trip =>
-        trip.members.map(member => ({
+    const allMembers = trips.flatMap((trip) =>
+        trip.members.map((member) => ({
             ...member,
             tripId: trip.id,
             tripDestination: trip.destination,
             tripCountry: trip.country,
             tripStatus: trip.status,
-        }))
+        })),
     );
 
     return (
         <div>
             <DashboardHeader title="Manage Family Members" />
 
-            {isLoading ? (
+            {isLoading ?
                 <div className="flex items-center justify-center py-20">
                     <LucideLoader2 className="w-6 h-6 text-accent animate-spin" />
                 </div>
-            ) : (pagination?.total ?? 0) === 0 ? (
-                <div className={cn(DASHBOARD_GLASS_SURFACE, "p-12 text-center")}>
+            : (pagination?.total ?? 0) === 0 ?
+                <div
+                    className={cn(DASHBOARD_GLASS_SURFACE, "p-12 text-center")}
+                >
                     <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
                         <LucideUsers className="w-8 h-8 text-accent" />
                     </div>
-                    <p className="text-sm font-semibold text-heading mb-2">No family members yet</p>
+                    <p className="text-sm font-semibold text-heading mb-2">
+                        No family members yet
+                    </p>
                     <p className="text-xs text-muted mb-6 max-w-sm mx-auto">
-                        Create a family trip and add members to see them here. Each member will get a login code to access their personalized travel health plan.
+                        Create a family trip and add members to see them here.
+                        Each member will get a login code to access their
+                        personalized travel health plan.
                     </p>
                     <Link
                         to="/dashboard/family-trip"
@@ -123,85 +129,130 @@ export default function FamilyManageMembers() {
                         Create a family trip
                     </Link>
                 </div>
-            ) : (
-                <div className="space-y-6">
+            :   <div className="space-y-6">
                     {/* Stats grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <StatCard
-                            icon={<LucideMapPin className="w-4 h-4 text-accent" />}
+                            icon={
+                                <LucideMapPin className="w-4 h-4 text-accent" />
+                            }
                             label="Total trips"
                             value={pagination?.total ?? trips.length}
                         />
                         <StatCard
-                            icon={<LucideUsers className="w-4 h-4 text-accent" />}
+                            icon={
+                                <LucideUsers className="w-4 h-4 text-accent" />
+                            }
                             label="Members on page"
                             value={allMembers.length}
                         />
                         <StatCard
-                            icon={<LucideKeyRound className="w-4 h-4 text-accent" />}
+                            icon={
+                                <LucideKeyRound className="w-4 h-4 text-accent" />
+                            }
                             label="Active codes (page)"
-                            value={allMembers.filter(m => m.loginCode).length}
+                            value={allMembers.filter((m) => m.loginCode).length}
                         />
                         <StatCard
-                            icon={<LucideClipboardCheck className="w-4 h-4 text-accent" />}
+                            icon={
+                                <LucideClipboardCheck className="w-4 h-4 text-accent" />
+                            }
                             label="Health info complete (page)"
-                            value={allMembers.filter(m => m.questionnaireStatus === "COMPLETE").length}
+                            value={
+                                allMembers.filter(
+                                    (m) => m.questionnaireStatus === "COMPLETE",
+                                ).length
+                            }
                         />
                     </div>
 
                     {/* Members grouped by trip */}
                     {trips.map((trip) => {
-                        const completed = trip.members.filter(m => m.questionnaireStatus === "COMPLETE").length;
+                        const completed = trip.members.filter(
+                            (m) => m.questionnaireStatus === "COMPLETE",
+                        ).length;
                         return (
-                        <div key={trip.id} className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
-                            {/* Trip header */}
-                            <div className="px-5 py-4 md:px-6 md:py-5 border-b border-border-light/50 bg-background-secondary/40">
-                                <div className="flex items-start justify-between gap-4 flex-wrap">
-                                    <div className="min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className={cn(
-                                                "text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full",
-                                                trip.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700" :
-                                                trip.status === "DRAFT" ? "bg-amber-50 text-amber-700" :
-                                                trip.status === "SUBMITTED" ? "bg-accent/10 text-accent" :
-                                                "bg-slate-100 text-muted"
-                                            )}>
-                                                {trip.status}
-                                            </span>
-                                            <span className="text-[10px] text-muted">Trip #{trip.id}</span>
-                                        </div>
-                                        <Link
-                                            to={`/dashboard/family-trip/${trip.id}`}
-                                            className="group inline-flex items-center gap-1.5 text-base font-serif text-heading hover:text-accent transition-colors"
-                                        >
-                                            <LucideMapPin className="w-4 h-4 text-accent" />
-                                            <span className="truncate">{trip.destination}, {trip.country}</span>
-                                        </Link>
-                                        <p className="text-xs text-muted mt-1">
-                                            {trip.duration} days · {trip.members.length} member{trip.members.length !== 1 ? "s" : ""} · {completed}/{trip.members.length} health info complete
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <Link
-                                            to={`/dashboard/family-trip/${trip.id}`}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-heading bg-white border border-border-light rounded-lg hover:border-accent/40 hover:bg-background-secondary transition-colors"
-                                        >
-                                            <LucideEye className="w-3.5 h-3.5" />
-                                            View trip
-                                        </Link>
-                                        {trip.familyPlanId && (
+                            <div
+                                key={trip.id}
+                                className={cn(
+                                    DASHBOARD_GLASS_SURFACE,
+                                    "overflow-hidden",
+                                )}
+                            >
+                                {/* Trip header */}
+                                <div className="px-5 py-4 md:px-6 md:py-5 border-b border-border-light/50 bg-background-secondary/40">
+                                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span
+                                                    className={cn(
+                                                        "text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full",
+                                                        (
+                                                            trip.status ===
+                                                                "ACTIVE"
+                                                        ) ?
+                                                            "bg-emerald-50 text-emerald-700"
+                                                        : (
+                                                            trip.status ===
+                                                            "DRAFT"
+                                                        ) ?
+                                                            "bg-amber-50 text-amber-700"
+                                                        : (
+                                                            trip.status ===
+                                                            "SUBMITTED"
+                                                        ) ?
+                                                            "bg-accent/10 text-accent"
+                                                        :   "bg-slate-100 text-muted",
+                                                    )}
+                                                >
+                                                    {trip.status}
+                                                </span>
+                                                <span className="text-[10px] text-muted">
+                                                    Trip #{trip.id}
+                                                </span>
+                                            </div>
                                             <Link
-                                                to={`/dashboard/family-trip/${trip.id}/plan`}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-accent rounded-lg hover:bg-accent/90 transition-colors"
+                                                to={`/dashboard/family-trip/${trip.id}`}
+                                                className="group inline-flex items-center gap-1.5 text-base font-serif text-heading hover:text-accent transition-colors"
                                             >
-                                                <LucideFileText className="w-3.5 h-3.5" />
-                                                View plan
+                                                <LucideMapPin className="w-4 h-4 text-accent" />
+                                                <span className="truncate">
+                                                    {trip.destination},{" "}
+                                                    {trip.country}
+                                                </span>
                                             </Link>
-                                        )}
+                                            <p className="text-xs text-muted mt-1">
+                                                {trip.duration} days ·{" "}
+                                                {trip.members.length} member
+                                                {trip.members.length !== 1 ?
+                                                    "s"
+                                                :   ""}{" "}
+                                                · {completed}/
+                                                {trip.members.length} health
+                                                info complete
+                                            </p>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <Link
+                                                to={`/dashboard/family-trip/${trip.id}`}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-heading bg-white border border-border-light rounded-lg hover:border-accent/40 hover:bg-background-secondary transition-colors"
+                                            >
+                                                <LucideEye className="w-3.5 h-3.5" />
+                                                View trip
+                                            </Link>
+                                            {trip.familyPlanId && (
+                                                <Link
+                                                    to={`/dashboard/family-trip/${trip.id}/plan`}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-accent rounded-lg hover:bg-accent/90 transition-colors"
+                                                >
+                                                    <LucideFileText className="w-3.5 h-3.5" />
+                                                    View plan
+                                                </Link>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
                             {/* Members list */}
                             <div className="divide-y divide-border-light/30">
@@ -240,8 +291,8 @@ export default function FamilyManageMembers() {
                                             </div>
                                         </div>
 
-                                        {/* Login code */}
-                                        {/*<div className="flex items-center gap-2 shrink-0 md:pl-4">
+                                                {/* Login code */}
+                                                {/*<div className="flex items-center gap-2 shrink-0 md:pl-4">
                                             {member.loginCode ? (
                                                 <>
                                                     <div className="flex flex-col items-end">
@@ -284,16 +335,21 @@ export default function FamilyManageMembers() {
                                                 </button>
                                             )}
                                         </div>*/}
-                                    </div>
-                                    );
-                                })}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
                         );
                     })}
 
                     {pagination && pagination.total > 0 && (
-                        <div className={cn(DASHBOARD_GLASS_SURFACE, "overflow-hidden")}>
+                        <div
+                            className={cn(
+                                DASHBOARD_GLASS_SURFACE,
+                                "overflow-hidden",
+                            )}
+                        >
                             <PaginationFooter
                                 page={pagination.page}
                                 pageSize={pagination.pageSize}
@@ -309,7 +365,7 @@ export default function FamilyManageMembers() {
                         </div>
                     )}
                 </div>
-            )}
+            }
         </div>
     );
 }
