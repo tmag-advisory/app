@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "pages:dev": "wrangler pages dev dist --compatibility-date=2026-05-11",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name=client"
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=app"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.3.3",
