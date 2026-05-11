@@ -1,0 +1,15 @@
+# Cloudflare Pages configuration for the Vite client app.
+# Build command: npm run build, bun run build, or pnpm run build
+# Build output directory: dist
+
+name = "client"
+compatibility_date = "2026-05-11"
+pages_build_output_dir = "dist"
+
+# Vite environment variables are injected at build time.
+# Configure production values in the Cloudflare Pages dashboard under:
+# Settings > Environment variables
+#
+# Required examples:
+# VITE_API_BASE_URL = "https://your-api.example.com/api"
+# VITE_API_KEY = "..."

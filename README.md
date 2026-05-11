@@ -49,6 +49,32 @@ Do not commit `.env` files or real secrets.
 | `bun run build` | Run TypeScript project build and create the Vite production bundle. |
 | `bun run lint` | Run ESLint. |
 | `bun run preview` | Preview the production build locally. |
+| `bun run pages:dev` | Serve the built `dist` folder with Cloudflare Pages locally. Run `bun run build` first. |
+| `bun run deploy` | Build and deploy `dist` to Cloudflare Pages with Wrangler. |
+
+## Cloudflare Pages deployment
+
+This app includes `wrangler.toml` for Cloudflare Pages:
+
+```toml
+name = "client"
+pages_build_output_dir = "dist"
+```
+
+Deploy from this directory after authenticating Wrangler:
+
+```bash
+cd client
+bun run deploy
+```
+
+For Cloudflare dashboard builds, use:
+
+- Build command: `bun run build` or `npm run build`
+- Build output directory: `dist`
+- Environment variables: set `VITE_API_BASE_URL`, `VITE_API_KEY`, and any dashboard redirect URLs in Pages settings.
+
+`public/_redirects` is included so React Router deep links fall back to `index.html`.
 
 ## Main route areas
 

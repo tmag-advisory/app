@@ -7,7 +7,9 @@
     "dev": "vite --port 3000",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pages:dev": "wrangler pages dev dist --compatibility-date=2026-05-11",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=client"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.3.3",
@@ -43,7 +45,8 @@
     "globals": "^16.5.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
-    "vite": "^8.0.0-beta.13"
+    "vite": "^8.0.0-beta.13",
+    "wrangler": "^4.90.0"
   },
   "overrides": {
     "vite": "^8.0.0-beta.13"
