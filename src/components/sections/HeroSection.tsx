@@ -26,7 +26,7 @@ const HERO_VARIANT: HeroVariant = {
     eyebrow: "Physician-designed. Evidence-based.",
     headlineLines: ["Travel Far.", "Come Back", "Safe."],
     subtext: "Get a personalized travel health plan in under 2 minutes vaccines, medications, disease risks, and more.",
-    cta: "Get My Free Plan",
+    cta: "Get Started",
     destinations: [
         { country: "Japan", flag: "🇯🇵", risk: "Low" },
         { country: "Kenya", flag: "🇰🇪", risk: "High", alert: "Malaria zone" },
@@ -217,9 +217,13 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
     );
 
     const coords = (side: "right" | "left" = "right") => (
-        <div aria-hidden className={`pointer-events-none absolute top-6 ${side === "right" ? "right-8 text-right" : "left-8"} hidden lg:block select-none`}>
-            <p className="font-mono text-[10px] tracking-widest text-brand-muted opacity-50">TMAG — GLOBAL HEALTH ADVISORY</p>
-            <p className={`font-mono text-[10px] tracking-widest text-brand-muted opacity-35 mt-0.5 ${side === "right" ? "text-right" : ""}`}>48.8566°N / 2.3522°E</p>
+        <div
+            aria-hidden
+            className={`pointer-events-none absolute top-6 ${side === "right" ? "right-8 text-right" : "left-8"} hidden lg:block select-none`}
+        >
+            <p className="font-mono text-[10px] tracking-widest text-brand-muted opacity-50">
+                TMAG — GLOBAL HEALTH ADVISORY
+            </p>
         </div>
     );
 
@@ -263,12 +267,12 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                             <Divider />
                             <p data-hero-anim className="text-body leading-relaxed max-w-md sm:text-lg">{variant.subtext}</p>
                             <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8">
-                                <Button variant="primary" link="/register">{variant.cta}</Button>
+                                <Button variant="primary" link="/pricing">{variant.cta}</Button>
                                 <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">Learn More <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
                             </div>
                             {/*<StatsRow />*/}
                         </div>
-                        <div className="relative hidden lg:block h-[460px]">
+                        <div className="relative hidden lg:block h-115">
                             <div aria-hidden className="absolute inset-0 flex items-center justify-center pointer-events-none"><LucideShield size={300} strokeWidth={0.4} className="text-accent opacity-[0.06]" /></div>
                             {floatingCards(OFFSETS_R)}
                         </div>
@@ -293,7 +297,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                     <Divider className="max-w-sm mx-auto" />
                     <p data-hero-anim className="text-body leading-relaxed max-w-xl sm:text-lg">{variant.subtext}</p>
                     <div data-hero-anim className="flex flex-wrap items-center justify-center gap-4 mt-8">
-                        <Button variant="primary" link="/register">{variant.cta}</Button>
+                        <Button variant="primary" link="/pricing">{variant.cta}</Button>
                         <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">Learn More <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
                     </div>
                     <div className="hidden lg:grid grid-cols-4 gap-4 mt-12 w-full">
@@ -326,7 +330,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                             <Divider />
                             <p data-hero-anim className="text-body leading-relaxed max-w-md sm:text-lg">{variant.subtext}</p>
                             <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8 lg:flex-row-reverse">
-                                <Button variant="primary" link="/register">{variant.cta}</Button>
+                                <Button variant="primary" link="/pricing">{variant.cta}</Button>
                                 <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
                             </div>
                             {/*<StatsRow className="lg:justify-end" />*/}
@@ -354,7 +358,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                         <div>
                             <p data-hero-anim className="text-body leading-relaxed max-w-md sm:text-lg">{variant.subtext}</p>
                             <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8">
-                                <Button variant="primary" link="/register">{variant.cta}</Button>
+                                <Button variant="primary" link="/pricing">{variant.cta}</Button>
                                 <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
                             </div>
                         </div>
@@ -384,7 +388,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                     <p data-hero-anim className="text-body leading-relaxed max-w-lg sm:text-lg">{variant.subtext}</p>
                     <div data-hero-anim className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mt-8 w-full">
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4">
-                            <Button variant="primary" link="/register">{variant.cta}</Button>
+                            <Button variant="primary" link="/pricing">{variant.cta}</Button>
                             <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
                         </div>
                     </div>
@@ -413,7 +417,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                             <Divider className="max-w-lg" />
                             <p data-hero-anim className="text-body leading-relaxed max-w-lg sm:text-lg">{variant.subtext}</p>
                             <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8">
-                                <Button variant="primary" link="/register">{variant.cta}</Button>
+                                <Button variant="primary" link="/pricing">{variant.cta}</Button>
                                 <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
                             </div>
                             {/*<StatsRow />*/}
@@ -444,7 +448,7 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                 <Divider className="max-w-sm mx-auto" />
                 <p data-hero-anim className="text-body leading-relaxed max-w-xl sm:text-lg">{variant.subtext}</p>
                 <div data-hero-anim className="flex flex-wrap items-center justify-center gap-4 mt-8">
-                    <Button variant="primary" link="/register">{variant.cta}</Button>
+                    <Button variant="primary" link="/pricing">{variant.cta}</Button>
                     <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
                 </div>
                 <MobileCards dests={variant.destinations} />

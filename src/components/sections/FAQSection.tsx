@@ -25,7 +25,7 @@ const faqs = [
     },
     {
         question: "Is my health information secure?",
-        answer: "Yes. We follow HIPAA-compliant data handling practices. Your health data is encrypted in transit and at rest, never shared with third parties, and you can delete it at any time from your account settings.",
+        answer: "Yes. We follow NDPR-aligned data handling practices. Your health data is encrypted in transit and at rest, never shared with third parties, and you can delete it at any time from your account settings.",
     },
 ];
 

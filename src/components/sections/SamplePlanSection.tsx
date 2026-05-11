@@ -1,12 +1,9 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
     LucideSyringe,
     LucidePill,
     LucideAlertTriangle,
     LucideDroplets,
 } from "lucide-react";
-import Button from "../ui/Button";
 import AnimateIn from "../animations/AnimateIn";
 
 const planItems = [
@@ -33,12 +30,12 @@ const planItems = [
 ];
 
 const SamplePlanSection = () => {
-    const [destination, setDestination] = useState("");
-    const navigate = useNavigate();
+    // const [destination, setDestination] = useState("");
+    // const navigate = useNavigate();
 
-    const handleGetPlan = () => {
-        navigate(destination.trim() ? `/register?destination=${encodeURIComponent(destination.trim())}` : "/register");
-    };
+    // const handleGetPlan = () => {
+    //     navigate(destination.trim() ? `/register?destination=${encodeURIComponent(destination.trim())}` : "/register");
+    // };
 
     return (
         <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
@@ -100,25 +97,6 @@ const SamplePlanSection = () => {
                             </ul>
                         </div>
                     ))}
-                </div>
-
-                {/* CTA */}
-                <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <p className="text-sm text-muted font-medium">
-                        Type your destination below get your personalized plan in under 2 minutes.
-                    </p>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <input
-                            type="text"
-                            value={destination}
-                            onChange={(e) => setDestination(e.target.value)}
-                            placeholder="e.g. Thailand"
-                            className="w-40 bg-white border border-border-light rounded-xl px-3 py-2.5 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
-                        />
-                        <Button variant="primary" onClick={handleGetPlan} className="whitespace-nowrap">
-                            Get My Free Plan
-                        </Button>
-                    </div>
                 </div>
             </AnimateIn>
         </section>

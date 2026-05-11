@@ -8,16 +8,12 @@ import {
     LucideCheck,
     LucideCheckCircle,
     LucideChevronDown,
+    LucideChevronUp,
     LucidePlane,
-    LucideHeartPulse,
-    LucideSyringe,
-    LucideBug,
-    LucideShieldCheck,
-    LucideSparkles,
-    LucideSkipForward,
     LucidePlus,
     LucideX,
     LucideLoader2,
+    LucideUsers,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { canAccessHR } from "../../lib/canAccessHr";
@@ -27,10 +23,23 @@ import {
     useSaveQuestionnaireProgress,
     useGetQuestionnaireProgress,
     useCreateTravelPlan,
+    useAcceptQuestionnaireConsent,
+    useDoctorReviewers,
 } from "../../api/hooks";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { getAuthCookie } from "../../api/axios";
-import TripItineraryFlow from "../../components/plan/TripItineraryFlow";
+import TripItineraryFlow, {
+    hydrateLegacyTripItinerary,
+    type TripItineraryData,
+} from "../../components/plan/TripItineraryFlow";
+import { buildPlanPayloadFromAnswers } from "../../components/plan/PlanQuestionnaireFlow";
+import { validateTripItineraryDates } from "../../components/plan/tripItineraryValidation";
+import {
+    isDateOfBirthPlausible,
+    isPlausibleEmail,
+    isValidOptionalNonNegativeNumber,
+    todayIsoDateLocal,
+} from "../../lib/questionnaireFieldValidation";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -68,197 +77,53 @@ interface QuestionCategory {
     questions: string;
 }
 
-interface TripItineraryData {
-    tripType: "one" | "return" | "multi" | "transit";
-    oneFrom?: string;
-    oneTo?: string;
-    oneDepartureDate?: string;
-    oneLengthOfStay?: string;
-    onePurpose?: string;
-    oneFlightNumber?: string;
-    returnFrom?: string;
-    returnTo?: string;
-    returnDepartureDate?: string;
-    returnReturnDate?: string;
-    outboundFlightNumber?: string;
-    returnFlightNumber?: string;
-    multiDepartingFrom?: string;
-    multiFinalReturnDestination?: string;
-    multiLegs?: { country: string; city: string; arrivalDate: string; nights: string }[];
-    multiOverallReturnDate?: string;
-    transitFrom?: string;
-    transitFinalDestination?: string;
-    transitLocation?: string;
-    transitDuration?: string;
-    transitDepartureDate?: string;
-    transitReturnDate?: string;
-}
-
 function isTripItineraryComplete(data: TripItineraryData | undefined): boolean {
     if (!data) return false;
-    if (data.tripType === "one") {
-        return Boolean(
-            data.oneTo?.trim() &&
-            data.oneDepartureDate?.trim() &&
-            data.oneLengthOfStay?.trim() &&
-            data.onePurpose?.trim()
+    const d = hydrateLegacyTripItinerary(data);
+    let filled = false;
+    if (d.tripType === "one") {
+        filled = Boolean(
+            d.oneFromCity?.trim() &&
+                d.oneFromCountry?.trim() &&
+                d.oneToCity?.trim() &&
+                d.oneTo?.trim() &&
+                d.oneDepartureDate?.trim() &&
+                d.oneLengthOfStay?.trim()
         );
-    }
-    if (data.tripType === "return") {
-        return Boolean(
-            data.returnFrom?.trim() &&
-            data.returnTo?.trim() &&
-            data.returnDepartureDate?.trim() &&
-            data.returnReturnDate?.trim()
+    } else if (d.tripType === "return") {
+        filled = Boolean(
+            d.returnFromCity?.trim() &&
+                d.returnFromCountry?.trim() &&
+                d.returnToCity?.trim() &&
+                d.returnTo?.trim() &&
+                d.returnDepartureDate?.trim() &&
+                d.returnReturnDate?.trim()
         );
-    }
-    if (data.tripType === "multi") {
-        const legs = data.multiLegs || [];
+    } else if (d.tripType === "multi") {
+        const legs = d.multiLegs || [];
         if (legs.length < 1) return false;
-        return legs.every((leg) => leg.country?.trim() && leg.arrivalDate?.trim() && leg.nights?.trim());
-    }
-    if (data.tripType === "transit") {
-        return Boolean(
-            data.transitFrom?.trim() &&
-            data.transitFinalDestination?.trim() &&
-            data.transitLocation?.trim() &&
-            data.transitDuration?.trim() &&
-            data.transitDepartureDate?.trim()
+        if (!d.multiDepartingFromCity?.trim() || !d.multiDepartingFromCountry?.trim()) return false;
+        filled = legs.every((leg) => leg.country?.trim() && leg.arrivalDate?.trim() && leg.nights?.trim());
+    } else if (d.tripType === "transit") {
+        filled = Boolean(
+            d.transitFromCity?.trim() &&
+                d.transitFromCountry?.trim() &&
+                d.transitFinalDestinationCity?.trim() &&
+                d.transitFinalDestination?.trim() &&
+                d.transitLocation?.trim() &&
+                d.transitDuration?.trim() &&
+                d.transitDepartureDate?.trim()
         );
     }
-    return false;
+    return filled && validateTripItineraryDates(d) === null;
 }
 
-function daysInclusiveBetween(start?: string, end?: string): number {
-    if (!start?.trim() || !end?.trim()) return 0;
-    const a = new Date(start);
-    const b = new Date(end);
-    if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
-    const diff = Math.ceil((b.getTime() - a.getTime()) / 86400000) + 1;
-    return diff > 0 ? diff : 0;
-}
+const PREFILLED_KEYS = new Set(["full_name_passport", "email_address"]);
 
-const TRAVEL_PURPOSE_TO_PLAN: Record<string, string> = {
-    leisure_tourism: "Leisure",
-    business_work: "Business",
-    study_relocation: "Study",
-    visiting_family_friends: "Leisure",
-    religious_pilgrimage: "Other",
-    other: "Other",
-    // Backward compatibility for older seeded questionnaires.
-    tourism: "Leisure",
-    business: "Business",
-    visiting_family: "Leisure",
-    study_work: "Study",
-    volunteer: "Volunteer",
-    pilgrimage: "Other",
-};
-
-/** Build create-plan payload from questionnaire answers (travel section). */
-function derivePlanFromQuestionnaireAnswers(
-    answers: Record<string, unknown>
-): { destination: string; country: string; duration: number; purpose: string; medicalConsiderations: string } | null {
-    const newCountriesRaw = answers.travel_countries;
-    const newCountries = Array.isArray(newCountriesRaw)
-        ? (newCountriesRaw as string[]).map((c) => c.trim()).filter(Boolean)
-        : [];
-    const itinerary = (answers.trip_itinerary as TripItineraryData | undefined) ?? undefined;
-
-    const newCity = typeof answers.travel_city_region === "string"
-        ? answers.travel_city_region.trim()
-        : "";
-    const newDeparture = typeof answers.departure_date === "string"
-        ? answers.departure_date.trim()
-        : "";
-    const newReturnOrDuration = typeof answers.return_date_or_duration === "string"
-        ? answers.return_date_or_duration.trim()
-        : "";
-
-    let destination = "";
-    let country = "";
-    let duration = 0;
-
-    if (itinerary) {
-        const tripType = itinerary.tripType || "one";
-
-        if (tripType === "one") {
-            country = (itinerary.oneTo || "").trim();
-            const fromCity = (itinerary.oneFrom || "").trim();
-            destination = country;
-            if (fromCity) destination = `${fromCity} → ${destination}`;
-            duration = 7;
-        } else if (tripType === "return") {
-            country = (itinerary.returnTo || "").trim();
-            const from = (itinerary.returnFrom || "").trim();
-            destination = country;
-            if (from) destination = `${from} → ${destination}`;
-            duration = 7;
-        } else if (tripType === "multi") {
-            const legs = itinerary.multiLegs || [];
-            const parts = legs
-                .map((leg) => [leg.city, leg.country].filter(Boolean).join(", ").trim())
-                .filter(Boolean);
-            destination = parts.join(" → ");
-            country = (legs[0]?.country || "").trim();
-            duration = 7;
-        } else if (tripType === "transit") {
-            country = (itinerary.transitFinalDestination || "").trim();
-            destination = `${(itinerary.transitFrom || "").trim()} via ${(itinerary.transitLocation || "").trim()} → ${country}`;
-            duration = 7;
-        }
-    } else if (newCountries.length > 0) {
-        country = newCountries[0];
-        const countryList = newCountries.join(", ");
-        destination = [newCity, countryList].filter(Boolean).join(", ") || countryList;
-
-        if (/^\d{4}-\d{2}-\d{2}$/.test(newReturnOrDuration)) {
-            duration = daysInclusiveBetween(newDeparture, newReturnOrDuration);
-        } else {
-            const durationFromText = parseInt(newReturnOrDuration, 10);
-            if (!Number.isNaN(durationFromText) && durationFromText > 0) {
-                duration = durationFromText;
-            }
-        }
-    }
-
-    if (!country.trim()) return null;
-
-    const purposeSelections = answers.purpose_of_travel ?? answers.travel_purpose;
-    let purpose = "Leisure";
-    if (Array.isArray(purposeSelections) && purposeSelections.length > 0) {
-        const first = purposeSelections[0] as string;
-        purpose = TRAVEL_PURPOSE_TO_PLAN[first] ?? "Other";
-    }
-
-    const extra =
-        typeof answers.additional_relevant_activities === "string"
-            ? answers.additional_relevant_activities.trim()
-            : typeof answers.lifestyle_additional_context === "string"
-                ? answers.lifestyle_additional_context.trim()
-                : typeof answers.additional_considerations === "string"
-                    ? answers.additional_considerations.trim()
-                    : typeof answers.additional_information === "string"
-                        ? answers.additional_information.trim()
-                        : "";
-
-    return {
-        destination: destination || country,
-        country,
-        duration: duration > 0 ? duration : 7,
-        purpose,
-        medicalConsiderations: extra,
-    };
-}
-
-// ─── Icon Map ────────────────────────────────────────────────
-
-const iconMap: Record<string, React.ReactNode> = {
-    plane: <LucidePlane className="w-12 h-12" />,
-    "heart-pulse": <LucideHeartPulse className="w-12 h-12" />,
-    syringe: <LucideSyringe className="w-12 h-12" />,
-    bug: <LucideBug className="w-12 h-12" />,
-    "shield-check": <LucideShieldCheck className="w-12 h-12" />,
-};
+const CONSENT_TEXT =
+    "I hereby give Travel Medicine Advisory Global my explicit consent to collect, process, and store my personal and sensitive health information (including medical history, medications, pregnancy status, and risk behaviours) for the sole purpose of generating my personalised travel health advisory plan.";
+const DATA_PROTECTION_TEXT =
+    "We protect your information with encryption, multi-factor authentication, and strict security measures. We comply with the Nigeria Data Protection Act (NDPA) 2023. Your data will not be sold or shared without your permission.";
 
 // ─── Motion Variants ─────────────────────────────────────────
 
@@ -280,22 +145,6 @@ const questionVariants = {
         scale: 0.97,
         transition: { duration: 0.2, ease: "easeIn" as const },
     }),
-};
-
-const introVariants = {
-    hidden: { opacity: 0, y: 30, scale: 0.96 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        transition: { type: "spring" as const, stiffness: 280, damping: 26 },
-    },
-    exit: {
-        opacity: 0,
-        y: -24,
-        scale: 0.97,
-        transition: { duration: 0.22 },
-    },
 };
 
 // ─── shouldShowQuestion ───────────────────────────────────────
@@ -353,15 +202,20 @@ const TravelHealthQuestionnaire = () => {
     const saveProgress = useSaveQuestionnaireProgress();
     const { data: savedProgress } = useGetQuestionnaireProgress();
     const createPlan = useCreateTravelPlan();
+    const acceptConsent = useAcceptQuestionnaireConsent();
+    const { data: reviewers = [] } = useDoctorReviewers();
+    const isFreePlan = !user?.user_credit_plan || user.user_credit_plan.code === "ESSENTIAL";
 
     const [answers, setAnswers] = useState<Record<string, unknown>>({});
     const [categoryIndex, setCategoryIndex] = useState(0);
-    const [questionIndex, setQuestionIndex] = useState(-1);
     const [direction, setDirection] = useState(1);
-    const [showIntro, setShowIntro] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showComplete, setShowComplete] = useState(false);
     const [showCreatePlan, setShowCreatePlan] = useState(false);
+    const [medicalDisclaimerConsentGiven, setMedicalDisclaimerConsentGiven] =
+        useState(false);
+    const [riskConsentGiven, setRiskConsentGiven] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
     const [planForm, setPlanForm] = useState({
         destination: "",
         country: "",
@@ -372,31 +226,36 @@ const TravelHealthQuestionnaire = () => {
 
     // Mobile accordion state for progress tracker
     const [mobileAccordionOpen, setMobileAccordionOpen] = useState(false);
+    const [isSavingExit, setIsSavingExit] = useState(false);
+    const [wantsDoctorSelection, setWantsDoctorSelection] = useState(false);
+    const [selectedDoctorIds, setSelectedDoctorIds] = useState<number[]>([]);
 
     const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const pendingSaveRef = useRef(false);
-    const latestStateRef = useRef({ answers: {} as Record<string, unknown>, categoryIndex: 0, questionIndex: -1 });
+    const latestStateRef = useRef({ answers: {} as Record<string, unknown>, categoryIndex: 0, questionIndex: -1 as number });
     const restoredRef = useRef(false);
     const generatingPlanLabelRef = useRef({ destination: "", country: "" });
 
     const categories: (QuestionCategory & { parsedQuestions: Question[] })[] =
-        (categoriesRaw || []).map((cat: QuestionCategory) => ({
-            ...cat,
-            parsedQuestions: (
-                typeof cat.questions === "string"
+        (categoriesRaw || []).map((cat: QuestionCategory) => {
+            let parsed: Question[] = [];
+            try {
+                parsed = typeof cat.questions === "string"
                     ? JSON.parse(cat.questions)
-                    : cat.questions
-            ) as Question[],
-        }));
+                    : (cat.questions as Question[]) ?? [];
+            } catch {
+                parsed = [];
+            }
+            return { ...cat, parsedQuestions: Array.isArray(parsed) ? parsed : [] };
+        });
 
     const currentCategory = categories[categoryIndex];
+    const isRiskSection =
+        currentCategory?.category_key === "personal_health_risk_behaviours";
     const visibleQuestions =
         currentCategory?.parsedQuestions.filter(
             (q) => shouldShowQuestion(q, answers)
         ) || [];
-    const currentQuestion =
-        questionIndex >= 0 ? visibleQuestions[questionIndex] : null;
-
     // Restore progress (only once per mount, only if server returned valid progress)
     useEffect(() => {
         if (restoredRef.current) return;
@@ -416,17 +275,29 @@ const TravelHealthQuestionnaire = () => {
                 const catIdx = Math.max(0, p.categoryIndex || 0);
                 const qIdx = p.questionIndex ?? -1;
                 setCategoryIndex(catIdx);
-                setQuestionIndex(qIdx);
-                if (qIdx >= 0) setShowIntro(false);
+                if (catIdx > 0 || qIdx >= 0) {
+                    setMedicalDisclaimerConsentGiven(true);
+                }
             }
         }
     }, [savedProgress]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Pre-fill profile fields (same behaviour as PlanQuestionnaireFlow / create-plan)
+    useEffect(() => {
+        if (!user) return;
+        const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ").trim();
+        setAnswers((prev) => ({
+            ...prev,
+            ...(fullName && !prev.full_name_passport ? { full_name_passport: fullName } : {}),
+            ...(user.email && !prev.email_address ? { email_address: user.email } : {}),
+        }));
+    }, [user]);
+
     // Keep refs in sync with latest state and mark dirty
     useEffect(() => {
-        latestStateRef.current = { answers, categoryIndex, questionIndex };
+        latestStateRef.current = { answers, categoryIndex, questionIndex: -1 };
         if (Object.keys(answers).length > 0) pendingSaveRef.current = true;
-    }, [answers, categoryIndex, questionIndex]);
+    }, [answers, categoryIndex]);
 
     // Save progress every 2 minutes if dirty
     useEffect(() => {
@@ -465,10 +336,16 @@ const TravelHealthQuestionnaire = () => {
 
     // ─── Handlers ────────────────────────────────────────────
 
-    const setAnswer = (key: string, value: unknown) =>
+    const setAnswer = (key: string, value: unknown) => {
         setAnswers((prev) => ({ ...prev, [key]: value }));
+        setFieldErrors((prev) => {
+            const next = new Set(prev);
+            next.delete(key);
+            return next;
+        });
+    };
 
-    const toggleCheckbox = (key: string, value: string) =>
+    const toggleCheckbox = (key: string, value: string) => {
         setAnswers((prev) => {
             const current = (prev[key] as string[]) || [];
             return {
@@ -478,6 +355,12 @@ const TravelHealthQuestionnaire = () => {
                     : [...current, value],
             };
         });
+        setFieldErrors((prev) => {
+            const next = new Set(prev);
+            next.delete(key);
+            return next;
+        });
+    };
 
     const setVaccineStatus = (
         vaccineId: string,
@@ -499,67 +382,99 @@ const TravelHealthQuestionnaire = () => {
             };
         });
 
+    const handleSaveAndExit = async () => {
+        const dashboardPath = user && canAccessHR(user) ? "/hr" : "/dashboard";
+        setIsSavingExit(true);
+        try {
+            const s = latestStateRef.current;
+            await saveProgress.mutateAsync({
+                answers: s.answers,
+                categoryIndex: s.categoryIndex,
+                questionIndex: s.questionIndex,
+            });
+            pendingSaveRef.current = false;
+        } catch {
+            // still navigate so user isn't trapped
+        } finally {
+            setIsSavingExit(false);
+        }
+        navigate(dashboardPath);
+    };
+
     // ─── Navigation ──────────────────────────────────────────
 
     const goNext = () => {
-        if (currentQuestion && !isQuestionAnswered(currentQuestion, answers)) {
-            toast.error("Please answer this required question before continuing.");
+        if (categoryIndex === 0 && !medicalDisclaimerConsentGiven) {
+            toast.error("Please accept the medical disclaimer to continue.");
             return;
         }
-        setDirection(1);
-        const next = questionIndex + 1;
-        if (next >= visibleQuestions.length) {
-            const nextCat = categoryIndex + 1;
-            if (nextCat >= categories.length) {
-                handleSubmit();
-                return;
-            }
-            setCategoryIndex(nextCat);
-            setQuestionIndex(-1);
-            setShowIntro(true);
-        } else {
-            setQuestionIndex(next);
+        if (isRiskSection && !riskConsentGiven) {
+            toast.error(
+                "Please agree to answer this section before continuing.",
+            );
+            return;
         }
+        const errors = new Set<string>();
+        const toastMessages: string[] = [];
+        for (const q of visibleQuestions) {
+            if (!isQuestionAnswered(q, answers)) {
+                errors.add(q.key);
+                if (q.type === "trip_itinerary") {
+                    const d = hydrateLegacyTripItinerary(answers[q.key] as TripItineraryData);
+                    const tripErr = validateTripItineraryDates(d);
+                    if (tripErr) toastMessages.push(tripErr);
+                }
+            }
+        }
+        for (const q of visibleQuestions) {
+            const v = String(answers[q.key] ?? "").trim();
+            if (q.key === "date_of_birth" && v && !isDateOfBirthPlausible(v)) {
+                errors.add(q.key);
+                toastMessages.push("Date of birth cannot be in the future.");
+            }
+            if (q.key === "email_address" && v && !isPlausibleEmail(v)) {
+                errors.add(q.key);
+                toastMessages.push("Please enter a valid email address.");
+            }
+            if (
+                (q.key === "longest_flight_leg_hours" ||
+                 q.key === "total_flying_hours" ||
+                 q.key === "number_of_flight_legs") &&
+                v && !isValidOptionalNonNegativeNumber(v)
+            ) {
+                errors.add(q.key);
+                toastMessages.push(`Please enter a valid non-negative number for "${q.text}"`);
+            }
+        }
+        if (errors.size > 0) {
+            setFieldErrors(errors);
+            toast.error(toastMessages.length > 0 ? toastMessages[0] : "Please fill in all required fields.");
+            return;
+        }
+        setFieldErrors(new Set());
+        setDirection(1);
+        const nextCat = categoryIndex + 1;
+        if (nextCat >= categories.length) {
+            void handleSubmit();
+            return;
+        }
+        setCategoryIndex(nextCat);
     };
 
     const goPrev = () => {
+        if (categoryIndex === 0) return;
         setDirection(-1);
-        if (questionIndex <= 0) {
-            if (questionIndex === 0) {
-                setQuestionIndex(-1);
-                setShowIntro(true);
-                return;
-            }
-            if (categoryIndex > 0) {
-                const prevCat = categoryIndex - 1;
-                const prevVisible = categories[prevCat].parsedQuestions.filter(
-                    (q) => shouldShowQuestion(q, answers)
-                );
-                setCategoryIndex(prevCat);
-                setQuestionIndex(prevVisible.length - 1);
-                setShowIntro(false);
-            }
-        } else {
-            setQuestionIndex(questionIndex - 1);
-        }
-    };
-
-    const startCategory = () => {
-        setShowIntro(false);
-        setDirection(1);
-        setQuestionIndex(0);
+        setCategoryIndex((i) => i - 1);
     };
 
     const skipCategory = () => {
         setDirection(1);
         const nextCat = categoryIndex + 1;
         if (nextCat >= categories.length) {
-            handleSubmit();
+            void handleSubmit();
             return;
         }
         setCategoryIndex(nextCat);
-        setQuestionIndex(-1);
-        setShowIntro(true);
     };
 
     const handleSubmit = async () => {
@@ -582,21 +497,10 @@ const TravelHealthQuestionnaire = () => {
     // Calculate progress based on sections completed + current section progress
     // This makes early progress more rewarding and feels less overwhelming
     const totalSections = categories.length;
-    const completedSections = categoryIndex;
-    const currentSectionProgress = visibleQuestions.length > 0
-        ? (questionIndex + 1) / visibleQuestions.length
-        : 0;
+    const progressPercent =
+        totalSections > 0 ? Math.min(Math.round((categoryIndex / totalSections) * 100), 100) : 0;
 
-    const progressPercent = totalSections > 0
-        ? Math.min(
-            Math.round(((completedSections + currentSectionProgress) / totalSections) * 100),
-            100
-        )
-        : 0;
-
-    const isLastQuestion =
-        categoryIndex === categories.length - 1 &&
-        questionIndex >= visibleQuestions.length - 1;
+    const isLastSection = categoryIndex === categories.length - 1;
 
     // ─── Loading ─────────────────────────────────────────────
 
@@ -619,9 +523,13 @@ const TravelHealthQuestionnaire = () => {
     const submitTravelPlan = async (payload: {
         destination: string;
         country: string;
-        duration: number;
+        duration: number | null;
         purpose: string;
         medicalConsiderations: string;
+        selectedDoctorIds?: number[];
+        tripType?: "one-way" | "return" | "multi" | "transit";
+        tripDetailsJson?: string;
+        questionnaireResponses?: string;
     }) => {
         const credits = user?.credits ?? 0;
         if (credits <= 0) {
@@ -636,20 +544,24 @@ const TravelHealthQuestionnaire = () => {
             const result = await createPlan.mutateAsync({
                 destination: payload.destination,
                 country: payload.country,
-                duration: payload.duration,
+                duration: payload.duration ?? undefined,
                 purpose: payload.purpose,
-                tripType: "one-way",
-                tripDetailsJson: JSON.stringify({
-                    tripType: "one-way",
-                    stops: [
-                        {
-                            city: payload.destination,
-                            country: payload.country,
-                            order: 1,
-                        },
-                    ],
-                }),
+                tripType: payload.tripType ?? "one-way",
+                tripDetailsJson:
+                    payload.tripDetailsJson ??
+                    JSON.stringify({
+                        tripType: "one-way",
+                        stops: [
+                            {
+                                city: payload.destination,
+                                country: payload.country,
+                                order: 1,
+                            },
+                        ],
+                    }),
                 medicalConsiderations: payload.medicalConsiderations,
+                questionnaireResponses: payload.questionnaireResponses,
+                selectedDoctorIds: payload.selectedDoctorIds ?? [],
                 userId: user?.id,
                 status: "completed",
                 riskScore: 1,
@@ -672,14 +584,24 @@ const TravelHealthQuestionnaire = () => {
         await submitTravelPlan({
             destination: planForm.destination,
             country: planForm.country,
-            duration: parseInt(planForm.duration, 10) || 0,
+            duration:
+                planForm.duration.trim() !== "" ? parseInt(planForm.duration, 10) || null : null,
             purpose: planForm.purpose,
             medicalConsiderations: planForm.medicalConsiderations,
+            selectedDoctorIds: wantsDoctorSelection ? selectedDoctorIds : [],
         });
     };
 
     const handlePlanFirstTrip = async () => {
-        const derived = derivePlanFromQuestionnaireAnswers(answers);
+        const tripRaw = answers.trip_itinerary as TripItineraryData | undefined;
+        if (tripRaw) {
+            const tripErr = validateTripItineraryDates(hydrateLegacyTripItinerary(tripRaw));
+            if (tripErr) {
+                toast.error(tripErr);
+                return;
+            }
+        }
+        const derived = buildPlanPayloadFromAnswers(answers);
         if (!derived) {
             toast.error(
                 "We couldn't read your trip details. Add your destination below to generate a plan."
@@ -690,11 +612,21 @@ const TravelHealthQuestionnaire = () => {
         setPlanForm({
             destination: derived.destination,
             country: derived.country,
-            duration: String(derived.duration),
+            duration: derived.duration != null ? String(derived.duration) : "",
             purpose: derived.purpose,
             medicalConsiderations: derived.medicalConsiderations,
         });
-        await submitTravelPlan(derived);
+        await submitTravelPlan({
+            destination: derived.destination,
+            country: derived.country,
+            duration: derived.duration,
+            purpose: derived.purpose,
+            medicalConsiderations: derived.medicalConsiderations,
+            tripType: derived.tripType,
+            tripDetailsJson: derived.tripDetailsJson,
+            questionnaireResponses: JSON.stringify(derived.questionnaireResponses),
+            selectedDoctorIds: wantsDoctorSelection ? selectedDoctorIds : [],
+        });
     };
 
     // ─── Complete Screen ──────────────────────────────────────
@@ -746,12 +678,16 @@ const TravelHealthQuestionnaire = () => {
             <div className="min-h-screen bg-background-primary flex items-center justify-center px-6">
                 <div className="w-full max-w-lg">
                     <AnimatePresence mode="wait">
-                        {!showCreatePlan ? (
+                        {!showCreatePlan ?
                             <motion.div
                                 key="complete"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20, transition: { duration: 0.2 } }}
+                                exit={{
+                                    opacity: 0,
+                                    y: -20,
+                                    transition: { duration: 0.2 },
+                                }}
                                 className="max-w-sm mx-auto"
                             >
                                 <motion.div
@@ -783,10 +719,129 @@ const TravelHealthQuestionnaire = () => {
                                     transition={{ delay: 0.3 }}
                                     className="text-sm text-muted leading-relaxed mb-8 text-center"
                                 >
-                                    Your health profile is complete. We will use the trip you
-                                    entered at the start of the questionnaire to generate your
-                                    first advisory.
+                                    Your travel health questionnaire is
+                                    complete. We'll use the trip details you
+                                    provided to generate your initial travel
+                                    plan.
                                 </motion.p>
+
+                                {!isFreePlan && reviewers.length > 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.35 }}
+                                        className="mb-6 rounded-2xl border border-border-light/60 bg-background-primary/60 p-4 space-y-3"
+                                    >
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setWantsDoctorSelection((v) => {
+                                                    if (v)
+                                                        setSelectedDoctorIds(
+                                                            [],
+                                                        );
+                                                    return !v;
+                                                });
+                                            }}
+                                            className="flex w-full items-center justify-between gap-4 text-left cursor-pointer"
+                                        >
+                                            <div>
+                                                <p className="text-sm font-semibold text-heading flex items-center gap-1.5">
+                                                    <LucideUsers className="h-4 w-4 text-accent" />
+                                                    Choose a reviewing doctor
+                                                    <span className="text-xs font-normal text-muted ml-1">
+                                                        (optional)
+                                                    </span>
+                                                </p>
+                                                <p className="text-xs text-muted mt-0.5">
+                                                    {wantsDoctorSelection ?
+                                                        "Select one or more doctors to review your plan."
+                                                    :   "By default, any verified doctor can review your plan."
+                                                    }
+                                                </p>
+                                            </div>
+                                            {wantsDoctorSelection ?
+                                                <LucideChevronUp className="h-4 w-4 shrink-0 text-muted" />
+                                            :   <LucideChevronDown className="h-4 w-4 shrink-0 text-muted" />
+                                            }
+                                        </button>
+                                        {wantsDoctorSelection && (
+                                            <div className="grid gap-2 pt-1">
+                                                {reviewers.map((doctor) => {
+                                                    const checked =
+                                                        selectedDoctorIds.includes(
+                                                            doctor.userId,
+                                                        );
+                                                    const name =
+                                                        `${doctor.firstName ?? ""} ${doctor.lastName ?? ""}`.trim() ||
+                                                        doctor.email;
+                                                    return (
+                                                        <button
+                                                            key={doctor.userId}
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setSelectedDoctorIds(
+                                                                    (ids) =>
+                                                                        (
+                                                                            ids.includes(
+                                                                                doctor.userId,
+                                                                            )
+                                                                        ) ?
+                                                                            ids.filter(
+                                                                                (
+                                                                                    id,
+                                                                                ) =>
+                                                                                    id !==
+                                                                                    doctor.userId,
+                                                                            )
+                                                                        :   [
+                                                                                ...ids,
+                                                                                doctor.userId,
+                                                                            ],
+                                                                )
+                                                            }
+                                                            className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors cursor-pointer ${checked ? "border-accent bg-accent/5" : "border-border-light bg-white hover:border-border"}`}
+                                                        >
+                                                            {(
+                                                                doctor.profilePictureUrl
+                                                            ) ?
+                                                                <img
+                                                                    src={
+                                                                        doctor.profilePictureUrl
+                                                                    }
+                                                                    alt=""
+                                                                    className="h-9 w-9 rounded-full object-cover shrink-0"
+                                                                />
+                                                            :   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                                                                    <LucideUsers className="h-4 w-4" />
+                                                                </div>
+                                                            }
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-sm font-semibold text-heading">
+                                                                    {name}
+                                                                </p>
+                                                                {doctor.bio && (
+                                                                    <p className="mt-0.5 line-clamp-1 text-xs text-muted">
+                                                                        {
+                                                                            doctor.bio
+                                                                        }
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <div
+                                                                className={`h-4 w-4 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${checked ? "border-accent bg-accent" : "border-border"}`}
+                                                            >
+                                                                {checked && (
+                                                                    <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                                                                )}
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
 
                                 <motion.button
                                     initial={{ opacity: 0, y: 20 }}
@@ -799,13 +854,21 @@ const TravelHealthQuestionnaire = () => {
                                     }}
                                     type="button"
                                     onClick={() => void handlePlanFirstTrip()}
-                                    disabled={credits === 0 || createPlan.isPending}
+                                    disabled={
+                                        credits === 0 ||
+                                        createPlan.isPending ||
+                                        (wantsDoctorSelection &&
+                                            selectedDoctorIds.length === 0)
+                                    }
                                     className="w-full mb-3 p-7 rounded-3xl outline-dark/20 outline-2 relative overflow-hidden group cursor-pointer text-left disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <div className="absolute inset-0 bg-linear-to-br from-accent/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
                                     <motion.div
-                                        animate={{ x: [0, 6, 0], y: [0, -3, 0] }}
+                                        animate={{
+                                            x: [0, 6, 0],
+                                            y: [0, -3, 0],
+                                        }}
                                         transition={{
                                             duration: 2.8,
                                             repeat: Infinity,
@@ -819,22 +882,17 @@ const TravelHealthQuestionnaire = () => {
                                     <p className="text-xl font-serif mb-1">
                                         Generate your travel health plan
                                     </p>
-                                    <p className="text-xs mb-5 leading-relaxed">
-                                        Uses your questionnaire trip, dates, and purpose — one
-                                        credit, no extra forms.
-                                    </p>
-                                    <span className="inline-flex items-center gap-1.5 text-accent text-xs font-semibold">
-                                        Generate plan{" "}
-                                        <LucideArrowRight className="w-3.5 h-3.5" />
-                                    </span>
                                 </motion.button>
 
                                 {credits === 0 && (
                                     <p className="text-center text-xs text-muted mb-3">
-                                        You need at least one credit to generate a plan.{" "}
+                                        You need at least one credit to generate
+                                        a plan.{" "}
                                         <button
                                             type="button"
-                                            onClick={() => navigate(dashboardPath)}
+                                            onClick={() =>
+                                                navigate(dashboardPath)
+                                            }
                                             className="text-accent font-medium hover:underline cursor-pointer"
                                         >
                                             Go to dashboard
@@ -842,29 +900,6 @@ const TravelHealthQuestionnaire = () => {
                                         to purchase credits.
                                     </p>
                                 )}
-
-                                <motion.button
-                                    type="button"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: 0.55 }}
-                                    onClick={() => {
-                                        const d = derivePlanFromQuestionnaireAnswers(answers);
-                                        if (d) {
-                                            setPlanForm({
-                                                destination: d.destination,
-                                                country: d.country,
-                                                duration: String(d.duration),
-                                                purpose: d.purpose,
-                                                medicalConsiderations: d.medicalConsiderations,
-                                            });
-                                        }
-                                        setShowCreatePlan(true);
-                                    }}
-                                    className="w-full py-2.5 text-xs text-muted font-medium hover:text-heading transition-colors cursor-pointer"
-                                >
-                                    Enter trip details manually instead
-                                </motion.button>
 
                                 <motion.button
                                     initial={{ opacity: 0 }}
@@ -876,12 +911,15 @@ const TravelHealthQuestionnaire = () => {
                                     Take me to the dashboard
                                 </motion.button>
                             </motion.div>
-                        ) : (
-                            <motion.div
+                        :   <motion.div
                                 key="create-plan"
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                                transition={{
+                                    type: "spring",
+                                    stiffness: 300,
+                                    damping: 28,
+                                }}
                             >
                                 <button
                                     type="button"
@@ -893,8 +931,15 @@ const TravelHealthQuestionnaire = () => {
 
                                 <div className="flex items-center gap-3 mb-2">
                                     <motion.div
-                                        animate={{ x: [0, 4, 0], y: [0, -2, 0] }}
-                                        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                                        animate={{
+                                            x: [0, 4, 0],
+                                            y: [0, -2, 0],
+                                        }}
+                                        transition={{
+                                            duration: 2.8,
+                                            repeat: Infinity,
+                                            ease: "easeInOut",
+                                        }}
                                     >
                                         <LucidePlane className="w-6 h-6 text-accent" />
                                     </motion.div>
@@ -903,7 +948,8 @@ const TravelHealthQuestionnaire = () => {
                                     </h1>
                                 </div>
                                 <p className="text-sm text-muted mb-8 leading-relaxed">
-                                    Tell us about your trip and we'll generate a personalised health advisory.
+                                    Tell us about your trip and we'll generate a
+                                    personalised health advisory.
                                 </p>
 
                                 {credits === 0 && (
@@ -912,7 +958,9 @@ const TravelHealthQuestionnaire = () => {
                                             You have no credits remaining.{" "}
                                             <button
                                                 type="button"
-                                                onClick={() => navigate(dashboardPath)}
+                                                onClick={() =>
+                                                    navigate(dashboardPath)
+                                                }
                                                 className="text-accent cursor-pointer hover:underline"
                                             >
                                                 Go to dashboard
@@ -922,7 +970,10 @@ const TravelHealthQuestionnaire = () => {
                                     </div>
                                 )}
 
-                                <form onSubmit={handleCreatePlan} className="space-y-5">
+                                <form
+                                    onSubmit={handleCreatePlan}
+                                    className="space-y-5"
+                                >
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
@@ -931,7 +982,12 @@ const TravelHealthQuestionnaire = () => {
                                             <input
                                                 type="text"
                                                 value={planForm.destination}
-                                                onChange={(e) => updatePlanForm("destination", e.target.value)}
+                                                onChange={(e) =>
+                                                    updatePlanForm(
+                                                        "destination",
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 placeholder="e.g. Bogota & Cartagena"
                                                 className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
                                                 required
@@ -943,7 +999,12 @@ const TravelHealthQuestionnaire = () => {
                                             </label>
                                             <CountryPicker
                                                 value={planForm.country}
-                                                onChange={(name) => updatePlanForm("country", name)}
+                                                onChange={(name) =>
+                                                    updatePlanForm(
+                                                        "country",
+                                                        name,
+                                                    )
+                                                }
                                                 inputClassName="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 pr-10 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
                                                 placeholder="e.g. Colombia"
                                             />
@@ -958,7 +1019,12 @@ const TravelHealthQuestionnaire = () => {
                                             <input
                                                 type="number"
                                                 value={planForm.duration}
-                                                onChange={(e) => updatePlanForm("duration", e.target.value)}
+                                                onChange={(e) =>
+                                                    updatePlanForm(
+                                                        "duration",
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 placeholder="e.g. 10"
                                                 className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200"
                                                 required
@@ -970,7 +1036,12 @@ const TravelHealthQuestionnaire = () => {
                                             </label>
                                             <select
                                                 value={planForm.purpose}
-                                                onChange={(e) => updatePlanForm("purpose", e.target.value)}
+                                                onChange={(e) =>
+                                                    updatePlanForm(
+                                                        "purpose",
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading outline-none focus:border-accent transition-colors duration-200"
                                             >
                                                 <option>Leisure</option>
@@ -984,27 +1055,168 @@ const TravelHealthQuestionnaire = () => {
 
                                     <div>
                                         <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                            Medical considerations <span className="text-muted font-normal normal-case">(optional)</span>
+                                            Medical considerations{" "}
+                                            <span className="text-muted font-normal normal-case">
+                                                (optional)
+                                            </span>
                                         </label>
                                         <textarea
-                                            value={planForm.medicalConsiderations}
-                                            onChange={(e) => updatePlanForm("medicalConsiderations", e.target.value)}
+                                            value={
+                                                planForm.medicalConsiderations
+                                            }
+                                            onChange={(e) =>
+                                                updatePlanForm(
+                                                    "medicalConsiderations",
+                                                    e.target.value,
+                                                )
+                                            }
                                             placeholder="e.g. I take blood thinners, have asthma, or am pregnant"
                                             rows={3}
                                             className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-3.5 text-sm text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-colors duration-200 resize-none"
                                         />
                                     </div>
 
+                                    {!isFreePlan && reviewers.length > 0 && (
+                                        <div className="rounded-2xl border border-border-light/60 bg-background-primary/60 p-4 space-y-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setWantsDoctorSelection(
+                                                        (v) => {
+                                                            if (v)
+                                                                setSelectedDoctorIds(
+                                                                    [],
+                                                                );
+                                                            return !v;
+                                                        },
+                                                    );
+                                                }}
+                                                className="flex w-full items-center justify-between gap-4 text-left cursor-pointer"
+                                            >
+                                                <div>
+                                                    <p className="text-sm font-semibold text-heading flex items-center gap-1.5">
+                                                        <LucideUsers className="h-4 w-4 text-accent" />
+                                                        Choose a reviewing
+                                                        doctor
+                                                        <span className="text-xs font-normal text-muted ml-1">
+                                                            (optional)
+                                                        </span>
+                                                    </p>
+                                                    <p className="text-xs text-muted mt-0.5">
+                                                        {wantsDoctorSelection ?
+                                                            "Select one or more doctors to review your plan."
+                                                        :   "By default, any verified doctor can review your plan."
+                                                        }
+                                                    </p>
+                                                </div>
+                                                {wantsDoctorSelection ?
+                                                    <LucideChevronUp className="h-4 w-4 shrink-0 text-muted" />
+                                                :   <LucideChevronDown className="h-4 w-4 shrink-0 text-muted" />
+                                                }
+                                            </button>
+                                            {wantsDoctorSelection && (
+                                                <div className="grid gap-2 pt-1">
+                                                    {reviewers.map((doctor) => {
+                                                        const checked =
+                                                            selectedDoctorIds.includes(
+                                                                doctor.userId,
+                                                            );
+                                                        const name =
+                                                            `${doctor.firstName ?? ""} ${doctor.lastName ?? ""}`.trim() ||
+                                                            doctor.email;
+                                                        return (
+                                                            <button
+                                                                key={
+                                                                    doctor.userId
+                                                                }
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setSelectedDoctorIds(
+                                                                        (
+                                                                            ids,
+                                                                        ) =>
+                                                                            (
+                                                                                ids.includes(
+                                                                                    doctor.userId,
+                                                                                )
+                                                                            ) ?
+                                                                                ids.filter(
+                                                                                    (
+                                                                                        id,
+                                                                                    ) =>
+                                                                                        id !==
+                                                                                        doctor.userId,
+                                                                                )
+                                                                            :   [
+                                                                                    ...ids,
+                                                                                    doctor.userId,
+                                                                                ],
+                                                                    )
+                                                                }
+                                                                className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors cursor-pointer ${checked ? "border-accent bg-accent/5" : "border-border-light bg-white hover:border-border"}`}
+                                                            >
+                                                                {(
+                                                                    doctor.profilePictureUrl
+                                                                ) ?
+                                                                    <img
+                                                                        src={
+                                                                            doctor.profilePictureUrl
+                                                                        }
+                                                                        alt=""
+                                                                        className="h-9 w-9 rounded-full object-cover shrink-0"
+                                                                    />
+                                                                :   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                                                                        <LucideUsers className="h-4 w-4" />
+                                                                    </div>
+                                                                }
+                                                                <div className="min-w-0 flex-1">
+                                                                    <p className="text-sm font-semibold text-heading">
+                                                                        {name}
+                                                                    </p>
+                                                                    {doctor.bio && (
+                                                                        <p className="mt-0.5 line-clamp-1 text-xs text-muted">
+                                                                            {
+                                                                                doctor.bio
+                                                                            }
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                                <div
+                                                                    className={`h-4 w-4 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${checked ? "border-accent bg-accent" : "border-border"}`}
+                                                                >
+                                                                    {checked && (
+                                                                        <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                                                                    )}
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-border-light/40">
                                         <p className="text-xs text-muted">
-                                            This will use <strong className="text-heading">1 credit</strong>. You have {credits} remaining.
+                                            This will use{" "}
+                                            <strong className="text-heading">
+                                                1 credit
+                                            </strong>
+                                            . You have {credits} remaining.
                                         </p>
                                         <button
                                             type="submit"
-                                            disabled={credits === 0 || createPlan.isPending}
+                                            disabled={
+                                                credits === 0 ||
+                                                createPlan.isPending ||
+                                                (wantsDoctorSelection &&
+                                                    selectedDoctorIds.length ===
+                                                        0)
+                                            }
                                             className="py-3.5 px-8 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
                                         >
-                                            Generate plan <LucideArrowRight className="w-4 h-4" />
+                                            Generate plan{" "}
+                                            <LucideArrowRight className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </form>
@@ -1017,7 +1229,7 @@ const TravelHealthQuestionnaire = () => {
                                     Skip — take me to the dashboard
                                 </button>
                             </motion.div>
-                        )}
+                        }
                     </AnimatePresence>
                 </div>
             </div>
@@ -1030,7 +1242,7 @@ const TravelHealthQuestionnaire = () => {
 
     return (
         <div className="min-h-screen bg-background-primary flex flex-col lg:flex-row">
-
+            <Toaster position="top-right" />
             {/* ── Mobile Top Bar / Desktop Minimal Header ─────────────────────────────────── */}
             <div className="sticky top-0 z-30 px-5 sm:px-8 py-4 flex items-center justify-between border-b border-border-light/60 bg-background-primary/80 backdrop-blur-md lg:fixed lg:w-full">
                 <span className="text-heading tracking-tight text-lg font-serif font-medium select-none">
@@ -1052,14 +1264,11 @@ const TravelHealthQuestionnaire = () => {
                         </span>
                     </div>
                     <button
-                        onClick={() =>
-                            navigate(
-                                user && canAccessHR(user) ? "/hr" : "/dashboard"
-                            )
-                        }
-                        className="text-xs font-medium text-muted hover:text-heading transition-colors cursor-pointer"
+                        onClick={() => void handleSaveAndExit()}
+                        disabled={isSavingExit}
+                        className="text-xs font-medium text-muted hover:text-heading transition-colors cursor-pointer disabled:opacity-50"
                     >
-                        Save & exit
+                        {isSavingExit ? "Saving…" : "Save & exit"}
                     </button>
                 </div>
             </div>
@@ -1070,8 +1279,12 @@ const TravelHealthQuestionnaire = () => {
                     {/* Progress header */}
                     <div className="mb-8">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-medium text-heading">Progress</span>
-                            <span className="text-sm font-bold text-accent">{progressPercent}%</span>
+                            <span className="text-sm font-medium text-heading">
+                                Progress
+                            </span>
+                            <span className="text-sm font-bold text-accent">
+                                {progressPercent}%
+                            </span>
                         </div>
                         <div className="h-2 rounded-full bg-border-light overflow-hidden">
                             <motion.div
@@ -1088,31 +1301,38 @@ const TravelHealthQuestionnaire = () => {
                         {categories.map((cat, i) => (
                             <div
                                 key={cat.category_key}
-                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${i === categoryIndex
-                                    ? "bg-accent/10 border border-accent/20"
-                                    : i < categoryIndex
-                                        ? "text-accent"
-                                        : "text-muted"
-                                    }`}
+                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${
+                                    i === categoryIndex ?
+                                        "bg-accent/10 border border-accent/20"
+                                    : i < categoryIndex ? "text-accent"
+                                    : "text-muted"
+                                }`}
                             >
                                 <div
-                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${i < categoryIndex
-                                        ? "bg-accent text-white"
-                                        : i === categoryIndex
-                                            ? "bg-heading text-white"
-                                            : "bg-border-light text-muted"
-                                        }`}
+                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
+                                        i < categoryIndex ?
+                                            "bg-accent text-white"
+                                        : i === categoryIndex ?
+                                            "bg-heading text-white"
+                                        :   "bg-border-light text-muted"
+                                    }`}
                                 >
-                                    {i < categoryIndex ? <LucideCheck className="w-3.5 h-3.5" /> : i + 1}
+                                    {i < categoryIndex ?
+                                        <LucideCheck className="w-3.5 h-3.5" />
+                                    :   i + 1}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className={`text-sm font-medium truncate ${i === categoryIndex ? "text-heading" : ""
-                                        }`}>
+                                    <p
+                                        className={`text-sm font-medium truncate ${
+                                            i === categoryIndex ? "text-heading"
+                                            :   ""
+                                        }`}
+                                    >
                                         {cat.category_name}
                                     </p>
                                     {i === categoryIndex && (
                                         <p className="text-xs text-muted mt-0.5">
-                                            {questionIndex >= 0 ? `Question ${questionIndex + 1} of ${visibleQuestions.length}` : "Introduction"}
+                                            In progress
                                         </p>
                                     )}
                                 </div>
@@ -1136,17 +1356,24 @@ const TravelHealthQuestionnaire = () => {
                             {categoryIndex + 1}
                         </div>
                         <div className="text-left">
-                            <p className="text-xs text-muted font-medium">Section {categoryIndex + 1} of {categories.length}</p>
-                            <p className="text-sm font-semibold text-heading truncate max-w-[180px]">
+                            <p className="text-xs text-muted font-medium">
+                                Section {categoryIndex + 1} of{" "}
+                                {categories.length}
+                            </p>
+                            <p className="text-sm font-semibold text-heading truncate max-w-45">
                                 {currentCategory?.category_name || "Loading..."}
                             </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
                         {/* Progress percentage */}
-                        <span className="text-sm font-bold text-accent tabular-nums">{progressPercent}%</span>
+                        <span className="text-sm font-bold text-accent tabular-nums">
+                            {progressPercent}%
+                        </span>
                         {/* Chevron */}
-                        <div className={`transition-transform duration-200 ${mobileAccordionOpen ? "rotate-180" : ""}`}>
+                        <div
+                            className={`transition-transform duration-200 ${mobileAccordionOpen ? "rotate-180" : ""}`}
+                        >
                             <LucideChevronDown className="w-5 h-5 text-muted" />
                         </div>
                     </div>
@@ -1171,36 +1398,36 @@ const TravelHealthQuestionnaire = () => {
                                             if (i !== categoryIndex) {
                                                 setDirection(i > categoryIndex ? 1 : -1);
                                                 setCategoryIndex(i);
-                                                setQuestionIndex(-1);
-                                                setShowIntro(true);
                                             }
                                             setMobileAccordionOpen(false);
                                         }}
                                         disabled={i === categoryIndex}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${i === categoryIndex
-                                            ? "bg-accent/10 border border-accent/20"
-                                            : i < categoryIndex
-                                                ? "hover:bg-accent/5 text-accent"
-                                                : "hover:bg-border-light/50 text-muted"
-                                            } ${i !== categoryIndex ? "cursor-pointer" : "cursor-default"}`}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                                            i === categoryIndex ?
+                                                "bg-accent/10 border border-accent/20"
+                                            : i < categoryIndex ?
+                                                "hover:bg-accent/5 text-accent"
+                                            :   "hover:bg-border-light/50 text-muted"
+                                        } ${i !== categoryIndex ? "cursor-pointer" : "cursor-default"}`}
                                     >
                                         {/* Status indicator */}
                                         <div
-                                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${i < categoryIndex
-                                                ? "bg-accent text-white"
-                                                : i === categoryIndex
-                                                    ? "bg-heading text-white"
-                                                    : "bg-border-light text-muted"
-                                                }`}
+                                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
+                                                i < categoryIndex ?
+                                                    "bg-accent text-white"
+                                                : i === categoryIndex ?
+                                                    "bg-heading text-white"
+                                                :   "bg-border-light text-muted"
+                                            }`}
                                         >
-                                            {i < categoryIndex ? (
+                                            {i < categoryIndex ?
                                                 <LucideCheck className="w-3.5 h-3.5" />
-                                            ) : (
-                                                i + 1
-                                            )}
+                                            :   i + 1}
                                         </div>
                                         {/* Section name */}
-                                        <span className={`text-sm font-medium truncate ${i === categoryIndex ? "text-heading" : ""}`}>
+                                        <span
+                                            className={`text-sm font-medium truncate ${i === categoryIndex ? "text-heading" : ""}`}
+                                        >
                                             {cat.category_name}
                                         </span>
                                         {/* Completed indicator */}
@@ -1216,159 +1443,220 @@ const TravelHealthQuestionnaire = () => {
             </div>
 
             {/* ── Main Content ─────────────────────────────── */}
-            <div className="flex-1 flex items-start sm:items-center justify-center px-5 sm:px-8 pt-6 pb-32 lg:pt-24">
+            <div className="flex-1 flex items-start sm:items-center justify-center px-3 sm:px-8 pt-6 pb-32 lg:pt-24">
                 <div className="w-full max-w-5xl flex justify-center">
-                    <div className="w-full max-w-lg">
+                    <div className="w-full max-w-3xl">
                         <AnimatePresence mode="wait" custom={direction}>
-                            {showIntro ? (
-                                <motion.div
-                                    key={`intro-${categoryIndex}`}
-                                    variants={introVariants}
-                                    initial="hidden"
-                                    animate="visible"
-                                    exit="exit"
-                                    className="text-center py-8 sm:py-16"
-                                >
-                                    {/* Icon */}
-                                    <motion.div
-                                        initial={{ scale: 0, rotate: -25 }}
-                                        animate={{ scale: 1, rotate: 0 }}
-                                        transition={{
-                                            delay: 0.1,
-                                            type: "spring",
-                                            stiffness: 260,
-                                            damping: 18,
-                                        }}
-                                        className="w-24 h-24 rounded-3xl bg-accent/10 flex items-center justify-center mx-auto mb-8 text-accent"
-                                    >
-                                        {iconMap[currentCategory.category_icon] || (
-                                            <LucideSparkles className="w-12 h-12" />
-                                        )}
-                                    </motion.div>
-
-                                    {/* Label */}
-                                    <motion.p
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        transition={{ delay: 0.2 }}
-                                        className="text-sm font-bold tracking-[0.14em] text-accent uppercase mb-4"
-                                    >
-                                        Section {categoryIndex + 1} of {categories.length}
-                                    </motion.p>
-
-                                    {/* Title */}
-                                    <motion.h2
-                                        initial={{ opacity: 0, y: 14 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.25 }}
-                                        className="text-4xl sm:text-5xl font-serif text-heading mb-5 leading-tight"
-                                    >
-                                        {currentCategory.category_name}
-                                    </motion.h2>
-
-                                    {/* Description */}
-                                    <motion.p
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.32 }}
-                                        className="text-base text-muted max-w-sm mx-auto leading-relaxed mb-12"
-                                    >
-                                        {currentCategory.category_description}
-                                    </motion.p>
-
-                                    {/* Actions */}
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.4 }}
-                                        className="flex items-center justify-center gap-3"
-                                    >
-                                        <button
-                                            onClick={startCategory}
-                                            className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl bg-dark text-white font-semibold text-sm cursor-pointer hover:bg-darkest transition-all duration-200"
-                                        >
-                                            Begin <LucideArrowRight className="w-4 h-4" />
-                                        </button>
-                                        {currentCategory.is_optional && (
-                                            <button
-                                                onClick={skipCategory}
-                                                className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-white border border-border-light text-muted font-semibold text-sm cursor-pointer hover:border-border hover:text-heading transition-all duration-200"
-                                            >
-                                                <LucideSkipForward className="w-4 h-4" />
-                                                Skip
-                                            </button>
-                                        )}
-                                    </motion.div>
-                                </motion.div>
-                            ) : currentQuestion ? (
-                                <motion.div
-                                    key={`q-${currentCategory.category_key}-${currentQuestion.key}`}
+                            <motion.div
+                                    key={`section-${currentCategory.category_key}`}
                                     custom={direction}
                                     variants={questionVariants}
                                     initial="enter"
                                     animate="center"
                                     exit="exit"
+                                    className="rounded-3xl border border-border-light/70 bg-white/80 p-3 md:p-7 space-y-4"
                                 >
-                                    {/* Question counter */}
-                                    <div className="flex items-center gap-2 mb-5">
-                                        <span className="text-sm font-bold tracking-wider text-accent uppercase">
+                                    <div>
+                                        <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-accent mb-1">
+                                            Section {categoryIndex + 1} of{" "}
+                                            {categories.length}
+                                        </p>
+                                        <h3 className="text-2xl md:text-3xl font-serif text-heading leading-snug">
                                             {currentCategory.category_name}
-                                        </span>
-                                        <span className="text-sm text-muted/60">
-                                            {questionIndex + 1} / {visibleQuestions.length}
-                                        </span>
+                                        </h3>
                                     </div>
 
-                                    {/* Question text */}
-                                    <h3 className="text-3xl sm:text-4xl font-serif text-heading mb-2 leading-snug">
-                                        {currentQuestion.text}
-                                        {currentQuestion.required && (
-                                            <span className="text-red-400 ml-1 text-lg">*</span>
-                                        )}
-                                    </h3>
-
-                                    {/* Question description */}
-                                    {currentQuestion.description && (
-                                        <p className="text-base text-muted mb-8 leading-relaxed">
-                                            {currentQuestion.description}
-                                        </p>
+                                    {categoryIndex === 0 && (
+                                        <div className="p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
+                                            <p className="text-sm text-heading font-semibold mb-2">
+                                                Before proceeding, please read and agree:
+                                            </p>
+                                            <p className="text-xs text-heading font-semibold mb-1">Consent</p>
+                                            <p className="text-xs text-muted leading-relaxed mb-3">
+                                                {CONSENT_TEXT}
+                                            </p>
+                                            <p className="text-xs text-heading font-semibold mb-1">Medical Disclaimer</p>
+                                            <ul className="list-disc pl-4 text-xs text-muted leading-relaxed space-y-1 mb-3">
+                                                <li>Your plan will be generated using AI and reviewed and validated by a licensed medical doctor.</li>
+                                                <li>This is not a substitute for professional medical advice, diagnosis, or treatment.</li>
+                                                <li>It is for informational and educational purposes only.</li>
+                                                <li>You should consult your own doctor or a qualified healthcare professional before making decisions regarding your health, vaccinations, medications, or travel, especially if you are pregnant, have chronic conditions, or take regular medication.</li>
+                                            </ul>
+                                            <p className="text-xs text-heading font-semibold mb-1">Data Protection</p>
+                                            <p className="text-xs text-muted leading-relaxed mb-3">
+                                                {DATA_PROTECTION_TEXT}
+                                            </p>
+                                            <label className="flex items-start gap-3 cursor-pointer">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setMedicalDisclaimerConsentGiven((v) => {
+                                                            const newVal = !v;
+                                                            if (newVal) acceptConsent.mutate();
+                                                            return newVal;
+                                                        })
+                                                    }
+                                                    className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${medicalDisclaimerConsentGiven ? "border-accent bg-accent" : "border-border"}`}
+                                                >
+                                                    {medicalDisclaimerConsentGiven && (
+                                                        <LucideCheck className="w-3 h-3 text-white" />
+                                                    )}
+                                                </button>
+                                                <span
+                                                    className="text-sm text-body font-medium leading-relaxed"
+                                                    onClick={() =>
+                                                        setMedicalDisclaimerConsentGiven((v) => {
+                                                            const newVal = !v;
+                                                            if (newVal) acceptConsent.mutate();
+                                                            return newVal;
+                                                        })
+                                                    }
+                                                >
+                                                    I have read, understood, and agree to the Consent, Medical Disclaimer, and Privacy Policy.
+                                                </span>
+                                            </label>
+                                        </div>
                                     )}
 
-                                    {/* Input */}
-                                    <div className={currentQuestion.description ? "" : "mt-7"}>
-                                        <QuestionInput
-                                            question={currentQuestion}
-                                            value={answers[currentQuestion.key]}
-                                            onChange={(val) =>
-                                                setAnswer(currentQuestion.key, val)
-                                            }
-                                            onToggleCheckbox={(val) =>
-                                                toggleCheckbox(currentQuestion.key, val)
-                                            }
-                                            onSetVaccineStatus={setVaccineStatus}
-                                            vaccineStatuses={
-                                                (answers.vaccine_status as Record<
-                                                    string,
-                                                    Record<string, string>
-                                                >) || {}
-                                            }
-                                        />
-                                    </div>
+                                    {isRiskSection && (
+                                        <div className="p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
+                                            <p className="text-sm text-heading font-semibold mb-3">
+                                                Your responses are confidential
+                                                and used only to provide
+                                                accurate health advice.
+                                            </p>
+                                            <label className="flex items-start gap-3 cursor-pointer">
+                                                <div
+                                                    onClick={() =>
+                                                        setRiskConsentGiven(
+                                                            (v) => !v,
+                                                        )
+                                                    }
+                                                    className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${riskConsentGiven ? "border-accent bg-accent" : "border-border"}`}
+                                                >
+                                                    {riskConsentGiven && (
+                                                        <LucideCheck className="w-3 h-3 text-white" />
+                                                    )}
+                                                </div>
+                                                <span
+                                                    className="text-sm text-body font-medium leading-relaxed"
+                                                    onClick={() =>
+                                                        setRiskConsentGiven(
+                                                            (v) => !v,
+                                                        )
+                                                    }
+                                                >
+                                                    I understand and agree to
+                                                    answer this section
+                                                </span>
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {isRiskSection && !riskConsentGiven ?
+                                        <div className="rounded-2xl border-2 border-dashed border-border-light/60 bg-background-primary/30 p-8 text-center">
+                                            <p className="text-sm text-muted leading-relaxed">
+                                                Please agree to the
+                                                confidentiality statement above
+                                                to access and answer these
+                                                questions.
+                                            </p>
+                                        </div>
+                                    :   visibleQuestions.map((question) => {
+                                            const prefilled =
+                                                PREFILLED_KEYS.has(
+                                                    question.key,
+                                                );
+                                            const hasError =
+                                                fieldErrors.has(question.key);
+                                            const ringClass = hasError
+                                                ? "ring ring-red-400"
+                                                : "";
+                                            return (
+                                                <div
+                                                    key={question.key}
+                                                    className={`space-y-3 rounded-xl p-4 transition-all duration-500 ${ringClass}`}
+                                                >
+                                                    <div>
+                                                        <p className="text-base md:text-lg font-semibold text-heading leading-snug">
+                                                            {question.text}
+                                                            {question.required && (
+                                                                <span className="text-red-500 ml-1">
+                                                                    *
+                                                                </span>
+                                                            )}
+                                                        </p>
+                                                        {hasError && (
+                                                            <p className="text-xs text-red-500 mt-1 font-medium">
+                                                                This field is required
+                                                            </p>
+                                                        )}
+                                                        {question.description && (
+                                                            <p className="text-sm text-muted mt-1 leading-relaxed">
+                                                                {
+                                                                    question.description
+                                                                }
+                                                            </p>
+                                                        )}
+                                                        {prefilled && (
+                                                            <p className="text-xs text-accent mt-1">
+                                                                Pre-filled from
+                                                                your profile
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <QuestionInput
+                                                        question={question}
+                                                        value={
+                                                            answers[
+                                                                question.key
+                                                            ]
+                                                        }
+                                                        prefilled={prefilled}
+                                                        hasError={hasError}
+                                                        onChange={(val) =>
+                                                            setAnswer(
+                                                                question.key,
+                                                                val,
+                                                            )
+                                                        }
+                                                        onToggleCheckbox={(
+                                                            val,
+                                                        ) =>
+                                                            toggleCheckbox(
+                                                                question.key,
+                                                                val,
+                                                            )
+                                                        }
+                                                        onSetVaccineStatus={
+                                                            setVaccineStatus
+                                                        }
+                                                        vaccineStatuses={
+                                                            (answers.vaccine_status as Record<
+                                                                string,
+                                                                Record<
+                                                                    string,
+                                                                    string
+                                                                >
+                                                            >) || {}
+                                                        }
+                                                    />
+                                                </div>
+                                            );
+                                        })
+                                    }
                                 </motion.div>
-                            ) : null}
                         </AnimatePresence>
                     </div>
                 </div>
             </div>
 
             {/* ── Bottom Nav ───────────────────────────────── */}
-            {!showIntro && (
-                <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border-light/50 bg-background-primary/90 backdrop-blur-md px-5 sm:px-8 py-4">
+            <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border-light/50 bg-background-primary/90 backdrop-blur-md px-5 sm:px-8 py-4">
                     <div className="max-w-lg mx-auto flex items-center justify-between">
                         <button
                             onClick={goPrev}
-                            disabled={categoryIndex === 0 && questionIndex <= 0}
-                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-muted hover:text-heading disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer transition-colors duration-150"
+                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-muted hover:text-heading cursor-pointer transition-colors duration-150"
                         >
                             <LucideArrowLeft className="w-4 h-4" /> Back
                         </button>
@@ -1383,25 +1671,23 @@ const TravelHealthQuestionnaire = () => {
                                 </button>
                             )}
                             <button
-                                onClick={goNext}
+                                onClick={() => void goNext()}
                                 disabled={submitting}
                                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-dark text-white text-sm font-semibold cursor-pointer hover:bg-darkest disabled:opacity-50 transition-all duration-200"
                             >
-                                {submitting ? (
+                                {submitting ?
                                     "Saving…"
-                                ) : isLastQuestion ? (
+                                : isLastSection ?
                                     "Complete"
-                                ) : (
-                                    <>
+                                :   <>
                                         Next{" "}
                                         <LucideArrowRight className="w-4 h-4" />
                                     </>
-                                )}
+                                }
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+            </div>
         </div>
     );
 };
@@ -1471,6 +1757,8 @@ const MultiCountryInput = ({
 interface QuestionInputProps {
     question: Question;
     value: unknown;
+    prefilled?: boolean;
+    hasError?: boolean;
     onChange: (val: unknown) => void;
     onToggleCheckbox: (val: string) => void;
     onSetVaccineStatus: (
@@ -1484,11 +1772,17 @@ interface QuestionInputProps {
 const QuestionInput = ({
     question,
     value,
+    prefilled = false,
+    hasError,
     onChange,
     onToggleCheckbox,
     onSetVaccineStatus,
     vaccineStatuses,
 }: QuestionInputProps) => {
+    const todayLocal = todayIsoDateLocal();
+    const errorInputClass = hasError ? "!border-red-400/70" : "";
+    const unselectedBorderClass = hasError ? "border-red-400/70" : "border-border-light/60";
+
     switch (question.type) {
         case "radio":
             return (
@@ -1508,14 +1802,14 @@ const QuestionInput = ({
                             onClick={() => onChange(opt.value)}
                             className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${value === opt.value
                                 ? "border-accent bg-white shadow-sm"
-                                : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
+                                : `${unselectedBorderClass} hover:border-border bg-white/60 hover:bg-white`
                                 }`}
                         >
                             <div className="flex items-center gap-3.5">
                                 <div
                                     className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${value === opt.value
                                         ? "border-accent bg-accent"
-                                        : "border-border"
+                                        : hasError ? "border-red-400/70" : "border-border"
                                         }`}
                                 >
                                     {value === opt.value && (
@@ -1558,14 +1852,14 @@ const QuestionInput = ({
                                 onClick={() => onToggleCheckbox(opt.value)}
                                 className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${checked
                                     ? "border-accent bg-white shadow-sm"
-                                    : "border-border-light/60 hover:border-border bg-white/60 hover:bg-white"
+                                    : `${unselectedBorderClass} hover:border-border bg-white/60 hover:bg-white`
                                     }`}
                             >
                                 <div className="flex items-center gap-3.5">
                                     <div
                                         className={`w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${checked
                                             ? "border-accent bg-accent"
-                                            : "border-border"
+                                            : hasError ? "border-red-400/70" : "border-border"
                                             }`}
                                     >
                                         {checked && (
@@ -1594,7 +1888,10 @@ const QuestionInput = ({
                     value={(value as string) || ""}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={question.placeholder}
-                    className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium"
+                    readOnly={prefilled}
+                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium ${errorInputClass} ${
+                        prefilled ? "bg-background-primary/50 cursor-default" : "bg-white"
+                    }`}
                 />
             );
 
@@ -1607,7 +1904,10 @@ const QuestionInput = ({
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={question.placeholder}
                     rows={4}
-                    className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 resize-none font-medium"
+                    readOnly={prefilled}
+                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 resize-none font-medium ${errorInputClass} ${
+                        prefilled ? "bg-background-primary/50 cursor-default" : "bg-white"
+                    }`}
                 />
             );
 
@@ -1618,8 +1918,12 @@ const QuestionInput = ({
                     animate={{ opacity: 1, y: 0 }}
                     type="date"
                     value={(value as string) || ""}
+                    max={question.key === "date_of_birth" ? todayLocal : undefined}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading outline-none focus:border-accent transition-all duration-200 font-medium"
+                    readOnly={prefilled}
+                    className={`w-full border-2 border-border-light/60 rounded-2xl px-5 py-4 text-base text-heading outline-none focus:border-accent transition-all duration-200 font-medium ${errorInputClass} ${
+                        prefilled ? "bg-background-primary/50 cursor-default" : "bg-white"
+                    }`}
                 />
             );
 
@@ -1705,7 +2009,7 @@ const QuestionInput = ({
                     <CountryPicker
                         value={(value as string) || ""}
                         onChange={(name) => onChange(name)}
-                        inputClassName="w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 pr-10 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium"
+                        inputClassName={`w-full bg-white border-2 border-border-light/60 rounded-2xl px-5 py-4 pr-10 text-base text-heading placeholder:text-muted/40 outline-none focus:border-accent transition-all duration-200 font-medium ${errorInputClass}`}
                         placeholder={question.placeholder ?? "Select a country"}
                     />
                 </motion.div>

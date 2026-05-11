@@ -4,15 +4,26 @@ export type BillingCurrency = "USD" | "NGN" | "EUR" | "GBP";
 
 // ─── User Credit Plans ────────────────────────────────────────
 
-export type CreditPlanCode = "ESSENTIAL" | "STANDARD" | "PREMIUM";
+export type CreditPlanCode = string;
 
 export interface CreditPlan {
   id: number;
   code: CreditPlanCode;
   displayName: string;
   basePriceUsd: number;
+  basePriceNgn: number | null;
   description: string;
   isDefault: boolean;
+  isCompanyPlan: boolean;
+  isFamilyPlan: boolean;
+  signupRangeLabel: string | null;
+  serviceLevel: "STANDARD" | "PREMIUM" | null;
+  visibility?: "PUBLIC" | "CUSTOM";
+  assignedCompanyId?: number | null;
+  planCount?: number | null;
+  includedFamilyMembers?: number | null;
+  additionalMemberPriceUsd?: number | null;
+  additionalMemberPriceNgn?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -66,6 +77,9 @@ export interface RegisterRequest {
   email: string;
   password: string;
   planCode?: string;
+  affiliate_referral_code?: string;
+  account_type?: string;
+  billing_currency?: BillingCurrency;
 }
 
 export interface ForgotPasswordRequest {
@@ -98,6 +112,7 @@ export interface AuthResponse {
   accessToken: string; // Backend uses accessToken (camelCase) in AuthResponse.java @JsonProperty("accessToken")
   exp: number;
   extend?: any;
+  settings?: UserSettingResponse;
 }
 
 export interface GoogleAuthRequest {
@@ -106,6 +121,8 @@ export interface GoogleAuthRequest {
 
 export interface GoogleCallbackRequest {
   code: string;
+  planCode?: string;
+  affiliate_referral_code?: string;
 }
 
 // ─── User ────────────────────────────────────────────────────
@@ -223,6 +240,175 @@ export interface PurchaseCreditsRequest {
   reference?: string;
 }
 
+// ─── Doctor ──────────────────────────────────────────────────
+
+export type DoctorApplicationStatus = "NONE" | "PENDING" | "APPROVED" | "REJECTED";
+export type DoctorValidationStatus = "PENDING" | "APPROVED" | "REJECTED" | "NOT_REQUIRED";
+export type PlanTier = "FREE" | "STANDARD" | "PREMIUM";
+
+export interface DoctorApplicationRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  specialty: string;
+  country: string;
+  medicalLicenseNumber: string;
+  profilePicture?: File;
+  signature: File;
+  stamp?: File;
+  practicingLicense?: File;
+  travelMedicineCertificate?: File;
+  confidentialityAgreementAccepted: boolean;
+  conductAgreementAccepted: boolean;
+}
+
+export interface DoctorProfileUpdateRequest {
+  firstName?: string;
+  lastName?: string;
+  profilePictureOption?: ProfilePictureOption;
+  medicalLicenseNumber?: string;
+  signature?: File;
+  stamp?: File;
+  practicingLicense?: File;
+  travelMedicineCertificate?: File;
+}
+
+export interface DoctorProfileResponse {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  avatarUrl: string | null;
+  profilePictureOption: ProfilePictureOption | null;
+  bio?: string | null;
+  medicalLicenseNumber: string;
+  signatureUrl: string | null;
+  stampUrl: string | null;
+  practicingLicenseUrl: string | null;
+  travelMedicineCertificateUrl: string | null;
+  doctorApplicationStatus: DoctorApplicationStatus;
+  applicationSubmittedAt: string | null;
+}
+
+export interface UserSettingResponse {
+  medicalLicenseNumber?: string | null;
+  signatureUrl?: string | null;
+  stampUrl?: string | null;
+  doctorApplicationStatus?: DoctorApplicationStatus;
+  consentVersion?: number;
+  consentAcceptedByVersion?: number | null;
+  consentAcceptedAt?: string | null;
+}
+
+export interface ConsentAcceptRequest {
+  consentVersion: number;
+}
+
+export interface DoctorDashboardStats {
+  pendingValidations: number;
+  approvedToday: number;
+  totalValidated: number;
+  recentPlans: DoctorValidationPlanDto[];
+}
+
+export interface DoctorValidationPlanDto {
+  planId: number;
+  destination: string;
+  country: string;
+  purpose: string;
+  duration: number;
+  riskScore: number;
+  validationStatus: DoctorValidationStatus;
+  planTier: PlanTier;
+  travellerName: string;
+  travellerEmail: string;
+  createdAt: string;
+  generatedPlanStatus: string;
+  assignedDoctors?: DoctorReviewerDto[];
+  openToAllDoctors?: boolean;
+}
+
+export interface DoctorValidationDetailDto {
+  planId: number;
+  destination: string;
+  country: string;
+  purpose: string;
+  duration: number;
+  riskScore: number;
+  validationStatus: DoctorValidationStatus;
+  validatedAt: string | null;
+  validatedByName: string | null;
+  rejectionReason: string | null;
+  planTier: PlanTier;
+  travellerName: string;
+  travellerEmail: string;
+  travellerPhone: string;
+  travellerAge?: number | null;
+  travellerDateOfBirth?: string | null;
+  createdAt: string;
+  generatedPlan: GeneratedPlanPayload | null;
+  generatedPlanContent: GeneratedPlanContent | null;
+  assignedDoctors?: DoctorReviewerDto[];
+  openToAllDoctors?: boolean;
+}
+
+export interface ValidatePlanRequest {
+  planId: number;
+  approved: boolean;
+  rejectionReason?: string;
+}
+
+export interface AdminDoctorApplicationDto {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  specialty: string;
+  country: string;
+  applicationStatus: DoctorApplicationStatus;
+  applicationSubmittedAt: string | null;
+  identityDocumentUrl: string | null;
+  licenseDocumentUrl: string | null;
+  cvOrProfileUrl?: string | null;
+  confidentialityAgreementAccepted: boolean;
+  conductAgreementAccepted: boolean;
+  bio?: string | null;
+  createdAt: string | null;
+}
+
+export interface AdminDoctorListItemDto {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  specialization: string;
+  profilePictureUrl?: string | null;
+  bio?: string | null;
+  validatedPlansCount: number;
+  createdAt: string | null;
+}
+
+export interface DoctorReviewerDto {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profilePictureUrl?: string | null;
+  bio?: string | null;
+}
+
+export interface AdminDoctorStatsDto {
+  totalDoctors: number;
+  pendingApplications: number;
+  approvedToday: number;
+  totalValidatedPlans: number;
+}
+
 // ─── Travel Plan ─────────────────────────────────────────────
 
 /** Mirrors spring-server GeneratedPlanPayload; present on GET /travel-plans/:id when a row exists. */
@@ -234,6 +420,9 @@ export interface GeneratedPlanPayload {
   tokensUsed?: number | null;
   processingTimeMs?: number | null;
   errorMessage?: string | null;
+  signedPdfUrl?: string | null;
+  summaryPdfUrl?: string | null;
+  isSigned?: boolean;
 }
 
 /** Parsed from AI output (PlanGenerationService JSON schema). */
@@ -261,6 +450,45 @@ export interface GeneratedPlanVaccinationItem {
 export interface GeneratedPlanRecommendationItem {
   title: string;
   details: string;
+}
+
+export interface GeneratedPlanMalariaPrevention {
+  riskLevel?: string;
+  recommendedAgent?: string;
+  rationale?: string;
+  mosquitoProtection?: string[];
+  contraindications?: string;
+}
+
+export interface GeneratedPlanSpecialistReferral {
+  condition: string;
+  specialist: string;
+  urgency: string;
+}
+
+export interface GeneratedPlanMedicalCondition {
+  condition: string;
+  precautions: string;
+}
+
+export interface GeneratedPlanFlightHealth {
+  vteRiskLevel?: string;
+  preventionMeasures?: string[];
+  medifClearanceRequired?: boolean;
+  medicationTimingGuidance?: string;
+}
+
+export interface GeneratedPlanMedicationLogistics {
+  packaging?: string;
+  supplyRule?: string;
+  destinationLegalityCheck?: boolean;
+  coldChainRequired?: boolean;
+}
+
+export interface GeneratedPlanSexualHealth {
+  riskLevel?: string;
+  preventionAdvice?: string[];
+  prepPepDiscussion?: boolean;
 }
 
 export interface GeneratedPlanAfterReturn {
@@ -312,10 +540,21 @@ export interface GeneratedPlanContent {
   travellerName?: string;
   destination?: string;
   travelDates?: string;
+  overallRiskLevel?: string;
+  hardStop?: string | null;
   tripAtGlance?: GeneratedPlanTripAtGlance;
   healthRiskOverview?: GeneratedPlanHealthRiskItem[];
   vaccinations?: GeneratedPlanVaccinationItem[];
+  malariaPrevention?: GeneratedPlanMalariaPrevention;
   recommendations?: GeneratedPlanRecommendationItem[];
+  clinicalFlags?: string[];
+  contraindications?: string[];
+  specialistReferrals?: GeneratedPlanSpecialistReferral[];
+  flightHealth?: GeneratedPlanFlightHealth;
+  medicalConditions?: GeneratedPlanMedicalCondition[];
+  medicationLogistics?: GeneratedPlanMedicationLogistics;
+  sexualHealth?: GeneratedPlanSexualHealth;
+  pregnancyGuidance?: unknown;
   afterReturn?: GeneratedPlanAfterReturn;
   medicalCare?: GeneratedPlanMedicalCare;
   itineraryGuidance?: GeneratedPlanItineraryGuidance;
@@ -329,7 +568,7 @@ export interface TravelPlanResponse {
   country: string;
   duration: number;
   purpose: string;
-  tripType?: "one-way" | "return" | "multi";
+  tripType?: "one-way" | "return" | "multi" | "transit";
   tripDetailsJson?: string;
   riskScore: number;
   status: string;
@@ -343,9 +582,41 @@ export interface TravelPlanResponse {
   companyId?: number;
   employeeId?: number;
   userId?: number;
+  signedPdfUrl: string | null;
+  summaryPdfUrl: string | null;
+  doctorValidationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ELEVATED' | 'NOT_REQUIRED';
   createdAt: string;
   updatedAt: string;
   generatedPlan?: GeneratedPlanPayload | null;
+  planTier?: PlanTier;
+  validationStatus?: DoctorValidationStatus;
+  validatedAt?: string | null;
+  validatedByName?: string | null;
+  assignedDoctors?: DoctorReviewerDto[];
+  openToAllDoctors?: boolean;
+  rejectionReason?: string | null;
+}
+
+export interface TravelPlanListItemResponse {
+  id: number;
+  destination: string;
+  country: string;
+  duration: number;
+  purpose: string;
+  riskScore: number;
+  status: string;
+  companyId?: number;
+  employeeId?: number;
+  userId?: number;
+  createdAt: string;
+  updatedAt: string;
+  planTier?: PlanTier;
+  doctorValidationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ELEVATED' | 'NOT_REQUIRED';
+  validatedByName?: string | null;
+  validatedAt?: string | null;
+  rejectionReason?: string | null;
+  signedPdfUrl?: string | null;
+  summaryPdfUrl?: string | null;
 }
 
 export interface CreateTravelPlanRequest {
@@ -354,9 +625,10 @@ export interface CreateTravelPlanRequest {
   userId?: number;
   destination: string;
   country: string;
-  duration: number;
+  /** Omitted or null when only known from tripDetailsJson; server infers */
+  duration?: number | null;
   purpose: string;
-  tripType?: "one-way" | "return" | "multi";
+  tripType?: "one-way" | "return" | "multi" | "transit";
   tripDetailsJson?: string;
   riskScore?: number;
   status?: string;
@@ -368,9 +640,36 @@ export interface CreateTravelPlanRequest {
   waterFood?: string;
   emergencyContacts?: string;
   questionnaireResponses?: string;
+  selectedDoctorIds?: number[];
 }
 
 export interface UpdateTravelPlanRequest extends Partial<CreateTravelPlanRequest> { }
+
+// ─── Draft Plan ──────────────────────────────────────────────
+
+export interface DraftPlanResponse {
+  id: number;
+  title: string;
+  country: string;
+  answersJson: string;
+  categoryIndex: number;
+  showVerify: boolean;
+  showIntro: boolean;
+  riskConsentGiven: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SaveDraftPlanRequest {
+  country?: string;
+  answersJson: string;
+  categoryIndex: number;
+  showVerify?: boolean;
+  showIntro?: boolean;
+  riskConsentGiven?: boolean;
+}
+
+export interface UpdateDraftPlanRequest extends SaveDraftPlanRequest { }
 
 // ─── Credit Request ──────────────────────────────────────────
 
@@ -621,6 +920,7 @@ export interface ProfileResponse {
   isVerified: boolean;
   lastLogin: string;
   avatarUrl: string;
+  profilePictureOption: ProfilePictureOption | null;
   credits: number;
   type: string;
   roleId: number;
@@ -628,6 +928,7 @@ export interface ProfileResponse {
   createdAt: string;
   updatedAt: string;
   userCreditPlan?: CreditPlan | null;
+  settings?: UserSettingResponse;
 }
 
 export interface UpdateProfileRequest {
@@ -636,8 +937,12 @@ export interface UpdateProfileRequest {
   username?: string;
   phone?: string;
   email?: string;
+  avatar_url?: string;
+  profile_picture_option?: ProfilePictureOption;
   billing_currency?: BillingCurrency;
 }
+
+export type ProfilePictureOption = "upload" | "initials" | "doctor";
 
 export interface UpdateProfilePasswordRequest {
   OldPassword: string;
@@ -651,10 +956,18 @@ export interface UpdateProfilePasswordRequest {
 export interface CompanyUserResponse {
   id: number;
   role: string;
+  creditsAllocated?: number;
+  creditsUsed?: number;
   companyId: number;
   userId: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateCompanyUserRequest {
+  role: string;
+  company_id: number;
+  user_id: number;
 }
 
 export interface MyCompanyMembership {
@@ -666,35 +979,29 @@ export interface MyCompanyMembership {
   total_credits: number;
   used_credits: number;
   employee_count: number;
-  billing_currency: BillingCurrency;
-  role: string;
-  credits_allocated: number;
-  credits_used: number;
+  billing_currency?: BillingCurrency;
   credit_plan?: CreditPlan | null;
-}
-
-export interface CreateCompanyUserRequest {
-  companyId: number;
-  userId: number;
   role: string;
+  credits_allocated?: number;
+  credits_used?: number;
 }
 
 // ─── Onboarding ──────────────────────────────────────────────
 
 export interface UserOnboardingResponse {
   id: number;
+  userType: string | null;
+  nationality: string | null;
+  companyCode: string | null;
+  completedAt: string | null;
   userId: number;
-  userType: "individual" | "company" | "";
-  nationality: string;
-  companyCode: string;
-  completedAt?: string;
-  questionnaireCompleted?: boolean;
   createdAt: string;
   updatedAt: string;
+  questionnaireCompleted: boolean | null;
 }
 
 export interface UpsertOnboardingRequest {
-  userType?: "individual" | "company";
+  userType?: string;
   nationality?: string;
   companyCode?: string;
   complete?: boolean;
@@ -704,7 +1011,13 @@ export interface AdvanceStageRequest {
   stage: number;
 }
 
-// ─── Onboarding Questionnaire ───────────────────────────────
+export interface OnboardingQuestion {
+  id: number;
+  text: string;
+  type: string;
+  options?: string[];
+  required?: boolean;
+}
 
 export interface OnboardingQuestionCategoryResponse {
   id: number;
@@ -714,21 +1027,19 @@ export interface OnboardingQuestionCategoryResponse {
   category_description: string;
   display_order: number;
   is_optional: boolean;
-  questions: string; // JSON string of Question[]
+  questions: string;
 }
 
 export interface SubmitQuestionnaireRequest {
-  responses: string;
-  complete: boolean;
+  responses: string | Record<string, unknown>;
+  complete?: boolean;
 }
 
 export interface QuestionnaireProgressRequest {
-  answers: Record<string, unknown>;
-  categoryIndex: number;
-  questionIndex: number;
+  [key: string]: unknown;
 }
 
-// ─── Plan Usage Ledger ─────────────────────────────────────────
+// ─── Plan Usage Ledger ───────────────────────────────────────
 
 export interface PlanUsageLedgerResponse {
   id: number;
@@ -743,30 +1054,10 @@ export interface PlanUsageLedgerResponse {
   updatedAt: string;
 }
 
-// ─── Credit Pricing ────────────────────────────────────────────
-
-export interface CreditPricingResponse {
-  id: number;
-  currency: BillingCurrency;
-  currencySymbol: string;
-  pricePerCredit: number;
-  minCredits: number;
-  maxCredits: number;
-  discountTier1Threshold: number | null;
-  discountTier1Amount: number | null;
-  discountTier2Threshold: number | null;
-  discountTier2Amount: number | null;
-  discountTier3Threshold: number | null;
-  discountTier3Amount: number | null;
-  isActive: boolean;
-  displayOrder: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface CreditPurchaseRequest {
   credits: number;
   currency: BillingCurrency;
+  affiliate_referral_code?: string;
 }
 
 export interface CreditPurchaseInitiateResponse {
@@ -775,7 +1066,7 @@ export interface CreditPurchaseInitiateResponse {
   paymentLink: string;
   credits: number;
   basePrice: number;
-  discountAmount: number;
+  discountAmount?: number;
   amount: number;
   currency: BillingCurrency;
   currencySymbol: string;
@@ -795,6 +1086,9 @@ export interface CreditPurchaseResponse {
   currencySymbol: string;
   pricePerCredit: number;
   amount: number;
+  affiliateReferralCode?: string | null;
+  affiliateDiscountRate?: number | null;
+  affiliateDiscountAmount?: number | null;
   amountPaid: number | null;
   status: string;
   flutterwaveStatus: string | null;
@@ -805,23 +1099,6 @@ export interface CreditPurchaseResponse {
   updatedAt: string;
 }
 
-export interface PriceCalculationResponse {
-  currency: BillingCurrency;
-  currencySymbol: string;
-  credits: number;
-  pricePerCredit: number;
-  basePrice: number;
-  discountAmount: number;
-  totalPrice: number;
-  appliedDiscountTier: string;
-  discountTier1Threshold: number | null;
-  discountTier1Amount: number | null;
-  discountTier2Threshold: number | null;
-  discountTier2Amount: number | null;
-  discountTier3Threshold: number | null;
-  discountTier3Amount: number | null;
-}
-
 // ─── Company Admin Credits (HR) ───────────────────────────────────────────
 
 export interface CompanyAdminCreditQuoteResponse {
@@ -829,12 +1106,12 @@ export interface CompanyAdminCreditQuoteResponse {
   companyName: string;
   credits: number;
   basePrice: number;
-  discountAmount: number;
   totalAmount: number;
   currency: BillingCurrency;
   currencySymbol: string;
   pricePerCredit: number;
-  appliedDiscountTier: string | null;
+  appliedTier: string | null;
+  qualifiesForContactSales: boolean;
 }
 
 export interface CompanyAdminPurchaseInitiateResponse {
@@ -853,16 +1130,27 @@ export interface CompanyAdminPricingResponse {
   currency: BillingCurrency;
   currencySymbol: string;
   pricePerCredit: number;
-  minCredits: number;
-  maxCredits: number;
-  discountTier1Threshold: number | null;
-  discountTier1Amount: number | null;
-  discountTier2Threshold: number | null;
-  discountTier2Amount: number | null;
-  discountTier3Threshold: number | null;
-  discountTier3Amount: number | null;
-  totalCredits: number;
-  usedCredits: number;
+  appliedTier: string;
+  qualifiesForContactSales: boolean;
+  standardTier1Price: number;
+  standardTier2Price: number;
+  standardTier3Price: number;
+  premiumTier1Price: number;
+  premiumTier2Price: number;
+  premiumTier3Price: number;
+  tier1MaxCredits: number;
+  tier2MaxCredits: number;
+  tier3MaxCredits: number;
+}
+
+export interface PublicPricingPreview {
+  serviceLevel: string;
+  currency: BillingCurrency;
+  credits: number;
+  pricePerCredit: number;
+  totalAmount: number;
+  appliedTier: string;
+  contactSales: boolean;
 }
 
 // ─── Reports ────────────────────────────────────────────────
@@ -1098,9 +1386,16 @@ export interface ExchangeRatesResponse {
 // ============ Company Onboarding ============
 
 export interface TeamMember {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  role: "admin" | "hr";
+  role: "admin";
+}
+
+export interface PlatformEmployee {
+  email: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface CompanyOnboardingRequest {
@@ -1114,6 +1409,9 @@ export interface CompanyOnboardingRequest {
   creditCount?: number;
   sampleRequest: string;
   teamMembers: TeamMember[];
+  teamMembersCsv?: File | null;
+  platformEmployees?: PlatformEmployee[];
+  affiliate_referral_code?: string;
 }
 
 export interface CompanyOnboardingResponse {
@@ -1128,9 +1426,14 @@ export interface CompanyOnboardingResponse {
   creditCount?: number | null;
   sampleRequest: string;
   teamMembers: TeamMember[];
+  platformEmployees?: PlatformEmployee[];
+  teamMembersCsvFileName?: string | null;
+  teamMembersCsvUrl?: string | null;
   txRef: string;
   paymentStatus: string;
   paymentAmount: number;
+  baseAmount?: number;
+  discountAmount?: number;
   paymentCurrency: string;
   status: string;
   rejectionReason: string | null;
@@ -1148,3 +1451,166 @@ export interface OnboardingPaymentInitiate {
   currency: string;
 }
 
+// ============ Family Plan ============
+
+export interface FamilyTripMemberRequest {
+  relationship: string;
+  firstName: string;
+  lastName: string;
+  memberEmail?: string;
+  dateOfBirth?: string;
+  questionnaireResponses?: string;
+}
+
+export interface FamilyTripRequest {
+  packageType?: string;
+  destination: string;
+  country: string;
+  duration: number;
+  purpose: string;
+  tripType: string;
+  tripDetailsJson?: string;
+  members: FamilyTripMemberRequest[];
+}
+
+export interface ActivePackageAllowanceDto {
+  type: string;
+  tripsRemaining: number;
+}
+
+export interface PaymentBreakdownItem {
+  label: string;
+  minor: number;
+  satisfiedBy: string;
+}
+
+export interface FamilyTripPreviewResponse {
+  includedMembers: number;
+  additionalMembers: number;
+  baseFiatCost: number;
+  extraFiatCost: number;
+  totalFiatCost: number;
+  currency: string;
+  availableCredits: number;
+  activePackageAllowance?: ActivePackageAllowanceDto;
+  paymentRequired: boolean;
+  paymentBreakdown: PaymentBreakdownItem[];
+}
+
+export interface FamilyTripMemberResponse {
+  id: number;
+  relationship: string;
+  firstName: string;
+  lastName: string;
+  memberEmail?: string;
+  dateOfBirth?: string;
+  ageAtDeparture?: number;
+  includedInBase?: boolean;
+  questionnaireStatus: string;
+  travelPlanId?: number;
+  loginCode?: string;
+}
+
+export interface FamilyTripResponse {
+  id: number;
+  status: string;
+  destination: string;
+  country: string;
+  duration: number;
+  purpose: string;
+  tripType: string;
+  tripDetailsJson?: string;
+  baseFiatCost: number;
+  extraMemberCount: number;
+  totalFiatCost: number;
+  currency: string;
+  familyPlanId?: number | null;
+  members: FamilyTripMemberResponse[];
+}
+
+export interface FamilyMemberPlanResponse {
+  destination: string;
+  country: string;
+  status: string;
+  tripSummary: string;
+  generalVaccinations: string[];
+  memberSection: {
+    memberId: number;
+    memberName: string;
+    relationship: string;
+    ageAtDeparture: number;
+    executiveSummary: string;
+    vaccinations: Array<{
+      name: string;
+      recommendation: string;
+      rationale: string;
+      timing: string;
+    }>;
+    medications: Array<{
+      name: string;
+      indication: string;
+      dosage: string;
+      notes: string;
+    }>;
+    healthConsiderations: Array<{
+      category: string;
+      advice: string;
+    }>;
+    travellerSpecific: string;
+    hardStop: boolean;
+  };
+}
+
+// ─── Family Package Purchase ─────────────────────────────────
+
+export type FamilyPackageType = "STANDARD";
+
+export interface FamilyPackageCheckoutRequest {
+  packageType: FamilyPackageType;
+  currency: BillingCurrency;
+  additionalMembers: number;
+  name?: string;
+  email?: string;
+  phone?: string;
+  affiliate_referral_code?: string;
+}
+
+export interface FamilyPackageCheckoutResponse {
+  success: boolean;
+  txRef: string;
+  paymentLink: string;
+  packageType: FamilyPackageType;
+  tripsAllowed: number;
+  amount: number;
+  baseAmount?: number;
+  discountAmount?: number;
+  currency: BillingCurrency;
+  currencySymbol: string;
+  purchaseId: number;
+  additionalMembers: number;
+  totalMembers: number;
+  error?: string;
+  errorType?: string;
+}
+
+export interface FamilyPackagePurchaseResponse {
+  id: number;
+  txRef: string;
+  flwRef: string | null;
+  userId: number;
+  packageType: FamilyPackageType;
+  tripsAllowed: number;
+  tripsUsed: number;
+  additionalMembers: number;
+  totalMembers: number;
+  amountPaidMinor: number;
+  currency: string;
+  paymentProvider: string | null;
+  paymentReference: string | null;
+  status: "PENDING" | "ACTIVE" | "EXHAUSTED" | "REFUNDED";
+  expiresAt: string | null;
+  paidAt: string | null;
+  flutterwaveStatus: string | null;
+  failedReason: string | null;
+  createdAt: string;
+}

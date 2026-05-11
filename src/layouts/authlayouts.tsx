@@ -1,25 +1,19 @@
 import { Toaster } from "react-hot-toast";
-import { Link, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import Navbar from "../components/sections/Navbar";
 
 const AuthLayout = () => {
     return (
         <>
             <Toaster />
-            <div className="min-h-screen bg-background-primary flex flex-col">
-                {/* Simple top bar */}
-                <div className="px-8 py-5 flex items-center justify-between">
-                    <Link to="/" className="text-heading tracking-tight text-xl font-serif font-medium">
-                        TMAG
-                    </Link>
-                    <Link to="/login" className="text-sm text-muted hover:text-heading transition-colors">
-                        Sign in
-                    </Link>
-                </div>
-
+            <Navbar />
+            <div className="min-h-screen bg-background-primary flex flex-col w-full">
                 {/* Trust bar */}
-                <div className="border-y border-border-light py-2.5 px-8 text-center">
+                <div className="border-y border-border-light py-2.5 px-8 text-center pt-20">
                     <p className="text-xs text-muted">
-                        <span className="font-medium text-heading">HIPAA-compliant</span>
+                        <span className="font-medium text-heading">
+                            NDPR-compliant
+                        </span>
                         {" · "}
                         No credit card required
                         {" · "}

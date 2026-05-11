@@ -31,8 +31,12 @@ import type {
   PurchaseCreditsRequest,
   // Travel Plan
   TravelPlanResponse,
+  TravelPlanListItemResponse,
   CreateTravelPlanRequest,
   UpdateTravelPlanRequest,
+  // Draft Plan
+  DraftPlanResponse,
+  SaveDraftPlanRequest,
   // Travel Request
   CreditRequestResponse,
   CreateCreditRequestRequest,
@@ -78,12 +82,9 @@ import type {
   OnboardingQuestionCategoryResponse,
   SubmitQuestionnaireRequest,
   QuestionnaireProgressRequest,
-  // Credit Pricing
-  CreditPricingResponse,
   CreditPurchaseRequest,
   CreditPurchaseInitiateResponse,
   CreditPurchaseResponse,
-  PriceCalculationResponse,
   CompanyAdminCreditQuoteResponse,
   CompanyAdminPurchaseInitiateResponse,
   CompanyAdminPricingResponse,
@@ -104,6 +105,21 @@ import type {
   CartCheckoutResponse,
   ExchangeRatesResponse,
   SupportedCurrency,
+  // Doctor
+  DoctorApplicationRequest,
+  DoctorProfileUpdateRequest,
+  DoctorProfileResponse,
+  DoctorDashboardStats,
+  DoctorValidationPlanDto,
+  DoctorValidationDetailDto,
+  ValidatePlanRequest,
+  AdminDoctorApplicationDto,
+  AdminDoctorListItemDto,
+  AdminDoctorStatsDto,
+  // Family Package
+  FamilyPackageCheckoutRequest,
+  FamilyPackageCheckoutResponse,
+  FamilyPackagePurchaseResponse,
 } from "./types";
 
 // ─── Generic CRUD helpers ────────────────────────────────────
@@ -228,7 +244,7 @@ export const employeesApi = {
 
 export const travelPlansApi = {
   list: (params?: PaginationParams) =>
-    api.get<ApiResponse<PaginatedResponse<TravelPlanResponse>>>("/travel-plans", { params: buildParams(params) }).then((r) => r.data.data),
+    api.get<ApiResponse<PaginatedResponse<TravelPlanListItemResponse>>>("/travel-plans", { params: buildParams(params) }).then((r) => r.data.data),
 
   listAll: () =>
     api.get<ApiResponse<SelectOption[]>>("/travel-plans/all").then((r) => r.data.data),
@@ -248,6 +264,10 @@ export const travelPlansApi = {
   /** Server-generated PDF (OpenHTMLToPDF). Requires completed plan; same auth as other travel-plan routes. */
   downloadPdfBlob: (id: number) =>
     api.get<Blob>(`/travel-plans/${id}/pdf`, { responseType: "blob" }).then((r) => r.data),
+
+  /** Condensed server-generated PDF. Available for completed paid travel plans. */
+  downloadSummaryPdfBlob: (id: number) =>
+    api.get<Blob>(`/travel-plans/${id}/summary-pdf`, { responseType: "blob" }).then((r) => r.data),
 };
 
 // ─── Credit Requests ─────────────────────────────────────────
@@ -488,6 +508,9 @@ export const profileApi = {
 
   updatePassword: (data: UpdateProfilePasswordRequest) =>
     api.put<ApiResponse<null>>("/profile/password", data).then((r) => r.data.data),
+
+  upgradePlan: (planCode: string) =>
+    api.put<ApiResponse<ProfileResponse>>("/profile/upgrade-plan", { planCode }).then((r) => r.data.data),
 };
 
 // ─── Onboarding ──────────────────────────────────────────────
@@ -514,18 +537,23 @@ export const onboardingApi = {
     api.get<ApiResponse<any>>("/onboarding/progress").then((r) => r.data.data),
 };
 
-// ─── Credit Pricing ────────────────────────────────────────────
-export const creditPricingApi = {
+// ─── Draft Plans ──────────────────────────────────────────────
+
+export const draftPlansApi = {
   list: () =>
-    api.get<ApiResponse<CreditPricingResponse[]>>("/credit-pricing").then((r) => r.data.data),
+    api.get<ApiResponse<DraftPlanResponse[]>>("/draft-plans").then((r) => r.data.data),
 
-  getByCurrency: (currency: string) =>
-    api.get<ApiResponse<CreditPricingResponse>>(`/credit-pricing/currency/${currency}`).then((r) => r.data.data),
+  get: (id: number) =>
+    api.get<ApiResponse<DraftPlanResponse>>(`/draft-plans/${id}`).then((r) => r.data.data),
 
-  calculatePrice: (currency: string, credits: number) =>
-    api.get<ApiResponse<PriceCalculationResponse>>("/credit-pricing/calculate", {
-      params: { currency, credits },
-    }).then((r) => r.data.data),
+  create: (data: SaveDraftPlanRequest) =>
+    api.post<ApiResponse<DraftPlanResponse>>("/draft-plans", data).then((r) => r.data.data),
+
+  update: (id: number, data: SaveDraftPlanRequest) =>
+    api.put<ApiResponse<DraftPlanResponse>>(`/draft-plans/${id}`, data).then((r) => r.data.data),
+
+  delete: (id: number) =>
+    api.delete<ApiResponse<null>>(`/draft-plans/${id}`).then((r) => r.data.data),
 };
 
 // ─── User Credit Plans ────────────────────────────────────────────
@@ -553,6 +581,18 @@ export const creditPurchaseApi = {
 
   get: (txRef: string) =>
     api.get<ApiResponse<CreditPurchaseResponse>>(`/credit-purchases/${txRef}`).then((r) => r.data.data),
+};
+
+// ─── Family Package Purchase ──────────────────────────────────
+export const familyPackagePurchaseApi = {
+  checkout: (data: FamilyPackageCheckoutRequest) =>
+    api.post<ApiResponse<FamilyPackageCheckoutResponse>>("/family-package-purchases/checkout", data).then((r) => r.data.data),
+
+  getActive: () =>
+    api.get<ApiResponse<FamilyPackagePurchaseResponse[]>>("/family-package-purchases/active").then((r) => r.data.data),
+
+  getHistory: () =>
+    api.get<ApiResponse<FamilyPackagePurchaseResponse[]>>("/family-package-purchases/history").then((r) => r.data.data),
 };
 
 // ─── Company Admin Credits (HR Payment) ────────────────────────────────────
@@ -717,11 +757,108 @@ export const publicPlansApi = {
     api.get<ApiResponse<PublicPlanResponse>>(`/public/plans/${id}`).then((r) => r.data.data),
 };
 
+// ─── Doctor ────────────────────────────────────────────────
+
+export const doctorApi = {
+  getProfile: () =>
+    api.get<ApiResponse<DoctorProfileResponse>>("/doctor/profile").then((r) => r.data.data),
+
+  apply: (data: DoctorApplicationRequest) => {
+    const form = new FormData();
+    form.append("firstName", data.firstName);
+    form.append("lastName", data.lastName);
+    form.append("email", data.email);
+    form.append("specialty", data.specialty);
+    form.append("country", data.country);
+    form.append("medicalLicenseNumber", data.medicalLicenseNumber);
+    if (data.profilePicture) form.append("profilePicture", data.profilePicture);
+    form.append("signature", data.signature);
+    if (data.stamp) form.append("stamp", data.stamp);
+    if (data.practicingLicense) form.append("practicingLicense", data.practicingLicense);
+    if (data.travelMedicineCertificate) form.append("travelMedicineCertificate", data.travelMedicineCertificate);
+    form.append("confidentialityAgreementAccepted", String(data.confidentialityAgreementAccepted));
+    form.append("conductAgreementAccepted", String(data.conductAgreementAccepted));
+    return api.post<ApiResponse<void>>("/doctor/apply", form, { headers: { "Content-Type": undefined } }).then((r) => r.data.data);
+  },
+
+  getReviewers: () =>
+    api.get<ApiResponse<import("./types").DoctorReviewerDto[]>>("/doctor/reviewers").then((r) => r.data.data),
+
+  updateProfile: (data: DoctorProfileUpdateRequest) => {
+    const form = new FormData();
+    if (data.firstName) form.append("firstName", data.firstName);
+    if (data.lastName) form.append("lastName", data.lastName);
+    if (data.profilePictureOption) form.append("profilePictureOption", data.profilePictureOption);
+    if (data.medicalLicenseNumber) form.append("medicalLicenseNumber", data.medicalLicenseNumber);
+    if (data.signature) form.append("signature", data.signature);
+    if (data.stamp) form.append("stamp", data.stamp);
+    if (data.practicingLicense) form.append("practicingLicense", data.practicingLicense);
+    if (data.travelMedicineCertificate) form.append("travelMedicineCertificate", data.travelMedicineCertificate);
+    return api.put<ApiResponse<DoctorProfileResponse>>("/doctor/profile", form, { headers: { "Content-Type": undefined } }).then((r) => r.data.data);
+  },
+
+  updateAvatar: (file: File) => {
+    const form = new FormData();
+    form.append("avatar", file);
+    return api.put<ApiResponse<ProfileResponse>>("/profile/avatar", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data.data);
+  },
+
+  getDashboardStats: () =>
+    api.get<ApiResponse<DoctorDashboardStats>>("/doctor/dashboard").then((r) => r.data.data),
+
+  getPendingValidations: (params?: PaginationParams) =>
+    api.get<ApiResponse<PaginatedResponse<DoctorValidationPlanDto>>>("/doctor/pending", { params: buildParams(params) }).then((r) => r.data.data),
+
+  getValidatedPlans: (params?: PaginationParams) =>
+    api.get<ApiResponse<PaginatedResponse<DoctorValidationPlanDto>>>("/doctor/validated", { params: buildParams(params) }).then((r) => r.data.data),
+
+  getValidationDetail: (planId: number) =>
+    api.get<ApiResponse<DoctorValidationDetailDto>>(`/doctor/plans/${planId}`).then((r) => r.data.data),
+
+  validatePlan: (data: ValidatePlanRequest) =>
+    api.post<ApiResponse<null>>("/doctor/validate", data).then((r) => r.data.data),
+
+  downloadSignedPdf: (planId: number) =>
+    api.get<Blob>(`/doctor/plans/${planId}/signed-pdf`, { responseType: "blob" }).then((r) => r.data),
+};
+
+// ─── Admin Doctor ──────────────────────────────────────────
+
+export const adminDoctorApi = {
+  getApplications: (status?: string) =>
+    api.get<ApiResponse<AdminDoctorApplicationDto[]>>("/admin/doctors/applications", { params: status ? { status } : {} }).then((r) => r.data.data),
+
+  getDoctors: (params?: PaginationParams) =>
+    api.get<ApiResponse<PaginatedResponse<AdminDoctorListItemDto>>>("/admin/doctors", { params: buildParams(params) }).then((r) => r.data.data),
+
+  approveApplication: (userId: number) =>
+    api.post<ApiResponse<null>>(`/admin/doctors/${userId}/approve`).then((r) => r.data.data),
+
+  rejectApplication: (userId: number, reason: string) =>
+    api.post<ApiResponse<null>>(`/admin/doctors/${userId}/reject`, { reason }).then((r) => r.data.data),
+
+  revokeDoctor: (userId: number) =>
+    api.post<ApiResponse<null>>(`/admin/doctors/${userId}/revoke`).then((r) => r.data.data),
+
+  getStats: () =>
+    api.get<ApiResponse<AdminDoctorStatsDto>>("/admin/doctors/stats").then((r) => r.data.data),
+};
+
 // ─── Company Onboarding ────────────────────────────────────
 
 export const companyOnboardingApi = {
-  submit: (data: import("./types").CompanyOnboardingRequest) =>
-    api.post<ApiResponse<import("./types").CompanyOnboardingResponse>>("/public/company-onboarding", data).then((r) => r.data.data),
+  submit: (data: import("./types").CompanyOnboardingRequest) => {
+    const formData = new FormData();
+    const { teamMembersCsv, ...payload } = data;
+    formData.append("request", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+    if (teamMembersCsv) formData.append("teamMembersCsv", teamMembersCsv);
+
+    return api.post<ApiResponse<import("./types").CompanyOnboardingResponse>>("/public/company-onboarding", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data.data);
+  },
 
   initiatePayment: (id: number) =>
     api.post<ApiResponse<import("./types").OnboardingPaymentInitiate>>(`/public/company-onboarding/${id}/pay`).then((r) => r.data.data),
@@ -733,4 +870,19 @@ export const companyOnboardingApi = {
 
   getStatus: (id: number) =>
     api.get<ApiResponse<import("./types").CompanyOnboardingResponse>>(`/public/company-onboarding/${id}/status`).then((r) => r.data.data),
+
+  getPricingPreview: (credits: number) =>
+    api.get<ApiResponse<import("./types").PublicPricingPreview[]>>("/public/company-onboarding/pricing", {
+      params: { credits },
+    }).then((r) => r.data.data),
+};
+
+// ─── User Settings ────────────────────────────────────────────
+
+export const settingsApi = {
+  get: () =>
+    api.get<ApiResponse<import("./types").UserSettingResponse>>("/settings").then((r) => r.data.data),
+
+  acceptQuestionnaireConsent: () =>
+    api.post<ApiResponse<import("./types").UserSettingResponse>>("/settings/questionnaire-consent").then((r) => r.data.data),
 };

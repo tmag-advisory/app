@@ -14,7 +14,7 @@ const badges = [
     },
     {
         icon: <LucideLock className="w-5 h-5" />,
-        label: "HIPAA-compliant",
+        label: "NDPR-aligned",
     },
     {
         icon: <LucideRefreshCw className="w-5 h-5" />,

@@ -1,8 +1,5 @@
-import { useState } from "react";
 import { LucideArrowUpRight, LucideMail, LucideMapPin, LucidePhone } from "lucide-react";
 import { Link } from "react-router-dom";
-import Button from "../ui/Button";
-import { useNewsletterSubscribe } from "../../api/hooks";
 
 const footerLinks = [
     {
@@ -22,8 +19,11 @@ const footerLinks = [
             { label: "Careers", href: "/careers" },
             { label: "Blog", href: "/blog" },
             { label: "Press", href: "/press" },
+            { label: "Apply as Doctor", href: "/apply-as-doctor" },
+            { label: "Apply as Affiliate", href: "/apply-as-affiliate" },
         ],
     },
+    // Note: "Apply as Affiliate" is rendered as a button (opens modal), not a link
     {
         heading: "Resources",
         links: [
@@ -39,21 +39,12 @@ const footerLinks = [
             { label: "Privacy policy", href: "/privacy" },
             { label: "Terms of service", href: "/terms" },
             { label: "Medical disclaimer", href: "/medical-disclaimer" },
-            { label: "HIPAA compliance", href: "/hipaa" },
+            { label: "NDPR compliance", href: "/ndpr" },
         ],
     },
 ];
 
 const FooterSection = () => {
-    const [newsletterEmail, setNewsletterEmail] = useState("");
-    const [destination, setDestination] = useState("");
-    const { mutate: subscribe, isPending: isSubscribing, isSuccess: isSubscribed, isError: isSubscribeError, error: subscribeError } = useNewsletterSubscribe();
-
-    const handleSubscribe = (e: React.FormEvent) => {
-        e.preventDefault();
-        subscribe({ email: newsletterEmail });
-    };
-
     return (
         <footer className="relative bg-darkest text-white min-h-screen flex flex-col overflow-hidden">
             {/* Ambient orbs */}
@@ -121,55 +112,6 @@ const FooterSection = () => {
                 {/* Middle: newsletter + contact info */}
                 <div className="py-16 md:py-20">
                     <div className="flex flex-col lg:flex-row gap-14 lg:gap-20">
-                        {/* Newsletter */}
-                        <div className="lg:w-1/2">
-                            <span className="text-xl font-serif font-medium tracking-tight">
-                                TMAG
-                            </span>
-                            <p className="text-sm text-white/40 leading-relaxed mt-4 max-w-sm">
-                                Get the travel health alert for your next
-                                destination free in your inbox.
-                            </p>
-                            {isSubscribed ? (
-                                <p className="text-sm text-accent mt-6 font-medium">
-                                    You're subscribed! Look for updates in your inbox.
-                                </p>
-                            ) : (
-                                <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row items-stretch gap-3 mt-6 max-w-md">
-                                    <input
-                                        type="text"
-                                        value={destination}
-                                        onChange={(e) => setDestination(e.target.value)}
-                                        placeholder="Your destination"
-                                        className="flex-1 bg-white/6 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-white/25 transition-colors duration-200"
-                                    />
-                                    <input
-                                        type="email"
-                                        value={newsletterEmail}
-                                        onChange={(e) => setNewsletterEmail(e.target.value)}
-                                        placeholder="Enter your email"
-                                        required
-                                        className="flex-1 bg-white/6 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-white/25 transition-colors duration-200"
-                                    />
-                                    <Button
-                                        type="submit"
-                                        variant="primary"
-                                        className="bg-white! text-dark! hover:bg-white/90! shrink-0"
-                                        disabled={isSubscribing}
-                                    >
-                                        {isSubscribing ? "…" : "Subscribe"}
-                                    </Button>
-                                </form>
-                            )}
-                            {isSubscribeError && (
-                                <p className="text-xs text-red-400 mt-2">
-                                    {(subscribeError as { response?: { data?: { message?: string } } })?.response?.data?.message === "Already subscribed"
-                                        ? "You're already subscribed."
-                                        : "Something went wrong. Please try again."}
-                                </p>
-                            )}
-                        </div>
-
                         {/* Contact info */}
                         <div className="lg:w-1/2 flex flex-col sm:flex-row gap-8">
                             <div className="flex items-start gap-3">
@@ -180,7 +122,10 @@ const FooterSection = () => {
                                     <p className="text-xs text-white/30 uppercase tracking-wider font-semibold mb-1">
                                         Email
                                     </p>
-                                    <a href="#" className="text-sm text-white/60 hover:text-white transition-colors duration-200">
+                                    <a
+                                        href="#"
+                                        className="text-sm text-white/60 hover:text-white transition-colors duration-200"
+                                    >
                                         hello@tmag.health
                                     </a>
                                 </div>
@@ -193,7 +138,10 @@ const FooterSection = () => {
                                     <p className="text-xs text-white/30 uppercase tracking-wider font-semibold mb-1">
                                         Phone
                                     </p>
-                                    <a href="#" className="text-sm text-white/60 hover:text-white transition-colors duration-200">
+                                    <a
+                                        href="#"
+                                        className="text-sm text-white/60 hover:text-white transition-colors duration-200"
+                                    >
                                         +1 (800) 555-TMAG
                                     </a>
                                 </div>
@@ -252,6 +200,21 @@ const FooterSection = () => {
                         © {new Date().getFullYear()} TMAG · Travel Medicine
                         Advisory Global. All rights reserved.
                     </p>
+                    <div className="flex items-center gap-4">
+                        <Link
+                            to="/privacy"
+                            className="text-xs text-white/25 hover:text-white transition-colors duration-200"
+                        >
+                            Privacy Policy
+                        </Link>
+                        <span className="text-white/10">·</span>
+                        <Link
+                            to="/terms"
+                            className="text-xs text-white/25 hover:text-white transition-colors duration-200"
+                        >
+                            Terms of Service
+                        </Link>
+                    </div>
                     <div className="flex items-center gap-6">
                         {["Twitter", "LinkedIn", "GitHub", "Instagram"].map(
                             (social) => (

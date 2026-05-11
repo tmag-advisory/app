@@ -68,7 +68,7 @@ const faqCategories = [
         questions: [
             {
                 q: "Is my health data safe?",
-                a: "Yes. We follow HIPAA-compliant data handling practices. Your health data is encrypted in transit and at rest, never sold to third parties, and can be fully deleted from your account settings at any time.",
+                a: "Yes. We follow NDPR-aligned data handling practices. Your health data is encrypted in transit and at rest, never sold to third parties, and can be fully deleted from your account settings at any time.",
             },
             {
                 q: "Do you train your system on my data?",
