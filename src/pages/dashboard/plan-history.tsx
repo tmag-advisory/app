@@ -15,9 +15,10 @@ import {
     LucideLoader2,
     LucideSearch,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
+import PaginationFooter from "../../components/dashboard/PaginationFooter";
 
 const riskColors: Record<string, string> = { Low: "text-accent", Moderate: "text-gold", High: "text-red-600" };
 const riskBg: Record<string, string> = { Low: "bg-accent/10", Moderate: "bg-gold/10", High: "bg-red-50" };
@@ -149,13 +150,24 @@ const getPlanDisplayStatus = (plan: TravelPlanListItemResponse) => {
 
 const PlanHistory = () => {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
   const [downloadingAction, setDownloadingAction] = useState<string | null>(
       null,
   );
-  const { data: plansData, isLoading } = useTravelPlans({ search: search || undefined });
+  const { data: plansData, isLoading } = useTravelPlans({
+      search: search || undefined,
+      page,
+      per_page: perPage,
+  });
   const { mutateAsync: downloadSummaryPdfBlob } = useTravelPlanSummaryPdf();
 
+  useEffect(() => {
+      setPage(1);
+  }, [search, perPage]);
+
   const plans = plansData?.data || [];
+  const pagination = plansData?.pagination;
   const sortedPlans = useMemo(
       () =>
           [...plans].sort(
@@ -420,6 +432,16 @@ const PlanHistory = () => {
                   <div className="px-6 py-12 text-center">
                       <p className="text-sm text-muted">No plans found.</p>
                   </div>
+              )}
+              {pagination && pagination.total > 0 && (
+                  <PaginationFooter
+                      page={pagination.page}
+                      pageSize={pagination.pageSize}
+                      total={pagination.total}
+                      totalPages={pagination.totalPages}
+                      onPageChange={setPage}
+                      onPageSizeChange={setPerPage}
+                  />
               )}
           </div>
       </div>

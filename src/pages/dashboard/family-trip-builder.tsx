@@ -21,8 +21,9 @@ import type {
     OnboardingQuestionCategoryResponse,
 } from "../../api/types";
 import CountryPicker from "../../components/CountryPicker";
+import { useAuth } from "../../context/AuthContext";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
-import { DashboardAmbientBackground } from "../../components/dashboard/dashboardChrome";
+
 import { buildPlanPayloadFromAnswers } from "../../components/plan/PlanQuestionnaireFlow";
 import TripItineraryFlow, {
     hydrateLegacyTripItinerary,
@@ -141,6 +142,7 @@ const RELATIONSHIP_OPTIONS = [
     { value: "CHILD", label: "Child" },
     { value: "PARENT", label: "Parent" },
     { value: "DEPENDENT", label: "Other Dependent" },
+    { value: "MAIN_APPLICANT", label: "You (Main applicant)" },
 ];
 
 const GENDER_OPTIONS = [
@@ -187,7 +189,7 @@ const FAMILY_BUILDER_GUIDE = [
 
 // ─── Helpers ───────────────────────────────────────────────────
 
-function defaultMember(relationship = "SPOUSE"): FamilyTripMemberRequest {
+function defaultMember(relationship = "MAIN_APPLICANT"): FamilyTripMemberRequest {
     return {
         relationship,
         firstName: "",
@@ -197,9 +199,9 @@ function defaultMember(relationship = "SPOUSE"): FamilyTripMemberRequest {
     };
 }
 
-function defaultMemberAnswers(relationship = "SPOUSE"): AnswerMap {
+function defaultMemberAnswers(relationship = "MAIN_APPLICANT"): AnswerMap {
     const isLikelyAdult =
-        relationship === "SPOUSE" || relationship === "PARENT";
+        relationship === "SPOUSE" || relationship === "PARENT" || relationship === "MAIN_APPLICANT";
     return {
         age_years: "",
         age_months: "",
@@ -453,7 +455,9 @@ function getMemberAgeLabel(
 function memberLabel(member: FamilyTripMemberRequest, index: number): string {
     const fullName =
         `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim();
-    return fullName || `Member ${index + 1}`;
+    if (fullName) return fullName;
+    if (member.relationship === "MAIN_APPLICANT") return "You (Main applicant)";
+    return `Member ${index + 1}`;
 }
 
 function getMemberInitials(
@@ -466,6 +470,7 @@ function getMemberInitials(
 }
 
 function getRelationshipLabel(value: string): string {
+    if (value === "MAIN_APPLICANT") return "You (Main applicant)";
     return (
         RELATIONSHIP_OPTIONS.find((option) => option.value === value)?.label ??
         value
@@ -793,8 +798,8 @@ function QuestionInput({
                                 type="button"
                                 onClick={() => onChange(option.value)}
                                 className={`text-left px-4 py-3 rounded-xl border transition-colors cursor-pointer ${selected ?
-                                        "border-accent bg-accent/10 text-heading"
-                                        : `${unselectedBorderClass} bg-white text-body hover:border-accent/50`
+                                    "border-accent bg-accent/10 text-heading"
+                                    : `${unselectedBorderClass} bg-white text-body hover:border-accent/50`
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
@@ -828,8 +833,8 @@ function QuestionInput({
                                 type="button"
                                 onClick={() => onToggleCheckbox(option.value)}
                                 className={`text-left px-4 py-3 rounded-xl border transition-colors cursor-pointer ${checked ?
-                                        "border-accent bg-accent/10 text-heading"
-                                        : `${unselectedBorderClass} bg-white text-body hover:border-accent/50`
+                                    "border-accent bg-accent/10 text-heading"
+                                    : `${unselectedBorderClass} bg-white text-body hover:border-accent/50`
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
@@ -1065,7 +1070,7 @@ function MemberProfileFields({
             <p className="text-xs text-red-500 mt-1 font-medium">
                 This field is required
             </p>
-        :   null;
+            : null;
 
     return (
         <div className="space-y-7">
@@ -1258,10 +1263,10 @@ function MemberProfileFields({
                                     )
                                 }
                                 className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-colors ${selected ?
-                                        "border-accent bg-accent/10 text-accent"
-                                        : hasFieldError("gender") ?
-                                            "border-red-400/70 text-body hover:border-red-400"
-                                        :   "border-border-light text-body hover:border-accent/50"
+                                    "border-accent bg-accent/10 text-accent"
+                                    : hasFieldError("gender") ?
+                                        "border-red-400/70 text-body hover:border-red-400"
+                                        : "border-border-light text-body hover:border-accent/50"
                                     }`}
                             >
                                 {option.label}
@@ -1342,8 +1347,8 @@ function MemberProfileFields({
                                         )
                                     }
                                     className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${selected ?
-                                            "border-accent bg-white text-accent"
-                                            : "border-border-light bg-white/70 text-body hover:border-accent/50"
+                                        "border-accent bg-white text-accent"
+                                        : "border-border-light bg-white/70 text-body hover:border-accent/50"
                                         }`}
                                 >
                                     {option.label}
@@ -1373,8 +1378,8 @@ function MemberProfileFields({
                                         )
                                     }
                                     className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${selected ?
-                                            "border-accent bg-white text-accent"
-                                            : "border-border-light bg-white/70 text-body hover:border-accent/50"
+                                        "border-accent bg-white text-accent"
+                                        : "border-border-light bg-white/70 text-body hover:border-accent/50"
                                         }`}
                                 >
                                     {option.label}
@@ -1565,6 +1570,7 @@ function BuilderIntroPanel() {
 
 export default function FamilyTripBuilder() {
     const navigate = useNavigate();
+    const { user: authUser } = useAuth();
     const { data: categoriesRaw, isLoading: questionsLoading } =
         useOnboardingQuestions();
     const [step, setStep] = useState<BuilderStep>("trip");
@@ -1581,6 +1587,16 @@ export default function FamilyTripBuilder() {
     const [memberQuestionnaireErrors, setMemberQuestionnaireErrors] =
         useState<FieldErrorMap>({});
 
+    const initialMainApplicant = useMemo(() => {
+        const m = defaultMember("MAIN_APPLICANT");
+        if (authUser) {
+            m.firstName = authUser.first_name;
+            m.lastName = authUser.last_name;
+            m.memberEmail = authUser.email;
+        }
+        return m;
+    }, [authUser]);
+
     const [request, setRequest] = useState<FamilyTripRequest>({
         packageType: "STANDARD",
         destination: "",
@@ -1589,7 +1605,7 @@ export default function FamilyTripBuilder() {
         purpose: "Leisure",
         tripType: "return",
         tripDetailsJson: "",
-        members: [defaultMember("SPOUSE")],
+        members: [initialMainApplicant],
     });
 
     const [sharedAnswers, setSharedAnswers] = useState<AnswerMap>({
@@ -1597,7 +1613,7 @@ export default function FamilyTripBuilder() {
         trip_itinerary: { tripType: "return" } satisfies TripItineraryData,
     });
     const [memberAnswers, setMemberAnswers] = useState<AnswerMap[]>([
-        defaultMemberAnswers("SPOUSE"),
+        defaultMemberAnswers("MAIN_APPLICANT"),
     ]);
 
     const categories = useMemo<ParsedCategory[]>(() => {
@@ -1657,7 +1673,7 @@ export default function FamilyTripBuilder() {
                     members:
                         members.length > 0 ?
                             members
-                            : [defaultMember("SPOUSE")],
+                            : [defaultMember("MAIN_APPLICANT")],
                 });
 
                 const itinerary = tripDetailsJsonToItineraryData(
@@ -1673,7 +1689,7 @@ export default function FamilyTripBuilder() {
                 setMemberAnswers(
                     (members.length > 0 ?
                         members
-                        : [defaultMember("SPOUSE")]
+                        : [defaultMember("MAIN_APPLICANT")]
                     ).map((member) => ({
                         ...defaultMemberAnswers(member.relationship),
                         age_years:
@@ -1748,7 +1764,7 @@ export default function FamilyTripBuilder() {
                 [key]:
                     current.includes(value) ?
                         current.filter((entry) => entry !== value)
-                    :   [...current, value],
+                        : [...current, value],
             };
         });
         clearSharedFieldError(key);
@@ -1818,7 +1834,7 @@ export default function FamilyTripBuilder() {
                     [key]:
                         current.includes(value) ?
                             current.filter((entry) => entry !== value)
-                        :   [...current, value],
+                            : [...current, value],
                 };
             }),
         );
@@ -1828,13 +1844,25 @@ export default function FamilyTripBuilder() {
     const addMember = () => {
         setRequest((prev) => ({
             ...prev,
-            members: [...prev.members, defaultMember("CHILD")],
+            members: [
+                prev.members[0],
+                defaultMember("CHILD"),
+                ...prev.members.slice(1),
+            ],
         }));
-        setMemberAnswers((prev) => [...prev, defaultMemberAnswers("CHILD")]);
+        setMemberAnswers((prev) => [
+            prev[0],
+            defaultMemberAnswers("CHILD"),
+            ...prev.slice(1),
+        ]);
         setExpandedMember(request.members.length);
     };
 
     const removeMember = (index: number) => {
+        if (index === 0) {
+            toast.error("Main applicant cannot be removed");
+            return;
+        }
         if (request.members.length <= 1) {
             toast.error("At least one family member is required");
             return;
@@ -2126,14 +2154,14 @@ export default function FamilyTripBuilder() {
                     >
                         <div
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${active ? "bg-accent text-white"
-                                    : done ? "bg-accent/15 text-accent"
-                                        : "bg-background-secondary text-muted"
+                                : done ? "bg-accent/15 text-accent"
+                                    : "bg-background-secondary text-muted"
                                 }`}
                         >
                             <span
                                 className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${active ? "bg-white text-accent"
-                                        : done ? "bg-accent text-white"
-                                            : "bg-muted/20 text-muted"
+                                    : done ? "bg-accent text-white"
+                                        : "bg-muted/20 text-muted"
                                     }`}
                             >
                                 {index + 1}
@@ -2151,10 +2179,9 @@ export default function FamilyTripBuilder() {
 
     return (
         <div className="relative min-h-screen font-sans">
-            <DashboardAmbientBackground />
             <DashboardHeader title="Family Trip Builder" />
 
-            <div className="relative z-10 mx-auto max-w-6xl px-3 pb-14 pt-8 md:px-10">
+            <div className="relative z-10 mx-auto max-w-6xl pb-14 pt-8">
                 <div className="bg-white/95 rounded-3xl border border-border-light overflow-hidden">
                     <div className="p-5 md:p-8 space-y-10">
                         <BuilderIntroPanel />
@@ -2329,10 +2356,10 @@ export default function FamilyTripBuilder() {
                                                     <article
                                                         key={index}
                                                         className={`overflow-hidden rounded-3xl border transition-all ${hasProfileErrors ?
-                                                                "border-red-300 bg-red-50/30 ring-2 ring-red-400/40"
+                                                            "border-red-300 bg-red-50/30 ring-2 ring-red-400/40"
                                                             : isExpanded ?
                                                                 "border-accent/40 bg-white shadow-[0_18px_45px_-35px_rgba(42,122,106,0.65)]"
-                                                            :   "border-border-light bg-background-secondary/70"
+                                                                : "border-border-light bg-background-secondary/70"
                                                             }`}
                                                     >
                                                         <div className="p-5 md:p-6">
@@ -2365,30 +2392,33 @@ export default function FamilyTripBuilder() {
                                                                                 </h4>
                                                                                 <span
                                                                                     className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${profileComplete ?
-                                                                                            "bg-emerald-50 text-emerald-700"
+                                                                                        "bg-emerald-50 text-emerald-700"
                                                                                         : hasProfileErrors ?
                                                                                             "bg-red-50 text-red-700"
-                                                                                        :   "bg-amber-50 text-amber-700"
+                                                                                            : "bg-amber-50 text-amber-700"
                                                                                         }`}
                                                                                 >
                                                                                     {profileComplete ?
                                                                                         "Profile ready"
-                                                                                    : hasProfileErrors ?
-                                                                                        "Required fields missing"
-                                                                                    :   "Needs profile details"}
+                                                                                        : hasProfileErrors ?
+                                                                                            "Required fields missing"
+                                                                                            : "Needs profile details"}
                                                                                 </span>
                                                                             </div>
                                                                             <p className="mt-1 text-sm text-muted">
                                                                                 {getRelationshipLabel(
                                                                                     member.relationship,
-                                                                                )}{" "}
-                                                                                ·{" "}
+                                                                                )}
+                                                                                {member.relationship === "MAIN_APPLICANT" && (
+                                                                                    <span className="ml-2 inline-flex rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">You</span>
+                                                                                )}
+                                                                                {" · "}
                                                                                 {age ===
-                                                                                null ?
+                                                                                    null ?
                                                                                     "Age pending"
-                                                                                : isAdult ?
-                                                                                    `Adult · ${getMemberAgeLabel(member, answers)}`
-                                                                                :   `Dependent/child · ${getMemberAgeLabel(member, answers)}`}
+                                                                                    : isAdult ?
+                                                                                        `Adult · ${getMemberAgeLabel(member, answers)}`
+                                                                                        : `Dependent/child · ${getMemberAgeLabel(member, answers)}`}
                                                                             </p>
                                                                             <p className="mt-2 text-sm leading-relaxed text-muted">
                                                                                 These profile answers will stay attached to this traveller's final plan.
@@ -2398,19 +2428,21 @@ export default function FamilyTripBuilder() {
                                                                 </button>
 
                                                                 <div className="flex shrink-0 flex-wrap items-center gap-2">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            removeMember(
-                                                                                index,
-                                                                            )
-                                                                        }
-                                                                        className="inline-flex items-center gap-1.5 rounded-xl border border-border-light bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                                                        aria-label="Remove member"
-                                                                    >
-                                                                        <LucideTrash className="w-4 h-4" />
-                                                                        Remove
-                                                                    </button>
+                                                                    {index > 0 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                removeMember(
+                                                                                    index,
+                                                                                )
+                                                                            }
+                                                                            className="inline-flex items-center gap-1.5 rounded-xl border border-border-light bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                                                            aria-label="Remove member"
+                                                                        >
+                                                                            <LucideTrash className="w-4 h-4" />
+                                                                            Remove
+                                                                        </button>
+                                                                    )}
                                                                     <button
                                                                         type="button"
                                                                         onClick={() =>
@@ -2495,7 +2527,7 @@ export default function FamilyTripBuilder() {
                                                                     }
                                                                     fieldErrors={
                                                                         memberProfileErrors[
-                                                                            index
+                                                                        index
                                                                         ]
                                                                     }
                                                                     onMemberChange={
@@ -2665,17 +2697,17 @@ export default function FamilyTripBuilder() {
                                                             <div className="flex items-center gap-2">
                                                                 <span
                                                                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${memberComplete ?
-                                                                            "text-emerald-700 bg-emerald-50"
+                                                                        "text-emerald-700 bg-emerald-50"
                                                                         : hasQuestionnaireErrors ?
                                                                             "text-red-700 bg-red-50"
-                                                                        :   "text-amber-700 bg-amber-50"
+                                                                            : "text-amber-700 bg-amber-50"
                                                                         }`}
                                                                 >
                                                                     {memberComplete ?
                                                                         "Complete"
-                                                                    : hasQuestionnaireErrors ?
-                                                                        "Required answers missing"
-                                                                    :   "Needs answers"}
+                                                                        : hasQuestionnaireErrors ?
+                                                                            "Required answers missing"
+                                                                            : "Needs answers"}
                                                                 </span>
                                                                 <LucideChevronDown
                                                                     className={`w-4 h-4 text-muted transition-transform ${isExpanded ? "rotate-180" : ""}`}
@@ -2699,7 +2731,7 @@ export default function FamilyTripBuilder() {
                                                                             }
                                                                             errorKeys={
                                                                                 memberQuestionnaireErrors[
-                                                                                    index
+                                                                                index
                                                                                 ]
                                                                             }
                                                                             fieldIdPrefix={`member-${index}`}
@@ -2872,8 +2904,8 @@ export default function FamilyTripBuilder() {
                                                         </div>
                                                         <span
                                                             className={`text-xs font-semibold px-2.5 py-1 rounded-full ${memberComplete ?
-                                                                    "bg-emerald-50 text-emerald-700"
-                                                                    : "bg-amber-50 text-amber-700"
+                                                                "bg-emerald-50 text-emerald-700"
+                                                                : "bg-amber-50 text-amber-700"
                                                                 }`}
                                                         >
                                                             {memberComplete ?

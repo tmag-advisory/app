@@ -49,8 +49,8 @@ const FamilyOverview = () => {
     const fetchTrips = async () => {
         setTripsLoading(true);
         try {
-            const res = await familyTripApi.list();
-            setTrips(res.data.data ?? []);
+            const res = await familyTripApi.list({ per_page: 50 });
+            setTrips(res.data.data?.data ?? []);
         } catch {
             // silent
         } finally {

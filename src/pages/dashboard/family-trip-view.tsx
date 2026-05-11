@@ -4,7 +4,7 @@ import familyTripApi from "../../api/familyTrip";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { DashboardAmbientBackground } from "../../components/dashboard/dashboardChrome";
 import type { FamilyTripResponse } from "../../api/types";
-import { LucideUsers, LucideMapPin, LucideCalendar, LucideCreditCard, LucideRefreshCw, LucideArrowRight, LucideEye, LucideEyeOff, LucideCopy } from "lucide-react";
+import { LucideUsers, LucideMapPin, LucideCalendar, LucideCreditCard, LucideRefreshCw, LucideArrowRight, LucideEye, LucideEyeOff, LucideCopy, LucideDownload, LucideLoader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "../../components/ui/Button";
 
@@ -14,6 +14,9 @@ export default function FamilyTripView() {
     const [trip, setTrip] = useState<FamilyTripResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [visibleCodes, setVisibleCodes] = useState<Record<number, boolean>>({});
+    const [familyPlan, setFamilyPlan] = useState<{ id: number; status: string } | null>(null);
+    const [familyPlanLoading, setFamilyPlanLoading] = useState(false);
+    const [downloadingPdf, setDownloadingPdf] = useState(false);
 
     useEffect(() => {
         const fetchTrip = async () => {
@@ -29,6 +32,42 @@ export default function FamilyTripView() {
         };
         if (id) fetchTrip();
     }, [id, navigate]);
+
+    useEffect(() => {
+        if (!trip?.familyPlanId) return;
+        const fetchFamilyPlan = async () => {
+            setFamilyPlanLoading(true);
+            try {
+                const res = await familyTripApi.getFamilyPlan(trip.id);
+                if (res.data.data) {
+                    setFamilyPlan({ id: (res.data.data as any).id, status: (res.data.data as any).status });
+                }
+            } catch {
+                // silently ignore
+            } finally {
+                setFamilyPlanLoading(false);
+            }
+        };
+        fetchFamilyPlan();
+    }, [trip?.familyPlanId]);
+
+    const handleDownloadPdf = async () => {
+        if (!trip) return;
+        setDownloadingPdf(true);
+        try {
+            const res = await familyTripApi.downloadFamilyPdf(trip.id);
+            const url = URL.createObjectURL(res.data as Blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "family-travel-health-plan.pdf";
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch {
+            toast.error("Failed to download PDF");
+        } finally {
+            setDownloadingPdf(false);
+        }
+    };
 
     const handleRegenerateCode = async (memberId: number) => {
         try {
@@ -100,6 +139,46 @@ export default function FamilyTripView() {
 
                     {/* Members */}
                     <div className="p-6 md:p-8">
+                        {(trip.familyPlanId || familyPlanLoading) && (
+                            <div className="mb-6 p-5 border border-accent/20 rounded-2xl bg-accent/5">
+                                <div className="flex items-center justify-between flex-wrap gap-3">
+                                    <div>
+                                        <p className="text-sm font-semibold text-heading">Family Travel Health Plan</p>
+                                        <p className="text-xs text-muted mt-0.5">
+                                            {familyPlanLoading ? "Loading..." :
+                                             familyPlan?.status === "COMPLETED" ? "Plan ready" :
+                                             familyPlan?.status === "PROCESSING" ? "Generating..." :
+                                             familyPlan?.status === "QUEUED" ? "Queued for generation" :
+                                             familyPlan?.status === "FAILED" ? "Generation failed" :
+                                             "Pending"}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        {familyPlan?.status === "COMPLETED" && (
+                                            <>
+                                                <Button
+                                                    variant="secondary"
+                                                    onClick={handleDownloadPdf}
+                                                    disabled={downloadingPdf}
+                                                    icon={downloadingPdf ? <LucideLoader2 className="w-4 h-4 animate-spin" /> : <LucideDownload className="w-4 h-4" />}
+                                                >
+                                                    Download PDF
+                                                </Button>
+                                                <Button
+                                                    variant="primary"
+                                                    onClick={() => navigate(`/dashboard/family-trip/${trip.id}/plan`)}
+                                                    icon={<LucideArrowRight className="w-4 h-4" />}
+                                                    className="bg-dark text-background-primary hover:bg-darkest"
+                                                >
+                                                    View Plan
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <h3 className="text-xl font-serif text-heading mb-6 flex items-center gap-2">
                             <LucideUsers className="w-5 h-5 text-muted" />
                             Family Members ({trip.members.length})
@@ -178,7 +257,7 @@ export default function FamilyTripView() {
                                             Regenerate Code
                                         </button>
 
-                                        {member.travelPlanId && (
+                                        {!trip.familyPlanId && member.travelPlanId && (
                                             <Button
                                                 variant="primary"
                                                 onClick={() => navigate(`/dashboard/plans/${member.travelPlanId}`)}

@@ -4,7 +4,20 @@ import type {
   FamilyTripRequest,
   FamilyTripResponse,
   FamilyTripPreviewResponse,
+  FamilyMemberPlanResponse,
+  PaginatedResponse,
+  PaginationParams,
 } from "./types";
+
+function buildFamilyTripParams(params?: PaginationParams) {
+  if (!params) return {};
+  return {
+    page: params.page !== undefined ? params.page - 1 : undefined,
+    size: params.per_page,
+    sort: params.sort,
+    order: params.order,
+  };
+}
 
 export interface FamilyMemberSession {
   id: number;
@@ -22,8 +35,8 @@ export interface FamilyMemberLoginResponse {
 
 const familyTripApi = {
   // Main Applicant Endpoints
-  list: () =>
-    api.get<ApiResponse<FamilyTripResponse[]>>("/family-trips"),
+  list: (params?: PaginationParams) =>
+    api.get<ApiResponse<PaginatedResponse<FamilyTripResponse>>>("/family-trips", { params: buildFamilyTripParams(params) }),
     
   preview: (data: FamilyTripRequest) =>
     api.post<ApiResponse<FamilyTripPreviewResponse>>("/family-trips/preview", data),
@@ -79,7 +92,32 @@ const familyTripApi = {
     return api.get<ApiResponse<Record<string, unknown>>>("/family-trips/members/plans/" + planId, {
       headers: { "X-Family-Member-Token": token }
     });
-  }
+  },
+
+  // New single-plan endpoints
+  getFamilyPlan: (tripId: number) =>
+    api.get<ApiResponse<import("./types").TravelPlanResponse>>(`/family-trips/${tripId}/plan`),
+
+  downloadFamilyPdf: (tripId: number) =>
+    api.get(`/family-trips/${tripId}/pdf`, { responseType: "blob" }),
+
+  getFamilySummaryPdfUrl: (tripId: number) =>
+    api.get(`/family-trips/${tripId}/summary-pdf`),
+
+  getMyMemberPlan: () => {
+    const token = localStorage.getItem("familyMemberToken");
+    return api.get<ApiResponse<FamilyMemberPlanResponse>>("/family-trips/members/my-plan", {
+      headers: { "X-Family-Member-Token": token }
+    });
+  },
+
+  downloadMyMemberPdf: () => {
+    const token = localStorage.getItem("familyMemberToken");
+    return api.get("/family-trips/members/my-pdf", {
+      responseType: "blob",
+      headers: { "X-Family-Member-Token": token }
+    });
+  },
 };
 
 export default familyTripApi;

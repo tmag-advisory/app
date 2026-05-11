@@ -1524,7 +1524,41 @@ export interface FamilyTripResponse {
   extraMemberCount: number;
   totalFiatCost: number;
   currency: string;
+  familyPlanId?: number | null;
   members: FamilyTripMemberResponse[];
+}
+
+export interface FamilyMemberPlanResponse {
+  destination: string;
+  country: string;
+  status: string;
+  tripSummary: string;
+  generalVaccinations: string[];
+  memberSection: {
+    memberId: number;
+    memberName: string;
+    relationship: string;
+    ageAtDeparture: number;
+    executiveSummary: string;
+    vaccinations: Array<{
+      name: string;
+      recommendation: string;
+      rationale: string;
+      timing: string;
+    }>;
+    medications: Array<{
+      name: string;
+      indication: string;
+      dosage: string;
+      notes: string;
+    }>;
+    healthConsiderations: Array<{
+      category: string;
+      advice: string;
+    }>;
+    travellerSpecific: string;
+    hardStop: boolean;
+  };
 }
 
 // ─── Family Package Purchase ─────────────────────────────────
