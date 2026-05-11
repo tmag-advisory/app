@@ -4,7 +4,15 @@ import familyTripApi from "../../api/familyTrip";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { DashboardAmbientBackground } from "../../components/dashboard/dashboardChrome";
 import type { FamilyTripResponse } from "../../api/types";
-import { LucideUsers, LucideMapPin, LucideCalendar, LucideCreditCard, LucideRefreshCw, LucideArrowRight, LucideEye, LucideEyeOff, LucideCopy, LucideDownload, LucideLoader2 } from "lucide-react";
+import {
+    LucideUsers,
+    LucideMapPin,
+    LucideCalendar,
+    LucideCreditCard,
+    LucideArrowRight,
+    LucideDownload,
+    LucideLoader2,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "../../components/ui/Button";
 
@@ -13,8 +21,13 @@ export default function FamilyTripView() {
     const navigate = useNavigate();
     const [trip, setTrip] = useState<FamilyTripResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [visibleCodes, setVisibleCodes] = useState<Record<number, boolean>>({});
-    const [familyPlan, setFamilyPlan] = useState<{ id: number; status: string } | null>(null);
+    // const [visibleCodes, setVisibleCodes] = useState<Record<number, boolean>>(
+    //     {},
+    // );
+    const [familyPlan, setFamilyPlan] = useState<{
+        id: number;
+        status: string;
+    } | null>(null);
     const [familyPlanLoading, setFamilyPlanLoading] = useState(false);
     const [downloadingPdf, setDownloadingPdf] = useState(false);
 
@@ -40,7 +53,10 @@ export default function FamilyTripView() {
             try {
                 const res = await familyTripApi.getFamilyPlan(trip.id);
                 if (res.data.data) {
-                    setFamilyPlan({ id: (res.data.data as any).id, status: (res.data.data as any).status });
+                    setFamilyPlan({
+                        id: (res.data.data as any).id,
+                        status: (res.data.data as any).status,
+                    });
                 }
             } catch {
                 // silently ignore
@@ -69,34 +85,35 @@ export default function FamilyTripView() {
         }
     };
 
-    const handleRegenerateCode = async (memberId: number) => {
-        try {
-            const res = await familyTripApi.regenerateCode(Number(id), memberId);
-            const newCode = res?.data?.data?.loginCode;
-            if (newCode && trip) {
-                setTrip({
-                    ...trip,
-                    members: trip.members.map((m) =>
-                        m.id === memberId ? { ...m, loginCode: newCode } : m
-                    ),
-                });
-            }
-            toast.success("Access code regenerated and emailed to member");
-        } catch (err) {
-            toast.error("Failed to regenerate code");
-        }
-    };
+    // const handleRegenerateCode = async (memberId: number) => {
+    //     try {
+    //         const res = await familyTripApi.regenerateCode(Number(id), memberId);
+    //         const newCode = res?.data?.data?.loginCode;
+    //         if (newCode && trip) {
+    //             setTrip({
+    //                 ...trip,
+    //                 members: trip.members.map((m) =>
+    //                     m.id === memberId ? { ...m, loginCode: newCode } : m
+    //                 ),
+    //             });
+    //         }
+    //         toast.success("Access code regenerated and emailed to member");
+    //     } catch (err) {
+    //         toast.error("Failed to regenerate code");
+    //     }
+    // };
 
-    const toggleCodeVisibility = (memberId: number) => {
-        setVisibleCodes((prev) => ({ ...prev, [memberId]: !prev[memberId] }));
-    };
+    // const toggleCodeVisibility = (memberId: number) => {
+    //     setVisibleCodes((prev) => ({ ...prev, [memberId]: !prev[memberId] }));
+    // };
 
-    const copyCode = (code: string) => {
-        navigator.clipboard.writeText(code);
-        toast.success("Code copied to clipboard");
-    };
+    // const copyCode = (code: string) => {
+    //     navigator.clipboard.writeText(code);
+    //     toast.success("Code copied to clipboard");
+    // };
 
-    if (isLoading) return <div className="p-8 text-center text-muted">Loading...</div>;
+    if (isLoading)
+        return <div className="p-8 text-center text-muted">Loading...</div>;
     if (!trip) return null;
 
     return (
@@ -110,10 +127,14 @@ export default function FamilyTripView() {
                     <div className="bg-background-secondary border-b border-border-light p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
-                                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full uppercase tracking-wider ${trip.status === 'SUBMITTED' ? 'bg-accent/10 text-accent' : 'bg-emerald-50 text-emerald-700'}`}>
+                                <span
+                                    className={`px-2.5 py-1 text-xs font-semibold rounded-full uppercase tracking-wider ${trip.status === "SUBMITTED" ? "bg-accent/10 text-accent" : "bg-emerald-50 text-emerald-700"}`}
+                                >
                                     {trip.status}
                                 </span>
-                                <span className="text-sm font-medium text-muted">Trip #{trip.id}</span>
+                                <span className="text-sm font-medium text-muted">
+                                    Trip #{trip.id}
+                                </span>
                             </div>
                             <h2 className="text-2xl font-serif text-heading flex items-center gap-2">
                                 <LucideMapPin className="w-6 h-6 text-accent" />
@@ -131,7 +152,9 @@ export default function FamilyTripView() {
                                 <LucideCreditCard className="w-4 h-4 text-muted" />
                                 <span>
                                     {trip.currency === "NGN" ? "₦" : "$"}
-                                    {(trip.totalFiatCost / 100).toLocaleString()}
+                                    {(
+                                        trip.totalFiatCost / 100
+                                    ).toLocaleString()}
                                 </span>
                             </div>
                         </div>
@@ -143,14 +166,27 @@ export default function FamilyTripView() {
                             <div className="mb-6 p-5 border border-accent/20 rounded-2xl bg-accent/5">
                                 <div className="flex items-center justify-between flex-wrap gap-3">
                                     <div>
-                                        <p className="text-sm font-semibold text-heading">Family Travel Health Plan</p>
+                                        <p className="text-sm font-semibold text-heading">
+                                            Family Travel Health Plan
+                                        </p>
                                         <p className="text-xs text-muted mt-0.5">
-                                            {familyPlanLoading ? "Loading..." :
-                                             familyPlan?.status === "COMPLETED" ? "Plan ready" :
-                                             familyPlan?.status === "PROCESSING" ? "Generating..." :
-                                             familyPlan?.status === "QUEUED" ? "Queued for generation" :
-                                             familyPlan?.status === "FAILED" ? "Generation failed" :
-                                             "Pending"}
+                                            {familyPlanLoading ?
+                                                "Loading..."
+                                            : (
+                                                familyPlan?.status ===
+                                                "COMPLETED"
+                                            ) ?
+                                                "Plan ready"
+                                            : (
+                                                familyPlan?.status ===
+                                                "PROCESSING"
+                                            ) ?
+                                                "Generating..."
+                                            : familyPlan?.status === "QUEUED" ?
+                                                "Queued for generation"
+                                            : familyPlan?.status === "FAILED" ?
+                                                "Generation failed"
+                                            :   "Pending"}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -160,14 +196,24 @@ export default function FamilyTripView() {
                                                     variant="secondary"
                                                     onClick={handleDownloadPdf}
                                                     disabled={downloadingPdf}
-                                                    icon={downloadingPdf ? <LucideLoader2 className="w-4 h-4 animate-spin" /> : <LucideDownload className="w-4 h-4" />}
+                                                    icon={
+                                                        downloadingPdf ?
+                                                            <LucideLoader2 className="w-4 h-4 animate-spin" />
+                                                        :   <LucideDownload className="w-4 h-4" />
+                                                    }
                                                 >
                                                     Download PDF
                                                 </Button>
                                                 <Button
                                                     variant="primary"
-                                                    onClick={() => navigate(`/dashboard/family-trip/${trip.id}/plan`)}
-                                                    icon={<LucideArrowRight className="w-4 h-4" />}
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/dashboard/family-trip/${trip.id}/plan`,
+                                                        )
+                                                    }
+                                                    icon={
+                                                        <LucideArrowRight className="w-4 h-4" />
+                                                    }
                                                     className="bg-dark text-background-primary hover:bg-darkest"
                                                 >
                                                     View Plan
@@ -186,25 +232,41 @@ export default function FamilyTripView() {
 
                         <div className="grid gap-4">
                             {trip.members.map((member) => (
-                                <div key={member.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 border border-border-light rounded-2xl hover:border-accent hover:shadow-[0_4px_16px_-6px_rgba(42,122,106,0.15)] transition-all bg-white group">
+                                <div
+                                    key={member.id}
+                                    className="flex flex-col md:flex-row md:items-center justify-between p-5 border border-border-light rounded-2xl hover:border-accent hover:shadow-[0_4px_16px_-6px_rgba(42,122,106,0.15)] transition-all bg-white group"
+                                >
                                     <div className="flex items-start gap-4 mb-4 md:mb-0">
                                         <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                                             <span className="text-accent font-serif font-bold text-sm">
-                                                {member.firstName.charAt(0)}{member.lastName.charAt(0)}
+                                                {member.firstName.charAt(0)}
+                                                {member.lastName.charAt(0)}
                                             </span>
                                         </div>
                                         <div>
                                             <h4 className="font-semibold text-heading text-lg">
-                                                {member.firstName} {member.lastName}
+                                                {member.firstName}{" "}
+                                                {member.lastName}
                                             </h4>
                                             <p className="text-sm text-muted flex items-center gap-2">
-                                                <span className="capitalize font-medium">{member.relationship.toLowerCase()}</span>
-                                                <span className="text-border-light">&bull;</span>
-                                                <span>{member.ageAtDeparture} years old</span>
+                                                <span className="capitalize font-medium">
+                                                    {member.relationship.toLowerCase()}
+                                                </span>
+                                                <span className="text-border-light">
+                                                    &bull;
+                                                </span>
+                                                <span>
+                                                    {member.ageAtDeparture}{" "}
+                                                    years old
+                                                </span>
                                                 {member.memberEmail && (
                                                     <>
-                                                        <span className="text-border-light">&bull;</span>
-                                                        <span>{member.memberEmail}</span>
+                                                        <span className="text-border-light">
+                                                            &bull;
+                                                        </span>
+                                                        <span>
+                                                            {member.memberEmail}
+                                                        </span>
                                                     </>
                                                 )}
                                             </p>
@@ -213,8 +275,12 @@ export default function FamilyTripView() {
 
                                     <div className="flex flex-wrap items-center gap-3">
                                         <div className="text-right">
-                                            <p className="text-[10px] uppercase tracking-wider text-muted font-semibold mb-1">Status</p>
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${member.questionnaireStatus === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gold/10 text-gold-dark'}`}>
+                                            <p className="text-[10px] uppercase tracking-wider text-muted font-semibold mb-1">
+                                                Status
+                                            </p>
+                                            <span
+                                                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${member.questionnaireStatus === "COMPLETED" ? "bg-emerald-50 text-emerald-700" : "bg-gold/10 text-gold-dark"}`}
+                                            >
                                                 {member.questionnaireStatus}
                                             </span>
                                         </div>
@@ -257,16 +323,23 @@ export default function FamilyTripView() {
                                             Regenerate Code
                                         </button>*/}
 
-                                        {!trip.familyPlanId && member.travelPlanId && (
-                                            <Button
-                                                variant="primary"
-                                                onClick={() => navigate(`/dashboard/plans/${member.travelPlanId}`)}
-                                                className="bg-dark text-background-primary hover:bg-darkest"
-                                                icon={<LucideArrowRight className="w-4 h-4" />}
-                                            >
-                                                View Plan
-                                            </Button>
-                                        )}
+                                        {!trip.familyPlanId &&
+                                            member.travelPlanId && (
+                                                <Button
+                                                    variant="primary"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/dashboard/plans/${member.travelPlanId}`,
+                                                        )
+                                                    }
+                                                    className="bg-dark text-background-primary hover:bg-darkest"
+                                                    icon={
+                                                        <LucideArrowRight className="w-4 h-4" />
+                                                    }
+                                                >
+                                                    View Plan
+                                                </Button>
+                                            )}
                                     </div>
                                 </div>
                             ))}
