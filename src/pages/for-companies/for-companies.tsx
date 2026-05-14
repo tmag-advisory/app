@@ -12,7 +12,24 @@ import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
-import { creditPlans, premiumFeatures } from "../../constants/companyPlans";
+import { useCurrencyStore } from "../../stores/currencyStore";
+import {
+    creditPlans,
+    enterprisePlanCodes,
+    enterpriseTierColors,
+    enterpriseTiers,
+    individualPlanFeatures,
+    premiumFeatures,
+    signupRanges,
+    type ServiceLevel,
+    type SignupRange,
+} from "../../constants/companyPlans";
+
+function formatPrice(priceUsd: number, priceNgn: number, currency: string): string {
+    if (priceUsd === 0 && currency !== "NGN") return "Free";
+    if (priceNgn === 0 && currency === "NGN") return "Free";
+    return currency === "NGN" ? `₦${priceNgn.toLocaleString()}` : `$${priceUsd.toLocaleString()}`;
+}
 
 const workflowSteps = [
     {
@@ -52,6 +69,8 @@ const features = [
 ];
 
 const ForCompanies = () => {
+    const { selectedCurrency } = useCurrencyStore();
+
     return (
         <main>
             {/* Hero */}
@@ -106,70 +125,68 @@ const ForCompanies = () => {
                         Company plans
                     </span>
                     <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
-                        Essential, Standard, and <span className="italic">Premium</span>.
+                        Enterprise tiers matched to your <span className="italic">team size</span>.
                     </h2>
                 </AnimateIn>
-                <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto" stagger={0.12}>
-                    {creditPlans.map((plan) => (
-                        <motion.div
-                            variants={staggerItem}
-                            key={plan.tier}
-                            className={`relative rounded-2xl p-6 border flex flex-col overflow-hidden ${
-                                plan.tier === "standard"
-                                    ? "bg-dark border-dark text-white"
-                                    : plan.tier === "premium"
-                                    ? "bg-background-primary border-amber-200/60"
-                                    : "bg-background-primary border-border-light/50"
-                            }`}
-                        >
-                            {plan.tier === "essential" && (
-                                <span className="self-start text-xs font-semibold text-accent bg-accent/10 border border-accent/20 px-3 py-1 rounded-full mb-4">
-                                    Free to start
-                                </span>
-                            )}
-                            {plan.tier === "standard" && (
-                                <span className="self-start text-xs font-semibold text-white/80 bg-white/15 px-3 py-1 rounded-full mb-4">
-                                    Most popular
-                                </span>
-                            )}
-                            {plan.tier === "premium" && (
-                                <span className="self-start text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full mb-4">
-                                    Best report
-                                </span>
-                            )}
-                            <h3 className={`text-xl font-serif mb-1 ${plan.tier === "standard" ? "text-white" : "text-heading"}`}>
-                                {plan.name}
+                <div className="space-y-12 max-w-5xl mx-auto">
+                    {signupRanges.map((range) => (
+                        <div key={range.value}>
+                            <h3 className="text-sm font-semibold text-muted text-center mb-5">
+                                {range.label} signups
                             </h3>
-                            <p className={`text-xs mb-4 ${plan.tier === "standard" ? "text-white/60" : "text-muted"}`}>
-                                {plan.description}
-                            </p>
-                            <div className="flex items-baseline gap-1.5 mb-1">
-                                <p className={`text-3xl font-serif ${plan.tier === "standard" ? "text-white" : plan.tier === "premium" ? "text-amber-700" : "text-heading"}`}>
-                                    {plan.priceUsd === 0 ? "Free" : `$${plan.priceUsd}`}
-                                </p>
-                            </div>
-                            <span className={`text-xs mb-5 ${plan.tier === "standard" ? "text-white/50" : "text-muted"}`}>
-                                {plan.priceUsd === 0 ? "included at signup" : "per credit"}
-                            </span>
-                            <ul className="space-y-2.5 flex-1">
-                                {plan.features.map((f) => (
-                                    <li key={f} className={`flex items-start gap-2 text-xs ${plan.tier === "standard" ? "text-white/80" : "text-body"}`}>
-                                        <LucideCheck className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${plan.tier === "standard" ? "text-white/60" : plan.tier === "premium" ? "text-amber-600" : "text-accent"}`} />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-                            <Button
-                                variant={plan.tier === "standard" ? "primary" : "secondary"}
-                                link="/company-onboarding"
-                                icon={plan.tier !== "standard" ? <LucideArrowRight /> : undefined}
-                                className={`mt-6 ${plan.tier === "standard" ? "bg-white !text-dark hover:bg-white/90 w-full text-center justify-center flex" : plan.tier === "premium" ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`}
-                            >
-                                Get started
-                            </Button>
-                        </motion.div>
+                            <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6" stagger={0.12}>
+                                {(["standard", "premium"] as ServiceLevel[]).map((level) => {
+                                    const colors = enterpriseTierColors[range.value as SignupRange][level];
+                                    const basePlan = creditPlans.find((p) => p.tier === level)!;
+                                    const features = level === "standard" ? individualPlanFeatures.standard : individualPlanFeatures.premium;
+
+                                    return (
+                                        <motion.div
+                                            variants={staggerItem}
+                                            key={`${range.value}-${level}`}
+                                            className={`relative p-6 border flex flex-col overflow-hidden ${colors.border}`}
+                                        >
+                                            <div className="absolute inset-0" style={{ background: colors.gradient }} />
+                                            <div className={`absolute top-0 left-0 w-1 h-full ${colors.sideAccent}`} />
+                                            <span className={`absolute top-6 right-6 text-xs font-semibold ${colors.badgeBg} ${colors.badgeText} px-3 py-1 rounded-full`}>
+                                                {level === "standard" ? "Most popular" : "Best report"}
+                                            </span>
+                                            <div className="relative z-10 flex flex-col flex-1">
+                                                <h3 className={`text-xl font-serif mb-1 ${colors.textPrimary}`}>
+                                                    {enterpriseTiers[range.value as SignupRange][level]}
+                                                </h3>
+                                                <p className={`text-xs mb-4 ${colors.textSecondary}`}>
+                                                    {basePlan.description}
+                                                </p>
+                                                <div className="flex items-baseline gap-1.5 mb-1">
+                                                    <p className={`text-3xl font-serif ${colors.textPrimary}`}>
+                                                        {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency)}
+                                                    </p>
+                                                </div>
+                                                <span className={`text-xs mb-5 ${colors.textMuted}`}>per credit</span>
+                                                <ul className="space-y-2.5 flex-1">
+                                                    {features.map((f) => (
+                                                        <li key={f} className={`flex items-start gap-2 text-xs ${colors.textPrimary}`}>
+                                                            <LucideCheck className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${colors.checkColor}`} />
+                                                            {f}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                <Button
+                                                    variant="primary"
+                                                    link={`/company-onboarding?plan=${enterprisePlanCodes[range.value as SignupRange][level]}`}
+                                                    className={`mt-6 text-center justify-center flex ${level === "premium" ? "bg-gold text-white! hover:bg-[#b07a22]" : "bg-stone-900 text-white! hover:bg-stone-800"}`}
+                                                >
+                                                    Get started
+                                                </Button>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
+                            </StaggerGroup>
+                        </div>
                     ))}
-                </StaggerGroup>
+                </div>
             </section>
 
             {/* HR workflow */}
