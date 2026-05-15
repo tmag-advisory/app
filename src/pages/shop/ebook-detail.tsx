@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import toast from "react-hot-toast";
+import SEOHead from "../../lib/seo";
 
 export default function EbookDetailPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -90,6 +91,7 @@ export default function EbookDetailPage() {
 
     return (
         <div className="min-h-screen bg-background-primary">
+            <SEOHead title="Ebook — Travel Medicine Advisory Global" description="Browse our collection of travel health ebooks and guides." path="/shop/:slug" />
             {/* Breadcrumb bar */}
             <div className="bg-white border-b border-border-light">
                 <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">

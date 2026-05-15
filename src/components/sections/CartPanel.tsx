@@ -19,7 +19,7 @@ export default function CartPanel() {
     // Sync local cart to server when user becomes authenticated.
     // Intentionally only fires on auth change to avoid infinite loop
     // (serverCart update would re-trigger this if it were in deps).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     useEffect(() => {
         if (isAuthenticated && items.length > 0 && !serverCart) {
             syncCart(
@@ -63,7 +63,7 @@ export default function CartPanel() {
                 currencySymbol: si.currencySymbol,
             })));
         }
-    }, [serverCart, isAuthenticated]);
+    }, [serverCart, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleRemove = (ebookVersionId: number) => {
         removeItem(ebookVersionId);

@@ -21,8 +21,9 @@ export default function FamilyLogin() {
       const res = await familyTripApi.memberLogin(email, code);
       localStorage.setItem("familyMemberToken", res.data.data.sessionToken);
       navigate("/family/dashboard");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid login credentials");
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { message?: string } }; message?: string };
+      setError(apiError?.response?.data?.message || "Invalid login credentials");
     } finally {
       setIsLoading(false);
     }

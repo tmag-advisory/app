@@ -144,15 +144,13 @@ const Settings = () => {
                 currency: activeCurrency,
                 affiliate_referral_code: affiliateDiscountRate > 0 ? getAffiliateReferralCode() : undefined,
             });
-
-            // Handle both SuccessResponse format and direct response
-            const responseData = (result as any).data || result;
-            const paymentLink = responseData.paymentLink || (responseData.data?.paymentLink);
+            const responseData = result;
+            const paymentLink = responseData.paymentLink;
 
             if (responseData.success && paymentLink) {
                 window.location.href = paymentLink;
             } else {
-                const errorMsg = responseData.error || responseData.data?.error || "Failed to initiate payment. Please try again.";
+                const errorMsg = responseData.error ?? "Failed to initiate payment. Please try again.";
                 toast.error(errorMsg);
             }
         } catch (error) {

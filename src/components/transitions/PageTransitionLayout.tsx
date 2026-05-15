@@ -8,6 +8,7 @@ import gsap from "gsap";
 const TransitionContext = createContext<React.RefObject<boolean> | null>(null);
 
 /** Returns the ref controlling the page transition. Set `.current` to `false` to disable. */
+// eslint-disable-next-line react-refresh/only-export-components
 export const usePageTransition = () => {
     const ref = useContext(TransitionContext);
     if (!ref)

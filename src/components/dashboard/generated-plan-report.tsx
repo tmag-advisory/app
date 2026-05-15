@@ -17,6 +17,7 @@ import {
     LucideUser,
 } from "lucide-react";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function parseGeneratedPlanContent(raw: string | null | undefined): GeneratedPlanContent | null {
     if (!raw || !String(raw).trim()) {
         return null;
@@ -56,6 +57,7 @@ function medicalCareHasContent(m: GeneratedPlanContent["medicalCare"]): boolean 
 }
 
 /** True when the parsed JSON has at least one section worth rendering in the structured layout. */
+// eslint-disable-next-line react-refresh/only-export-components
 export function hasGeneratedPlanLayout(c: GeneratedPlanContent): boolean {
     if (c.tripAtGlance && Object.values(c.tripAtGlance).some((v) => v !== undefined && v !== null && String(v).trim() !== "")) {
         return true;

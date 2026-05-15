@@ -1,0 +1,7 @@
+# Travel Medicine Advisory Global
+# https://travelmedicineadvisory.com
+
+User-agent: *
+Allow: /
+
+Sitemap: https://travelmedicineadvisory.com/sitemap.xml

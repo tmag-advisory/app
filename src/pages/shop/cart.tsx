@@ -10,6 +10,7 @@ import {
     LucideShieldCheck, LucideLock
 } from "lucide-react";
 import toast from "react-hot-toast";
+import SEOHead from "../../lib/seo";
 
 export default function CartPage() {
     const navigate = useNavigate();
@@ -44,6 +45,7 @@ export default function CartPage() {
 
     return (
         <div className="min-h-screen bg-background-primary">
+            <SEOHead title="Cart — Travel Medicine Advisory Global" description="Review your travel health ebook selections before checkout." path="/shop/cart" robots="noindex, follow" />
             {/* Header */}
             <div className="bg-white border-b border-border-light">
                 <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">

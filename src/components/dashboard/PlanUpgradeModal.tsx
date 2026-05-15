@@ -37,7 +37,7 @@ export default function PlanUpgradeModal({
       toast.success("Plan upgraded successfully!");
       onClose();
       onUpgradeSuccess(planCode);
-    } catch (error) {
+    } catch {
       toast.error("Failed to upgrade plan. Please try again.");
     }
   };

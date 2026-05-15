@@ -120,6 +120,7 @@ import type {
   FamilyPackageCheckoutRequest,
   FamilyPackageCheckoutResponse,
   FamilyPackagePurchaseResponse,
+  QuestionnaireProgressResponse,
 } from "./types";
 
 // ─── Generic CRUD helpers ────────────────────────────────────
@@ -534,7 +535,7 @@ export const onboardingApi = {
     api.post<ApiResponse<null>>("/onboarding/progress", data).then((r) => r.data.data),
 
   getProgress: () =>
-    api.get<ApiResponse<any>>("/onboarding/progress").then((r) => r.data.data),
+    api.get<ApiResponse<QuestionnaireProgressResponse>>("/onboarding/progress").then((r) => r.data.data),
 };
 
 // ─── Draft Plans ──────────────────────────────────────────────

@@ -4,6 +4,7 @@ import { LucideCheckCircle, LucideArrowLeft } from "lucide-react";
 import AnimateIn from "../../components/animations/AnimateIn";
 import { useSubmitContact } from "../../api/hooks";
 import type { ContactInquiryType } from "../../api/types";
+import SEOHead from "../../lib/seo";
 
 const INQUIRY_LABELS: Record<ContactInquiryType, string> = {
     SUPPORT: "Support request",
@@ -58,6 +59,7 @@ const ContactPage = () => {
     if (isSuccess) {
         return (
             <main>
+                <SEOHead title="Contact — Travel Medicine Advisory Global" description="Get in touch with the TMAG team. We're here to help with travel health questions, support, and partnerships." path="/contact" />
                 <section className="flex flex-col items-center text-center pt-20 pb-24 px-6 max-w-2xl mx-auto">
                     <AnimateIn type="fade">
                         <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
@@ -93,6 +95,7 @@ const ContactPage = () => {
 
     return (
         <main>
+            <SEOHead title="Contact — Travel Medicine Advisory Global" description="Get in touch with the TMAG team. We're here to help with travel health questions, support, and partnerships." path="/contact" />
             {/* Hero */}
             <AnimateIn
                 as="section"

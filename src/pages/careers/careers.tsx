@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 import Button from "../../components/ui/Button";
+import SEOHead from "../../lib/seo";
 
 const doctorBenefits = [
     {
@@ -59,7 +60,12 @@ const affiliateBenefits = [
 
 const Careers = () => {
     return (
-        <main>
+ <main>
+             <SEOHead
+                 title="Careers — Travel Medicine Advisory Global"
+                 description="Join the TMAG team and help make travel health advice accessible to everyone."
+                 path="/careers"
+             />
             {/* Hero */}
             <AnimateIn
                 as="section"

@@ -206,7 +206,7 @@ const Sidebar = () => {
         if (!selectedCompanyId || !mapped.some((c) => c.id === selectedCompanyId)) {
             selectCompany(mapped[0].id);
         }
-    }, [isSuccess, myCompanies]);
+    }, [isSuccess, myCompanies, selectCompany, selectedCompanyId, setCompanies]);
 
     const currentCompany = companies.find((c) => c.id === selectedCompanyId) ?? companies[0];
 

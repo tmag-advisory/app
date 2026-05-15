@@ -24,6 +24,7 @@ import {
     type ServiceLevel,
     type SignupRange,
 } from "../../constants/companyPlans";
+import SEOHead from "../../lib/seo";
 
 function formatPrice(priceUsd: number, priceNgn: number, currency: string): string {
     if (priceUsd === 0 && currency !== "NGN") return "Free";
@@ -73,6 +74,7 @@ const ForCompanies = () => {
 
     return (
         <main>
+ <SEOHead title="For Companies — Travel Medicine Advisory Global" description="Protect your employees with corporate travel health plans. HR dashboard, compliance reporting, and bulk plan management." path="/for-companies" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">

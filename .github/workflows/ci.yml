@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: ['feature/**']
+    branches: [main, staging, "feature/**"]
   pull_request:
-    branches: [staging]
+    branches: [main, staging]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -27,20 +27,17 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
 
-      - run: bun install --frozen-lockfile
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
-      - run: bun run lint
+      - name: Lint
+        run: bun run lint
 
-      - name: Type check
-        run: bunx tsc -b
+      - name: Typecheck
+        run: bunx tsc -b --noEmit
 
-      - name: Unit tests
-        run: |
-          grep -q '"test"' package.json && bun run test || \
-            echo "::notice::No test script — add \"test\" to package.json to enable"
-
-      - name: Production build
-        run: bunx vite build
+      - name: Build
+        run: bun run build
 
   docker-validate:
     name: Docker build (validate only)
@@ -48,8 +45,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false

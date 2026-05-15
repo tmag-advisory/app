@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { LucideLogOut, LucideArrowRight, LucideFileText } from "lucide-react";
-import familyTripApi from "../../api/familyTrip";
+import familyTripApi, { type FamilyMemberSession } from "../../api/familyTrip";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 import { cn } from "../../lib/utils";
 
 export default function FamilyDashboard() {
-  const [member, setMember] = useState<any>(null);
+  const [member, setMember] = useState<FamilyMemberSession | null>(null);
   const [plans, setPlans] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export default function FamilyDashboard() {
   const handleLogout = async () => {
     try {
       await familyTripApi.memberLogout();
-    } catch (err) {
+    } catch {
       // ignore
     }
     localStorage.removeItem("familyMemberToken");

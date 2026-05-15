@@ -11,6 +11,7 @@ import {
     LucideCheck
 } from "lucide-react";
 import toast from "react-hot-toast";
+import SEOHead from "../../lib/seo";
 
 export default function ShopPage() {
     const { data: ebooks, isLoading } = useEbooks();
@@ -57,6 +58,7 @@ export default function ShopPage() {
 
     return (
         <div className="min-h-screen bg-background-primary">
+            <SEOHead title="Shop — Travel Medicine Advisory Global" description="Browse travel health ebooks, guides, and resources from TMAG." path="/shop" />
             {/* Hero */}
             <div className="bg-darkest text-white">
                 <div className="max-w-6xl mx-auto px-6 py-20 text-center">

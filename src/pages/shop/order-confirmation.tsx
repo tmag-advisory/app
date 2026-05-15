@@ -5,6 +5,7 @@ import {
     LucideCheckCircle2, LucideLoader2, LucideXCircle,
     LucideBookOpen, LucideMail, LucideArrowRight
 } from "lucide-react";
+import SEOHead from "../../lib/seo";
 
 export default function EbookOrderConfirmationPage() {
     const [searchParams] = useSearchParams();
@@ -22,7 +23,7 @@ export default function EbookOrderConfirmationPage() {
             { txRef, transactionId: transactionId || undefined },
             { onSuccess: () => setVerified(true), onError: () => setVerified(true) }
         );
-    }, [txRef]);
+    }, [txRef, transactionId, verifyOrder]);
 
     const isLoading = isVerifying || isLoadingStatus;
     const order = orderData;
@@ -44,6 +45,7 @@ export default function EbookOrderConfirmationPage() {
 
     return (
         <div className="min-h-screen bg-background-primary flex items-center justify-center px-4 py-12">
+            <SEOHead title="Order Confirmation — Travel Medicine Advisory Global" path="/shop/order-confirmation" robots="noindex, follow" />
             <div className="max-w-md w-full">
                 {isLoading ? (
                     <div className="bg-white rounded-3xl border border-border-light p-12 text-center">

@@ -56,11 +56,7 @@ const Onboarding = () => {
     const [searchParams] = useSearchParams();
     const { data: onboardingData } = useOnboarding();
     const { data: myCompanies } = useMyCompanies();
-
-    if (user?.type?.toUpperCase() === "FAMILY") {
-        navigate("/dashboard", { replace: true });
-        return null;
-    }
+    const shouldRedirectFamily = user?.type?.toUpperCase() === "FAMILY";
 
     // If user was invited (has a company membership already), prefill and lock fields
     const invitedCompany = myCompanies && myCompanies.length > 0 ? myCompanies[0] : null;
@@ -115,6 +111,12 @@ const Onboarding = () => {
         didMountRefresh.current = true;
         void refreshProfile();
     }, [refreshProfile]);
+
+    useEffect(() => {
+        if (shouldRedirectFamily) {
+            navigate("/dashboard", { replace: true });
+        }
+    }, [navigate, shouldRedirectFamily]);
     const initiatePurchase = useInitiateCreditPurchase();
     const [direction, setDirection] = useState(1);
     const [userType, setUserType] = useState<"individual" | "company" | null>(null);
@@ -183,7 +185,7 @@ const Onboarding = () => {
         if(user && user.extend && user.extend.role_name.toLowerCase() === "individual") {
             setUserType(user?.extend?.role_name.toLowerCase() as "individual" | "company");
         }
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const upsertOnboarding = useUpsertOnboarding();
     const advanceStage = useAdvanceOnboardingStage();
@@ -263,9 +265,8 @@ const Onboarding = () => {
                 currency: (selectedCurrency || "USD") as BillingCurrency,
                 affiliate_referral_code: getAffiliateReferralCode(),
             });
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const data = (raw as any).data ?? raw;
-            const paymentLink: string = data.paymentLink ?? (raw as any).data?.paymentLink;
+            const data = raw;
+            const paymentLink: string = data.paymentLink;
             if (paymentLink) {
                 window.location.href = paymentLink;
             } else {
@@ -315,6 +316,8 @@ const Onboarding = () => {
         }
         navigate("/");
     };
+
+    if (shouldRedirectFamily) return null;
 
     return (
         <div className="min-h-screen bg-background-primary flex flex-col lg:flex-row">

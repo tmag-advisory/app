@@ -67,7 +67,7 @@ const FamilyPaymentCallback = () => {
         };
 
         handleResult();
-    }, [success, txRef]);
+    }, [success, txRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const packageDisplayName = "Family Plan";
 

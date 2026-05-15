@@ -43,23 +43,23 @@ export default function FamilyManageMembers() {
     // const [copiedId, setCopiedId] = useState<string | null>(null);
 
     useEffect(() => {
+        const fetchTrips = async () => {
+            setIsLoading(true);
+            try {
+                const res = await familyTripApi.list({ page, per_page: perPage });
+                const paginated = res.data.data;
+                setTrips(paginated?.data ?? []);
+                setPagination(paginated?.pagination ?? null);
+            } catch (err) {
+                console.error("Failed to fetch family trips", err);
+                toast.error("Could not load family members");
+            } finally {
+                setIsLoading(false);
+            }
+        };
         fetchTrips();
     }, [page, perPage]);
 
-    const fetchTrips = async () => {
-        setIsLoading(true);
-        try {
-            const res = await familyTripApi.list({ page, per_page: perPage });
-            const paginated = res.data.data;
-            setTrips(paginated?.data ?? []);
-            setPagination(paginated?.pagination ?? null);
-        } catch (err) {
-            console.error("Failed to fetch family trips", err);
-            toast.error("Could not load family members");
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     // const handleRegenerateCode = async (tripId: number, memberId: number) => {
     //     setRegeneratingId({ tripId, memberId });

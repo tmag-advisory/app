@@ -31,7 +31,7 @@ export default function FamilyTripView() {
             try {
                 const res = await familyTripApi.getById(Number(id));
                 setTrip(res.data.data);
-            } catch (err) {
+            } catch {
                 toast.error("Failed to load family trip details");
                 navigate("/dashboard/plans");
             } finally {
@@ -49,8 +49,8 @@ export default function FamilyTripView() {
                 const res = await familyTripApi.getFamilyPlan(trip.id);
                 if (res.data.data) {
                     setFamilyPlan({
-                        id: (res.data.data as any).id,
-                        status: (res.data.data as any).status,
+                        id: res.data.data.id,
+                        status: res.data.data.status,
                     });
                 }
             } catch {
@@ -60,7 +60,7 @@ export default function FamilyTripView() {
             }
         };
         fetchFamilyPlan();
-    }, [trip?.familyPlanId]);
+    }, [trip?.familyPlanId, trip?.id]);
 
     const handleDownloadPdf = async () => {
         if (!trip) return;

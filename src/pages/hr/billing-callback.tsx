@@ -57,18 +57,19 @@ const HRPaymentCallback = () => {
                         (result?.purchase?.status === "failed" ? "Payment failed" : "Payment was not completed")
                     );
                 }
-            } catch (error: any) {
+            } catch (error: unknown) {
+                const apiError = error as { response?: { data?: { error?: string; message?: string } }; message?: string };
                 setStatus("failed");
                 setErrorMessage(
-                    error?.response?.data?.error ||
-                    error?.response?.data?.message ||
+                    apiError?.response?.data?.error ||
+                    apiError?.response?.data?.message ||
                     "Failed to verify payment"
                 );
             }
         };
 
         verifyPayment();
-    }, [txRef, flwStatus, transactionId]);
+    }, [txRef, flwStatus, transactionId, verifyPurchase]);
 
     return (
         <div className="min-h-[60vh] flex items-center justify-center px-6">

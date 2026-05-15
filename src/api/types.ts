@@ -111,7 +111,7 @@ export interface AuthResponse {
   last_login: string;
   accessToken: string; // Backend uses accessToken (camelCase) in AuthResponse.java @JsonProperty("accessToken")
   exp: number;
-  extend?: any;
+  extend?: Record<string, unknown>;
   settings?: UserSettingResponse;
 }
 
@@ -1038,6 +1038,13 @@ export interface SubmitQuestionnaireRequest {
 export interface QuestionnaireProgressRequest {
   [key: string]: unknown;
 }
+export interface QuestionnaireProgressResponse {
+  answers?: Record<string, unknown>;
+  categoryIndex?: number;
+  questionIndex?: number;
+  [key: string]: unknown;
+}
+
 
 // ─── Plan Usage Ledger ───────────────────────────────────────
 

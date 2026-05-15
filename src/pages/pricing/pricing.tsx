@@ -20,6 +20,7 @@ import {
     type ServiceLevel,
 } from "../../constants/companyPlans";
 import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
+import SEOHead from "../../lib/seo";
 
 type Audience = "individual" | "family" | "company";
 
@@ -92,6 +93,7 @@ const PricingPage = () => {
 
     return (
         <main>
+            <SEOHead title="Pricing — Travel Medicine Advisory Global" description="Choose the right travel health plan for your needs. Individual, family, and company plans available." path="/pricing" />
             {/* Hero */}
             <AnimateIn
                 as="section"
