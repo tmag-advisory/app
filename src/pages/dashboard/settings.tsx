@@ -995,7 +995,7 @@ const Settings = () => {
                     <div
                         className={cn(
                             DASHBOARD_GLASS_SURFACE,
-                            "relative w-full max-w-md p-6 md:p-8",
+                            "relative w-full max-w-sm sm:max-w-md p-5 sm:p-6 md:p-8 max-h-[90vh] overflow-y-auto",
                         )}
                         onClick={(e) => e.stopPropagation()}
                     >
