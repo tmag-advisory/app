@@ -20,10 +20,6 @@ const RoleGuard = ({ children, section, redirectTo }: RoleGuardProps) => {
     const canUseHR = canAccessHR(user);
     const canUseDoctor = canAccessDoctor(user);
 
-    console.log("RoleGuard: canUseDashboard:", canUseDashboard);
-    console.log("RoleGuard: canUseHR:", canUseHR);
-    console.log("RoleGuard: canUseDoctor:", canUseDoctor);
-
     // Prevent redirect ping-pong when role is missing/unknown.
     if (!canUseDashboard && !canUseHR && !canUseDoctor) {
         return <Navigate to="/unauthorized" replace />;
