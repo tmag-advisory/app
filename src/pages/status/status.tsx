@@ -2,6 +2,7 @@ import { LucideCheckCircle, LucideAlertTriangle, LucideClock } from "lucide-reac
 import { motion } from "framer-motion";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
+import SEOHead from "../../lib/seo";
 
 const services = [
     {
@@ -82,6 +83,7 @@ const Status = () => {
 
     return (
         <main>
+            <SEOHead title="Status — Travel Medicine Advisory Global" description="Check the current status of TMAG services and platform availability." path="/status" robots="noindex, follow" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">

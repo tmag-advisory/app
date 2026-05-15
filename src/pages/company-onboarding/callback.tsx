@@ -51,10 +51,11 @@ const CompanyOnboardingCallback = () => {
           setStatus("failed");
           setMessage(`Payment verification returned status: ${data.paymentStatus || data.status}. Please contact support.`);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (cancelled) return;
         console.error("Payment verification error:", err);
-        const errMsg = err?.response?.data?.message || err?.message || "Unknown error";
+        const apiError = err as { response?: { data?: { message?: string } }; message?: string };
+        const errMsg = apiError?.response?.data?.message || apiError?.message || "Unknown error";
         setStatus("failed");
         setMessage(`Verification failed: ${errMsg}. Please contact support with your transaction reference.`);
       }

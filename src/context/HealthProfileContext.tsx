@@ -42,6 +42,7 @@ export function HealthProfileProvider({ children }: { children: ReactNode }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useHealthProfile(): HealthProfileContextValue {
     const ctx = useContext(HealthProfileContext);
     if (!ctx) throw new Error("useHealthProfile must be used within <HealthProfileProvider>");

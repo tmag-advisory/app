@@ -280,7 +280,7 @@ const TravelHealthQuestionnaire = () => {
                 }
             }
         }
-    }, [savedProgress]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [savedProgress]);  
 
     // Pre-fill profile fields (same behaviour as PlanQuestionnaireFlow / create-plan)
     useEffect(() => {
@@ -332,7 +332,7 @@ const TravelHealthQuestionnaire = () => {
         };
         window.addEventListener("beforeunload", handleBeforeUnload);
         return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);  
 
     // ─── Handlers ────────────────────────────────────────────
 

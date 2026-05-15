@@ -147,6 +147,7 @@ export const PaymentSuccessModal = ({ onClose }: PaymentSuccessModalProps) => {
 };
 
 // Hook to manage payment success modal state
+// eslint-disable-next-line react-refresh/only-export-components
 export const usePaymentSuccessModal = () => {
     const [showModal, setShowModal] = useState(false);
     const [hasShownModal, setHasShownModal] = useState(false);
@@ -163,7 +164,7 @@ export const usePaymentSuccessModal = () => {
                         setHasShownModal(true);
                         refreshProfile();
                     }
-                } catch (e) {
+                } catch {
                     sessionStorage.removeItem("paymentSuccess");
                 }
             }

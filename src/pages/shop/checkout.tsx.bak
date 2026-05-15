@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import toast from "react-hot-toast";
-import SEOHead from "../../lib/seo";
+ import SEOHead from "../../lib/seo";
 
 export default function CheckoutPage() {
     const [searchParams] = useSearchParams();
@@ -159,7 +159,7 @@ export default function CheckoutPage() {
 
     return (
         <div className="min-h-screen bg-background-primary">
-            <SEOHead title="Checkout — Travel Medicine Advisory Global" path="/shop/checkout" robots="noindex, follow" />
+ <SEOHead title="Checkout — Travel Medicine Advisory Global" path="/shop/checkout" robots="noindex, follow" />
             {/* Header */}
             <div className="bg-white border-b border-border-light">
                 <div className="max-w-4xl mx-auto px-6 py-5 flex items-center gap-4">

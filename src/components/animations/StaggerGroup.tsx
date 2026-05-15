@@ -16,6 +16,7 @@ const container = (stagger: number) => ({
     },
 });
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const staggerItem = {
     hidden: { opacity: 0, y: 30 },
     visible: {

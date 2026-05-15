@@ -93,8 +93,9 @@ export default function FamilyPlanView() {
                 } else {
                     setContent(null);
                 }
-            } catch (err: any) {
-                if (err?.response?.status === 404) {
+            } catch (err: unknown) {
+                const apiError = err as { response?: { status?: number }; message?: string };
+                if (apiError?.response?.status === 404) {
                     setError("Family trip not found");
                 } else {
                     setError("Could not load family plan");

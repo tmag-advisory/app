@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 import Button from "../../components/ui/Button";
+import SEOHead from "../../lib/seo";
 
 const pressReleases = [
     {
@@ -35,6 +36,7 @@ const stats = [
 const Press = () => {
     return (
         <main>
+            <SEOHead title="Press — Travel Medicine Advisory Global" description="Press resources, media kit, and news about Travel Medicine Advisory Global." path="/press" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">

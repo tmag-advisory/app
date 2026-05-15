@@ -72,18 +72,19 @@ const PaymentCallback = () => {
                         (result?.purchase?.status === "failed" ? "Payment failed" : "Payment was not completed")
                     );
                 }
-            } catch (error: any) {
+            } catch (error: unknown) {
+                const apiError = error as { response?: { data?: { error?: string; message?: string } }; message?: string };
                 setStatus("failed");
                 setErrorMessage(
-                    error?.response?.data?.error ||
-                    error?.response?.data?.message ||
+                    apiError?.response?.data?.error ||
+                    apiError?.response?.data?.message ||
                     "Failed to verify payment"
                 );
             }
         };
 
         verifyPayment();
-    }, [txRef, transactionId]);
+    }, [txRef, transactionId, navigate, queryClient, searchParams, verifyPurchase]);
 
     return (
         <div className="min-h-screen bg-background-primary flex flex-col">

@@ -7,7 +7,7 @@ import { LucideCoins, LucideTrendingUp, LucideCalendar, LucideLoader2, LucideExt
 import toast from "react-hot-toast";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
-import type { CreditPlan } from "../../api/types";
+import type { CreditPlan, CompanyAdminCreditQuoteResponse } from "../../api/types";
 
 const creditPackages = [50, 100, 200];
 
@@ -16,7 +16,7 @@ const Billing = () => {
     const { data: companiesData } = useMyCompanies();
     const company = companiesData?.find((c) => c.id === Number(selectedCompanyId)) || companiesData?.[0];
     const companyId = company?.id;
-    const billingCurrency = (company as any)?.billingCurrency || (company as any)?.billing_currency || "NGN";
+    const billingCurrency = company?.billing_currency || "NGN";
 
     const { data: creditsData, isLoading } = useCredits(companyId ? { companyId } : undefined);
     const purchaseCredits = useHrPurchaseCredits();
@@ -25,9 +25,9 @@ const Billing = () => {
     const creditHistory = creditsData?.data || [];
     const totalAllocated = company?.total_credits ?? 0;
     const totalUsed = company?.used_credits ?? 0;
-    const creditPlan: CreditPlan | null | undefined = (company as any)?.credit_plan ?? (company as any)?.creditPlan ?? null;
+    const creditPlan: CreditPlan | null | undefined = company?.credit_plan ?? null;
 
-    const [quotes, setQuotes] = useState<Record<number, any>>({});
+    const [quotes, setQuotes] = useState<Record<number, CompanyAdminCreditQuoteResponse>>({});
 
     useEffect(() => {
         if (!companyId) return;
@@ -39,7 +39,7 @@ const Billing = () => {
                 console.error(`Failed to fetch quote for ${credits} credits`, err);
             }
         });
-    }, [companyId, billingCurrency]);
+    }, [companyId, billingCurrency, getQuote]);
 
     const handlePurchase = async (credits: number) => {
         if (!companyId) return;
@@ -50,8 +50,9 @@ const Billing = () => {
             } else {
                 toast.error("No payment link received");
             }
-        } catch (err: any) {
-            toast.error(err?.response?.data?.error || err?.response?.data?.message || "Purchase failed");
+        } catch (err: unknown) {
+            const apiError = err as { response?: { data?: { error?: string; message?: string } }; message?: string };
+            toast.error(apiError?.response?.data?.error || apiError?.response?.data?.message || "Purchase failed");
         }
     };
 

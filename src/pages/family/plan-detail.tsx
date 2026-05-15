@@ -18,8 +18,9 @@ export default function FamilyPlanDetail() {
       try {
         const res = await familyTripApi.getMyMemberPlan();
         setPlan(res.data.data ?? null);
-      } catch (err: any) {
-        if (err?.response?.status === 401 || err?.response?.status === 403) {
+      } catch (err: unknown) {
+        const apiError = err as { response?: { status?: number }; message?: string };
+        if (apiError?.response?.status === 401 || apiError?.response?.status === 403) {
           navigate("/family/login");
           return;
         }

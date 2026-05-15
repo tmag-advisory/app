@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 import { LucideServerCrash, LucideHome, LucideRefreshCw } from "lucide-react";
 import AnimateIn from "../../components/animations/AnimateIn";
+import SEOHead from "../../lib/seo";
 
 const ServerError = () => {
     return (
         <div className="min-h-screen bg-background-primary flex flex-col">
+            <SEOHead title="Server Error — Travel Medicine Advisory Global" path="/server-error" robots="noindex, follow" />
             <div className="px-6 sm:px-8 py-5">
                 <Link to="/" className="text-heading tracking-tight text-xl font-serif font-medium">
                     TMAG

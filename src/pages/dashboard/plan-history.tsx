@@ -167,7 +167,7 @@ const PlanHistory = () => {
       setPage(1);
   }, [search, perPage]);
 
-  const plans = plansData?.data || [];
+  const plans = useMemo(() => plansData?.data || [], [plansData]);
   const pagination = plansData?.pagination;
   const sortedPlans = useMemo(
       () =>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { LucidePlus, LucideMinus, LucideArrowRight } from "lucide-react";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
+import SEOHead from "../../lib/seo";
 
 const faqCategories = [
     {
@@ -139,6 +140,7 @@ const FAQPage = () => {
 
     return (
         <main>
+ <SEOHead title="FAQ — Travel Medicine Advisory Global" description="Frequently asked questions about TMAG travel health plans, pricing, data privacy, and how our platform works." path="/faq" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">

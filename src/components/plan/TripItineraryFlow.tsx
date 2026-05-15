@@ -95,6 +95,7 @@ const TRANSIT_DURATION_OPTIONS = [
 // ── Helpers ────────────────────────────────────────────────────
 
 /** Hydrate split city/country from legacy single-line fields when loading saved drafts. */
+// eslint-disable-next-line react-refresh/only-export-components
 export function hydrateLegacyTripItinerary(value: TripItineraryData | undefined): TripItineraryData {
     const v: TripItineraryData = value ?? { tripType: "one" };
     const out: TripItineraryData = { ...v, tripType: v.tripType ?? "one", multiLegs: v.multiLegs ?? [] };

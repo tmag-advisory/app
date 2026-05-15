@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
+import SEOHead from "../../lib/seo";
 
 const processSteps = [
     {
@@ -55,6 +56,7 @@ const planIncludes = [
 const HowItWorks = () => {
     return (
         <main>
+ <SEOHead title="How It Works — Travel Medicine Advisory Global" description="Learn how TMAG generates personalized travel health plans in minutes using AI-powered technology." path="/how-it-works" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
                 <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">

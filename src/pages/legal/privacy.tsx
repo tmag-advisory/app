@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import AnimateIn from "../../components/animations/AnimateIn";
+import SEOHead from "../../lib/seo";
 
 const PrivacyPolicy = () => {
     return (
         <main>
+            <SEOHead title="Privacy Policy — Travel Medicine Advisory Global" description="Privacy policy for TMAG travel health platform. Learn how we collect, use, and protect your data." path="/privacy" robots="noindex, follow" />
             <section className="px-8 lg:px-16 pt-20 pb-24 max-w-4xl mx-auto">
                 <AnimateIn>
                     <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">

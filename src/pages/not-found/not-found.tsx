@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 import { LucideCompass, LucideArrowLeft, LucideHome } from "lucide-react";
 import AnimateIn from "../../components/animations/AnimateIn";
+import SEOHead from "../../lib/seo";
 
 const NotFound = () => {
     return (
         <div className="min-h-screen bg-background-primary flex flex-col">
+            <SEOHead title="Page Not Found — Travel Medicine Advisory Global" path="/*" robots="noindex, follow" />
             {/* Top bar */}
             <div className="px-6 sm:px-8 py-5">
                 <Link to="/" className="text-heading tracking-tight text-xl font-serif font-medium">
