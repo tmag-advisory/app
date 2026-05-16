@@ -6,7 +6,6 @@ import {
     LucideArrowRight,
     LucideCheck,
     LucideCheckCircle,
-    LucideChevronDown,
     LucidePlus,
     LucideSave,
     LucideTrash,
@@ -38,7 +37,7 @@ import { todayIsoDateLocal } from "../../lib/questionnaireFieldValidation";
 
 // ─── Types ─────────────────────────────────────────────────────
 
-type BuilderStep = "trip" | "members" | "questionnaire" | "review";
+type BuilderStep = "trip" | "members" | "questionnaire";
 type AnswerMap = Record<string, unknown>;
 type FieldErrorMap = Record<number, Set<string>>;
 
@@ -110,13 +109,11 @@ const STEP_ORDER: BuilderStep[] = [
     "trip",
     "members",
     "questionnaire",
-    "review",
 ];
 const STEP_LABELS: Record<BuilderStep, string> = {
     trip: "Shared trip",
     members: "Member profiles",
     questionnaire: "Health per member",
-    review: "Finalize",
 };
 
 const SHARED_CATEGORY_KEYS = [
@@ -151,41 +148,11 @@ const GENDER_OPTIONS = [
     { value: "prefer_not_to_say", label: "Prefer not to say" },
 ];
 
-const QUESTIONNAIRE_COMPLETED_BY_OPTIONS = [
-    { value: "self", label: "This member" },
-    { value: "parent_guardian", label: "Parent / guardian" },
-    { value: "other", label: "Other caregiver" },
-];
-
-const SELF_COMPLETION_OPTIONS = [
-    { value: "yes", label: "Yes" },
-    { value: "no", label: "No" },
-    { value: "needs_help", label: "Needs help" },
-];
-
 const AGE_YEAR_OPTIONS = Array.from({ length: 121 }, (_, age) => age);
 const AGE_MONTH_OPTIONS = Array.from({ length: 12 }, (_, month) => month);
 
 const baseInputClass =
     "w-full bg-white border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors";
-
-const FAMILY_BUILDER_GUIDE = [
-    {
-        title: "Shared trip once",
-        description:
-            "Add itinerary, accommodation, activities, and preparation details one time. These answers apply to everyone travelling.",
-    },
-    {
-        title: "Separate member cards",
-        description:
-            "Open one traveller at a time. Names, age, nationality, residence, and caregiver notes stay attached to that person only.",
-    },
-    {
-        title: "Individual health answers",
-        description:
-            "Medical history, vaccines, and risk questions are completed per member so each final TravelPlan is personal.",
-    },
-] as const;
 
 // ─── Helpers ───────────────────────────────────────────────────
 
@@ -199,20 +166,13 @@ function defaultMember(relationship = "MAIN_APPLICANT"): FamilyTripMemberRequest
     };
 }
 
-function defaultMemberAnswers(relationship = "MAIN_APPLICANT"): AnswerMap {
-    const isLikelyAdult =
-        relationship === "SPOUSE" || relationship === "PARENT" || relationship === "MAIN_APPLICANT";
+function defaultMemberAnswers(): AnswerMap {
     return {
         age_years: "",
         age_months: "",
         gender: "",
         nationality: "",
         current_residence_country: "",
-        questionnaire_completed_by: isLikelyAdult ? "self" : "parent_guardian",
-        can_complete_own_questionnaire: isLikelyAdult ? "yes" : "no",
-        guardian_name: "",
-        guardian_relationship: "",
-        dependent_additional_details: "",
     };
 }
 
@@ -379,15 +339,6 @@ function getValidationIssues(
     return issues;
 }
 
-function getValidationMessages(
-    categories: ParsedCategory[],
-    answers: AnswerMap,
-): string[] {
-    return getValidationIssues(categories, answers).map(
-        (issue) => issue.message,
-    );
-}
-
 function getAgeFromDob(dob: string): number | null {
     if (!dob) return null;
     const birth = new Date(dob);
@@ -423,15 +374,6 @@ function numberFromAnswer(value: unknown): number | null {
     if (value === null || value === undefined || value === "") return null;
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-}
-
-function getMemberAge(
-    member: FamilyTripMemberRequest,
-    answers: AnswerMap,
-): number | null {
-    const dobAge = getAgeFromDob(member.dateOfBirth ?? "");
-    if (dobAge !== null) return dobAge;
-    return numberFromAnswer(answers.age_years);
 }
 
 function getMemberAgeLabel(
@@ -644,27 +586,6 @@ function getDependentAgesSummary(
                 `${memberLabel(member, index)}: ${getMemberAgeLabel(member, answers)}`,
         )
         .join("; ");
-}
-
-function isMemberProfileComplete(
-    member: FamilyTripMemberRequest,
-    answers: AnswerMap,
-): boolean {
-    const hasIdentity = Boolean(
-        member.relationship &&
-        member.firstName?.trim() &&
-        member.lastName?.trim(),
-    );
-    const hasAge = Boolean(
-        member.dateOfBirth?.trim() ||
-        numberFromAnswer(answers.age_years) !== null,
-    );
-    const hasPersonalInfo = Boolean(
-        String(answers.gender ?? "").trim() &&
-        String(answers.nationality ?? "").trim() &&
-        String(answers.current_residence_country ?? "").trim(),
-    );
-    return hasIdentity && hasAge && hasPersonalInfo;
 }
 
 function createMemberQuestionnaireResponses({
@@ -1059,7 +980,6 @@ function MemberProfileFields({
     onAnswerChange: (index: number, key: string, value: unknown) => void;
 }) {
     const dobParts = getAgePartsFromDob(member.dateOfBirth ?? "");
-    const completedBy = String(answers.questionnaire_completed_by ?? "");
     const hasFieldError = (field: string) => Boolean(fieldErrors?.has(field));
     const fieldShellClass = (field: string) =>
         `transition-all duration-500 ${hasFieldError(field) ? "rounded-2xl p-3 ring ring-red-400/60" : ""}`;
@@ -1317,140 +1237,6 @@ function MemberProfileFields({
                     {showFieldError("current_residence_country")}
                 </div>
             </div>
-
-            <div className="rounded-2xl border border-accent/15 bg-accent/5 p-5 md:p-6 space-y-5">
-                <div>
-                    <h4 className="font-serif text-heading text-lg">
-                        Dependent details
-                    </h4>
-                    <p className="text-sm text-muted">
-                        Capture who filled this member's answers and any
-                        caregiver context.
-                    </p>
-                </div>
-                <div>
-                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                        Who completed this questionnaire?
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        {QUESTIONNAIRE_COMPLETED_BY_OPTIONS.map((option) => {
-                            const selected = completedBy === option.value;
-                            return (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    onClick={() =>
-                                        onAnswerChange(
-                                            index,
-                                            "questionnaire_completed_by",
-                                            option.value,
-                                        )
-                                    }
-                                    className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${selected ?
-                                        "border-accent bg-white text-accent"
-                                        : "border-border-light bg-white/70 text-body hover:border-accent/50"
-                                        }`}
-                                >
-                                    {option.label}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-                <div>
-                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                        Can this member complete their own questionnaire?
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        {SELF_COMPLETION_OPTIONS.map((option) => {
-                            const selected =
-                                answers.can_complete_own_questionnaire ===
-                                option.value;
-                            return (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    onClick={() =>
-                                        onAnswerChange(
-                                            index,
-                                            "can_complete_own_questionnaire",
-                                            option.value,
-                                        )
-                                    }
-                                    className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${selected ?
-                                        "border-accent bg-white text-accent"
-                                        : "border-border-light bg-white/70 text-body hover:border-accent/50"
-                                        }`}
-                                >
-                                    {option.label}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-                {completedBy !== "self" && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                Guardian / caregiver name
-                            </label>
-                            <input
-                                type="text"
-                                value={String(answers.guardian_name ?? "")}
-                                onChange={(event) =>
-                                    onAnswerChange(
-                                        index,
-                                        "guardian_name",
-                                        event.target.value,
-                                    )
-                                }
-                                className={baseInputClass}
-                                placeholder="Full name"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                Guardian relationship
-                            </label>
-                            <input
-                                type="text"
-                                value={String(
-                                    answers.guardian_relationship ?? "",
-                                )}
-                                onChange={(event) =>
-                                    onAnswerChange(
-                                        index,
-                                        "guardian_relationship",
-                                        event.target.value,
-                                    )
-                                }
-                                className={baseInputClass}
-                                placeholder="e.g. Mother, father, aunt"
-                            />
-                        </div>
-                    </div>
-                )}
-                <div>
-                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                        Dependent-specific notes
-                    </label>
-                    <textarea
-                        value={String(
-                            answers.dependent_additional_details ?? "",
-                        )}
-                        onChange={(event) =>
-                            onAnswerChange(
-                                index,
-                                "dependent_additional_details",
-                                event.target.value,
-                            )
-                        }
-                        rows={3}
-                        className={`${baseInputClass} resize-none`}
-                        placeholder="Anything about care needs, feeding, school travel, supervision, or communication we should consider."
-                    />
-                </div>
-            </div>
         </div>
     );
 }
@@ -1514,57 +1300,6 @@ function CostBreakdown({
             )}
         </section>
     );
-}
-
-function BuilderIntroPanel() {
-    return (
-        <section className="rounded-3xl border border-accent/15 bg-gradient-to-br from-accent/10 via-white to-background-secondary p-5 md:p-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-2xl">
-                    <span className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent shadow-sm">
-                        Family plan workspace
-                    </span>
-                    <h2 className="mt-3 text-2xl md:text-3xl font-serif text-heading">
-                        Build one shared trip, then manage each traveller
-                        separately.
-                    </h2>
-                    <p className="mt-2 text-sm text-muted leading-relaxed">
-                        Start with the itinerary everyone shares. After that,
-                        open each member card on its own so personal details,
-                        caregiver context, medical history, and vaccine answers
-                        do not blend together.
-                    </p>
-                </div>
-                <div className="rounded-2xl border border-white/80 bg-white/80 p-4 text-sm text-body shadow-sm lg:max-w-xs">
-                    <p className="font-semibold text-heading">
-                        Finalizing this family trip will submit it to the
-                        server and queue an individual TravelPlan for every
-                        completed member.
-                    </p>
-                </div>
-            </div>
-
-            <div className="mt-5 grid gap-3 md:grid-cols-3">
-                {FAMILY_BUILDER_GUIDE.map((item, index) => (
-                    <div
-                        key={item.title}
-                        className="rounded-2xl border border-white/80 bg-white/85 p-4 shadow-sm"
-                    >
-                        <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs font-bold text-white">
-                            {index + 1}
-                        </div>
-                        <h3 className="font-serif text-lg text-heading">
-                            {item.title}
-                        </h3>
-                        <p className="mt-1 text-sm leading-relaxed text-muted">
-                            {item.description}
-                        </p>
-                    </div>
-                ))}
-            </div>
-        </section>
-    );
-}
 
 // ─── Main Component ────────────────────────────────────────────
 
@@ -1574,7 +1309,7 @@ export default function FamilyTripBuilder() {
     const { data: categoriesRaw, isLoading: questionsLoading } =
         useOnboardingQuestions();
     const [step, setStep] = useState<BuilderStep>("trip");
-    const [expandedMember, setExpandedMember] = useState<number | null>(0);
+    const [activeMemberIndex, setActiveMemberIndex] = useState<number | null>(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isPreviewing, setIsPreviewing] = useState(false);
     const [previewData, setPreviewData] =
@@ -1613,7 +1348,7 @@ export default function FamilyTripBuilder() {
         trip_itinerary: { tripType: "return" } satisfies TripItineraryData,
     });
     const [memberAnswers, setMemberAnswers] = useState<AnswerMap[]>([
-        defaultMemberAnswers("MAIN_APPLICANT"),
+        defaultMemberAnswers(),
     ]);
 
     const categories = useMemo<ParsedCategory[]>(() => {
@@ -1691,7 +1426,7 @@ export default function FamilyTripBuilder() {
                         members
                         : [defaultMember("MAIN_APPLICANT")]
                     ).map((member) => ({
-                        ...defaultMemberAnswers(member.relationship),
+                        ...defaultMemberAnswers(),
                         age_years:
                             getAgeFromDob(member.dateOfBirth ?? "") ?? "",
                     })),
@@ -1710,11 +1445,6 @@ export default function FamilyTripBuilder() {
             ),
         };
     }, [memberAnswers, request.members, sharedAnswers]);
-
-    const derivedTripPayload = useMemo(
-        () => buildPlanPayloadFromAnswers(normalizedSharedAnswers),
-        [normalizedSharedAnswers],
-    );
 
     const clearSharedFieldError = (key: string) => {
         setSharedFieldErrors((prev) => {
@@ -1783,26 +1513,6 @@ export default function FamilyTripBuilder() {
         }));
         clearMemberProfileError(index, field);
         if (field === "dateOfBirth") clearMemberProfileError(index, "age_years");
-
-        if (field === "relationship") {
-            setMemberAnswers((prev) =>
-                prev.map((answers, memberIndex) =>
-                    memberIndex === index ?
-                        {
-                            ...answers,
-                            questionnaire_completed_by:
-                                answers.questionnaire_completed_by ||
-                                defaultMemberAnswers(value)
-                                    .questionnaire_completed_by,
-                            can_complete_own_questionnaire:
-                                answers.can_complete_own_questionnaire ||
-                                defaultMemberAnswers(value)
-                                    .can_complete_own_questionnaire,
-                        }
-                        : answers,
-                ),
-            );
-        }
     };
 
     const handleMemberAnswerChange = (
@@ -1852,10 +1562,10 @@ export default function FamilyTripBuilder() {
         }));
         setMemberAnswers((prev) => [
             prev[0],
-            defaultMemberAnswers("CHILD"),
+            defaultMemberAnswers(),
             ...prev.slice(1),
         ]);
-        setExpandedMember(request.members.length);
+        setActiveMemberIndex(request.members.length);
     };
 
     const removeMember = (index: number) => {
@@ -1886,7 +1596,7 @@ export default function FamilyTripBuilder() {
             }, {});
         setMemberProfileErrors(reindexErrors);
         setMemberQuestionnaireErrors(reindexErrors);
-        setExpandedMember((current) => {
+        setActiveMemberIndex((current) => {
             if (current === null) return null;
             if (current === index) return null;
             return current > index ? current - 1 : current;
@@ -1915,7 +1625,7 @@ export default function FamilyTripBuilder() {
                         member,
                         answers:
                             memberAnswers[index] ??
-                            defaultMemberAnswers(member.relationship),
+                            defaultMemberAnswers(),
                         index,
                         totalMembers: request.members.length,
                     }),
@@ -2020,7 +1730,7 @@ export default function FamilyTripBuilder() {
 
         if (firstInvalidIndex !== null) {
             setMemberProfileErrors(nextErrors);
-            setExpandedMember(firstInvalidIndex);
+            setActiveMemberIndex(firstInvalidIndex);
             scrollToValidationTarget(
                 getMemberProfileFieldId(firstInvalidIndex, firstInvalidField),
             );
@@ -2054,7 +1764,7 @@ export default function FamilyTripBuilder() {
 
         if (firstInvalidIndex !== null) {
             setMemberQuestionnaireErrors(nextErrors);
-            setExpandedMember(firstInvalidIndex);
+            setActiveMemberIndex(firstInvalidIndex);
             scrollToValidationTarget(
                 getQuestionFieldId(firstInvalidKey, `member-${firstInvalidIndex}`),
             );
@@ -2179,19 +1889,18 @@ export default function FamilyTripBuilder() {
 
     return (
         <div className="relative min-h-screen font-sans">
-            <DashboardHeader title="Family Trip Builder" />
+            <DashboardHeader title={step === "trip" ? "Family Plan" : step === "members" ? "Family Plan - Add Member" : "Family Plan - Health Info"} />
 
             <div className="relative z-10 mx-auto max-w-6xl pb-14 pt-8">
                 <div className="bg-white/95 rounded-3xl border border-border-light overflow-hidden">
                     <div className="p-5 md:p-8 space-y-10">
-                        <BuilderIntroPanel />
                         {stepIndicator}
 
                         {step === "trip" && (
                             <>
                                 <section className="rounded-2xl border border-accent/15 bg-accent/5 p-5 md:p-6">
                                     <h2 className="text-2xl font-serif text-heading mb-2">
-                                        Step 1: shared trip details
+                                        Step 1: Shared trip details
                                     </h2>
                                     <p className="text-sm text-muted leading-relaxed">
                                         Keep this section about the journey only:
@@ -2258,18 +1967,10 @@ export default function FamilyTripBuilder() {
                                                     Step 2
                                                 </span>
                                                 <h2 className="mt-1 text-2xl font-serif text-heading">
-                                                    Set up one member profile at
-                                                    a time
+                                                    Member {(activeMemberIndex ?? 0) + 1} of {request.members.length}
                                                 </h2>
                                                 <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
-                                                    Each card below belongs to
-                                                    one traveller. Expand only
-                                                    the person you are editing,
-                                                    then add their identity,
-                                                    age, nationality,
-                                                    residence, and caregiver
-                                                    context before moving to
-                                                    medical questions.
+                                                    Fill in identity, age, nationality, and residence for this member, then proceed to the next.
                                                 </p>
                                             </div>
                                             <button
@@ -2281,269 +1982,78 @@ export default function FamilyTripBuilder() {
                                                 Add Member
                                             </button>
                                         </div>
-
-                                        <div className="mt-5 grid gap-3 md:grid-cols-3">
-                                            <div className="rounded-2xl bg-white/80 p-4 text-sm text-muted ring-1 ring-white">
-                                                <p className="font-semibold text-heading">
-                                                    Shared details stay shared
-                                                </p>
-                                                <p className="mt-1">
-                                                    Do not repeat itinerary
-                                                    answers here.
-                                                </p>
-                                            </div>
-                                            <div className="rounded-2xl bg-white/80 p-4 text-sm text-muted ring-1 ring-white">
-                                                <p className="font-semibold text-heading">
-                                                    One profile per traveller
-                                                </p>
-                                                <p className="mt-1">
-                                                    Adult, child, and dependent
-                                                    data are kept separate.
-                                                </p>
-                                            </div>
-                                            <div className="rounded-2xl bg-white/80 p-4 text-sm text-muted ring-1 ring-white">
-                                                <p className="font-semibold text-heading">
-                                                    Health comes next
-                                                </p>
-                                                <p className="mt-1">
-                                                    Medical answers are asked
-                                                    after these profile basics.
-                                                </p>
-                                            </div>
-                                        </div>
                                     </div>
 
                                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                         <div>
                                             <h3 className="text-xl font-serif text-heading">
-                                                Travellers ({request.members.length})
+                                                Main applicant and family members ({request.members.length})
                                             </h3>
-                                            <p className="text-sm text-muted">
-                                                Complete the open card, collapse
-                                                it, then move to the next
-                                                traveller.
-                                            </p>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-5">
-                                        {request.members.map(
-                                            (member, index) => {
-                                                const answers =
-                                                    memberAnswers[index] ??
-                                                    defaultMemberAnswers(
-                                                        member.relationship,
-                                                    );
-                                                const age = getMemberAge(
-                                                    member,
-                                                    answers,
-                                                );
-                                                const isAdult =
-                                                    age !== null && age >= 18;
-                                                const isExpanded =
-                                                    expandedMember === index;
-                                                const profileComplete =
-                                                    isMemberProfileComplete(
-                                                        member,
-                                                        answers,
-                                                    );
-                                                const hasProfileErrors = Boolean(
-                                                    memberProfileErrors[index]
-                                                        ?.size,
-                                                );
+                                    {(() => {
+                                        const index = activeMemberIndex ?? 0;
+                                        const member = request.members[index];
+                                        if (!member) return null;
+                                        const answers =
+                                            memberAnswers[index] ??
+                                            defaultMemberAnswers();
+                                        const hasProfileErrors = Boolean(
+                                            memberProfileErrors[index]?.size,
+                                        );
 
-                                                return (
-                                                    <article
-                                                        key={index}
-                                                        className={`overflow-hidden rounded-3xl border transition-all ${hasProfileErrors ?
-                                                            "border-red-300 bg-red-50/30 ring-2 ring-red-400/40"
-                                                            : isExpanded ?
-                                                                "border-accent/40 bg-white shadow-[0_18px_45px_-35px_rgba(42,122,106,0.65)]"
-                                                                : "border-border-light bg-background-secondary/70"
-                                                            }`}
-                                                    >
-                                                        <div className="p-5 md:p-6">
-                                                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        setExpandedMember(
-                                                                            isExpanded ?
-                                                                                null
-                                                                                : index,
-                                                                        )
-                                                                    }
-                                                                    className="min-w-0 flex-1 text-left"
-                                                                >
-                                                                    <div className="flex items-start gap-4">
-                                                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-sm font-bold text-accent">
-                                                                            {getMemberInitials(
-                                                                                member,
-                                                                                index,
-                                                                            )}
-                                                                        </div>
-                                                                        <div className="min-w-0">
-                                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                                <h4 className="text-xl font-serif text-heading">
-                                                                                    {memberLabel(
-                                                                                        member,
-                                                                                        index,
-                                                                                    )}
-                                                                                </h4>
-                                                                                <span
-                                                                                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${profileComplete ?
-                                                                                        "bg-emerald-50 text-emerald-700"
-                                                                                        : hasProfileErrors ?
-                                                                                            "bg-red-50 text-red-700"
-                                                                                            : "bg-amber-50 text-amber-700"
-                                                                                        }`}
-                                                                                >
-                                                                                    {profileComplete ?
-                                                                                        "Profile ready"
-                                                                                        : hasProfileErrors ?
-                                                                                            "Required fields missing"
-                                                                                            : "Needs profile details"}
-                                                                                </span>
-                                                                            </div>
-                                                                            <p className="mt-1 text-sm text-muted">
-                                                                                {getRelationshipLabel(
-                                                                                    member.relationship,
-                                                                                )}
-                                                                                {member.relationship === "MAIN_APPLICANT" && (
-                                                                                    <span className="ml-2 inline-flex rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">You</span>
-                                                                                )}
-                                                                                {" · "}
-                                                                                {age ===
-                                                                                    null ?
-                                                                                    "Age pending"
-                                                                                    : isAdult ?
-                                                                                        `Adult · ${getMemberAgeLabel(member, answers)}`
-                                                                                        : `Dependent/child · ${getMemberAgeLabel(member, answers)}`}
-                                                                            </p>
-                                                                            <p className="mt-2 text-sm leading-relaxed text-muted">
-                                                                                These profile answers will stay attached to this traveller's final plan.
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-                                                                </button>
-
-                                                                <div className="flex shrink-0 flex-wrap items-center gap-2">
-                                                                    {index > 0 && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                removeMember(
-                                                                                    index,
-                                                                                )
-                                                                            }
-                                                                            className="inline-flex items-center gap-1.5 rounded-xl border border-border-light bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                                                            aria-label="Remove member"
-                                                                        >
-                                                                            <LucideTrash className="w-4 h-4" />
-                                                                            Remove
-                                                                        </button>
+                                        return (
+                                            <article
+                                                className={`overflow-hidden rounded-3xl border transition-all ${hasProfileErrors ?
+                                                    "border-red-300 bg-red-50/30 ring-2 ring-red-400/40"
+                                                    : "border-accent/40 bg-white shadow-[0_18px_45px_-35px_rgba(42,122,106,0.65)]"
+                                                    }`}
+                                            >
+                                                <div className="p-5 md:p-6">
+                                                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-4">
+                                                        <div className="flex items-start gap-4">
+                                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-sm font-bold text-accent">
+                                                                {getMemberInitials(member, index)}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <h4 className="text-xl font-serif text-heading">
+                                                                    {memberLabel(member, index)}
+                                                                </h4>
+                                                                <p className="mt-1 text-sm text-muted">
+                                                                    {getRelationshipLabel(member.relationship)}
+                                                                    {member.relationship === "MAIN_APPLICANT" && (
+                                                                        <span className="ml-2 inline-flex rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">You</span>
                                                                     )}
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            setExpandedMember(
-                                                                                isExpanded ?
-                                                                                    null
-                                                                                    : index,
-                                                                            )
-                                                                        }
-                                                                        className="inline-flex items-center gap-1.5 rounded-xl border border-accent/20 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-accent transition-colors hover:bg-accent/10"
-                                                                    >
-                                                                        {isExpanded ?
-                                                                            "Collapse"
-                                                                            : "Edit details"}
-                                                                        <LucideChevronDown
-                                                                            className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                                                                        />
-                                                                    </button>
-                                                                </div>
+                                                                </p>
                                                             </div>
-
-                                                            {!isExpanded && (
-                                                                <div className="mt-5 grid gap-3 md:grid-cols-3">
-                                                                    <div className="rounded-2xl bg-white p-4 text-sm ring-1 ring-border-light">
-                                                                        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-                                                                            Identity
-                                                                        </p>
-                                                                        <p className="mt-1 font-medium text-heading">
-                                                                            {member.firstName?.trim() &&
-                                                                                member.lastName?.trim() ?
-                                                                                "Name added"
-                                                                                : "Name needed"}
-                                                                        </p>
-                                                                    </div>
-                                                                    <div className="rounded-2xl bg-white p-4 text-sm ring-1 ring-border-light">
-                                                                        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-                                                                            Age
-                                                                        </p>
-                                                                        <p className="mt-1 font-medium text-heading">
-                                                                            {getMemberAgeLabel(
-                                                                                member,
-                                                                                answers,
-                                                                            )}
-                                                                        </p>
-                                                                    </div>
-                                                                    <div className="rounded-2xl bg-white p-4 text-sm ring-1 ring-border-light">
-                                                                        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-                                                                            Residence
-                                                                        </p>
-                                                                        <p className="mt-1 font-medium text-heading">
-                                                                            {String(
-                                                                                answers.current_residence_country ??
-                                                                                "",
-                                                                            ).trim() ||
-                                                                                "Residence needed"}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            )}
                                                         </div>
-
-                                                        {isExpanded && (
-                                                            <div className="border-t border-border-light bg-white p-5 md:p-6">
-                                                                <div className="mb-6 rounded-2xl border border-border-light bg-background-secondary p-4 text-sm text-muted">
-                                                                    <span className="font-semibold text-heading">
-                                                                        Editing {memberLabel(
-                                                                            member,
-                                                                            index,
-                                                                        )}
-                                                                    </span>{" "}
-                                                                    — complete these profile basics, then use the next step for medical history and vaccines.
-                                                                </div>
-                                                                <MemberProfileFields
-                                                                    member={
-                                                                        member
-                                                                    }
-                                                                    answers={
-                                                                        answers
-                                                                    }
-                                                                    index={
-                                                                        index
-                                                                    }
-                                                                    fieldErrors={
-                                                                        memberProfileErrors[
-                                                                        index
-                                                                        ]
-                                                                    }
-                                                                    onMemberChange={
-                                                                        handleMemberChange
-                                                                    }
-                                                                    onAnswerChange={
-                                                                        handleMemberAnswerChange
-                                                                    }
-                                                                />
-                                                            </div>
+                                                        {index > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeMember(index)}
+                                                                className="inline-flex items-center gap-1.5 rounded-xl border border-border-light bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                                                aria-label="Remove member"
+                                                            >
+                                                                <LucideTrash className="w-4 h-4" />
+                                                                Remove
+                                                            </button>
                                                         )}
-                                                    </article>
-                                                );
-                                            },
-                                        )}
-                                    </div>
+                                                    </div>
+                                                    <div className="border-t border-border-light bg-white pt-5">
+                                                        <MemberProfileFields
+                                                            member={member}
+                                                            answers={answers}
+                                                            index={index}
+                                                            fieldErrors={memberProfileErrors[index]}
+                                                            onMemberChange={handleMemberChange}
+                                                            onAnswerChange={handleMemberAnswerChange}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </article>
+                                        );
+                                    })()}
                                 </section>
 
                                 <hr className="border-border-light" />
@@ -2554,7 +2064,14 @@ export default function FamilyTripBuilder() {
                                         icon={
                                             <LucideArrowLeft className="w-4 h-4" />
                                         }
-                                        onClick={() => setStep("trip")}
+                                        onClick={() => {
+                                            const current = activeMemberIndex ?? 0;
+                                            if (current > 0) {
+                                                setActiveMemberIndex(current - 1);
+                                            } else {
+                                                setStep("trip");
+                                            }
+                                        }}
                                     >
                                         Back
                                     </Button>
@@ -2580,21 +2097,38 @@ export default function FamilyTripBuilder() {
                                         >
                                             Save Draft
                                         </Button>
-                                        <Button
-                                            variant="primary"
-                                            icon={
-                                                <LucideArrowRight className="w-4 h-4" />
-                                            }
-                                            onClick={() => {
-                                                if (!validateMembersStep())
-                                                    return;
-                                                setExpandedMember(0);
-                                                setStep("questionnaire");
-                                            }}
-                                            className="flex-1 md:flex-none bg-dark text-background-primary hover:bg-darkest"
-                                        >
-                                            Continue to Per-Member Health Info
-                                        </Button>
+                                        {(activeMemberIndex ?? 0) < request.members.length - 1 ? (
+                                            <Button
+                                                variant="primary"
+                                                icon={
+                                                    <LucideArrowRight className="w-4 h-4" />
+                                                }
+                                                onClick={() => {
+                                                    const current = activeMemberIndex ?? 0;
+                                                    if (!validateMembersStep()) return;
+                                                    setActiveMemberIndex(current + 1);
+                                                }}
+                                                className="flex-1 md:flex-none bg-dark text-background-primary hover:bg-darkest"
+                                            >
+                                                Next Member
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="primary"
+                                                icon={
+                                                    <LucideArrowRight className="w-4 h-4" />
+                                                }
+                                                onClick={() => {
+                                                    if (!validateMembersStep())
+                                                        return;
+                                                    setActiveMemberIndex(0);
+                                                    setStep("questionnaire");
+                                                }}
+                                                className="flex-1 md:flex-none bg-dark text-background-primary hover:bg-darkest"
+                                            >
+                                                Continue to Health Info
+                                            </Button>
+                                        )}
                                     </div>
                                 </section>
 
@@ -2610,161 +2144,63 @@ export default function FamilyTripBuilder() {
                                             Step 3
                                         </span>
                                         <h2 className="mt-1 text-2xl font-serif text-heading">
-                                            Complete health answers per member
+                                            Member {(activeMemberIndex ?? 0) + 1} of {request.members.length} — Health answers
                                         </h2>
                                         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
-                                            Open one traveller, answer only that
-                                            person's medical history,
-                                            vaccination, travel history, and
-                                            risk questions, then collapse the
-                                            card and move to the next member.
+                                            Answer the medical history, vaccination, and risk questions for this member only.
                                         </p>
                                     </section>
 
-                                    <div className="space-y-5">
-                                        {request.members.map(
-                                            (member, index) => {
-                                                const answers =
-                                                    memberAnswers[index] ??
-                                                    defaultMemberAnswers(
-                                                        member.relationship,
-                                                    );
-                                                const isExpanded =
-                                                    expandedMember === index;
-                                                const profileComplete =
-                                                    isMemberProfileComplete(
-                                                        member,
-                                                        answers,
-                                                    );
-                                                const questionMessages =
-                                                    getValidationMessages(
-                                                        memberCategories,
-                                                        answers,
-                                                    );
-                                                const memberComplete =
-                                                    profileComplete &&
-                                                    questionMessages.length ===
-                                                    0;
-                                                const hasQuestionnaireErrors =
-                                                    Boolean(
-                                                        memberQuestionnaireErrors[
-                                                            index
-                                                        ]?.size,
-                                                    );
+                                    {(() => {
+                                        const index = activeMemberIndex ?? 0;
+                                        const member = request.members[index];
+                                        if (!member) return null;
+                                        const answers =
+                                            memberAnswers[index] ??
+                                            defaultMemberAnswers();
+                                        const hasQuestionnaireErrors = Boolean(
+                                            memberQuestionnaireErrors[index]?.size,
+                                        );
 
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className={`border rounded-3xl overflow-hidden bg-white shadow-[0_8px_30px_-24px_rgba(10,20,18,0.45)] transition-all duration-500 ${hasQuestionnaireErrors ? "border-red-300 ring-2 ring-red-400/40" : "border-border-light"}`}
-                                                    >
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setExpandedMember(
-                                                                    isExpanded ?
-                                                                        null
-                                                                        : index,
-                                                                )
-                                                            }
-                                                            className="w-full flex items-center justify-between gap-4 px-5 py-5 md:px-6 bg-background-secondary hover:bg-accent/5 transition-colors text-left"
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center">
-                                                                    <span className="text-accent text-xs font-bold">
-                                                                        {getMemberInitials(
-                                                                            member,
-                                                                            index,
-                                                                        )}
-                                                                    </span>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="font-semibold text-heading text-sm">
-                                                                        {memberLabel(
-                                                                            member,
-                                                                            index,
-                                                                        )}
-                                                                    </p>
-                                                                    <p className="text-xs text-muted capitalize">
-                                                                        {member.relationship.toLowerCase()}{" "}
-                                                                        ·{" "}
-                                                                        {getMemberAgeLabel(
-                                                                            member,
-                                                                            answers,
-                                                                        )}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span
-                                                                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${memberComplete ?
-                                                                        "text-emerald-700 bg-emerald-50"
-                                                                        : hasQuestionnaireErrors ?
-                                                                            "text-red-700 bg-red-50"
-                                                                            : "text-amber-700 bg-amber-50"
-                                                                        }`}
-                                                                >
-                                                                    {memberComplete ?
-                                                                        "Complete"
-                                                                        : hasQuestionnaireErrors ?
-                                                                            "Required answers missing"
-                                                                            : "Needs answers"}
-                                                                </span>
-                                                                <LucideChevronDown
-                                                                    className={`w-4 h-4 text-muted transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                                                                />
-                                                            </div>
-                                                        </button>
-
-                                                        {isExpanded && (
-                                                            <div className="p-5 md:p-6 space-y-9 bg-white border-t border-border-light">
-                                                                {memberCategories.map(
-                                                                    (
-                                                                        category,
-                                                                    ) => (
-                                                                        <QuestionGroup
-                                                                            key={`${index}-${category.category_key}`}
-                                                                            category={
-                                                                                category
-                                                                            }
-                                                                            answers={
-                                                                                answers
-                                                                            }
-                                                                            errorKeys={
-                                                                                memberQuestionnaireErrors[
-                                                                                index
-                                                                                ]
-                                                                            }
-                                                                            fieldIdPrefix={`member-${index}`}
-                                                                            onAnswer={(
-                                                                                key,
-                                                                                value,
-                                                                            ) =>
-                                                                                handleMemberAnswerChange(
-                                                                                    index,
-                                                                                    key,
-                                                                                    value,
-                                                                                )
-                                                                            }
-                                                                            onToggleCheckbox={(
-                                                                                key,
-                                                                                value,
-                                                                            ) =>
-                                                                                toggleMemberCheckbox(
-                                                                                    index,
-                                                                                    key,
-                                                                                    value,
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                    ),
-                                                                )}
-                                                            </div>
-                                                        )}
+                                        return (
+                                            <div
+                                                className={`border rounded-3xl overflow-hidden bg-white shadow-[0_8px_30px_-24px_rgba(10,20,18,0.45)] ${hasQuestionnaireErrors ? "border-red-300 ring-2 ring-red-400/40" : "border-border-light"}`}
+                                            >
+                                                <div className="px-5 py-4 md:px-6 bg-background-secondary/60 flex items-center gap-3 border-b border-border-light">
+                                                    <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center">
+                                                        <span className="text-accent text-xs font-bold">
+                                                            {getMemberInitials(member, index)}
+                                                        </span>
                                                     </div>
-                                                );
-                                            },
-                                        )}
-                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-heading text-sm">
+                                                            {memberLabel(member, index)}
+                                                        </p>
+                                                        <p className="text-xs text-muted capitalize">
+                                                            {member.relationship.toLowerCase()} · {getMemberAgeLabel(member, answers)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="p-5 md:p-6 space-y-9 bg-white">
+                                                    {memberCategories.map((category) => (
+                                                        <QuestionGroup
+                                                            key={`${index}-${category.category_key}`}
+                                                            category={category}
+                                                            answers={answers}
+                                                            errorKeys={memberQuestionnaireErrors[index]}
+                                                            fieldIdPrefix={`member-${index}`}
+                                                            onAnswer={(key, value) =>
+                                                                handleMemberAnswerChange(index, key, value)
+                                                            }
+                                                            onToggleCheckbox={(key, value) =>
+                                                                toggleMemberCheckbox(index, key, value)
+                                                            }
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
 
                                 <hr className="border-border-light" />
@@ -2775,7 +2211,14 @@ export default function FamilyTripBuilder() {
                                         icon={
                                             <LucideArrowLeft className="w-4 h-4" />
                                         }
-                                        onClick={() => setStep("members")}
+                                        onClick={() => {
+                                            const current = activeMemberIndex ?? 0;
+                                            if (current > 0) {
+                                                setActiveMemberIndex(current - 1);
+                                            } else {
+                                                setStep("members");
+                                            }
+                                        }}
                                     >
                                         Back
                                     </Button>
@@ -2790,164 +2233,42 @@ export default function FamilyTripBuilder() {
                                         >
                                             Save Draft
                                         </Button>
-                                        <Button
-                                            variant="primary"
-                                            icon={
-                                                <LucideArrowRight className="w-4 h-4" />
-                                            }
-                                            onClick={() => {
-                                                if (
-                                                    !validateMemberQuestionnaires()
-                                                )
-                                                    return;
-                                                setStep("review");
-                                            }}
-                                            className="bg-dark text-background-primary hover:bg-darkest"
-                                        >
-                                            Review & Finalize
-                                        </Button>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-
-                        {step === "review" && (
-                            <>
-                                <div>
-                                    <h2 className="text-2xl font-serif text-heading mb-1">
-                                        Review Your Family Trip
-                                    </h2>
-                                    <p className="text-sm text-muted mb-6 leading-relaxed">
-                                        Confirm the shared itinerary and each
-                                        member's questionnaire status. When you
-                                        finalize, the family trip is submitted
-                                        and the server queues a separate
-                                        TravelPlan for every completed member.
-                                    </p>
-
-                                    <div className="bg-background-secondary rounded-2xl p-5 mb-5 space-y-2 text-sm">
-                                        <div className="flex justify-between gap-4">
-                                            <span className="text-muted font-semibold uppercase tracking-wider text-xs">
-                                                Destination
-                                            </span>
-                                            <span className="text-heading font-medium text-right">
-                                                {derivedTripPayload ?
-                                                    `${derivedTripPayload.destination}, ${derivedTripPayload.country}`
-                                                    : "Not set"}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between gap-4">
-                                            <span className="text-muted font-semibold uppercase tracking-wider text-xs">
-                                                Duration
-                                            </span>
-                                            <span className="text-heading font-medium">
-                                                {derivedTripPayload?.duration ??
-                                                    request.duration}{" "}
-                                                days
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between gap-4">
-                                            <span className="text-muted font-semibold uppercase tracking-wider text-xs">
-                                                Purpose
-                                            </span>
-                                            <span className="text-heading font-medium">
-                                                {derivedTripPayload?.purpose ??
-                                                    request.purpose}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between gap-4">
-                                            <span className="text-muted font-semibold uppercase tracking-wider text-xs">
-                                                Members
-                                            </span>
-                                            <span className="text-heading font-medium">
-                                                {request.members.length}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        {request.members.map(
-                                            (member, index) => {
-                                                const answers =
-                                                    memberAnswers[index] ?? {};
-                                                const profileComplete =
-                                                    isMemberProfileComplete(
-                                                        member,
-                                                        answers,
-                                                    );
-                                                const memberComplete =
-                                                    profileComplete &&
-                                                    getValidationMessages(
-                                                        memberCategories,
-                                                        answers,
-                                                    ).length === 0;
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="flex items-center justify-between gap-4 px-4 py-3 border border-border-light rounded-xl bg-white"
-                                                    >
-                                                        <div>
-                                                            <p className="text-sm font-semibold text-heading">
-                                                                {memberLabel(
-                                                                    member,
-                                                                    index,
-                                                                )}
-                                                            </p>
-                                                            <p className="text-xs text-muted capitalize">
-                                                                {member.relationship.toLowerCase()}{" "}
-                                                                ·{" "}
-                                                                {getMemberAgeLabel(
-                                                                    member,
-                                                                    answers,
-                                                                )}
-                                                            </p>
-                                                        </div>
-                                                        <span
-                                                            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${memberComplete ?
-                                                                "bg-emerald-50 text-emerald-700"
-                                                                : "bg-amber-50 text-amber-700"
-                                                                }`}
-                                                        >
-                                                            {memberComplete ?
-                                                                "Questionnaire complete"
-                                                                : "Questionnaire missing"
-                                                            }
-                                                        </span>
-                                                    </div>
-                                                );
-                                            },
+                                        {(activeMemberIndex ?? 0) < request.members.length - 1 ? (
+                                            <Button
+                                                variant="primary"
+                                                icon={
+                                                    <LucideArrowRight className="w-4 h-4" />
+                                                }
+                                                onClick={() => {
+                                                    const current = activeMemberIndex ?? 0;
+                                                    if (!validateMemberQuestionnaires()) return;
+                                                    setActiveMemberIndex(current + 1);
+                                                }}
+                                                className="bg-dark text-background-primary hover:bg-darkest"
+                                            >
+                                                Next Member
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="primary"
+                                                icon={
+                                                    <LucideCheckCircle className="w-4 h-4" />
+                                                }
+                                                onClick={handleSubmit}
+                                                disabled={isSubmitting}
+                                                className="bg-dark text-background-primary hover:bg-darkest"
+                                            >
+                                                {isSubmitting ?
+                                                    "Submitting..."
+                                                    : "Submit"}
+                                            </Button>
                                         )}
                                     </div>
                                 </div>
-
-                                <hr className="border-border-light" />
-
-                                <div className="flex gap-3 justify-between">
-                                    <Button
-                                        variant="secondary"
-                                        icon={
-                                            <LucideArrowLeft className="w-4 h-4" />
-                                        }
-                                        onClick={() => setStep("questionnaire")}
-                                    >
-                                        Back
-                                    </Button>
-                                    <Button
-                                        variant="primary"
-                                        icon={
-                                            <LucideCheckCircle className="w-4 h-4" />
-                                        }
-                                        onClick={handleSubmit}
-                                        disabled={isSubmitting}
-                                        className="bg-dark text-background-primary hover:bg-darkest"
-                                    >
-                                        {isSubmitting ?
-                                            "Finalizing..."
-                                            : "Finalize & Create Plans"}
-                                    </Button>
-                                </div>
                             </>
                         )}
+
+
                     </div>
                 </div>
             </div>

@@ -60,8 +60,9 @@ const Settings = lazy(() => import("../pages/dashboard/settings"));
 const Transactions = lazy(() => import("../pages/dashboard/transactions"));
 const MyEbooks = lazy(() => import("../pages/dashboard/my-ebooks"));
 const FamilyTripBuilder = lazy(() => import("../pages/dashboard/family-trip-builder"));
-const FamilyTripView = lazy(() => import("../pages/dashboard/family-trip-view"));
-const BuyFamilyPlan = lazy(() => import("../pages/dashboard/buy-family-plan"));
+const FamilyTripView = lazy(
+    () => import("../pages/dashboard/family-trip-view"),
+);
 const FamilyManageMembers = lazy(() => import("../pages/dashboard/family-manage-members"));
 const FamilyPlanView = lazy(() => import("../pages/dashboard/family-plan-view"));
 
@@ -102,6 +103,9 @@ const Unauthorized = lazy(() => import("../pages/not-found/unauthorized"));
 const FamilyLogin = lazy(() => import("../pages/family/login"));
 const FamilyDashboard = lazy(() => import("../pages/family/dashboard"));
 const FamilyPlanDetail = lazy(() => import("../pages/family/plan-detail"));
+const BuyAdditionalPlan = lazy(
+    () => import("../pages/dashboard/buy-additional-plan"),
+);
 
 
 const router = createBrowserRouter([
@@ -146,7 +150,10 @@ const router = createBrowserRouter([
 
     // Company onboarding (standalone, no nav)
     { path: "company-onboarding", element: <CompanyOnboarding /> },
-    { path: "company-onboarding/callback", element: <CompanyOnboardingCallback /> },
+    {
+        path: "company-onboarding/callback",
+        element: <CompanyOnboardingCallback />,
+    },
 
     // Auth
     {
@@ -162,11 +169,21 @@ const router = createBrowserRouter([
     },
 
     {
-        path: "onboarding", element: <ProtectedRoute><Onboarding /></ProtectedRoute>
+        path: "onboarding",
+        element: (
+            <ProtectedRoute>
+                <Onboarding />
+            </ProtectedRoute>
+        ),
     },
 
     {
-        path: "onboarding/questionnaire", element: <ProtectedRoute><TravelHealthQuestionnaire /></ProtectedRoute>
+        path: "onboarding/questionnaire",
+        element: (
+            <ProtectedRoute>
+                <TravelHealthQuestionnaire />
+            </ProtectedRoute>
+        ),
     },
 
     // Email verification callback (from email link: /auth/verify-email?token=...)
@@ -221,7 +238,6 @@ const router = createBrowserRouter([
         ],
     },
 
-
     // Individual dashboard
     {
         path: "dashboard",
@@ -243,7 +259,7 @@ const router = createBrowserRouter([
             { path: "family-trip", element: <FamilyTripBuilder /> },
             { path: "family-trip/:id", element: <FamilyTripView /> },
             { path: "family-trip/:id/plan", element: <FamilyPlanView /> },
-            { path: "buy-family-plan", element: <BuyFamilyPlan /> },
+            { path: "buy-additional-plan", element: <BuyAdditionalPlan /> },
             { path: "family-members", element: <FamilyManageMembers /> },
         ],
     },
@@ -253,13 +269,21 @@ const router = createBrowserRouter([
         path: "family",
         children: [
             { path: "login", element: <FamilyLogin /> },
-            { 
-                path: "dashboard", 
-                element: <FamilyMemberRoute><FamilyDashboard /></FamilyMemberRoute> 
+            {
+                path: "dashboard",
+                element: (
+                    <FamilyMemberRoute>
+                        <FamilyDashboard />
+                    </FamilyMemberRoute>
+                ),
             },
-            { 
-                path: "plans/:id", 
-                element: <FamilyMemberRoute><FamilyPlanDetail /></FamilyMemberRoute> 
+            {
+                path: "plans/:id",
+                element: (
+                    <FamilyMemberRoute>
+                        <FamilyPlanDetail />
+                    </FamilyMemberRoute>
+                ),
             },
         ],
     },

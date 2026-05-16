@@ -77,8 +77,8 @@ const familyNav: NavItem[] = [
         icon: <LucideUsers className="w-4 h-4" />,
     },
     {
-        label: "Buy Family Plan",
-        href: "/dashboard/buy-family-plan",
+        label: "Buy Additional Plan",
+        href: "/dashboard/buy-additional-plan",
         icon: <LucideCreditCard className="w-4 h-4" />,
     },
     {
