@@ -329,7 +329,7 @@ export const familyPlans: FamilyPlanDefinition[] = [
     priceNgn: 180000,
     additionalMemberPriceUsd: 30,
     additionalMemberPriceNgn: 25000,
-    priceNote: "for up to 6 family members",
+    priceNote: "per trip",
     cta: "Get Family Plan",
     highlighted: true,
     features: [

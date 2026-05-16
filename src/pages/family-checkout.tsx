@@ -5,7 +5,7 @@ import FooterSection from "../components/sections/FooterSection";
 import Navbar from "../components/sections/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { useCurrencyStore } from "../stores/currencyStore";
-import { familyPlans, formatFamilyAdditionalMemberPrice, formatFamilyPlanPrice, normalizePlanCurrency, calculateFamilyTotalPrice, formatFamilyTotalPrice } from "../constants/companyPlans";
+import { familyPlans, formatFamilyPlanPrice, normalizePlanCurrency, calculateFamilyTotalPrice, formatFamilyTotalPrice } from "../constants/companyPlans";
 import type { BillingCurrency, FamilyPackageType, FamilyPackageCheckoutResponse } from "../api/types";
 import { LucideLoader2, LucideLock, LucideShieldCheck, LucideAlertCircle, LucideUsers, LucideCheck, LucideHeart, LucideHome, LucideGlobe, LucideShield, LucideArrowRight, LucidePlus, LucideMinus, LucideUserPlus, LucideTag } from "lucide-react";
 import { cn } from "../lib/utils";
@@ -32,15 +32,14 @@ export default function FamilyCheckoutPage() {
 
     const { mutate: initiateCheckout, isPending } = useInitiateFamilyPackageCheckout();
 
-    const [form, setForm] = useState({ name: "", email: "", phone: "" });
+    const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [additionalMembers, setAdditionalMembers] = useState(0);
     const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
 
     useEffect(() => {
         if (user) {
-            const name = [user.first_name, user.last_name].filter(Boolean).join(" ");
-            setForm({ name, email: user.email ?? "", phone: user.phone ?? "" });
+            setForm({ firstName: user.first_name ?? "", lastName: user.last_name ?? "", email: user.email ?? "", phone: user.phone ?? "" });
         }
     }, [user]);
 
@@ -68,7 +67,8 @@ export default function FamilyCheckoutPage() {
     const validate = () => {
         const errs: Record<string, string> = {};
         if (!user) {
-            if (!form.name.trim()) errs.name = "Full name is required";
+            if (!form.firstName.trim()) errs.firstName = "First name is required";
+            if (!form.lastName.trim()) errs.lastName = "Last name is required";
             if (!form.email.trim()) errs.email = "Email is required";
             else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Invalid email";
         }
@@ -91,7 +91,7 @@ export default function FamilyCheckoutPage() {
                 currency: normalizePlanCurrency(selectedCurrency),
                 additionalMembers,
                 affiliate_referral_code: referralCode,
-                ...(user ? {} : { name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim() }),
+                ...(user ? {} : { name: `${form.firstName.trim()} ${form.lastName.trim()}`, email: form.email.trim(), phone: form.phone.trim() }),
             },
             {
                 onSuccess: (data: FamilyPackageCheckoutResponse) => {
@@ -130,7 +130,6 @@ export default function FamilyCheckoutPage() {
 
     const checkoutCurrency: BillingCurrency = normalizePlanCurrency(selectedCurrency);
     const priceDisplay = formatFamilyPlanPrice(plan, checkoutCurrency);
-    const additionalMemberDisplay = formatFamilyAdditionalMemberPrice(plan, checkoutCurrency);
     const pricing = calculateFamilyTotalPrice(plan, checkoutCurrency, additionalMembers);
     const totalPriceDisplay = formatFamilyTotalPrice(plan, checkoutCurrency, additionalMembers);
     const totalMembers = BASE_INCLUDED_MEMBERS + additionalMembers;
@@ -179,7 +178,9 @@ export default function FamilyCheckoutPage() {
                                     Build your Family Plan
                                 </h1>
                                 <p className="text-muted text-sm mt-1.5">
-                                    One plan covers up to {BASE_INCLUDED_MEMBERS} family members on a single trip. Add more if you need.
+                                    One plan covers up to{" "}
+                                    {BASE_INCLUDED_MEMBERS} family members on a
+                                    single trip. Add more if you need.
                                 </p>
                             </div>
                         </div>
@@ -187,9 +188,14 @@ export default function FamilyCheckoutPage() {
                         {/* Perks row */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
                             {familyPerks.map(({ icon: Icon, text }) => (
-                                <div key={text} className="bg-white rounded-xl border border-slate-200 p-3.5 text-center">
+                                <div
+                                    key={text}
+                                    className="bg-white rounded-xl border border-slate-200 p-3.5 text-center"
+                                >
                                     <Icon className="w-5 h-5 text-accent mx-auto mb-1.5" />
-                                    <p className="text-xs text-body leading-snug">{text}</p>
+                                    <p className="text-xs text-body leading-snug">
+                                        {text}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -201,10 +207,14 @@ export default function FamilyCheckoutPage() {
                                     <LucideUserPlus className="w-5 h-5 text-accent" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-heading text-sm">How many family members?</h3>
+                                    <h3 className="font-semibold text-heading text-sm">
+                                        How many family members?
+                                    </h3>
                                     <p className="text-xs text-muted">
-                                        {BASE_INCLUDED_MEMBERS} members included in the base plan.
-                                        {memberBasePrice > 0 && ` Additional members cost ${currencySymbol}${memberBasePrice.toLocaleString()} each.`}
+                                        {BASE_INCLUDED_MEMBERS} members included
+                                        in the base plan.
+                                        {memberBasePrice > 0 &&
+                                            ` Additional members cost ${currencySymbol}${memberBasePrice.toLocaleString()} each.`}
                                     </p>
                                 </div>
                             </div>
@@ -212,37 +222,56 @@ export default function FamilyCheckoutPage() {
                             <div className="flex items-center gap-4">
                                 <button
                                     type="button"
-                                    onClick={() => setAdditionalMembers(Math.max(0, additionalMembers - 1))}
+                                    onClick={() =>
+                                        setAdditionalMembers(
+                                            Math.max(0, additionalMembers - 1),
+                                        )
+                                    }
                                     disabled={additionalMembers === 0}
                                     className={cn(
                                         "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
-                                        additionalMembers === 0
-                                            ? "border-border-light text-muted/40 cursor-not-allowed"
-                                            : "border-accent/30 text-accent hover:bg-accent/10 cursor-pointer"
+                                        additionalMembers === 0 ?
+                                            "border-border-light text-muted/40 cursor-not-allowed"
+                                        :   "border-accent/30 text-accent hover:bg-accent/10 cursor-pointer",
                                     )}
                                 >
                                     <LucideMinus className="w-4 h-4" />
                                 </button>
 
                                 <div className="flex-1 text-center">
-                                    <p className="text-3xl font-bold text-heading">{totalMembers}</p>
+                                    <p className="text-3xl font-bold text-heading">
+                                        {totalMembers}
+                                    </p>
                                     <p className="text-xs text-muted mt-0.5">
-                                        {additionalMembers === 0
-                                            ? `${BASE_INCLUDED_MEMBERS} included — no extra charge`
-                                            : `${BASE_INCLUDED_MEMBERS} base + ${additionalMembers} additional`
+                                        {additionalMembers === 0 ?
+                                            `${BASE_INCLUDED_MEMBERS} included — no extra charge`
+                                        :   `${BASE_INCLUDED_MEMBERS} base + ${additionalMembers} additional`
                                         }
                                     </p>
                                 </div>
 
                                 <button
                                     type="button"
-                                    onClick={() => setAdditionalMembers(Math.min(MAX_ADDITIONAL_MEMBERS, additionalMembers + 1))}
-                                    disabled={additionalMembers >= MAX_ADDITIONAL_MEMBERS}
+                                    onClick={() =>
+                                        setAdditionalMembers(
+                                            Math.min(
+                                                MAX_ADDITIONAL_MEMBERS,
+                                                additionalMembers + 1,
+                                            ),
+                                        )
+                                    }
+                                    disabled={
+                                        additionalMembers >=
+                                        MAX_ADDITIONAL_MEMBERS
+                                    }
                                     className={cn(
                                         "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
-                                        additionalMembers >= MAX_ADDITIONAL_MEMBERS
-                                            ? "border-border-light text-muted/40 cursor-not-allowed"
-                                            : "border-accent/30 text-accent hover:bg-accent/10 cursor-pointer"
+                                        (
+                                            additionalMembers >=
+                                                MAX_ADDITIONAL_MEMBERS
+                                        ) ?
+                                            "border-border-light text-muted/40 cursor-not-allowed"
+                                        :   "border-accent/30 text-accent hover:bg-accent/10 cursor-pointer",
                                     )}
                                 >
                                     <LucidePlus className="w-4 h-4" />
@@ -252,42 +281,54 @@ export default function FamilyCheckoutPage() {
                             {additionalMembers > 0 && (
                                 <div className="mt-4 bg-amber-50 border border-amber-200/60 rounded-xl px-4 py-3">
                                     <p className="text-xs text-amber-800 flex items-center gap-2">
-                                        <span className="font-medium">Additional charge:</span>
-                                        {additionalMembers} × {currencySymbol}{memberBasePrice.toLocaleString()} ={" "}
-                                        <span className="font-semibold">{currencySymbol}{pricing.extra.toLocaleString()}</span>
+                                        <span className="font-medium">
+                                            Additional charge:
+                                        </span>
+                                        {additionalMembers} × {currencySymbol}
+                                        {memberBasePrice.toLocaleString()} ={" "}
+                                        <span className="font-semibold">
+                                            {currencySymbol}
+                                            {pricing.extra.toLocaleString()}
+                                        </span>
                                     </p>
                                 </div>
                             )}
 
-                            <p className="text-xs text-muted mt-3">
-                                You can add more family members later from your dashboard (additional charges apply).
-                            </p>
                         </div>
 
                         {/* ─── Form ─── */}
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            {user ? (
+                            {user ?
                                 <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                                     <div className="flex items-center gap-3 mb-3">
                                         <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent font-semibold text-sm">
-                                            {(user.first_name?.[0] ?? "").toUpperCase()}{(user.last_name?.[0] ?? "").toUpperCase()}
+                                            {(
+                                                user.first_name?.[0] ?? ""
+                                            ).toUpperCase()}
+                                            {(
+                                                user.last_name?.[0] ?? ""
+                                            ).toUpperCase()}
                                         </div>
                                         <div>
                                             <p className="font-semibold text-heading">
-                                                {user.first_name} {user.last_name}
+                                                {user.first_name}{" "}
+                                                {user.last_name}
                                             </p>
-                                            <p className="text-xs text-muted">{user.email}</p>
+                                            <p className="text-xs text-muted">
+                                                {user.email}
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="bg-accent/5 rounded-xl px-4 py-3">
                                         <p className="text-xs text-body flex items-center gap-2">
                                             <LucideCheck className="w-3.5 h-3.5 text-accent shrink-0" />
-                                            Purchase linked to your account. Manage family members from your dashboard after activation.
+                                            Purchase linked to your account.
+                                            Manage family members from your
+                                            dashboard after activation.
                                         </p>
                                     </div>
                                 </div>
-                            ) : (
-                                <>
+                            :   <>
                                     <div className="bg-white border border-amber-200/60 rounded-2xl p-4 shadow-sm">
                                         <p className="text-xs text-amber-800">
                                             Already have an account?{" "}
@@ -297,82 +338,161 @@ export default function FamilyCheckoutPage() {
                                             >
                                                 Sign in
                                             </Link>{" "}
-                                            to link this family plan to your existing profile.
+                                            to link this family plan to your
+                                            existing profile.
                                         </p>
                                     </div>
 
                                     <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-5 shadow-sm">
-                                        <h3 className="font-semibold text-heading text-sm">Who is purchasing this plan?</h3>
+                                        <h3 className="font-semibold text-heading text-sm">
+                                            Main Applicant Details
+                                        </h3>
 
                                         <div>
                                             <label className="block text-xs font-semibold text-heading uppercase tracking-wider mb-1.5">
-                                                Full Name <span className="text-red-400">*</span>
+                                                First Name{" "}
+                                                <span className="text-red-400">
+                                                    *
+                                                </span>
                                             </label>
                                             <input
                                                 type="text"
-                                                value={form.name}
-                                                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                                                placeholder="Your full name"
-                                                className={cn(fieldClassName, errors.name ? "border-red-300 ring-red-200" : "")}
+                                                value={form.firstName}
+                                                onChange={(e) =>
+                                                    setForm((f) => ({
+                                                        ...f,
+                                                        firstName: e.target.value,
+                                                    }))
+                                                }
+                                                placeholder="Your first name"
+                                                className={cn(
+                                                    fieldClassName,
+                                                    errors.firstName ?
+                                                        "border-red-300 ring-red-200"
+                                                    :   "",
+                                                )}
                                             />
-                                            {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+                                            {errors.firstName && (
+                                                <p className="text-xs text-red-500 mt-1">
+                                                    {errors.firstName}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-heading uppercase tracking-wider mb-1.5">
+                                                Last Name{" "}
+                                                <span className="text-red-400">
+                                                    *
+                                                </span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={form.lastName}
+                                                onChange={(e) =>
+                                                    setForm((f) => ({
+                                                        ...f,
+                                                        lastName: e.target.value,
+                                                    }))
+                                                }
+                                                placeholder="Your last name"
+                                                className={cn(
+                                                    fieldClassName,
+                                                    errors.lastName ?
+                                                        "border-red-300 ring-red-200"
+                                                    :   "",
+                                                )}
+                                            />
+                                            {errors.lastName && (
+                                                <p className="text-xs text-red-500 mt-1">
+                                                    {errors.lastName}
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div>
                                             <label className="block text-xs font-semibold text-heading uppercase tracking-wider mb-1.5">
-                                                Email Address <span className="text-red-400">*</span>
+                                                Email Address{" "}
+                                                <span className="text-red-400">
+                                                    *
+                                                </span>
                                             </label>
                                             <input
                                                 type="email"
                                                 value={form.email}
-                                                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                                                onChange={(e) =>
+                                                    setForm((f) => ({
+                                                        ...f,
+                                                        email: e.target.value,
+                                                    }))
+                                                }
                                                 placeholder="your@email.com"
-                                                className={cn(fieldClassName, errors.email ? "border-red-300 ring-red-200" : "")}
+                                                className={cn(
+                                                    fieldClassName,
+                                                    errors.email ?
+                                                        "border-red-300 ring-red-200"
+                                                    :   "",
+                                                )}
                                             />
-                                            {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+                                            {errors.email && (
+                                                <p className="text-xs text-red-500 mt-1">
+                                                    {errors.email}
+                                                </p>
+                                            )}
                                             <p className="text-xs text-muted mt-1.5 flex items-center gap-1">
                                                 <LucideCheck className="w-3 h-3 text-accent" />
-                                                Family login codes will be sent to this email.
+                                                Family login codes will be sent
+                                                to this email.
                                             </p>
                                         </div>
 
                                         <div>
                                             <label className="block text-xs font-semibold text-heading uppercase tracking-wider mb-1.5">
-                                                Phone <span className="text-muted font-normal normal-case">(optional)</span>
+                                                Phone{" "}
+                                                <span className="text-muted font-normal normal-case">
+                                                    (optional)
+                                                </span>
                                             </label>
                                             <input
                                                 type="tel"
                                                 value={form.phone}
-                                                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                                                onChange={(e) =>
+                                                    setForm((f) => ({
+                                                        ...f,
+                                                        phone: e.target.value,
+                                                    }))
+                                                }
                                                 placeholder="+1 234 567 8900"
                                                 className={fieldClassName}
                                             />
                                         </div>
                                     </div>
                                 </>
-                            )}
+                            }
 
                             <button
                                 type="submit"
                                 disabled={isPending}
                                 className={cn(
                                     "w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-semibold text-sm transition-colors duration-200",
-                                    isPending
-                                        ? "bg-dark/40 text-white/50 cursor-not-allowed"
-                                        : "bg-dark text-background-primary hover:bg-darkest cursor-pointer"
+                                    isPending ?
+                                        "bg-dark/40 text-white/50 cursor-not-allowed"
+                                    :   "bg-dark text-background-primary hover:bg-darkest cursor-pointer",
                                 )}
                             >
-                                {isPending ? (
+                                {isPending ?
                                     <>
                                         <LucideLoader2 className="w-4 h-4 animate-spin" />
                                         Redirecting to payment...
                                     </>
-                                ) : (
-                                    <>
+                                :   <>
                                         <LucideLock className="w-4 h-4" />
-                                        Pay {hasAffiliateDiscount ? finalTotalDisplay : totalPriceDisplay} &amp; Activate Family Plan
+                                        Pay{" "}
+                                        {hasAffiliateDiscount ?
+                                            finalTotalDisplay
+                                        :   totalPriceDisplay}{" "}
+                                        &amp; Activate Family Plan
                                     </>
-                                )}
+                                }
                             </button>
 
                             <div className="flex items-center justify-center gap-2 text-xs text-muted">
@@ -392,54 +512,94 @@ export default function FamilyCheckoutPage() {
                                     <LucideUsers className="w-5 h-5 text-accent" />
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-heading">{plan.name}</p>
-                                    <p className="text-xs text-muted">{plan.description}</p>
+                                    <p className="font-semibold text-heading">
+                                        {plan.name}
+                                    </p>
+                                    <p className="text-xs text-muted">
+                                        {plan.description}
+                                    </p>
                                 </div>
                             </div>
 
                             {/* Price breakdown */}
                             <div className="bg-accent/5 rounded-xl border border-accent/10 p-5 mb-6">
-                                <p className="text-xs text-muted uppercase tracking-wider font-semibold mb-3 text-center">Total</p>
-                                <p className="text-4xl font-serif text-heading text-center">{hasAffiliateDiscount ? finalTotalDisplay : totalPriceDisplay}</p>
+                                <p className="text-xs text-muted uppercase tracking-wider font-semibold mb-3 text-center">
+                                    Total
+                                </p>
+                                <p className="text-4xl font-serif text-heading text-center">
+                                    {hasAffiliateDiscount ?
+                                        finalTotalDisplay
+                                    :   totalPriceDisplay}
+                                </p>
 
                                 {hasAffiliateDiscount && (
                                     <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1.5">
                                         <LucideTag className="w-3.5 h-3.5" />
-                                        <span className="font-medium">{affiliateDiscountRate}% affiliate discount applied</span>
+                                        <span className="font-medium">
+                                            {affiliateDiscountRate}% affiliate
+                                            discount applied
+                                        </span>
                                     </div>
                                 )}
 
                                 <div className="mt-4 space-y-2 border-t border-border-light pt-4">
                                     <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted">Base plan ({BASE_INCLUDED_MEMBERS} members)</span>
-                                        <span className="font-medium text-heading">{priceDisplay}</span>
+                                        <span className="text-muted">
+                                            Base plan ({BASE_INCLUDED_MEMBERS}{" "}
+                                            members)
+                                        </span>
+                                        <span className="font-medium text-heading">
+                                            {priceDisplay}
+                                        </span>
                                     </div>
                                     {additionalMembers > 0 && (
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-muted">{additionalMembers} additional member{additionalMembers > 1 ? "s" : ""}</span>
+                                            <span className="text-muted">
+                                                {additionalMembers} additional
+                                                member
+                                                {additionalMembers > 1 ?
+                                                    "s"
+                                                :   ""}
+                                            </span>
                                             <span className="font-medium text-heading">
-                                                {currencySymbol}{pricing.extra.toLocaleString()}
+                                                {currencySymbol}
+                                                {pricing.extra.toLocaleString()}
                                             </span>
                                         </div>
                                     )}
                                     {hasAffiliateDiscount && (
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-green-700">Affiliate discount ({affiliateDiscountRate}%)</span>
-                                            <span className="font-medium text-green-700">-{currencySymbol}{discountAmount.toLocaleString()}</span>
+                                            <span className="text-green-700">
+                                                Affiliate discount (
+                                                {affiliateDiscountRate}%)
+                                            </span>
+                                            <span className="font-medium text-green-700">
+                                                -{currencySymbol}
+                                                {discountAmount.toLocaleString()}
+                                            </span>
                                         </div>
                                     )}
                                     <div className="flex items-center justify-between text-sm border-t border-border-light pt-2">
-                                        <span className="font-semibold text-heading">Total family members</span>
-                                        <span className="font-bold text-heading">{totalMembers}</span>
+                                        <span className="font-semibold text-heading">
+                                            Total family members
+                                        </span>
+                                        <span className="font-bold text-heading">
+                                            {totalMembers}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Features */}
                             <div className="space-y-3 mb-6">
-                                <p className="text-xs font-bold tracking-wider text-muted uppercase">What's included</p>
+                                <p className="text-xs font-bold tracking-wider text-muted uppercase">
+                                    What's included
+                                </p>
                                 {plan.features.map((f, i) => (
-                                    <div key={i} className="flex items-start gap-2.5 text-sm text-body">
+                                    <div
+                                        key={i}
+                                        className="flex items-start gap-2.5 text-sm text-body"
+                                    >
                                         <div className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
                                             <LucideCheck className="w-3 h-3 text-accent" />
                                         </div>
@@ -450,29 +610,31 @@ export default function FamilyCheckoutPage() {
 
                             {/* Coverage details */}
                             <div className="border-t border-border-light pt-5 space-y-3">
-                                <p className="text-xs font-bold tracking-wider text-muted uppercase">Coverage details</p>
+                                <p className="text-xs font-bold tracking-wider text-muted uppercase">
+                                    Coverage details
+                                </p>
                                 <div className="space-y-2.5">
-                                    {[
-                                        { label: "Family members covered", value: `${totalMembers}` },
-                                        { label: "Included in base", value: `${BASE_INCLUDED_MEMBERS}` },
-                                        ...(additionalMembers > 0 ? [{ label: "Additional (extra charge)", value: `${additionalMembers}` }] : []),
-                                        { label: "Additional member price", value: additionalMemberDisplay },
-                                        { label: "Individual login codes", value: "Yes, included" },
-                                        { label: "Activation", value: "Immediate after payment" },
-                                    ].map(({ label, value }) => (
-                                        <div key={label} className="flex items-center justify-between text-sm">
-                                            <span className="text-muted">{label}</span>
-                                            <span className="font-medium text-heading text-right">{value}</span>
-                                        </div>
-                                    ))}
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-muted">
+                                            Individual login codes
+                                        </span>
+                                        <span className="font-medium text-heading text-right">
+                                            Yes, included
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Trust note */}
                             <div className="mt-6 bg-accent/5 rounded-xl p-4 text-xs text-body leading-relaxed">
-                                <p className="font-semibold text-heading mb-1">Family-first protection</p>
+                                <p className="font-semibold text-heading mb-1">
+                                    Family-first protection
+                                </p>
                                 <p className="text-muted">
-                                    Each family member gets their own personalised travel health report, physician-reviewed and based on their individual health profile.
+                                    Each family member gets their own
+                                    personalised travel health report,
+                                    physician-reviewed and based on their
+                                    individual health profile.
                                 </p>
                             </div>
                         </div>
