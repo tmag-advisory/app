@@ -130,7 +130,6 @@ export default function FamilyCheckoutPage() {
 
     const checkoutCurrency: BillingCurrency = normalizePlanCurrency(selectedCurrency);
     const priceDisplay = formatFamilyPlanPrice(plan, checkoutCurrency);
-    const additionalMemberDisplay = formatFamilyAdditionalMemberPrice(plan, checkoutCurrency);
     const pricing = calculateFamilyTotalPrice(plan, checkoutCurrency, additionalMembers);
     const totalPriceDisplay = formatFamilyTotalPrice(plan, checkoutCurrency, additionalMembers);
     const totalMembers = BASE_INCLUDED_MEMBERS + additionalMembers;
