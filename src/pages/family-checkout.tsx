@@ -5,7 +5,7 @@ import FooterSection from "../components/sections/FooterSection";
 import Navbar from "../components/sections/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { useCurrencyStore } from "../stores/currencyStore";
-import { familyPlans, formatFamilyAdditionalMemberPrice, formatFamilyPlanPrice, normalizePlanCurrency, calculateFamilyTotalPrice, formatFamilyTotalPrice } from "../constants/companyPlans";
+import { familyPlans, formatFamilyPlanPrice, normalizePlanCurrency, calculateFamilyTotalPrice, formatFamilyTotalPrice } from "../constants/companyPlans";
 import type { BillingCurrency, FamilyPackageType, FamilyPackageCheckoutResponse } from "../api/types";
 import { LucideLoader2, LucideLock, LucideShieldCheck, LucideAlertCircle, LucideUsers, LucideCheck, LucideHeart, LucideHome, LucideGlobe, LucideShield, LucideArrowRight, LucidePlus, LucideMinus, LucideUserPlus, LucideTag } from "lucide-react";
 import { cn } from "../lib/utils";

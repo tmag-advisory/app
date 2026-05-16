@@ -1300,6 +1300,7 @@ function CostBreakdown({
             )}
         </section>
     );
+}
 
 // ─── Main Component ────────────────────────────────────────────
 
