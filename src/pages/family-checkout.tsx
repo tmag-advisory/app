@@ -33,6 +33,7 @@ export default function FamilyCheckoutPage() {
     const { mutate: initiateCheckout, isPending } = useInitiateFamilyPackageCheckout();
 
     const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
+    const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [additionalMembers, setAdditionalMembers] = useState(0);
     const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
@@ -469,12 +470,42 @@ export default function FamilyCheckoutPage() {
                                 </>
                             }
 
+
+                            {/* ─── Declaration & Disclaimer ─── */}
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                                <p className="text-xs font-bold tracking-wider text-muted uppercase mb-3">
+                                    Declaration &amp; Disclaimer
+                                </p>
+                                <p className="text-xs text-body leading-relaxed mb-4">
+                                    Travel medicine advice is educational and informational only. It does
+                                    not replace consultation with a licensed physician or healthcare
+                                    provider. Individual circumstances vary; always seek professional
+                                    medical advice before travel, especially if you have pre-existing
+                                    health conditions. TMAG is not liable for outcomes arising from
+                                    decisions made solely on the basis of this advisory.
+                                </p>
+                                <label className="flex items-start gap-3 cursor-pointer group">
+                                    <input
+                                        type="checkbox"
+                                        checked={disclaimerAccepted}
+                                        onChange={(e) => setDisclaimerAccepted(e.target.checked)}
+                                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-accent cursor-pointer"
+                                    />
+                                    <span className="text-xs text-body leading-relaxed group-hover:text-heading transition-colors">
+                                        I understand that the family travel health advisory is for
+                                        informational purposes only and does not constitute medical
+                                        advice. I confirm that all information provided is accurate to
+                                        the best of my knowledge.
+                                    </span>
+                                </label>
+                            </div>
+
                             <button
                                 type="submit"
-                                disabled={isPending}
+                                disabled={isPending || !disclaimerAccepted}
                                 className={cn(
                                     "w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-semibold text-sm transition-colors duration-200",
-                                    isPending ?
+                                    (isPending || !disclaimerAccepted) ?
                                         "bg-dark/40 text-white/50 cursor-not-allowed"
                                     :   "bg-dark text-background-primary hover:bg-darkest cursor-pointer",
                                 )}
