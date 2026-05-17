@@ -28,39 +28,41 @@ const premiumOnlyFeatures = [
 ];
 
 export const creditPlans: CreditPlanDefinition[] = [
-  {
-    tier: "essential",
-    code: "ESSENTIAL",
-    name: "Essential",
-    priceUsd: 0,
-    priceNgn: 0,
-    description: "Generic destination health education for casual travellers. No personal data required.",
-    features: [
-      "Destination health risk overview",
-      "General food & water safety guidance",
-      "Environmental considerations",
-      "Post-return awareness note",
-      "WHO & CDC validated guidance",
-    ],
-  },
-  {
-    tier: "standard",
-    code: "STANDARD",
-    name: "Standard",
-    priceUsd: 50,
-    priceNgn: 50000,
-    description: "Fully personalised travel health report using all questionnaire inputs across 14 clinical decision trees.",
-    features: standardFeatures,
-  },
-  {
-    tier: "premium",
-    code: "PREMIUM",
-    name: "Premium",
-    priceUsd: 100,
-    priceNgn: 100000,
-    description: "Everything in Standard plus clinical-grade extras for high-risk or complex trips.",
-    features: [...standardFeatures, ...premiumOnlyFeatures],
-  },
+    {
+        tier: "essential",
+        code: "ESSENTIAL",
+        name: "Essential",
+        priceUsd: 0,
+        priceNgn: 0,
+        description:
+            "Generic destination health education for casual travellers. No personal data required.",
+        features: [
+            "Destination health risk overview",
+            "General food & water safety guidance",
+            "Environmental considerations",
+            "Post-return awareness note",
+            "WHO & CDC validated guidance",
+        ],
+    },
+    {
+        tier: "standard",
+        code: "STANDARD",
+        name: "Standard",
+        priceUsd: 50,
+        priceNgn: 50000,
+        description: "Fully personalised travel health report.",
+        features: standardFeatures,
+    },
+    {
+        tier: "premium",
+        code: "PREMIUM",
+        name: "Premium",
+        priceUsd: 100,
+        priceNgn: 100000,
+        description:
+            "Everything in Standard plus clinical-grade extras for high-risk or complex trips.",
+        features: [...standardFeatures, ...premiumOnlyFeatures],
+    },
 ];
 
 export interface IndividualPlanDefinition extends CreditPlanDefinition {
