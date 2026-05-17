@@ -103,7 +103,7 @@ const Login = () => {
                 navigate(`/verify-email?email=${encodeURIComponent(email)}`);
                 return;
             }
-            const msg = errData?.data?.message ?? "Invalid email or password";
+            const msg = errData?.data?.error ?? "Invalid email or password";
             setError(msg);
         } finally {
             setLoading(false);
