@@ -15,7 +15,6 @@ import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import {
     GeneratedPlanHeroMeta,
     GeneratedPlanReport,
-    GenerationMetaLine,
     hasGeneratedPlanLayout,
     parseGeneratedPlanContent,
 } from "../../components/dashboard/generated-plan-report";
@@ -1456,9 +1455,6 @@ const PlanDetails = () => {
                         <span>Recorded: {new Date(plan.createdAt).toLocaleDateString()}</span>
                         <span className="hidden sm:inline">·</span>
                         <span>1 credit consumed</span>
-                    </div>
-                    <div className="mt-2">
-                        <GenerationMetaLine plan={plan} />
                     </div>
                     <ValidationStatusBadge
                         status={plan.doctorValidationStatus}
