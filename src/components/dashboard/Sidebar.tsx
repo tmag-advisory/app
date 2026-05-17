@@ -72,7 +72,7 @@ const familyNav: NavItem[] = [
         icon: <LucidePlusCircle className="w-4 h-4" />,
     },
     {
-        label: "Manage Members",
+        label: "Manage Plans",
         href: "/dashboard/family-members",
         icon: <LucideUsers className="w-4 h-4" />,
     },

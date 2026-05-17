@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
     LucideArrowLeft,
@@ -148,8 +148,6 @@ const GENDER_OPTIONS = [
     { value: "prefer_not_to_say", label: "Prefer not to say" },
 ];
 
-const AGE_YEAR_OPTIONS = Array.from({ length: 121 }, (_, age) => age);
-const AGE_MONTH_OPTIONS = Array.from({ length: 12 }, (_, month) => month);
 
 const baseInputClass =
     "w-full bg-white border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors";
@@ -1109,56 +1107,6 @@ function MemberProfileFields({
                         </p>
                     )}
                 </div>
-                <div
-                    id={getMemberProfileFieldId(index, "age_years")}
-                    className={fieldShellClass("age_years")}
-                >
-                    <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                        Age Selector
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                        <select
-                            value={String(answers.age_years ?? "")}
-                            onChange={(event) =>
-                                onAnswerChange(
-                                    index,
-                                    "age_years",
-                                    event.target.value,
-                                )
-                            }
-                            className={fieldInputClass("age_years")}
-                        >
-                            <option value="">Years</option>
-                            {AGE_YEAR_OPTIONS.map((age) => (
-                                <option key={age} value={age}>
-                                    {age} year{age === 1 ? "" : "s"}
-                                </option>
-                            ))}
-                        </select>
-                        <select
-                            value={String(answers.age_months ?? "")}
-                            onChange={(event) =>
-                                onAnswerChange(
-                                    index,
-                                    "age_months",
-                                    event.target.value,
-                                )
-                            }
-                            className={fieldInputClass("age_years")}
-                        >
-                            <option value="">Months</option>
-                            {AGE_MONTH_OPTIONS.map((month) => (
-                                <option key={month} value={month}>
-                                    {month} month{month === 1 ? "" : "s"}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    {showFieldError("age_years")}
-                    <p className="text-xs text-muted mt-1">
-                        Use this when exact DOB is not available.
-                    </p>
-                </div>
             </div>
 
             <div
@@ -1306,6 +1254,7 @@ function CostBreakdown({
 
 export default function FamilyTripBuilder() {
     const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
     const { user: authUser } = useAuth();
     const { data: categoriesRaw, isLoading: questionsLoading } =
         useOnboardingQuestions();
@@ -1384,8 +1333,10 @@ export default function FamilyTripBuilder() {
     }, [categoryByKey]);
 
     useEffect(() => {
-        familyTripApi
-            .getLatestDraft()
+        const apiCall = id
+            ? familyTripApi.getById(Number(id))
+            : familyTripApi.getLatestDraft();
+        apiCall
             .then((res) => {
                 const draft = res.data.data;
                 if (!draft) return;
@@ -1434,7 +1385,7 @@ export default function FamilyTripBuilder() {
                 );
             })
             .catch(() => undefined);
-    }, []);
+    }, [id]);
 
     const normalizedSharedAnswers = useMemo<AnswerMap>(() => {
         return {
@@ -1513,7 +1464,6 @@ export default function FamilyTripBuilder() {
             ),
         }));
         clearMemberProfileError(index, field);
-        if (field === "dateOfBirth") clearMemberProfileError(index, "age_years");
     };
 
     const handleMemberAnswerChange = (
@@ -1527,7 +1477,6 @@ export default function FamilyTripBuilder() {
             ),
         );
         clearMemberProfileError(index, key);
-        if (key === "age_years") clearMemberProfileError(index, "dateOfBirth");
         clearMemberQuestionnaireError(index, key);
     };
 
@@ -1692,14 +1641,10 @@ export default function FamilyTripBuilder() {
                 errors.add("lastName");
                 messages.push(`Enter last name for ${memberLabel(member, index)}`);
             }
-            if (
-                !member.dateOfBirth?.trim() &&
-                numberFromAnswer(answers.age_years) === null
-            ) {
+            if (!member.dateOfBirth?.trim()) {
                 errors.add("dateOfBirth");
-                errors.add("age_years");
                 messages.push(
-                    `Select age or date of birth for ${memberLabel(member, index)}`,
+                    `Enter date of birth for ${memberLabel(member, index)}`,
                 );
             }
             if (!String(answers.gender ?? "").trim()) {
@@ -1893,7 +1838,7 @@ export default function FamilyTripBuilder() {
             <DashboardHeader title={step === "trip" ? "Family Plan" : step === "members" ? "Family Plan - Add Member" : "Family Plan - Health Info"} />
 
             <div className="relative z-10 mx-auto max-w-6xl pb-14 pt-8">
-                <div className="bg-white/95 rounded-3xl border border-border-light overflow-hidden">
+                <div className="bg-white/95 rounded-3xl border border-border-light">
                     <div className="p-5 md:p-8 space-y-10">
                         {stepIndicator}
 
@@ -2006,7 +1951,7 @@ export default function FamilyTripBuilder() {
 
                                         return (
                                             <article
-                                                className={`overflow-hidden rounded-3xl border transition-all ${hasProfileErrors ?
+                                                className={`rounded-3xl border transition-all ${hasProfileErrors ?
                                                     "border-red-300 bg-red-50/30 ring-2 ring-red-400/40"
                                                     : "border-accent/40 bg-white shadow-[0_18px_45px_-35px_rgba(42,122,106,0.65)]"
                                                     }`}

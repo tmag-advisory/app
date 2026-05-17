@@ -19,6 +19,7 @@ import {
     LucideRefreshCw,
     LucideUserPlus,
     LucideChevronRight,
+    LucidePencil,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
@@ -100,30 +101,45 @@ const FamilyOverview = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 <Link
                     to="/dashboard/family-members"
-                    className={cn(DASHBOARD_GLASS_SURFACE, "p-5 flex items-center justify-between hover:bg-background-secondary/30 transition-colors")}
+                    className={cn(
+                        DASHBOARD_GLASS_SURFACE,
+                        "p-5 flex items-center justify-between hover:bg-background-secondary/30 transition-colors",
+                    )}
                 >
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                             <LucideUsers className="w-5 h-5 text-accent" />
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-heading">Manage members</p>
-                            <p className="text-xs text-muted">View login codes &amp; regenerate</p>
+                            <p className="text-sm font-semibold text-heading">
+                                Manage plans
+                            </p>
+                            <p className="text-xs text-muted">
+                                View and continue family trip drafts
+                            </p>
                         </div>
                     </div>
                     <LucideChevronRight className="w-4 h-4 text-muted" />
                 </Link>
                 <Link
-                    to="/dashboard/buy-family-plan"
-                    className={cn(DASHBOARD_GLASS_SURFACE, "p-5 flex items-center justify-between hover:bg-background-secondary/30 transition-colors")}
+                    to="/dashboard/buy-additional-plan"
+                    className={cn(
+                        DASHBOARD_GLASS_SURFACE,
+                        "p-5 flex items-center justify-between hover:bg-background-secondary/30 transition-colors",
+                    )}
                 >
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                             <LucideRefreshCw className="w-5 h-5 text-accent" />
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-heading">Buy family plan</p>
-                            <p className="text-xs text-muted">Purchase additional plans</p>
+                            <p className="text-sm font-semibold text-heading">
+                                Buy Additional Plan
+                            </p>
+                            <p className="text-xs text-muted">
+                                Get more coverage to create personalized plans
+                                for your family trips
+                            </p>
                         </div>
                     </div>
                     <LucideChevronRight className="w-4 h-4 text-muted" />
@@ -138,39 +154,84 @@ const FamilyOverview = () => {
                     </h2>
                 </div>
 
-                {tripsLoading ? (
+                {tripsLoading ?
                     <div className="flex items-center justify-center py-12">
                         <LucideLoader2 className="w-6 h-6 text-accent animate-spin" />
                     </div>
-                ) : trips.length > 0 ? (
+                : trips.length > 0 ?
                     <div className="divide-y divide-border-light/50">
                         {trips.map((trip) => (
-                            <Link
+                            <div
                                 key={trip.id}
-                                to={`/dashboard/family-trip/${trip.id}`}
                                 className="flex items-center justify-between px-4 sm:px-6 py-4 hover:bg-background-secondary/50 transition-colors duration-150 gap-3"
                             >
-                                <div>
-                                    <p className="text-sm font-medium text-heading">
-                                        {trip.destination}
-                                    </p>
-                                    <p className="text-xs text-muted">
-                                        {trip.country} · {trip.duration} days · {trip.members?.length ?? 0} member{(trip.members?.length ?? 0) !== 1 ? "s" : ""}
-                                    </p>
+                                {trip.status !== "DRAFT" ?
+                                    <Link
+                                        to={`/dashboard/family-trip/${trip.id}`}
+                                        className="flex-1 min-w-0"
+                                    >
+                                        <p className="text-sm font-medium text-heading">
+                                            {trip.destination}
+                                        </p>
+                                        <p className="text-xs text-muted">
+                                            {trip.country} · {trip.duration}{" "}
+                                            days · {trip.members?.length ?? 0}{" "}
+                                            member
+                                            {(trip.members?.length ?? 0) !== 1 ?
+                                                "s"
+                                            :   ""}
+                                        </p>
+                                    </Link>
+                                :   <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-heading">
+                                            {trip.destination}
+                                        </p>
+                                        <p className="text-xs text-muted">
+                                            {trip.country} · {trip.duration}{" "}
+                                            days · {trip.members?.length ?? 0}{" "}
+                                            member
+                                            {(trip.members?.length ?? 0) !== 1 ?
+                                                "s"
+                                            :   ""}
+                                        </p>
+                                    </div>
+                                }
+                                <div className="flex items-center gap-3">
+                                    <span
+                                        className={cn(
+                                            "text-xs font-semibold px-2.5 py-1 rounded-full",
+                                            trip.status === "ACTIVE" ?
+                                                "bg-emerald-50 text-emerald-700"
+                                            : trip.status === "DRAFT" ?
+                                                "bg-amber-50 text-amber-700"
+                                            :   "bg-slate-100 text-muted",
+                                        )}
+                                    >
+                                        {trip.status}
+                                    </span>
+                                    {trip.status === "DRAFT" && (
+                                        <Link
+                                            to={`/dashboard/family-trip/${trip.id}/edit`}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-colors"
+                                        >
+                                            <LucidePencil className="w-3 h-3" />
+                                            Continue
+                                        </Link>
+                                    )}
+                                    {trip.status !== "DRAFT" && (
+                                        <Link
+                                            to={`/dashboard/family-trip/${trip.id}`}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border-light text-xs font-semibold text-heading hover:bg-background-secondary transition-colors"
+                                        >
+                                            View
+                                        </Link>
+                                    )}
                                 </div>
-                                <span className={cn(
-                                    "text-xs font-semibold px-2.5 py-1 rounded-full",
-                                    trip.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700" :
-                                    trip.status === "DRAFT" ? "bg-amber-50 text-amber-700" :
-                                    "bg-slate-100 text-muted"
-                                )}>
-                                    {trip.status}
-                                </span>
-                            </Link>
+                            </div>
                         ))}
                     </div>
-                ) : (
-                    <div className="px-6 py-12">
+                :   <div className="px-6 py-12">
                         <div className="max-w-md mx-auto text-center">
                             <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
                                 <LucideUsers className="w-8 h-8 text-accent" />
@@ -179,7 +240,9 @@ const FamilyOverview = () => {
                                 No family trips yet
                             </p>
                             <p className="text-xs text-muted mb-6">
-                                Create your first family trip to get personalized travel health plans for every member.
+                                Create your first family trip to get
+                                personalized travel health plans for every
+                                member.
                             </p>
                             <Link
                                 to="/dashboard/family-trip"
@@ -190,7 +253,7 @@ const FamilyOverview = () => {
                             </Link>
                         </div>
                     </div>
-                )}
+                }
             </div>
         </div>
     );

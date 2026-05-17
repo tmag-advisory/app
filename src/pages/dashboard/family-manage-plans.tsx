@@ -15,6 +15,7 @@ import {
     LucideFileText,
     LucideKeyRound,
     LucideClipboardCheck,
+    LucidePencil,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -33,7 +34,7 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
     );
 }
 
-export default function FamilyManageMembers() {
+export default function FamilyManagePlans() {
     const [trips, setTrips] = useState<FamilyTripResponse[]>([]);
     const [pagination, setPagination] = useState<Pagination | null>(null);
     const [page, setPage] = useState(1);
@@ -100,7 +101,7 @@ export default function FamilyManageMembers() {
 
     return (
         <div>
-            <DashboardHeader title="Manage Family Members" />
+            <DashboardHeader title="Manage Family Plans" />
 
             {isLoading ?
                 <div className="flex items-center justify-center py-20">
@@ -241,6 +242,15 @@ export default function FamilyManageMembers() {
                                                 <LucideEye className="w-3.5 h-3.5" />
                                                 View trip
                                             </Link>
+                                            {trip.status === "DRAFT" && (
+                                                <Link
+                                                    to={`/dashboard/family-trip/${trip.id}/edit`}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-accent rounded-lg hover:bg-accent/90 transition-colors"
+                                                >
+                                                    <LucidePencil className="w-3.5 h-3.5" />
+                                                    Continue
+                                                </Link>
+                                            )}
                                             {trip.familyPlanId && (
                                                 <Link
                                                     to={`/dashboard/family-trip/${trip.id}/plan`}
