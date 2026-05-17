@@ -150,7 +150,7 @@ export default function FamilyPlanView() {
                         onClick={() => navigate("/dashboard/family-members")}
                         className="text-sm text-accent font-medium hover:underline"
                     >
-                        Back to family members
+                        Back to manage plans
                     </button>
                 </div>
             </div>
