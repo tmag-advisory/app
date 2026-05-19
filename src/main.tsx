@@ -12,22 +12,26 @@ import { queryclient } from "./lib/queryclient";
 /* eslint-disable react-refresh/only-export-components */
 const AppFallback = () => (
     <div className="min-h-screen bg-background-primary flex items-center justify-center px-6 text-center text-sm text-gray-600">
-        Loading Travel Medicine Advisory...
+        <img
+            src="/tmag-logo-transparent.png"
+            alt="Logo"
+            className="h-16 md:h-20 inline-block mr-2 -mt-1"
+        />
     </div>
 );
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
-            <HelmetProvider>
-        <QueryClientProvider client={queryclient}>
-            <AuthProvider>
-                <CountriesProvider>
-                    <Suspense fallback={<AppFallback />}>
-                        <RouterProvider router={router} />
-                    </Suspense>
-                </CountriesProvider>
-            </AuthProvider>
-        </QueryClientProvider>
-            </HelmetProvider>
+        <HelmetProvider>
+            <QueryClientProvider client={queryclient}>
+                <AuthProvider>
+                    <CountriesProvider>
+                        <Suspense fallback={<AppFallback />}>
+                            <RouterProvider router={router} />
+                        </Suspense>
+                    </CountriesProvider>
+                </AuthProvider>
+            </QueryClientProvider>
+        </HelmetProvider>
     </StrictMode>,
 );

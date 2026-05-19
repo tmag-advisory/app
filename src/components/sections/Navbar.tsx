@@ -21,7 +21,10 @@ const Navbar = () => {
                     <NavLink href="/pricing">Pricing</NavLink>
                 </div>
 
-                <Link to="/" className="text-heading tracking-tight text-xl font-serif font-medium text-center">
+                <Link
+                    to="/"
+                    className="text-heading tracking-tight text-xl font-serif font-medium text-center"
+                >
                     TMAG
                 </Link>
 
