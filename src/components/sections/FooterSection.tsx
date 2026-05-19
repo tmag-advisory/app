@@ -126,7 +126,7 @@ const FooterSection = () => {
                                         href="#"
                                         className="text-sm text-white/60 hover:text-white transition-colors duration-200"
                                     >
-                                        hello@tmag.health
+                                        info@travelmedicineadvisory.com
                                     </a>
                                 </div>
                             </div>
@@ -142,7 +142,7 @@ const FooterSection = () => {
                                         href="#"
                                         className="text-sm text-white/60 hover:text-white transition-colors duration-200"
                                     >
-                                        +1 (800) 555-TMAG
+                                        +234 916 261 9043
                                     </a>
                                 </div>
                             </div>
@@ -155,7 +155,7 @@ const FooterSection = () => {
                                         Location
                                     </p>
                                     <span className="text-sm text-white/60">
-                                        San Francisco, CA
+                                        Plot 199 Adetokunbo Ademola Crescent. Wuse II. FCT
                                     </span>
                                 </div>
                             </div>
