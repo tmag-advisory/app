@@ -140,7 +140,7 @@ const FooterSection = () => {
                                     </p>
                                     <a
                                         href="#"
-                                        className="text-sm text-white/60 hover:text-white transition-colors duration-200"
+                                        className="text-sm text-nowrap text-white/60 hover:text-white transition-colors duration-200"
                                     >
                                         +234 916 261 9043
                                     </a>
@@ -154,8 +154,8 @@ const FooterSection = () => {
                                     <p className="text-xs text-white/30 uppercase tracking-wider font-semibold mb-1">
                                         Location
                                     </p>
-                                    <span className="text-sm text-white/60">
-                                        Plot 199 Adetokunbo Ademola Crescent. Wuse II. FCT
+                                    <span className="text-sm text-white/60 text-nowrap">
+                                        Plot 199 Adetokunbo Ademola Crescent. <br /> Wuse II. FCT
                                     </span>
                                 </div>
                             </div>
