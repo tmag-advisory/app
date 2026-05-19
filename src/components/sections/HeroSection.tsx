@@ -1,17 +1,22 @@
-import { LucideArrowRight, LucideShield } from "lucide-react";
-import { useRef, useLayoutEffect } from "react";
+import { LucideArrowRight, LucideShield, LucideCheck } from "lucide-react";
+import { useRef, useLayoutEffect, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import gsap from "gsap";
 import Button from "../ui/Button";
 import StarRating from "../ui/StarRating";
 
-type RiskLevel = "Low" | "Moderate" | "High";
+interface ProgressStep {
+    label: string;
+    done: boolean;
+}
 
-interface DestinationData {
+interface SampleTripData {
     country: string;
     flag: string;
-    risk: RiskLevel;
-    alert?: string;
+    tripType: string;
+    detail: string;
+    completeness: number;
+    progressSteps: ProgressStep[];
 }
 
 interface HeroVariant {
@@ -19,32 +24,80 @@ interface HeroVariant {
     headlineLines: [string, string, string];
     subtext: string;
     cta: string;
-    destinations: DestinationData[];
+    destinations: SampleTripData[];
 }
 
 const HERO_VARIANT: HeroVariant = {
-    eyebrow: "Physician-designed. Evidence-based.",
+    eyebrow: "Personalized Travel Health Intelligence",
     headlineLines: ["Travel Far.", "Come Back", "Safe."],
-    subtext: "Get a personalized travel health plan in under 2 minutes vaccines, medications, disease risks, and more.",
+    subtext:
+        "Physician validated. Tailored to your  itinerary and health history. Any time, any where.",
     cta: "Get Started",
     destinations: [
-        { country: "Japan", flag: "🇯🇵", risk: "Low" },
-        { country: "Kenya", flag: "🇰🇪", risk: "High", alert: "Malaria zone" },
-        { country: "Brazil", flag: "🇧🇷", risk: "Moderate", alert: "Yellow fever" },
-        { country: "India", flag: "🇮🇳", risk: "High", alert: "Multiple vaccines" },
+        {
+            country: "Japan",
+            flag: "🇯🇵",
+            tripType: "Business Travel",
+            detail: "7-day Tokyo itinerary",
+            completeness: 85,
+            progressSteps: [
+                { label: "Medical Review", done: true },
+                { label: "Vaccinations", done: true },
+                { label: "Travel Insurance", done: true },
+                { label: "Medication Plan", done: true },
+            ],
+        },
+        {
+            country: "Kenya",
+            flag: "🇰🇪",
+            tripType: "Family Vacation",
+            detail: "Wildlife & beach getaway",
+            completeness: 45,
+            progressSteps: [
+                { label: "Medical Review", done: true },
+                { label: "Vaccinations", done: true },
+                { label: "Travel Insurance", done: false },
+                { label: "Travel Advisories", done: false },
+            ],
+        },
+        {
+            country: "Brazil",
+            flag: "🇧🇷",
+            tripType: "Medical Mission",
+            detail: "Rio & Amazon trek",
+            completeness: 60,
+            progressSteps: [
+                { label: "Medical Review", done: true },
+                { label: "Vaccinations", done: true },
+                { label: "Medication Plan", done: false },
+                { label: "Travel Advisories", done: false },
+            ],
+        },
+        {
+            country: "India",
+            flag: "🇮🇳",
+            tripType: "Study Abroad",
+            detail: "Cultural immersion program",
+            completeness: 30,
+            progressSteps: [
+                { label: "Medical Review", done: true },
+                { label: "Vaccinations", done: false },
+                { label: "Travel Insurance", done: false },
+                { label: "Travel Advisories", done: false },
+            ],
+        },
     ],
 };
 
+const CARD_CLS =
+    "rounded-2xl border border-border bg-background-secondary shadow-sm p-4 cursor-default select-none";
 
-const RISK_STYLE: Record<RiskLevel, { badge: string; dot: string }> = {
-    Low: { badge: "bg-emerald-50 text-emerald-700 border border-emerald-200", dot: "bg-emerald-500" },
-    Moderate: { badge: "bg-amber-50 text-amber-700 border border-amber-200", dot: "bg-amber-400" },
-    High: { badge: "bg-red-50 text-red-700 border border-red-200", dot: "bg-red-500" },
-};
-
-const CARD_CLS = "rounded-2xl border border-border bg-background-secondary shadow-sm p-4 cursor-default select-none";
-
-const OFFSETS_R: { top: string; left?: string; right?: string; rotate: number }[] = [
+const OFFSETS_R: {
+    top: string;
+    left?: string;
+    right?: string;
+    rotate: number;
+}[] = [
     { top: "3%", left: "2%", rotate: -2.5 },
     { top: "6%", right: "0%", rotate: 2 },
     { top: "50%", left: "6%", rotate: 1.5 },
@@ -80,58 +133,114 @@ const HL_SIZE = [
     "text-5xl md:text-6xl lg:text-7xl xl:text-8xl",
 ];
 
-
-const CardContent = ({ d }: { d: DestinationData }) => {
-    const r = RISK_STYLE[d.risk];
-    return (
-        <>
-            <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xl flex-shrink-0">{d.flag}</span>
-                    <span className="font-semibold text-heading text-sm truncate">{d.country}</span>
+const ProgressChecklist = ({ steps }: { steps: ProgressStep[] }) => (
+    <div className="mt-2 space-y-1">
+        {steps.map((step, i) => (
+            <div key={i} className="flex items-center gap-1.5">
+                <div
+                    className={`w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        step.done ? "bg-accent" : "border border-border"
+                    }`}
+                >
+                    {step.done && (
+                        <LucideCheck
+                            size={8}
+                            className="text-white"
+                            strokeWidth={3}
+                        />
+                    )}
                 </div>
-                <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ml-1 ${r.badge}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${r.dot}`} />
-                    {d.risk}
+                <span
+                    className={`text-[10px] leading-tight ${
+                        step.done ? "text-heading font-medium" : "text-muted"
+                    }`}
+                >
+                    {step.label}
                 </span>
             </div>
-            <div className="text-xs text-muted flex items-center gap-1.5">
-                {d.alert ? (
-                    <>
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-                        {d.alert}
-                    </>
-                ) : (
-                    <>
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
-                        No active alerts
-                    </>
-                )}
-            </div>
-            <div className="mt-3 h-1 rounded-full bg-border overflow-hidden">
-                <div className={`h-full rounded-full ${d.risk === "Low" ? "w-1/4 bg-emerald-500" : d.risk === "Moderate" ? "w-1/2 bg-amber-400" : "w-3/4 bg-red-500"}`} />
-            </div>
-        </>
-    );
-};
+        ))}
+    </div>
+);
 
-const MobileCards = ({ dests }: { dests: DestinationData[] }) => (
+const CardContent = ({ d }: { d: SampleTripData }) => (
+    <>
+        <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xl shrink-0">{d.flag}</span>
+                <span className="font-semibold text-heading text-sm truncate">
+                    {d.country}
+                </span>
+            </div>
+            <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ml-1 bg-accent/10 text-accent border border-accent/20">
+                {d.tripType}
+            </span>
+        </div>
+        <p className="text-xs text-muted leading-snug">{d.detail}</p>
+        <ProgressChecklist steps={d.progressSteps} />
+        <div className="mt-2">
+            <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] text-muted font-medium uppercase tracking-wider">
+                    Readiness
+                </span>
+                <span className="text-[10px] font-semibold text-heading tabular-nums">
+                    {d.completeness}%
+                </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-border overflow-hidden">
+                <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                        width: `${d.completeness}%`,
+                        backgroundColor:
+                            d.completeness >= 70 ? "#4f9e6a"
+                            : d.completeness >= 40 ? "#d4a04a"
+                            : "#d46a4a",
+                    }}
+                />
+            </div>
+        </div>
+    </>
+);
+
+const MobileCards = ({ dests }: { dests: SampleTripData[] }) => (
     <div data-hero-anim className="grid grid-cols-2 gap-3 mt-10 lg:hidden">
-        {dests.slice(0, 2).map((d) => {
-            const r = RISK_STYLE[d.risk];
-            return (
-                <div key={d.country} className="rounded-2xl border border-border bg-background-secondary p-3">
-                    <div className="flex items-center gap-1.5 mb-2">
-                        <span className="text-base">{d.flag}</span>
-                        <span className="font-semibold text-heading text-xs truncate">{d.country}</span>
-                    </div>
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${r.badge}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${r.dot}`} />
-                        {d.risk}
+        {dests.slice(0, 2).map((d) => (
+            <div
+                key={d.country}
+                className="rounded-2xl border border-border bg-background-secondary p-3"
+            >
+                <div className="flex items-center gap-1.5 mb-2">
+                    <span className="text-base">{d.flag}</span>
+                    <span className="font-semibold text-heading text-xs truncate">
+                        {d.country}
                     </span>
                 </div>
-            );
-        })}
+                <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-accent/10 text-accent">
+                    {d.tripType}
+                </span>
+                <p className="text-xs text-muted mt-1.5 leading-snug">
+                    {d.detail}
+                </p>
+                <ProgressChecklist steps={d.progressSteps} />
+                <div className="mt-2 flex items-center gap-2">
+                    <div className="flex-1 h-1 rounded-full bg-border overflow-hidden">
+                        <div
+                            className="h-full rounded-full"
+                            style={{
+                                width: `${d.completeness}%`,
+                                backgroundColor:
+                                    d.completeness >= 70 ? "#4f9e6a"
+                                    : d.completeness >= 40 ? "#d4a04a"
+                                    : "#d46a4a",
+                            }}
+                        />
+                    </div>
+                    <span className="text-[10px] font-semibold text-heading tabular-nums">
+                        {d.completeness}%
+                    </span>
+                </div>
+            </div>
+        ))}
     </div>
 );
 
@@ -147,13 +256,91 @@ const MobileCards = ({ dests }: { dests: DestinationData[] }) => (
 // );
 
 const Divider = ({ className = "" }: { className?: string }) => (
-    <div data-hero-anim className={`flex items-center gap-3 mt-7 mb-6 w-full max-w-md ${className}`}>
+    <div
+        data-hero-anim
+        className={`flex items-center gap-3 mt-7 mb-6 w-full max-w-md ${className}`}
+    >
         <div className="h-px flex-1 bg-border" />
-        <LucideShield size={13} className="text-accent opacity-50" strokeWidth={1.5} />
+        <LucideShield
+            size={13}
+            className="text-accent opacity-50"
+            strokeWidth={1.5}
+        />
         <div className="h-px flex-1 bg-border" />
     </div>
 );
 
+const TYPING_WORDS = [
+    "Safe.",
+    "Covered.",
+    "Prepared.",
+    "Protected.",
+    "Informed.",
+    "Ready.",
+    "Advised.",
+];
+
+const TypewriterWord = ({ hl }: { hl: string }) => {
+    const [text, setText] = useState("");
+    const wordIdxRef = useRef(0);
+    const phaseRef = useRef<"typing" | "pause" | "deleting">("typing");
+    const textRef = useRef(text);
+    const cursorRef = useRef<HTMLSpanElement>(null);
+
+    // Keep textRef synced during render
+    textRef.current = text;
+
+    useEffect(() => {
+        let mounted = true;
+        let timeoutId: ReturnType<typeof setTimeout>;
+
+        const tick = () => {
+            if (!mounted) return;
+            const word = TYPING_WORDS[wordIdxRef.current];
+            const phase = phaseRef.current;
+            const currentText = textRef.current;
+
+            if (phase === "typing") {
+                if (currentText.length < word.length) {
+                    setText(word.slice(0, currentText.length + 1));
+                    timeoutId = setTimeout(tick, 70);
+                } else {
+                    phaseRef.current = "pause";
+                    timeoutId = setTimeout(tick, 1800);
+                }
+            } else if (phase === "pause") {
+                phaseRef.current = "deleting";
+                timeoutId = setTimeout(tick, 200);
+            } else if (phase === "deleting") {
+                if (currentText.length > 0) {
+                    setText(word.slice(0, currentText.length - 1));
+                    timeoutId = setTimeout(tick, 35);
+                } else {
+                    wordIdxRef.current = (wordIdxRef.current + 1) % TYPING_WORDS.length;
+                    phaseRef.current = "typing";
+                    timeoutId = setTimeout(tick, 250);
+                }
+            }
+        };
+
+        timeoutId = setTimeout(tick, 70);
+        return () => {
+            mounted = false;
+            clearTimeout(timeoutId);
+        };
+    }, []);
+
+    return (
+        <span className={`block ${hl} italic text-accent`}>
+            {text}
+            <span
+                ref={cursorRef}
+                className="inline-block w-[2px] h-[0.85em] bg-accent align-middle ml-0.5 animate-pulse"
+                aria-hidden
+            />
+        </span>
+    );
+};
 
 interface HeroSectionProps {
     layout?: number;
@@ -175,8 +362,15 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                 stagger: 0.1,
             });
 
-            const fromX = layout === 0 ? 60 : layout === 2 ? -60 : layout === 5 ? 40 : 0;
-            const fromY = layout === 6 ? -30 : fromX === 0 ? 30 : 0;
+            const fromX =
+                layout === 0 ? 60
+                : layout === 2 ? -60
+                : layout === 5 ? 40
+                : 0;
+            const fromY =
+                layout === 6 ? -30
+                : fromX === 0 ? 30
+                : 0;
             gsap.from("[data-dest-card]", {
                 x: fromX,
                 y: fromY,
@@ -210,7 +404,8 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-[0.18]"
             style={{
-                backgroundImage: "radial-gradient(circle,#7a6a5a 1px,transparent 1px)",
+                backgroundImage:
+                    "radial-gradient(circle,#7a6a5a 1px,transparent 1px)",
                 backgroundSize: "26px 26px",
             }}
         />
@@ -228,7 +423,8 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
     );
 
     const hl = HL_SIZE[layout] ?? HL_SIZE[0];
-    const base = "relative overflow-hidden px-6 pt-14 pb-16 lg:px-14 lg:pt-20 lg:pb-24";
+    const base =
+        "relative overflow-hidden px-6 pt-14 pb-16 lg:px-14 lg:pt-20 lg:pb-24";
 
     const floatingCards = (offsets: typeof OFFSETS_R) =>
         variant.destinations.map((d, i) => {
@@ -237,7 +433,9 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                 <div
                     key={d.country}
                     data-dest-card
-                    ref={(el: HTMLDivElement | null) => { cardsRef.current[i] = el; }}
+                    ref={(el: HTMLDivElement | null) => {
+                        cardsRef.current[i] = el;
+                    }}
                     className={`absolute w-52 ${CARD_CLS}`}
                     style={{
                         top: pos.top,
@@ -254,26 +452,74 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
     if (layout === 0) {
         return (
             <section ref={sectionRef} className={base}>
-                {dotBg}{coords("right")}
+                {dotBg}
+                {coords("right")}
                 <div className="relative z-10 mx-auto max-w-7xl">
                     <div className="grid lg:grid-cols-[1fr_0.85fr] lg:gap-12 items-center">
                         <div className="flex flex-col items-start">
-                            <div data-hero-anim className="flex items-center gap-3 mb-5"><StarRating count={5} /><span className="text-sm font-medium text-muted">{variant.eyebrow}</span></div>
-                            <h1 data-hero-anim className="font-serif text-heading leading-[0.88] tracking-tight">
-                                <span className={`block ${hl}`}>{variant.headlineLines[0]}</span>
-                                <span className={`block ${hl}`}>{variant.headlineLines[1]}</span>
-                                <span className={`block ${hl} italic text-accent`}>{variant.headlineLines[2]}</span>
+                            <div
+                                data-hero-anim
+                                className="flex flex-col items-start gap-3 mb-5"
+                            >
+                                <StarRating count={5} />
+                                <br />
+                                <span className="text-sm font-medium text-muted">
+                                    {variant.eyebrow}
+                                </span>
+                            </div>
+                            <h1
+                                data-hero-anim
+                                className="font-serif text-heading leading-[0.88] tracking-tight"
+                            >
+                                <span className={`block ${hl}`}>
+                                    {variant.headlineLines[0]}
+                                </span>
+                                <span className={`block ${hl}`}>
+                                    {variant.headlineLines[1]}
+                                </span>
+                                <span
+                                    className={`block ${hl} italic text-accent`}
+                                >
+                                    <TypewriterWord hl={hl} />
+                                </span>
                             </h1>
                             <Divider />
-                            <p data-hero-anim className="text-body leading-relaxed max-w-md sm:text-lg">{variant.subtext}</p>
-                            <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8">
-                                <Button variant="primary" link="/pricing">{variant.cta}</Button>
-                                <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">Learn More <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
+                            <p
+                                data-hero-anim
+                                className="text-body leading-relaxed max-w-md sm:text-lg"
+                            >
+                                {variant.subtext}
+                            </p>
+                            <div
+                                data-hero-anim
+                                className="flex flex-wrap items-center gap-4 mt-8"
+                            >
+                                <Button variant="primary" link="/pricing">
+                                    {variant.cta}
+                                </Button>
+                                <Link
+                                    to="/how-it-works"
+                                    className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group"
+                                >
+                                    Learn More{" "}
+                                    <span className="group-hover:translate-x-0.5 transition-transform">
+                                        →
+                                    </span>
+                                </Link>
                             </div>
                             {/*<StatsRow />*/}
                         </div>
                         <div className="relative hidden lg:block h-115">
-                            <div aria-hidden className="absolute inset-0 flex items-center justify-center pointer-events-none"><LucideShield size={300} strokeWidth={0.4} className="text-accent opacity-[0.06]" /></div>
+                            <div
+                                aria-hidden
+                                className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                            >
+                                <LucideShield
+                                    size={300}
+                                    strokeWidth={0.4}
+                                    className="text-accent opacity-[0.06]"
+                                />
+                            </div>
                             {floatingCards(OFFSETS_R)}
                         </div>
                     </div>
@@ -285,23 +531,67 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
 
     if (layout === 1) {
         return (
-            <section ref={sectionRef} className={base}>
+            <section ref={sectionRef} data-id={layout} className={base}>
                 {dotBg}
                 <div className="relative z-10 mx-auto max-w-5xl flex flex-col items-center text-center">
-                    <div data-hero-anim className="flex items-center gap-3 mb-5"><StarRating count={5} /><span className="text-sm font-medium text-muted">{variant.eyebrow}</span></div>
-                    <h1 data-hero-anim className="font-serif text-heading leading-[0.88] tracking-tight max-w-4xl">
-                        <span className={`block ${hl}`}>{variant.headlineLines[0]}</span>
-                        <span className={`block ${hl}`}>{variant.headlineLines[1]}</span>
-                        <span className={`block ${hl} italic text-accent`}>{variant.headlineLines[2]}</span>
+                    <div
+                        data-hero-anim
+                        className="flex flex-col items-center gap-3 mb-5"
+                    >
+                        <StarRating count={5} />
+                        <br />
+                        <span className="text-sm font-medium text-muted">
+                            {variant.eyebrow}
+                        </span>
+                    </div>
+                    <h1
+                        data-hero-anim
+                        className="font-serif text-heading leading-[0.88] tracking-tight max-w-4xl"
+                    >
+                        <span className={`block ${hl}`}>
+                            {variant.headlineLines[0]}
+                        </span>
+                        <span className={`block ${hl}`}>
+                            {variant.headlineLines[1]}
+                        </span>
+                        <span className={`block ${hl} italic text-accent`}>
+                            <TypewriterWord hl={hl} />
+                        </span>
                     </h1>
                     <Divider className="max-w-sm mx-auto" />
-                    <p data-hero-anim className="text-body leading-relaxed max-w-xl sm:text-lg">{variant.subtext}</p>
-                    <div data-hero-anim className="flex flex-wrap items-center justify-center gap-4 mt-8">
-                        <Button variant="primary" link="/pricing">{variant.cta}</Button>
-                        <Link to="/how-it-works" className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group">Learn More <span className="group-hover:translate-x-0.5 transition-transform">→</span></Link>
+                    <p
+                        data-hero-anim
+                        className="text-body leading-relaxed max-w-xl sm:text-lg"
+                    >
+                        {variant.subtext}
+                    </p>
+                    <div
+                        data-hero-anim
+                        className="flex flex-wrap items-center justify-center gap-4 mt-8"
+                    >
+                        <Button variant="primary" link="/pricing">
+                            {variant.cta}
+                        </Button>
+                        <Link
+                            to="/how-it-works"
+                            className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group"
+                        >
+                            Learn More{" "}
+                            <span className="group-hover:translate-x-0.5 transition-transform">
+                                →
+                            </span>
+                        </Link>
                     </div>
                     <div className="hidden lg:grid grid-cols-4 gap-4 mt-12 w-full">
-                        {variant.destinations.map((d) => (<div key={d.country} data-dest-card className={CARD_CLS}><CardContent d={d} /></div>))}
+                        {variant.destinations.map((d) => (
+                            <div
+                                key={d.country}
+                                data-dest-card
+                                className={CARD_CLS}
+                            >
+                                <CardContent d={d} />
+                            </div>
+                        ))}
                     </div>
                     <MobileCards dests={variant.destinations} />
                     {/*/!*<StatsRow className="justify-center" />*!/*/}
@@ -312,26 +602,72 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
 
     if (layout === 2) {
         return (
-            <section ref={sectionRef} className={base}>
-                {dotBg}{coords("left")}
+            <section ref={sectionRef} data-id={layout} className={base}>
+                {dotBg}
+                {coords("left")}
                 <div className="relative z-10 mx-auto max-w-7xl">
                     <div className="grid lg:grid-cols-[0.85fr_1fr] lg:gap-12 items-center">
-                        <div className="relative hidden lg:block h-[460px]">
-                            <div aria-hidden className="absolute inset-0 flex items-center justify-center pointer-events-none"><LucideShield size={300} strokeWidth={0.4} className="text-accent opacity-[0.06]" /></div>
+                        <div className="relative hidden lg:block h-115">
+                            <div
+                                aria-hidden
+                                className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                            >
+                                <LucideShield
+                                    size={300}
+                                    strokeWidth={0.4}
+                                    className="text-accent opacity-[0.06]"
+                                />
+                            </div>
                             {floatingCards(OFFSETS_L)}
                         </div>
                         <div className="flex flex-col items-start lg:items-end lg:text-right">
-                            <div data-hero-anim className="flex items-center gap-3 mb-5 lg:flex-row-reverse"><StarRating count={5} /><span className="text-sm font-medium text-muted">{variant.eyebrow}</span></div>
-                            <h1 data-hero-anim className="font-serif text-heading leading-[0.88] tracking-tight">
-                                <span className={`block ${hl}`}>{variant.headlineLines[0]}</span>
-                                <span className={`block ${hl}`}>{variant.headlineLines[1]}</span>
-                                <span className={`block ${hl} italic text-accent`}>{variant.headlineLines[2]}</span>
+                            <div
+                                data-hero-anim
+                                className="flex flex-col items-end gap-3 mb-5 flex-wrap"
+                            >
+                                <StarRating count={5} />
+                                <br />
+                                <span className="text-sm font-medium text-muted">
+                                    {variant.eyebrow}
+                                </span>
+                            </div>
+                            <h1
+                                data-hero-anim
+                                className="font-serif text-heading leading-[0.88] tracking-tight"
+                            >
+                                <span className={`block ${hl}`}>
+                                    {variant.headlineLines[0]}
+                                </span>
+                                <span className={`block ${hl}`}>
+                                    {variant.headlineLines[1]}
+                                </span>
+                                <span
+                                    className={`block ${hl} italic text-accent`}
+                                >
+                                    <TypewriterWord hl={hl} />
+                                </span>
                             </h1>
                             <Divider />
-                            <p data-hero-anim className="text-body leading-relaxed max-w-md sm:text-lg">{variant.subtext}</p>
-                            <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8 lg:flex-row-reverse">
-                                <Button variant="primary" link="/pricing">{variant.cta}</Button>
-                                <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
+                            <p
+                                data-hero-anim
+                                className="text-body leading-relaxed max-w-md sm:text-lg"
+                            >
+                                {variant.subtext}
+                            </p>
+                            <div
+                                data-hero-anim
+                                className="flex flex-wrap items-center gap-4 mt-8 lg:flex-row-reverse"
+                            >
+                                <Button variant="primary" link="/pricing">
+                                    {variant.cta}
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    link="/how-it-works"
+                                    icon={<LucideArrowRight />}
+                                >
+                                    Learn More
+                                </Button>
                             </div>
                             {/*<StatsRow className="lg:justify-end" />*/}
                         </div>
@@ -344,26 +680,69 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
 
     if (layout === 3) {
         return (
-            <section ref={sectionRef} className={base}>
-                {dotBg}{coords("right")}
+            <section ref={sectionRef} data-id={layout} className={base}>
+                {dotBg}
+                {coords("right")}
                 <div className="relative z-10 mx-auto max-w-7xl">
-                    <div data-hero-anim className="flex items-center gap-3 mb-5"><StarRating count={5} /><span className="text-sm font-medium text-muted">{variant.eyebrow}</span></div>
-                    <h1 data-hero-anim className="font-serif text-heading leading-[0.85] tracking-tight">
-                        <span className={`block ${hl}`}>{variant.headlineLines[0]}</span>
-                        <span className={`block ${hl}`}>{variant.headlineLines[1]}</span>
-                        <span className={`block ${hl} italic text-accent`}>{variant.headlineLines[2]}</span>
+                    <div
+                        data-hero-anim
+                        className="flex flex-col items-start gap-3 mb-5"
+                    >
+                        <StarRating count={5} />
+                        <br />
+                        <span className="text-sm font-medium text-muted">
+                            {variant.eyebrow}
+                        </span>
+                    </div>
+                    <h1
+                        data-hero-anim
+                        className="font-serif text-heading leading-[0.85] tracking-tight"
+                    >
+                        <span className={`block ${hl}`}>
+                            {variant.headlineLines[0]}
+                        </span>
+                        <span className={`block ${hl}`}>
+                            {variant.headlineLines[1]}
+                        </span>
+                        <span className={`block ${hl} italic text-accent`}>
+                            <TypewriterWord hl={hl} />
+                        </span>
                     </h1>
                     <Divider className="max-w-lg" />
                     <div className="grid lg:grid-cols-[1fr_1fr] lg:gap-16 items-start">
                         <div>
-                            <p data-hero-anim className="text-body leading-relaxed max-w-md sm:text-lg">{variant.subtext}</p>
-                            <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8">
-                                <Button variant="primary" link="/pricing">{variant.cta}</Button>
-                                <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
+                            <p
+                                data-hero-anim
+                                className="text-body leading-relaxed max-w-md sm:text-lg"
+                            >
+                                {variant.subtext}
+                            </p>
+                            <div
+                                data-hero-anim
+                                className="flex flex-wrap items-center gap-4 mt-8"
+                            >
+                                <Button variant="primary" link="/pricing">
+                                    {variant.cta}
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    link="/how-it-works"
+                                    icon={<LucideArrowRight />}
+                                >
+                                    Learn More
+                                </Button>
                             </div>
                         </div>
                         <div className="hidden lg:grid grid-cols-2 gap-3">
-                            {variant.destinations.map((d) => (<div key={d.country} data-dest-card className={CARD_CLS}><CardContent d={d} /></div>))}
+                            {variant.destinations.map((d) => (
+                                <div
+                                    key={d.country}
+                                    data-dest-card
+                                    className={CARD_CLS}
+                                >
+                                    <CardContent d={d} />
+                                </div>
+                            ))}
                         </div>
                     </div>
                     <MobileCards dests={variant.destinations} />
@@ -375,26 +754,66 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
 
     if (layout === 4) {
         return (
-            <section ref={sectionRef} className={base}>
+            <section ref={sectionRef} data-id={layout} className={base}>
                 {dotBg}
                 <div className="relative z-10 mx-auto max-w-3xl flex flex-col items-center text-center">
-                    <div data-hero-anim className="flex items-center gap-3 mb-5"><StarRating count={5} /><span className="text-sm font-medium text-muted">{variant.eyebrow}</span></div>
-                    <h1 data-hero-anim className="font-serif text-heading leading-[0.90] tracking-tight">
-                        <span className={`block ${hl}`}>{variant.headlineLines[0]}</span>
-                        <span className={`block ${hl}`}>{variant.headlineLines[1]}</span>
-                        <span className={`block ${hl} italic text-accent`}>{variant.headlineLines[2]}</span>
+                    <div
+                        data-hero-anim
+                        className="flex flex-col items-center gap-3 mb-5"
+                    >
+                        <StarRating count={5} />
+                        <br />
+                        <span className="text-sm font-medium text-muted">
+                            {variant.eyebrow}
+                        </span>
+                    </div>
+                    <h1
+                        data-hero-anim
+                        className="font-serif text-heading leading-[0.90] tracking-tight"
+                    >
+                        <span className={`block ${hl}`}>
+                            {variant.headlineLines[0]}
+                        </span>
+                        <span className={`block ${hl}`}>
+                            {variant.headlineLines[1]}
+                        </span>
+                        <span className={`block ${hl} italic text-accent`}>
+                            <TypewriterWord hl={hl} />
+                        </span>
                     </h1>
                     <Divider className="max-w-xs mx-auto" />
-                    <p data-hero-anim className="text-body leading-relaxed max-w-lg sm:text-lg">{variant.subtext}</p>
-                    <div data-hero-anim className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mt-8 w-full">
+                    <p
+                        data-hero-anim
+                        className="text-body leading-relaxed max-w-lg sm:text-lg"
+                    >
+                        {variant.subtext}
+                    </p>
+                    <div
+                        data-hero-anim
+                        className="flex justify-center sm:flex-row sm:items-center sm:justify-center gap-6 mt-8 w-full"
+                    >
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4">
-                            <Button variant="primary" link="/pricing">{variant.cta}</Button>
-                            <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
+                            <Button variant="primary" link="/pricing">
+                                {variant.cta}
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                link="/how-it-works"
+                                icon={<LucideArrowRight />}
+                            >
+                                Learn More
+                            </Button>
                         </div>
                     </div>
                     <div className="flex gap-3 mt-10 overflow-x-auto pb-2 w-full lg:grid lg:grid-cols-4 lg:overflow-visible">
                         {variant.destinations.map((d) => (
-                            <div key={d.country} data-dest-card className={`${CARD_CLS} min-w-[11rem] flex-shrink-0 lg:min-w-0`}><CardContent d={d} /></div>
+                            <div
+                                key={d.country}
+                                data-dest-card
+                                className={`${CARD_CLS} min-w-[11rem] flex-shrink-0 lg:min-w-0`}
+                            >
+                                <CardContent d={d} />
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -404,26 +823,70 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
 
     if (layout === 5) {
         return (
-            <section ref={sectionRef} className={base}>
-                {dotBg}{coords("right")}
+            <section ref={sectionRef} data-id={layout} className={base}>
+                {dotBg}
+                {coords("right")}
                 <div className="relative z-10 mx-auto max-w-7xl">
                     <div className="grid lg:grid-cols-[1fr_auto] lg:gap-10 items-start">
                         <div className="flex flex-col items-start">
-                            <div data-hero-anim className="flex items-center gap-3 mb-5"><StarRating count={5} /><span className="text-sm font-medium text-muted">{variant.eyebrow}</span></div>
-                            <h1 data-hero-anim className="font-serif text-heading leading-[0.88] tracking-tight">
-                                <span className={`block ${hl}`}>{variant.headlineLines[0]} {variant.headlineLines[1]}</span>
-                                <span className={`block ${hl} italic text-accent`}>{variant.headlineLines[2]}</span>
+                            <div
+                                data-hero-anim
+                                className="flex flex-col items-start gap-3 mb-5"
+                            >
+                                <StarRating count={5} />
+                                <br />
+                                <span className="text-sm font-medium text-muted">
+                                    {variant.eyebrow}
+                                </span>
+                            </div>
+                            <h1
+                                data-hero-anim
+                                className="font-serif text-heading leading-[0.88] tracking-tight"
+                            >
+                                <span className={`block ${hl}`}>
+                                    {variant.headlineLines[0]}{" "}
+                                    {variant.headlineLines[1]}
+                                </span>
+                                <span
+                                    className={`block ${hl} italic text-accent`}
+                                >
+                                    <TypewriterWord hl={hl} />
+                                </span>
                             </h1>
                             <Divider className="max-w-lg" />
-                            <p data-hero-anim className="text-body leading-relaxed max-w-lg sm:text-lg">{variant.subtext}</p>
-                            <div data-hero-anim className="flex flex-wrap items-center gap-4 mt-8">
-                                <Button variant="primary" link="/pricing">{variant.cta}</Button>
-                                <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
+                            <p
+                                data-hero-anim
+                                className="text-body leading-relaxed max-w-lg sm:text-lg"
+                            >
+                                {variant.subtext}
+                            </p>
+                            <div
+                                data-hero-anim
+                                className="flex flex-wrap items-center gap-4 mt-8"
+                            >
+                                <Button variant="primary" link="/pricing">
+                                    {variant.cta}
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    link="/how-it-works"
+                                    icon={<LucideArrowRight />}
+                                >
+                                    Learn More
+                                </Button>
                             </div>
                             {/*<StatsRow />*/}
                         </div>
                         <div className="hidden lg:flex flex-col gap-3 w-52 pt-2">
-                            {variant.destinations.map((d) => (<div key={d.country} data-dest-card className={CARD_CLS}><CardContent d={d} /></div>))}
+                            {variant.destinations.map((d) => (
+                                <div
+                                    key={d.country}
+                                    data-dest-card
+                                    className={CARD_CLS}
+                                >
+                                    <CardContent d={d} />
+                                </div>
+                            ))}
                         </div>
                     </div>
                     <MobileCards dests={variant.destinations} />
@@ -433,23 +896,65 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
     }
 
     return (
-        <section ref={sectionRef} className={base}>
+        <section ref={sectionRef} data-id={layout} className={base}>
             {dotBg}
             <div className="relative z-10 mx-auto max-w-5xl flex flex-col items-center text-center">
                 <div className="hidden lg:grid grid-cols-4 gap-4 mb-10 w-full">
-                    {variant.destinations.map((d) => (<div key={d.country} data-dest-card className={CARD_CLS}><CardContent d={d} /></div>))}
+                    {variant.destinations.map((d) => (
+                        <div
+                            key={d.country}
+                            data-dest-card
+                            className={CARD_CLS}
+                        >
+                            <CardContent d={d} />
+                        </div>
+                    ))}
                 </div>
-                <div data-hero-anim className="flex items-center gap-3 mb-5"><StarRating count={5} /><span className="text-sm font-medium text-muted">{variant.eyebrow}</span></div>
-                <h1 data-hero-anim className="font-serif text-heading leading-[0.88] tracking-tight max-w-4xl">
-                    <span className={`block ${hl}`}>{variant.headlineLines[0]}</span>
-                    <span className={`block ${hl}`}>{variant.headlineLines[1]}</span>
-                    <span className={`block ${hl} italic text-accent`}>{variant.headlineLines[2]}</span>
+                <div
+                    data-hero-anim
+                    className="flex flex-col items-center gap-3 mb-5"
+                >
+                    <StarRating count={5} />
+                    <br />
+                    <span className="text-sm font-medium text-muted">
+                        {variant.eyebrow}
+                    </span>
+                </div>
+                <h1
+                    data-hero-anim
+                    className="font-serif text-heading leading-[0.88] tracking-tight max-w-4xl"
+                >
+                    <span className={`block ${hl}`}>
+                        {variant.headlineLines[0]}
+                    </span>
+                    <span className={`block ${hl}`}>
+                        {variant.headlineLines[1]}
+                    </span>
+                    <span className={`block ${hl} italic text-accent`}>
+                        <TypewriterWord hl={hl} />
+                    </span>
                 </h1>
                 <Divider className="max-w-sm mx-auto" />
-                <p data-hero-anim className="text-body leading-relaxed max-w-xl sm:text-lg">{variant.subtext}</p>
-                <div data-hero-anim className="flex flex-wrap items-center justify-center gap-4 mt-8">
-                    <Button variant="primary" link="/pricing">{variant.cta}</Button>
-                    <Button variant="secondary" link="/how-it-works" icon={<LucideArrowRight />}>Learn More</Button>
+                <p
+                    data-hero-anim
+                    className="text-body leading-relaxed max-w-xl sm:text-lg"
+                >
+                    {variant.subtext}
+                </p>
+                <div
+                    data-hero-anim
+                    className="flex flex-wrap items-center justify-center gap-4 mt-8"
+                >
+                    <Button variant="primary" link="/pricing">
+                        {variant.cta}
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        link="/how-it-works"
+                        icon={<LucideArrowRight />}
+                    >
+                        Learn More
+                    </Button>
                 </div>
                 <MobileCards dests={variant.destinations} />
                 {/*<StatsRow className="justify-center" />*/}

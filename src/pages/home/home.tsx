@@ -17,9 +17,9 @@ const Home = () => {
 
     return (
         <main>
-            <SEOHead title="Travel Medicine Advisory Global — AI-Powered Travel Health Plans" description="Get personalized travel health recommendations based on your destination, medical history, and planned activities." path="/" />
+            <SEOHead title="Travel Medicine Advisory Global — Personalized Travel Health Intelligence" description="Physician validated travel health guidance tailored to your itinerary and health history." path="/" />
             <HeroSection layout={heroLayout} />
-            {/*<BrandsSection />*/}
+            {/* <BrandsSection /> */}
             <HowItWorksSection />
             <SamplePlanSection />
             <WhatAICoversSection />
