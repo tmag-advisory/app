@@ -488,31 +488,3 @@ export function GeneratedPlanHeroMeta({
         </div>
     );
 }
-
-export function GenerationMetaLine({ plan }: { plan: TravelPlanResponse }) {
-    const g = plan.generatedPlan;
-    if (!g || g.status !== "active") {
-        return null;
-    }
-    const parts: string[] = [];
-    if (g.provider) {
-        parts.push(g.provider);
-    }
-    if (g.modelUsed) {
-        parts.push(g.modelUsed);
-    }
-    if (g.tokensUsed != null) {
-        parts.push(`~${g.tokensUsed} tokens`);
-    }
-    if (g.processingTimeMs != null) {
-        parts.push(`${(g.processingTimeMs / 1000).toFixed(1)}s`);
-    }
-    if (parts.length === 0) {
-        return null;
-    }
-    return (
-        <p className="text-[11px] text-muted/90">
-            Generated with {parts.join(" · ")}
-        </p>
-    );
-}

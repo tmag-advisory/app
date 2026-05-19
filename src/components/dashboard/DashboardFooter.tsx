@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 const DashboardFooter = () => {
     return (
-        <footer className="relative z-10 lg:ml-64 border-t border-border-light/40 mt-auto">
+        <footer className="relative lg:ml-64 border-t border-border-light/40 mt-auto">
             <div className="px-4 sm:px-6 lg:px-12 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 max-w-7xl">
                 <p className="text-xs text-muted">
                     © {new Date().getFullYear()} TMAG · Travel Medicine Advisory Global. All rights reserved.
