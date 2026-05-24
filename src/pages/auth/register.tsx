@@ -223,6 +223,9 @@ const Register = () => {
                             {resendVerification.isPending ? "Sending..." : "Resend code"}
                         </button>
                     </p>
+                    <p className="text-sm text-body">
+                        (Don't forget to check your spam folder!)
+                    </p>
                 </div>
             </div>
         );

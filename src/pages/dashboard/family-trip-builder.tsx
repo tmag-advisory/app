@@ -89,17 +89,15 @@ interface TripDetailsJson {
     destination?: unknown;
     departureDate?: unknown;
     returnDate?: unknown;
-    outboundFlightNumber?: unknown;
-    returnFlightNumber?: unknown;
     departingFrom?: unknown;
     finalReturnDestination?: unknown;
     overallReturnDate?: unknown;
     finalDestination?: unknown;
     transitLocation?: unknown;
     transitDuration?: unknown;
+    numberOfFlights?: unknown;
     lengthOfStay?: unknown;
     purpose?: unknown;
-    flightNumber?: unknown;
     stops?: unknown;
 }
 
@@ -238,14 +236,14 @@ function isTripItineraryComplete(
     const data = hydrateLegacyTripItinerary(value);
     let filled = false;
 
-    if (data.tripType === "one") {
+    if (data.tripType === "one-way") {
         filled = Boolean(
             data.oneFromCity?.trim() &&
             data.oneFromCountry?.trim() &&
             data.oneToCity?.trim() &&
             data.oneTo?.trim() &&
             data.oneDepartureDate?.trim() &&
-            data.oneLengthOfStay?.trim(),
+            data.oneNumberOfFlights?.trim(),
         );
     } else if (data.tripType === "return") {
         filled = Boolean(
@@ -479,10 +477,6 @@ function tripDetailsJsonToItineraryData(
                 returnToCity: String(firstStop.city ?? destination.city ?? ""),
                 returnDepartureDate: String(details.departureDate ?? ""),
                 returnReturnDate: String(details.returnDate ?? ""),
-                outboundFlightNumber: String(
-                    details.outboundFlightNumber ?? "",
-                ),
-                returnFlightNumber: String(details.returnFlightNumber ?? ""),
             };
         }
 
@@ -538,16 +532,16 @@ function tripDetailsJsonToItineraryData(
         const firstStop = stops[0] ?? {};
         const destination = splitCityCountry(String(details.destination ?? ""));
         return {
-            tripType: "one",
+            tripType: "one-way",
             oneFrom: String(details.departureCity ?? ""),
             oneFromCity: departure.city,
             oneFromCountry: departure.country,
             oneTo: String(firstStop.country ?? destination.country ?? ""),
             oneToCity: String(firstStop.city ?? destination.city ?? ""),
             oneDepartureDate: String(details.departureDate ?? ""),
-            oneLengthOfStay: String(details.lengthOfStay ?? ""),
+            oneNumberOfFlights: String(details.numberOfFlights ?? ""),
             onePurpose: String(details.purpose ?? ""),
-            oneFlightNumber: String(details.flightNumber ?? ""),
+            oneLengthOfStay: String(details.lengthOfStay ?? ""),
         };
     } catch {
         return undefined;

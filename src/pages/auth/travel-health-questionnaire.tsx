@@ -81,14 +81,14 @@ function isTripItineraryComplete(data: TripItineraryData | undefined): boolean {
     if (!data) return false;
     const d = hydrateLegacyTripItinerary(data);
     let filled = false;
-    if (d.tripType === "one") {
+    if (d.tripType === "one-way") {
         filled = Boolean(
             d.oneFromCity?.trim() &&
                 d.oneFromCountry?.trim() &&
                 d.oneToCity?.trim() &&
                 d.oneTo?.trim() &&
                 d.oneDepartureDate?.trim() &&
-                d.oneLengthOfStay?.trim()
+                d.oneNumberOfFlights?.trim()
         );
     } else if (d.tripType === "return") {
         filled = Boolean(
@@ -409,9 +409,7 @@ const TravelHealthQuestionnaire = () => {
             return;
         }
         if (isRiskSection && !riskConsentGiven) {
-            toast.error(
-                "Please agree to answer this section before continuing.",
-            );
+            toast.error("Please agree to answer this section before continuing.");
             return;
         }
         const errors = new Set<string>();
@@ -1468,9 +1466,6 @@ const TravelHealthQuestionnaire = () => {
 
                                     {categoryIndex === 0 && (
                                         <div className="p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
-                                            <p className="text-sm text-heading font-semibold mb-2">
-                                                Before proceeding, please read and agree:
-                                            </p>
                                             <p className="text-xs text-heading font-semibold mb-1">Consent</p>
                                             <p className="text-xs text-muted leading-relaxed mb-3">
                                                 {CONSENT_TEXT}
@@ -1520,49 +1515,50 @@ const TravelHealthQuestionnaire = () => {
 
                                     {isRiskSection && (
                                         <div className="p-4 rounded-2xl border-2 border-border-light/60 bg-background-primary/40">
-                                            <p className="text-sm text-heading font-semibold mb-3">
-                                                Your responses are confidential
-                                                and used only to provide
-                                                accurate health advice.
+                                            <p className="text-sm text-body leading-relaxed mb-3">
+                                                The questions in this section
+                                                relate to personal behaviours
+                                                that may affect your travel
+                                                health risks. Your responses
+                                                are confidential and used only
+                                                to tailor your vaccinations,
+                                                medications, and harm-reduction
+                                                advice. You may skip any
+                                                question you prefer not to
+                                                answer.
                                             </p>
                                             <label className="flex items-start gap-3 cursor-pointer">
-                                                <div
+                                                <button
+                                                    type="button"
                                                     onClick={() =>
-                                                        setRiskConsentGiven(
-                                                            (v) => !v,
-                                                        )
+                                                        setRiskConsentGiven((v) => !v)
                                                     }
                                                     className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${riskConsentGiven ? "border-accent bg-accent" : "border-border"}`}
                                                 >
                                                     {riskConsentGiven && (
                                                         <LucideCheck className="w-3 h-3 text-white" />
                                                     )}
-                                                </div>
+                                                </button>
                                                 <span
                                                     className="text-sm text-body font-medium leading-relaxed"
                                                     onClick={() =>
-                                                        setRiskConsentGiven(
-                                                            (v) => !v,
-                                                        )
+                                                        setRiskConsentGiven((v) => !v)
                                                     }
                                                 >
-                                                    I understand and agree to
-                                                    answer this section
+                                                    I understand and agree to answer this section.
                                                 </span>
                                             </label>
                                         </div>
                                     )}
 
-                                    {isRiskSection && !riskConsentGiven ?
+                                    {isRiskSection && !riskConsentGiven ? (
                                         <div className="rounded-2xl border-2 border-dashed border-border-light/60 bg-background-primary/30 p-8 text-center">
                                             <p className="text-sm text-muted leading-relaxed">
-                                                Please agree to the
-                                                confidentiality statement above
-                                                to access and answer these
-                                                questions.
+                                                Please agree to the confidentiality statement above to access and answer these questions.
                                             </p>
                                         </div>
-                                    :   visibleQuestions.map((question) => {
+                                    ) : (
+                                        visibleQuestions.map((question) => {
                                             const prefilled =
                                                 PREFILLED_KEYS.has(
                                                     question.key,
@@ -1644,7 +1640,7 @@ const TravelHealthQuestionnaire = () => {
                                                 </div>
                                             );
                                         })
-                                    }
+                                    )}
                                 </motion.div>
                         </AnimatePresence>
                     </div>
@@ -2027,7 +2023,7 @@ const QuestionInput = ({
         case "trip_itinerary":
             return (
                 <TripItineraryFlow
-                    value={(value as TripItineraryData) || { tripType: "one" }}
+                    value={(value as TripItineraryData) || { tripType: "one-way" }}
                     onChange={(data) => onChange(data)}
                 />
             );

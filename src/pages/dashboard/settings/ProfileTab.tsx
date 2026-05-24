@@ -5,6 +5,7 @@ import { useUpdateProfile, useUpdateProfileAvatar } from "../../../api/hooks";
 import { DASHBOARD_GLASS_SURFACE } from "../../../components/dashboard/dashboardChrome";
 import { cn } from "../../../lib/utils";
 import toast from "react-hot-toast";
+import { IMAGE_ACCEPT, validateImageFile } from "../../../lib/imageUpload";
 
 interface ProfileTabProps {
   onRefreshProfile: () => Promise<void>;
@@ -42,6 +43,11 @@ const ProfileTab = ({ onRefreshProfile }: ProfileTabProps) => {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!validateImageFile(file)) {
+      e.target.value = "";
+      return;
+    }
 
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Profile picture must be 5MB or smaller");
@@ -89,7 +95,7 @@ const ProfileTab = ({ onRefreshProfile }: ProfileTabProps) => {
             {updateAvatar.isPending ? "Uploading..." : "Upload photo"}
             <input
               type="file"
-              accept="image/*"
+              accept={IMAGE_ACCEPT}
               className="hidden"
               onChange={handleAvatarUpload}
               disabled={updateAvatar.isPending}

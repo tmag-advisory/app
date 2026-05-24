@@ -1,84 +1,60 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import NavLink from "../ui/NavLink";
+import { LucideShoppingCart, LucideMenu } from "lucide-react";
 import { useCartStore } from "../../stores/cartStore";
-import { LucideShoppingCart } from "lucide-react";
+import FullPageMenu from "./FullPageMenu";
 
 const Navbar = () => {
-    const [open, setOpen] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
     const { pathname } = useLocation();
     const { itemCount, togglePanel } = useCartStore();
-    const count = itemCount();
 
     const isShopPage = pathname.startsWith("/shop");
+    const count = isShopPage ? itemCount() : 0;
 
     return (
-        <nav className="px-8 lg:px-16 py-5 max-w-350 mx-auto">
-            {/* Desktop row */}
-            <div className="flex justify-between md:grid grid-cols-3 items-center">
-                <div className="hidden md:flex items-center gap-6 font-medium">
-                    <NavLink href="/about">About Us</NavLink>
-                    <NavLink href="/pricing">Pricing</NavLink>
-                </div>
-
-                <Link
-                    to="/"
-                    className="text-heading tracking-tight text-xl font-serif font-medium text-center"
-                >
-                    TMAG
-                </Link>
-
-                <div className="flex justify-end items-center gap-3">
-                    {/* Cart icon — only on shop pages */}
-                    {isShopPage && (
-                        <button
-                            onClick={togglePanel}
-                            className="relative p-2 hover:bg-background-primary rounded-lg transition-colors"
-                            aria-label="Shopping cart"
-                        >
-                            <LucideShoppingCart className="w-5 h-5 text-heading" />
-                            {count > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 bg-accent text-white text-[10px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center min-w-4.5 min-h-4.5">
-                                    {count}
-                                </span>
-                            )}
-                        </button>
-                    )}
-
-                    <div className="hidden md:flex items-center gap-3">
-                        <NavLink href="/shop">Shop</NavLink>
-                        <NavLink href="/login">Sign In</NavLink>
-                    </div>
-                    <button
-                        className="md:hidden flex flex-col gap-1.5 p-1 cursor-pointer self-end"
-                        onClick={() => setOpen((o) => !o)}
-                        aria-label="Toggle menu"
+        <>
+            <nav className="px-8 lg:px-16 py-5 max-w-350 mx-auto">
+                <div className="flex items-center justify-between">
+                    <Link
+                        to="/"
+                        className="text-heading tracking-tight text-xl font-serif font-medium"
                     >
-                        <span
-                            className={`block h-0.5 w-6 bg-heading rounded transition-transform duration-300 origin-center ${open ? "translate-y-2 rotate-45" : ""}`}
-                        />
-                        <span
-                            className={`block h-0.5 w-6 bg-heading rounded transition-opacity duration-300 ${open ? "opacity-0" : ""}`}
-                        />
-                        <span
-                            className={`block h-0.5 w-6 bg-heading rounded transition-transform duration-300 origin-center ${open ? "-translate-y-2 -rotate-45" : ""}`}
-                        />
-                    </button>
-                </div>
-            </div>
+                        TMAG
+                    </Link>
 
-            {/* Mobile drawer */}
-            <div
-                className={`md:hidden overflow-hidden transition-all duration-300 ${open ? "max-h-80 mt-4" : "max-h-0"}`}
-            >
-                <div className="flex flex-col gap-4 pb-4 font-medium border-t border-border-light pt-4">
-                    <NavLink href="/pricing">Pricing</NavLink>
-                    <NavLink href="/about">About</NavLink>
-                    <NavLink href="/shop">Shop</NavLink>
-                    <NavLink href="/login">Sign In</NavLink>
+                    <div className="flex items-center gap-3">
+                        {isShopPage && (
+                            <button
+                                onClick={togglePanel}
+                                className="relative p-2 hover:bg-background-primary rounded-lg transition-colors"
+                                aria-label="Shopping cart"
+                            >
+                                <LucideShoppingCart className="w-5 h-5 text-heading" />
+                                {count > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 bg-accent text-white text-[10px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center min-w-4.5 min-h-4.5">
+                                        {count}
+                                    </span>
+                                )}
+                            </button>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={() => setMenuOpen(true)}
+                            aria-label="Open menu"
+                            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-background-secondary transition-colors cursor-pointer"
+                        >
+                            <LucideMenu className="w-5 h-5 text-heading" />
+                            <span className="hidden sm:inline text-sm font-medium text-heading">
+                                Menu
+                            </span>
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </nav>
+            </nav>
+            <FullPageMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+        </>
     );
 };
 

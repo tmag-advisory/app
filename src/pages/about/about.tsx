@@ -83,7 +83,7 @@ const About = () => {
                             <p className="text-sm text-body leading-relaxed">
                                 TMAG uses intelligent technology to consolidate that information into
                                 personalized, actionable health plans. We don't
-                                replace doctors we help travelers arrive at their
+                                replace doctors, we help travelers arrive at their
                                 appointments informed, and help those without
                                 easy access to travel medicine clinics get
                                 critical guidance they'd otherwise miss.

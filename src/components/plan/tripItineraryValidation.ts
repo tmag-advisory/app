@@ -32,7 +32,7 @@ export function validateTripItineraryDates(data: TripItineraryData | undefined):
         return null;
     };
 
-    if (data.tripType === "one") {
+    if (data.tripType === "one-way") {
         return gteToday("Departure date", data.oneDepartureDate, true);
     }
 
@@ -99,13 +99,13 @@ export function validateTripItineraryDates(data: TripItineraryData | undefined):
 export function getTripItineraryMissingFieldError(data: TripItineraryData | undefined): string | null {
     if (!data?.tripType) return "Please select a trip type.";
     
-    if (data.tripType === "one") {
+    if (data.tripType === "one-way") {
         if (!data.oneFromCountry?.trim()) return "Please select an origin country for your trip.";
         if (!data.oneFromCity?.trim()) return "Please enter an origin city for your trip.";
         if (!data.oneTo?.trim()) return "Please select a destination country for your trip.";
         if (!data.oneToCity?.trim()) return "Please enter a destination city for your trip.";
         if (!data.oneDepartureDate?.trim()) return "Please select a departure date for your trip.";
-        if (!data.oneLengthOfStay?.trim()) return "Please enter the length of stay for your trip.";
+        if (!data.oneNumberOfFlights?.trim()) return "Please enter the number of flights for your trip.";
     } else if (data.tripType === "return") {
         if (!data.returnFromCountry?.trim()) return "Please select an origin country for your return trip.";
         if (!data.returnFromCity?.trim()) return "Please enter an origin city for your return trip.";

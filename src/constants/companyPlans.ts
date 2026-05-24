@@ -28,41 +28,41 @@ const premiumOnlyFeatures = [
 ];
 
 export const creditPlans: CreditPlanDefinition[] = [
-    {
-        tier: "essential",
-        code: "ESSENTIAL",
-        name: "Essential",
-        priceUsd: 0,
-        priceNgn: 0,
-        description:
-            "Generic destination health education for casual travellers. No personal data required.",
-        features: [
-            "Destination health risk overview",
-            "General food & water safety guidance",
-            "Environmental considerations",
-            "Post-return awareness note",
-            "WHO & CDC validated guidance",
-        ],
-    },
-    {
-        tier: "standard",
-        code: "STANDARD",
-        name: "Standard",
-        priceUsd: 50,
-        priceNgn: 50000,
-        description: "Fully personalised travel health report.",
-        features: standardFeatures,
-    },
-    {
-        tier: "premium",
-        code: "PREMIUM",
-        name: "Premium",
-        priceUsd: 100,
-        priceNgn: 100000,
-        description:
-            "Everything in Standard plus clinical-grade extras for high-risk or complex trips.",
-        features: [...standardFeatures, ...premiumOnlyFeatures],
-    },
+  {
+    tier: "essential",
+    code: "ESSENTIAL",
+    name: "Essential",
+    priceUsd: 0,
+    priceNgn: 0,
+    description:
+      "Generic destination health education for casual travellers. No personal data required.",
+    features: [
+      "Destination health risk overview",
+      "General food & water safety guidance",
+      "Environmental considerations",
+      "Post-return awareness note",
+      "WHO & CDC validated guidance",
+    ],
+  },
+  {
+    tier: "standard",
+    code: "STANDARD",
+    name: "Standard",
+    priceUsd: 50,
+    priceNgn: 50000,
+    description: "Fully personalised travel health report.",
+    features: standardFeatures,
+  },
+  {
+    tier: "premium",
+    code: "PREMIUM",
+    name: "Premium",
+    priceUsd: 100,
+    priceNgn: 100000,
+    description:
+      "Everything in Standard ",
+    features: [...premiumOnlyFeatures],
+  },
 ];
 
 export interface IndividualPlanDefinition extends CreditPlanDefinition {
@@ -106,13 +106,7 @@ export const individualPlans: IndividualPlanDefinition[] = [
     cta: "Get Premium",
     highlighted: false,
     features: [
-      "Destination health risk overview (including current alerts & outbreaks)",
-      "General food and water safety guidance",
-      "Environmental and safety considerations",
-      "Downloadable PDF report",
-      "Personalised health risk report (tailored to your age, medical conditions, medications & allergies)",
-      "Vaccination gap analysis",
-      "Emergency contacts and local clinic directory",
+      "Everything in Standard, plus:",
       "Physician-reviewed and validated report",
       "Pre-travel preparation and medication packing checklist",
       "15-minute virtual pre-travel consultation with a travel medicine physician",
@@ -128,26 +122,26 @@ export type SignupRange = "0-100" | "100-500" | ">500";
 export type ServiceLevel = "standard" | "premium";
 
 export const enterpriseTiers: Record<SignupRange, Record<ServiceLevel, string>> = {
-  "0-100":   { standard: "Enterprise Silver",   premium: "Enterprise Plus" },
-  "100-500": { standard: "Enterprise Gold",     premium: "Enterprise Elite" },
-  ">500":    { standard: "Enterprise Platinum", premium: "Enterprise Signature" },
+  "0-100": { standard: "Enterprise Silver", premium: "Enterprise Plus" },
+  "100-500": { standard: "Enterprise Gold", premium: "Enterprise Elite" },
+  ">500": { standard: "Enterprise Platinum", premium: "Enterprise Signature" },
 };
 
 export const enterprisePlanCodes: Record<SignupRange, Record<ServiceLevel, string>> = {
-  "0-100":   { standard: "ENTERPRISE_SILVER",   premium: "ENTERPRISE_PLUS" },
-  "100-500": { standard: "ENTERPRISE_GOLD",     premium: "ENTERPRISE_ELITE" },
-  ">500":    { standard: "ENTERPRISE_PLATINUM", premium: "ENTERPRISE_SIGNATURE" },
+  "0-100": { standard: "ENTERPRISE_SILVER", premium: "ENTERPRISE_PLUS" },
+  "100-500": { standard: "ENTERPRISE_GOLD", premium: "ENTERPRISE_ELITE" },
+  ">500": { standard: "ENTERPRISE_PLATINUM", premium: "ENTERPRISE_SIGNATURE" },
 };
 
 export const signupRanges: { value: SignupRange; label: string }[] = [
-  { value: "0-100",   label: "0 – 100" },
+  { value: "0-100", label: "0 – 100" },
   { value: "100-500", label: "100 – 500" },
-  { value: ">500",    label: "500+" },
+  { value: ">500", label: "500+" },
 ];
 
 export const featuresByServiceLevel: Record<"STANDARD" | "PREMIUM", string[]> = {
   STANDARD: standardFeatures,
-  PREMIUM: [...standardFeatures, ...premiumOnlyFeatures],
+  PREMIUM: [...premiumOnlyFeatures],
 };
 
 export const individualPlanFeatures: Record<"standard" | "premium", string[]> = {
@@ -162,14 +156,7 @@ export const individualPlanFeatures: Record<"standard" | "premium", string[]> = 
     "Physician-reviewed and validated report",
   ],
   premium: [
-    "Destination health risk overview (including current alerts & outbreaks)",
-    "General food and water safety guidance",
-    "Environmental and safety considerations",
-    "Downloadable PDF report",
-    "Personalised health risk report (tailored to your age, medical conditions, medications & allergies)",
-    "Vaccination gap analysis",
-    "Emergency contacts and local clinic directory",
-    "Physician-reviewed and validated report",
+    "Everything in Standard, plus:",
     "Pre-travel preparation and medication packing checklist",
     "15-minute virtual pre-travel consultation with a travel medicine physician",
     "Doctor-ready clinical summary letter (where applicable)",
@@ -331,7 +318,7 @@ export const familyPlans: FamilyPlanDefinition[] = [
     priceNgn: 180000,
     additionalMemberPriceUsd: 30,
     additionalMemberPriceNgn: 25000,
-    priceNote: "per trip",
+    priceNote: "per plan",
     cta: "Get Family Plan",
     highlighted: true,
     features: [
