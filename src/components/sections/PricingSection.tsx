@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { LucideCheck, LucideArrowRight, LucideTag } from "lucide-react";
+import { LucideCheck, LucideArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../ui/Button";
 import AnimateIn from "../animations/AnimateIn";
@@ -19,26 +19,21 @@ import {
     type ServiceLevel,
 } from "../../constants/companyPlans";
 import { getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
+import PriceDiscountBadge from "../pricing/PriceDiscountBadge";
+import { formatStackedPrice as formatPrice } from "../../lib/launchDiscount";
+import LaunchDiscountBanner from "./LaunchDiscountBanner";
+import { useLaunchDiscount } from "../../api";
 
 type Audience = "individual" | "family" | "company";
 
-function formatPrice(priceUsd: number, priceNgn: number, currency: string, discountRate = 0): string {
-    if (priceUsd === 0) return "Free";
-    const basePrice = currency === "NGN" ? priceNgn : priceUsd;
-    const discountedPrice = discountRate > 0 ? basePrice * (1 - discountRate / 100) : basePrice;
-    const displayPrice = currency === "NGN" ? Math.round(discountedPrice) : discountedPrice;
-    if (currency === "NGN") return `₦${displayPrice.toLocaleString()}`;
-    return `$${displayPrice.toLocaleString(undefined, {
-        maximumFractionDigits: displayPrice % 1 === 0 ? 0 : 2,
-        minimumFractionDigits: displayPrice % 1 === 0 ? 0 : 2,
-    })}`;
-}
 
 const PricingSection = () => {
     const [audience, setAudience] = useState<Audience>("individual");
     const [signupRange, setSignupRange] = useState<SignupRange>("0-100");
     const { selectedCurrency, setCurrency } = useCurrencyStore();
     const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
+    const { data: launchDiscount } = useLaunchDiscount();
+    const launchPct = launchDiscount?.active ? launchDiscount.percentage : 0;
 
     useEffect(() => {
         let cancelled = false;
@@ -105,6 +100,8 @@ const PricingSection = () => {
                     </div>
                 </AnimateIn>
 
+                <LaunchDiscountBanner variant="page" className="max-w-5xl mx-auto mb-6" />
+
                 {affiliateDiscountRate > 0 && (
                     <div className="max-w-5xl mx-auto rounded-2xl border border-accent/20 bg-accent/10 px-5 py-3 text-sm font-semibold text-accent text-center mb-10">
                         Affiliate discount active — {affiliateDiscountRate}% off paid plans at checkout.
@@ -164,21 +161,17 @@ const PricingSection = () => {
                                         <div className="flex items-baseline gap-1.5 mb-1">
                                             <span className={`text-4xl font-serif ${isHighlighted ? "text-[#1a5c52]" : isPremium ? "text-[#9a7020]" : "text-stone-800"
                                                 }`}>
-                                                {formatPrice(plan.priceUsd, plan.priceNgn, selectedCurrency, affiliateDiscountRate)}
+                                                {formatPrice(plan.priceUsd, plan.priceNgn, selectedCurrency, affiliateDiscountRate, launchPct)}
                                             </span>
                                         </div>
 
-                                        {affiliateDiscountRate > 0 && (() => {
-                                            const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
-                                            const basePrice = selectedCurrency === "NGN" ? plan.priceNgn : plan.priceUsd;
-                                            const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
-                                            return (
-                                                <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
-                                                    <LucideTag className="w-3 h-3" />
-                                                    <span className="font-medium">{affiliateDiscountRate}% off — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()}</span>
-                                                </div>
-                                            );
-                                        })()}
+                                        <PriceDiscountBadge
+                                            priceUsd={plan.priceUsd}
+                                            priceNgn={plan.priceNgn}
+                                            currency={selectedCurrency}
+                                            affiliatePct={affiliateDiscountRate}
+                                            launchPct={launchPct}
+                                        />
                                         <p className={`text-xs mb-8 ${isHighlighted ? "text-[#2a5858]/60" : "text-stone-400"
                                             }`}>
                                             {plan.priceNote}
@@ -258,21 +251,17 @@ const PricingSection = () => {
                                     </p>
                                     <div className="flex items-baseline gap-1.5 mb-1">
                                         <span className="text-4xl font-serif text-[#1a5c52]">
-                                            {formatPrice(plan.priceUsd, plan.priceNgn, selectedCurrency, affiliateDiscountRate)}
+                                            {formatPrice(plan.priceUsd, plan.priceNgn, selectedCurrency, affiliateDiscountRate, launchPct)}
                                         </span>
                                     </div>
 
-                                    {affiliateDiscountRate > 0 && (() => {
-                                        const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
-                                        const basePrice = selectedCurrency === "NGN" ? plan.priceNgn : plan.priceUsd;
-                                        const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
-                                        return (
-                                            <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
-                                                <LucideTag className="w-3 h-3" />
-                                                <span className="font-medium">{affiliateDiscountRate}% off — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()}</span>
-                                            </div>
-                                        );
-                                    })()}
+                                    <PriceDiscountBadge
+                                        priceUsd={plan.priceUsd}
+                                        priceNgn={plan.priceNgn}
+                                        currency={selectedCurrency}
+                                        affiliatePct={affiliateDiscountRate}
+                                        launchPct={launchPct}
+                                    />
                                     <p className="text-xs mb-8 text-[#2a5858]/60">
                                         {plan.priceNote}
                                     </p>
@@ -359,21 +348,18 @@ const PricingSection = () => {
                                             </p>
                                             <div className="flex items-baseline gap-1.5 mb-1">
                                                 <span className={`text-4xl font-serif ${colors.textPrimary}`}>
-                                                    {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency, affiliateDiscountRate)}
+                                                    {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency, affiliateDiscountRate, launchPct)}
                                                 </span>
                                             </div>
 
-                                            {affiliateDiscountRate > 0 && (() => {
-                                                const currencySymbol = selectedCurrency === "NGN" ? "₦" : "$";
-                                                const basePrice = selectedCurrency === "NGN" ? basePlan.priceNgn : basePlan.priceUsd;
-                                                const discountAmt = Math.round(basePrice * affiliateDiscountRate / 100);
-                                                return (
-                                                    <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1 w-fit mb-1">
-                                                        <LucideTag className="w-3 h-3" />
-                                                        <span className="font-medium">{affiliateDiscountRate}% off — <span className="line-through text-muted">{currencySymbol}{basePrice.toLocaleString()}</span> → {currencySymbol}{(basePrice - discountAmt).toLocaleString()} per credit</span>
-                                                    </div>
-                                                );
-                                            })()}
+                                            <PriceDiscountBadge
+                                                priceUsd={basePlan.priceUsd}
+                                                priceNgn={basePlan.priceNgn}
+                                                currency={selectedCurrency}
+                                                affiliatePct={affiliateDiscountRate}
+                                                launchPct={launchPct}
+                                                unit="per credit"
+                                            />
                                             <p className={`text-xs mb-8 ${colors.textMuted}`}>
                                                 per credit
                                             </p>

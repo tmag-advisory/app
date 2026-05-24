@@ -11,6 +11,9 @@ import { LucideLoader2, LucideLock, LucideShieldCheck, LucideAlertCircle, Lucide
 import { cn } from "../lib/utils";
 import toast from "react-hot-toast";
 import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../lib/affiliateTracking";
+import { useLaunchDiscount } from "../api";
+import LaunchDiscountBanner from "../components/sections/LaunchDiscountBanner";
+import { applyLaunchToBase } from "../lib/launchDiscount";
 
 const BASE_INCLUDED_MEMBERS = 6;
 const MAX_ADDITIONAL_MEMBERS = 10;
@@ -37,6 +40,8 @@ export default function FamilyCheckoutPage() {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [additionalMembers, setAdditionalMembers] = useState(0);
     const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
+    const { data: launchDiscount } = useLaunchDiscount();
+    const launchPct = launchDiscount?.active ? launchDiscount.percentage : 0;
 
     useEffect(() => {
         if (user) {
@@ -138,11 +143,15 @@ export default function FamilyCheckoutPage() {
     const memberBasePrice = checkoutCurrency === "NGN" ? plan.additionalMemberPriceNgn : plan.additionalMemberPriceUsd;
     const currencySymbol = checkoutCurrency === "NGN" ? "₦" : "$";
 
-    // Affiliate discount calculation
+    // Apply platform-wide launch discount first, then any affiliate discount.
     const hasAffiliateDiscount = affiliateDiscountRate > 0;
-    const baseAmount = pricing.total;
+    const originalBaseAmount = pricing.total;
+    const baseAmount = launchPct > 0
+        ? applyLaunchToBase(originalBaseAmount, launchPct)
+        : originalBaseAmount;
+    const launchDiscountAmount = originalBaseAmount - baseAmount;
     const discountAmount = hasAffiliateDiscount
-        ? Math.round(baseAmount * affiliateDiscountRate / 100)
+        ? Math.round((baseAmount * affiliateDiscountRate) / 100)
         : 0;
     const finalTotal = baseAmount - discountAmount;
     const finalTotalDisplay = `${currencySymbol}${finalTotal.toLocaleString()}`;
@@ -518,7 +527,7 @@ export default function FamilyCheckoutPage() {
                                 :   <>
                                         <LucideLock className="w-4 h-4" />
                                         Pay{" "}
-                                        {hasAffiliateDiscount ?
+                                        {launchPct > 0 || hasAffiliateDiscount ?
                                             finalTotalDisplay
                                         :   totalPriceDisplay}{" "}
                                         &amp; Activate Family Plan
@@ -558,10 +567,26 @@ export default function FamilyCheckoutPage() {
                                     Total
                                 </p>
                                 <p className="text-4xl font-serif text-heading text-center">
-                                    {hasAffiliateDiscount ?
-                                        finalTotalDisplay
-                                    :   totalPriceDisplay}
+                                    {launchPct > 0 || hasAffiliateDiscount
+                                        ? finalTotalDisplay
+                                        : totalPriceDisplay}
                                 </p>
+
+                                {launchPct > 0 && (
+                                    <p className="mt-1 text-center text-sm text-muted">
+                                        <span className="line-through">
+                                            {currencySymbol}
+                                            {originalBaseAmount.toLocaleString()}
+                                        </span>
+                                        <span className="ml-2 font-medium text-emerald-700">
+                                            {launchPct}% launch off
+                                        </span>
+                                    </p>
+                                )}
+
+                                <div className="mt-3 flex justify-center">
+                                    <LaunchDiscountBanner variant="inline" />
+                                </div>
 
                                 {hasAffiliateDiscount && (
                                     <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1.5">
@@ -595,6 +620,17 @@ export default function FamilyCheckoutPage() {
                                             <span className="font-medium text-heading">
                                                 {currencySymbol}
                                                 {pricing.extra.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {launchPct > 0 && (
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-emerald-700">
+                                                Launch discount ({launchPct}%)
+                                            </span>
+                                            <span className="font-medium text-emerald-700">
+                                                -{currencySymbol}
+                                                {launchDiscountAmount.toLocaleString()}
                                             </span>
                                         </div>
                                     )}

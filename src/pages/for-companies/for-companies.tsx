@@ -24,11 +24,16 @@ import {
     type SignupRange,
 } from "../../constants/companyPlans";
 import SEOHead from "../../lib/seo";
+import { useLaunchDiscount } from "../../api";
+import { applyLaunchToBase } from "../../lib/launchDiscount";
+import LaunchDiscountBanner from "../../components/sections/LaunchDiscountBanner";
 
-function formatPrice(priceUsd: number, priceNgn: number, currency: string): string {
+function formatPrice(priceUsd: number, priceNgn: number, currency: string, launchPct = 0): string {
     if (priceUsd === 0 && currency !== "NGN") return "Free";
     if (priceNgn === 0 && currency === "NGN") return "Free";
-    return currency === "NGN" ? `₦${priceNgn.toLocaleString()}` : `$${priceUsd.toLocaleString()}`;
+    const base = currency === "NGN" ? priceNgn : priceUsd;
+    const discounted = launchPct > 0 ? applyLaunchToBase(base, launchPct) : base;
+    return currency === "NGN" ? `₦${discounted.toLocaleString()}` : `$${discounted.toLocaleString()}`;
 }
 
 const workflowSteps = [
@@ -70,6 +75,8 @@ const features = [
 
 const ForCompanies = () => {
     const { selectedCurrency } = useCurrencyStore();
+    const { data: launchDiscount } = useLaunchDiscount();
+    const launchPct = launchDiscount?.active ? launchDiscount.percentage : 0;
 
     return (
         <main>
@@ -129,6 +136,8 @@ const ForCompanies = () => {
                         Enterprise tiers matched to your <span className="italic">team size</span>.
                     </h2>
                 </AnimateIn>
+
+                <LaunchDiscountBanner variant="page" className="max-w-5xl mx-auto mb-8" />
                 <div className="space-y-12 max-w-5xl mx-auto">
                     {signupRanges.map((range) => (
                         <div key={range.value}>
@@ -161,8 +170,20 @@ const ForCompanies = () => {
                                                 </p>
                                                 <div className="flex items-baseline gap-1.5 mb-1">
                                                     <p className={`text-3xl font-serif ${colors.textPrimary}`}>
-                                                        {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency)}
+                                                        {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency, launchPct)}
                                                     </p>
+                                                    {launchPct > 0 && (() => {
+                                                        const base = selectedCurrency === "NGN" ? basePlan.priceNgn : basePlan.priceUsd;
+                                                        if (base === 0) return null;
+                                                        const symbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                                        return (
+                                                            <span className="ml-2 text-sm">
+                                                                <span className="line-through text-muted">
+                                                                    {symbol}{base.toLocaleString()}
+                                                                </span>
+                                                            </span>
+                                                        );
+                                                    })()}
                                                 </div>
                                                 <span className={`text-xs mb-5 ${colors.textMuted}`}>per credit</span>
                                                 <ul className="space-y-2.5 flex-1">

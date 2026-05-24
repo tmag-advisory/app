@@ -33,6 +33,9 @@ import toast from "react-hot-toast";
 import type { BillingCurrency } from "../../../api/types";
 import { useAuth } from "../../../context/AuthContext";
 import PlanUpgradeModal from "../../../components/dashboard/PlanUpgradeModal";
+import LaunchDiscountBanner from "../../../components/sections/LaunchDiscountBanner";
+import { useLaunchDiscount } from "../../../api";
+import { applyLaunchToBase } from "../../../lib/launchDiscount";
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: "$",
@@ -77,7 +80,12 @@ const BillingTab = ({ onRefreshProfile }: BillingTabProps) => {
 
   const basePriceUsd = user?.user_credit_plan?.basePriceUsd ?? 0;
   const basePriceNgn = user?.user_credit_plan?.basePriceNgn ?? 0;
-  const pricePerCredit = activeCurrency === "USD" ? basePriceUsd : basePriceNgn;
+  const originalPricePerCredit = activeCurrency === "USD" ? basePriceUsd : basePriceNgn;
+  const { data: launchDiscount } = useLaunchDiscount();
+  const launchPct = launchDiscount?.active ? launchDiscount.percentage : 0;
+  const pricePerCredit = launchPct > 0
+    ? applyLaunchToBase(originalPricePerCredit, launchPct)
+    : originalPricePerCredit;
 
   useEffect(() => {
     let cancelled = false;
@@ -514,7 +522,17 @@ const BillingTab = ({ onRefreshProfile }: BillingTabProps) => {
                       </div>
                       {basePriceUsd !== null && basePriceUsd > 0 && (
                         <p className="text-xs text-accent font-semibold mb-1">
-                          ${basePriceUsd.toFixed(0)} USD per credit
+                          {launchPct > 0 ? (
+                            <>
+                              <span className="line-through text-muted mr-1">
+                                ${basePriceUsd.toFixed(0)}
+                              </span>
+                              ${applyLaunchToBase(basePriceUsd, launchPct).toFixed(0)} USD per credit
+                              <span className="ml-1 text-emerald-700">({launchPct}% off)</span>
+                            </>
+                          ) : (
+                            <>${basePriceUsd.toFixed(0)} USD per credit</>
+                          )}
                         </p>
                       )}
                       {basePriceUsd === 0 && (
@@ -556,6 +574,7 @@ const BillingTab = ({ onRefreshProfile }: BillingTabProps) => {
           currencySymbol={currencySymbol}
           activeCurrency={activeCurrency}
           pricePerCredit={pricePerCredit}
+          launchPct={launchPct}
           affiliateDiscountRate={affiliateDiscountRate}
           user={user}
           onClose={() => setPurchaseCreditsOpen(false)}
@@ -578,6 +597,7 @@ interface PurchaseCreditsModalProps {
   currencySymbol: string;
   activeCurrency: BillingCurrency;
   pricePerCredit: number;
+  launchPct: number;
   affiliateDiscountRate: number;
   user: {
     user_credit_plan?: import("../../../api/types").CreditPlan | null;
@@ -598,6 +618,7 @@ const PurchaseCreditsModal = ({
   currencySymbol,
   activeCurrency,
   pricePerCredit,
+  launchPct,
   affiliateDiscountRate,
   user,
   onClose,
@@ -679,6 +700,8 @@ const PurchaseCreditsModal = ({
                 </>
               )}
             </button>
+
+            <LaunchDiscountBanner variant="inline" className="mt-2 mb-2" />
           </>
         ) : (
           /* ── Individual user view ── */
@@ -694,7 +717,14 @@ const PurchaseCreditsModal = ({
                 </span>
                 {user.user_credit_plan.basePriceUsd > 0 && (
                   <span className="text-xs text-muted">
-                    — ${user.user_credit_plan.basePriceUsd.toFixed(0)} USD/credit
+                    {launchPct > 0 ? (
+                      <>
+                        — <span className="line-through mr-1">${user.user_credit_plan.basePriceUsd.toFixed(0)}</span>
+                        ${applyLaunchToBase(user.user_credit_plan.basePriceUsd, launchPct).toFixed(0)} USD/credit
+                      </>
+                    ) : (
+                      <>— ${user.user_credit_plan.basePriceUsd.toFixed(0)} USD/credit</>
+                    )}
                   </span>
                 )}
               </div>
@@ -702,6 +732,8 @@ const PurchaseCreditsModal = ({
             <p className="text-xs text-muted mb-6">
               Select a credit pack that works for you.
             </p>
+
+            <LaunchDiscountBanner variant="inline" className="mb-4" />
 
             {/* Tiered pricing cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
