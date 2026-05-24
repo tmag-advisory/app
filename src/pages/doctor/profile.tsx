@@ -6,6 +6,7 @@ import { useDoctorProfile, useUpdateDoctorProfile, useUpdateDoctorProfileAvatar 
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 import { cn } from "../../lib/utils";
 import type { ProfilePictureOption } from "../../api/types";
+import { IMAGE_ACCEPT, validateImageFile } from "../../lib/imageUpload";
 
 const PROFILE_PICTURE_OPTIONS: { id: ProfilePictureOption; label: string; description: string }[] = [
     { id: "upload", label: "Uploaded photo", description: "Use your current uploaded profile photo." },
@@ -48,9 +49,16 @@ const FilePickerField = ({
             <input
                 ref={ref}
                 type="file"
-                accept="image/*"
+                accept={IMAGE_ACCEPT}
                 className="hidden"
-                onChange={(e) => onChange(e.target.files?.[0])}
+                onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f && !validateImageFile(f)) {
+                        e.target.value = "";
+                        return;
+                    }
+                    onChange(f);
+                }}
             />
         </div>
     );

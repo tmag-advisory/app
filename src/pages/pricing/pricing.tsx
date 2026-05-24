@@ -93,61 +93,55 @@ const PricingPage = () => {
 
     return (
         <main>
-            <SEOHead title="Pricing — Travel Medicine Advisory Global" description="Choose the right travel health plan for your needs. Individual, family, and company plans available." path="/pricing" />
+            <SEOHead title="Plans — Travel Medicine Advisory Global" description="Choose the right travel health plan for your needs. Individual, family, and company plans available." path="/pricing" />
             {/* Hero */}
             <AnimateIn
                 as="section"
                 className="flex flex-col items-center text-center pt-20 pb-12 px-6"
             >
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
+                <span className="inline-block text-sm text-teal-700 font-semibold px-4 py-1.5 mb-6">
                     Pricing
                 </span>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading font-serif max-w-3xl">
                     Simple, <span className="italic">honest</span> pricing.
                 </h1>
-                <p className="sm:text-lg text-body mt-6 max-w-xl leading-relaxed">
-                    Whether you&apos;re planning a single trip or managing
-                    travel for an entire company, we&apos;ve got a plan for you.
-                </p>
             </AnimateIn>
 
             {/* Controls row — audience tabs + currency toggle */}
-            <div className="px-8 lg:px-16 max-w-7xl mx-auto mb-10">
+            <div className="px-8 lg:px-16 max-w-6xl mx-auto mb-10">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     {/* Audience pill */}
-                    <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
+                    <div className="inline-flex items-center bg-button-secondary rounded p-1 gap-1">
                         {(
                             ["individual", "family", "company"] as Audience[]
                         ).map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setAudience(tab)}
-                                className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                                    audience === tab ?
-                                        "bg-white shadow-sm text-heading"
-                                    :   "text-muted hover:text-heading"
-                                }`}
+                                className={`px-5 py-2 rounded text-sm font-medium transition-all duration-200 ${audience === tab ?
+                                    "bg-white shadow-sm text-heading"
+                                    : "text-muted hover:text-heading"
+                                    }`}
                             >
                                 {tab === "individual" ?
                                     "Individuals"
-                                : tab === "family" ?
-                                    "Family"
-                                :   "Company"}
+                                    : tab === "family" ?
+                                        "Family"
+                                        : "Company"}
                             </button>
                         ))}
                     </div>
 
                     {/* Currency toggle */}
-                    <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
+                    <div className="inline-flex items-center bg-button-secondary rounded p-1 gap-1">
                         {(["NGN", "USD"] as const).map((cur) => (
                             <button
                                 key={cur}
                                 onClick={() => setCurrency(cur)}
-                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                                    selectedCurrency === cur ?
-                                        "bg-white shadow-sm text-heading"
-                                    :   "text-muted hover:text-heading"
-                                }`}
+                                className={`px-4 py-2 rounded text-sm font-medium transition-all duration-200 ${selectedCurrency === cur ?
+                                    "bg-white shadow-sm text-heading"
+                                    : "text-muted hover:text-heading"
+                                    }`}
                             >
                                 {cur === "USD" ? "$ USD" : "₦ NGN"}
                             </button>
@@ -158,7 +152,7 @@ const PricingPage = () => {
 
             {affiliateDiscountRate > 0 && (
                 <div className="px-8 lg:px-16 max-w-7xl mx-auto mb-8">
-                    <div className="max-w-5xl mx-auto rounded-2xl border border-accent/20 bg-accent/10 px-5 py-3 text-sm font-semibold text-accent text-center">
+                    <div className="max-w-5xl mx-auto rounded border border-accent/20 bg-accent/10 px-5 py-3 text-sm font-semibold text-accent text-center">
                         Affiliate discount active — {affiliateDiscountRate}% off paid credits at checkout.
                     </div>
                 </div>
@@ -179,13 +173,12 @@ const PricingPage = () => {
                                 <motion.div
                                     variants={staggerItem}
                                     key={plan.name}
-                                    className={`relative p-8 flex flex-col justify-between overflow-hidden ${
-                                        isEssential ?
-                                            "bg-white border border-stone-200"
+                                    className={`relative p-8 flex flex-col justify-between overflow-hidden ${isEssential ?
+                                        "bg-white border border-stone-200"
                                         : isHighlighted ?
                                             "border border-accent/25"
-                                        :   "border border-gold/35"
-                                    }`}
+                                            : "border border-gold/35"
+                                        }`}
                                 >
                                     {(isHighlighted || isPremium) && (
                                         <div
@@ -194,7 +187,7 @@ const PricingPage = () => {
                                                 background:
                                                     isHighlighted ?
                                                         "linear-gradient(145deg, #eaf7f4 0%, #dff2ee 45%, #e6f5f1 100%)"
-                                                    :   "linear-gradient(145deg, #fdf8f0 0%, #faf3e4 45%, #fdf7ee 100%)",
+                                                        : "linear-gradient(145deg, #fdf8f0 0%, #faf3e4 45%, #fdf7ee 100%)",
                                             }}
                                         />
                                     )}
@@ -213,31 +206,28 @@ const PricingPage = () => {
                                     )}
                                     <div className="relative z-10">
                                         <h3
-                                            className={`text-lg font-semibold mb-1 ${
-                                                isHighlighted ? "text-[#1a3c38]"
-                                                :   "text-stone-800"
-                                            }`}
+                                            className={`text-lg font-semibold mb-1 ${isHighlighted ? "text-[#1a3c38]"
+                                                : "text-stone-800"
+                                                }`}
                                         >
                                             {plan.name}
                                         </h3>
                                         <p
-                                            className={`text-sm mb-6 ${
-                                                isHighlighted ?
-                                                    "text-[#2a5858]/80"
-                                                :   "text-stone-500"
-                                            }`}
+                                            className={`text-sm mb-6 ${isHighlighted ?
+                                                "text-[#2a5858]/80"
+                                                : "text-stone-500"
+                                                }`}
                                         >
                                             {plan.description}
                                         </p>
                                         <div className="flex items-baseline gap-1.5 mb-1">
                                             <span
-                                                className={`text-4xl font-serif ${
-                                                    isHighlighted ?
-                                                        "text-[#1a5c52]"
+                                                className={`text-4xl font-serif ${isHighlighted ?
+                                                    "text-[#1a5c52]"
                                                     : isPremium ?
                                                         "text-[#9a7020]"
-                                                    :   "text-stone-800"
-                                                }`}
+                                                        : "text-stone-800"
+                                                    }`}
                                             >
                                                 {formatPrice(
                                                     plan.priceUsd,
@@ -260,11 +250,10 @@ const PricingPage = () => {
                                             );
                                         })()}
                                         <p
-                                            className={`text-xs mb-8 ${
-                                                isHighlighted ?
-                                                    "text-[#2a5858]/60"
-                                                :   "text-stone-400"
-                                            }`}
+                                            className={`text-xs mb-8 ${isHighlighted ?
+                                                "text-[#2a5858]/60"
+                                                : "text-stone-400"
+                                                }`}
                                         >
                                             {plan.priceNote}
                                         </p>
@@ -272,20 +261,18 @@ const PricingPage = () => {
                                             {plan.features.map((f) => (
                                                 <li
                                                     key={f}
-                                                    className={`flex items-start gap-3 text-sm ${
-                                                        isHighlighted ?
-                                                            "text-[#1a3c38]"
-                                                        :   "text-stone-700"
-                                                    }`}
+                                                    className={`flex items-start gap-3 text-sm ${isHighlighted ?
+                                                        "text-[#1a3c38]"
+                                                        : "text-stone-700"
+                                                        }`}
                                                 >
                                                     <LucideCheck
-                                                        className={`w-4 h-4 mt-0.5 shrink-0 ${
-                                                            isEssential ?
-                                                                "text-emerald-600"
+                                                        className={`w-4 h-4 mt-0.5 shrink-0 ${isEssential ?
+                                                            "text-emerald-600"
                                                             : isPremium ?
                                                                 "text-gold"
-                                                            :   "text-accent"
-                                                        }`}
+                                                                : "text-accent"
+                                                            }`}
                                                     />
                                                     {f}
                                                 </li>
@@ -300,23 +287,23 @@ const PricingPage = () => {
                                         >
                                             {plan.cta}
                                         </Button>
-                                    : isPremium ?
-                                        <Button
-                                            variant="secondary"
-                                            icon={<LucideArrowRight />}
-                                            link={`/register?plan=${plan.code}`}
-                                            className="relative z-10 self-start border-gold/60 text-[#9a7020] hover:bg-gold/10"
-                                        >
-                                            {plan.cta}
-                                        </Button>
-                                    :   <Button
-                                            variant="secondary"
-                                            icon={<LucideArrowRight />}
-                                            link={`/register?plan=${plan.code}`}
-                                            className="relative z-10 self-start"
-                                        >
-                                            {plan.cta}
-                                        </Button>
+                                        : isPremium ?
+                                            <Button
+                                                variant="secondary"
+                                                icon={<LucideArrowRight />}
+                                                link={`/register?plan=${plan.code}`}
+                                                className="relative z-10 self-start border-gold/60 text-[#9a7020] hover:bg-gold/10"
+                                            >
+                                                {plan.cta}
+                                            </Button>
+                                            : <Button
+                                                variant="secondary"
+                                                icon={<LucideArrowRight />}
+                                                link={`/register?plan=${plan.code}`}
+                                                className="relative z-10 self-start"
+                                            >
+                                                {plan.cta}
+                                            </Button>
                                     }
                                 </motion.div>
                             );
@@ -420,11 +407,10 @@ const PricingPage = () => {
                                 <button
                                     key={r.value}
                                     onClick={() => setSignupRange(r.value)}
-                                    className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                                        signupRange === r.value ?
-                                            "bg-white shadow-sm text-heading"
-                                        :   "text-muted hover:text-heading"
-                                    }`}
+                                    className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${signupRange === r.value ?
+                                        "bg-white shadow-sm text-heading"
+                                        : "text-muted hover:text-heading"
+                                        }`}
                                 >
                                     {r.label}{" "}
                                     <span className="text-muted font-normal">
@@ -449,7 +435,7 @@ const PricingPage = () => {
                                 const features =
                                     level === "standard" ?
                                         individualPlanFeatures.standard
-                                    :   individualPlanFeatures.premium;
+                                        : individualPlanFeatures.premium;
                                 const basePlan = creditPlans.find(
                                     (p) => p.tier === level,
                                 )!;
@@ -474,7 +460,7 @@ const PricingPage = () => {
                                         >
                                             {level === "standard" ?
                                                 "Most popular"
-                                            :   "Best report"}
+                                                : "Best report"}
                                         </span>
                                         <div className="relative z-10">
                                             <h3
@@ -487,7 +473,7 @@ const PricingPage = () => {
                                             >
                                                 {level === "standard" ?
                                                     "Standard service"
-                                                :   "Premium service"}
+                                                    : "Premium service"}
                                             </p>
                                             <p
                                                 className={`text-sm mb-6 ${colors.textSecondary}`}
@@ -540,11 +526,10 @@ const PricingPage = () => {
                                         <Button
                                             variant="primary"
                                             link={`/company-onboarding?plan=${enterprisePlanCodes[signupRange][level]}`}
-                                            className={`relative z-10 self-stretch text-center justify-center flex ${
-                                                level === "premium" ?
-                                                    "bg-gold text-white! hover:bg-[#b07a22]"
-                                                :   "bg-stone-900 text-white! hover:bg-stone-800"
-                                            }`}
+                                            className={`relative z-10 self-stretch text-center justify-center flex ${level === "premium" ?
+                                                "bg-gold text-white! hover:bg-[#b07a22]"
+                                                : "bg-stone-900 text-white! hover:bg-stone-800"
+                                                }`}
                                         >
                                             Get started
                                         </Button>
@@ -576,67 +561,24 @@ const PricingPage = () => {
                 </section>
             )}
 
-            {/* FAQ section */}
+            {/* FAQ CTA — full questions moved to /faq */}
             <div className="bg-background-secondary">
-                <section className="px-8 lg:px-16 py-24 max-w-5xl mx-auto">
+                <section className="px-8 lg:px-16 py-20 max-w-3xl mx-auto text-center">
                     <AnimateIn>
-                        <h2 className="text-3xl md:text-4xl text-heading leading-[1.1] font-serif mb-10 text-center">
-                            Common questions about pricing.
+                        <h2 className="text-2xl md:text-3xl text-heading leading-[1.1] font-serif mb-4">
+                            Have pricing questions?
                         </h2>
-                    </AnimateIn>
-                    <StaggerGroup
-                        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                        stagger={0.1}
-                    >
-                        {[
-                            {
-                                q: "How do credits work?",
-                                a: "One credit generates one complete travel health plan for one trip. Individual users can buy credits directly. Company plans include signup credits that are distributed to employees.",
-                            },
-                            {
-                                q: "Can I buy more credits later?",
-                                a: "Yes. Individual users can purchase credits anytime. Company admins can top up credits or request additional allocations from their dashboard.",
-                            },
-                            {
-                                q: "What's the difference between Standard and Premium?",
-                                a: "Standard generates a fully personalised travel health report covering vaccines, medications, risks, and emergency contacts. Premium adds a Pre-Travel Checklist, Medication Packing List, and a Doctor-Ready Clinical Summary Letter for your GP.",
-                            },
-                            {
-                                q: "Can I upgrade my company plan?",
-                                a: "Yes. Contact our sales team and we'll migrate your account to a higher tier. Any unused credits transfer over.",
-                            },
-                            {
-                                q: "Do credits expire?",
-                                a: "Never. Your credits stay in your account until you use them, whether that's next week or next year.",
-                            },
-                            {
-                                q: "Is there a free tier?",
-                                a: "Yes. Every new account receives 1 free Essential credit — a destination health education report with no personal data required. Upgrade to Standard or Premium for a fully personalised plan.",
-                            },
-                        ].map((item) => (
-                            <motion.div
-                                variants={staggerItem}
-                                key={item.q}
-                                className="bg-background-primary rounded-2xl p-6"
-                            >
-                                <h4 className="text-sm font-semibold text-heading mb-2">
-                                    {item.q}
-                                </h4>
-                                <p className="text-sm text-body leading-relaxed">
-                                    {item.a}
-                                </p>
-                            </motion.div>
-                        ))}
-                    </StaggerGroup>
-                    <div className="text-center mt-10">
+                        <p className="text-sm text-body mb-8 max-w-lg mx-auto">
+                            Credits, plan tiers, refunds, and more — all answered in one place.
+                        </p>
                         <Button
                             variant="secondary"
                             icon={<LucideArrowRight />}
                             link="/faq"
                         >
-                            View all FAQs
+                            See our FAQ
                         </Button>
-                    </div>
+                    </AnimateIn>
                 </section>
             </div>
         </main>

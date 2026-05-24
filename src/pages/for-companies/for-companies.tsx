@@ -225,65 +225,6 @@ const ForCompanies = () => {
                 </section>
             </div>
 
-            {/* Compliance angle */}
-            <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
-                <div className="flex flex-col md:flex-row gap-12 md:gap-20">
-                    <AnimateIn type="fadeLeft" className="md:w-1/2">
-                        <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                            Compliance
-                        </span>
-                        <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif mb-4">
-                            Duty of care,{" "}
-                            <span className="italic">handled.</span>
-                        </h2>
-                        <p className="text-sm text-body leading-relaxed mb-6">
-                            Employers have a legal obligation to inform employees
-                            about health risks when traveling for work. TMAG
-                            automates this process with auditable, timestamped
-                            documentation that proves you did your part.
-                        </p>
-                        <div className="space-y-3">
-                            {[
-                                "ISO 31030 travel risk management alignment",
-                                "Timestamped plan delivery and read receipts",
-                                "Exportable compliance reports per trip",
-                                "NDPR-aligned data handling",
-                            ].map((item) => (
-                                <div key={item} className="flex items-start gap-3">
-                                    <LucideCheck className="w-4 h-4 mt-0.5 text-accent shrink-0" />
-                                    <span className="text-sm text-heading">
-                                        {item}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </AnimateIn>
-                    <AnimateIn type="fadeRight" delay={0.1} className="md:w-1/2">
-                        <div className="relative rounded-3xl overflow-hidden p-8 md:p-10 h-full flex flex-col justify-center"
-                            style={{
-                                background:
-                                    "linear-gradient(135deg, #2a7a6a 0%, #1a6a7a 30%, #187080 55%, #1a6878 80%, #246858 100%)",
-                            }}
-                        >
-                            <LucideBuilding2 className="w-10 h-10 text-white/30 mb-6" />
-                            <blockquote className="text-lg text-white leading-relaxed font-serif italic mb-6">
-                                "We reduced our travel health compliance process
-                                from 3 weeks to 20 minutes. The audit trail alone
-                                justified the cost."
-                            </blockquote>
-                            <div>
-                                <p className="text-sm font-semibold text-white">
-                                    James L.
-                                </p>
-                                <p className="text-xs text-white/50">
-                                    Head of Global Mobility · TechCorp
-                                </p>
-                            </div>
-                        </div>
-                    </AnimateIn>
-                </div>
-            </section>
-
             {/* Credit allocation */}
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
@@ -394,10 +335,10 @@ const ForCompanies = () => {
                         </p>
                         <Button
                             variant="primary"
-                            link="/company-onboarding"
-                            className="bg-white !text-dark hover:bg-white/90 mx-auto"
+                            link="/pricing?tab=company"
+                            className="bg-white text-dark! hover:bg-white/90 mx-auto"
                         >
-                            Start onboarding
+                            Start Onboarding
                         </Button>
                     </AnimateIn>
                 </div>

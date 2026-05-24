@@ -135,6 +135,18 @@ function parsePositiveInteger(value?: string): number {
     return Number.isNaN(parsed) || parsed <= 0 ? 0 : parsed;
 }
 
+function durationDaysFromTransitDuration(value?: string): number {
+    switch ((value ?? "").trim()) {
+        case "<12h":
+        case "12-24h":
+            return 1;
+        case ">24h":
+            return 2;
+        default:
+            return 0;
+    }
+}
+
 function durationDaysFromLengthOfStay(value?: string): number {
     switch ((value ?? "").trim()) {
         case "<1m":
@@ -148,18 +160,6 @@ function durationDaysFromLengthOfStay(value?: string): number {
         case "12m+":
         case "open":
             return 366;
-        default:
-            return 0;
-    }
-}
-
-function durationDaysFromTransitDuration(value?: string): number {
-    switch ((value ?? "").trim()) {
-        case "<12h":
-        case "12-24h":
-            return 1;
-        case ">24h":
-            return 2;
         default:
             return 0;
     }
@@ -217,14 +217,14 @@ function isTripItineraryComplete(data: TripItineraryData | undefined): boolean {
     if (!data) return false;
     const d = hydrateLegacyTripItinerary(data);
     let filled = false;
-    if (d.tripType === "one") {
+    if (d.tripType === "one-way") {
         filled = Boolean(
             d.oneFromCity?.trim() &&
                 d.oneFromCountry?.trim() &&
                 d.oneToCity?.trim() &&
                 d.oneTo?.trim() &&
                 d.oneDepartureDate?.trim() &&
-                d.oneLengthOfStay?.trim()
+                d.oneNumberOfFlights?.trim()
         );
     } else if (d.tripType === "return") {
         filled = Boolean(
@@ -286,7 +286,7 @@ function getDisplayValue(question: Question, value: unknown): string {
     if (question.type === "trip_itinerary") {
         const trip = hydrateLegacyTripItinerary(value as TripItineraryData);
         if (!trip?.tripType) return "Not provided";
-        if (trip.tripType === "one") {
+        if (trip.tripType === "one-way") {
             const from = mergeCityCountry(trip.oneFromCity, trip.oneFromCountry) || (trip.oneFrom ?? "").trim();
             const to = mergeCityCountry(trip.oneToCity, trip.oneTo) || (trip.oneTo ?? "").trim();
             return `One-way: ${from} → ${to}`;
@@ -361,23 +361,23 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
 
     if (itinerary) {
         const it = hydrateLegacyTripItinerary(itinerary);
-        if (it.tripType === "one") {
+        if (it.tripType === "one-way") {
             primaryCountry = (it.oneTo ?? "").trim();
             const fromMerged = mergeCityCountry(it.oneFromCity, it.oneFromCountry) || (it.oneFrom ?? "").trim();
             const toMerged = mergeCityCountry(it.oneToCity, it.oneTo) || primaryCountry;
             destination = toMerged;
             if (fromMerged) destination = `${fromMerged} → ${toMerged}`;
             tripType = "one-way";
-            const oneWayDuration = durationDaysFromLengthOfStay(it.oneLengthOfStay);
-            if (oneWayDuration > 0) duration = oneWayDuration;
+            const lengthOfStayDays = durationDaysFromLengthOfStay(it.oneLengthOfStay);
+            if (lengthOfStayDays > 0) duration = lengthOfStayDays;
             tripDetailsJson = JSON.stringify({
                 tripType: "one-way",
                 departureCity: fromMerged,
                 destination: toMerged,
                 departureDate: it.oneDepartureDate ?? "",
-                lengthOfStay: it.oneLengthOfStay ?? "",
+                numberOfFlights: it.oneNumberOfFlights ?? "",
                 purpose: it.onePurpose ?? "",
-                flightNumber: it.oneFlightNumber ?? "",
+                lengthOfStay: it.oneLengthOfStay ?? "",
                 stops: [{ city: (it.oneToCity ?? "").trim(), country: primaryCountry, order: 1 }],
             });
         } else if (it.tripType === "return") {
@@ -395,8 +395,6 @@ function buildPlanPayloadFromAnswers(answers: Record<string, unknown>): Question
                 destination: toMerged,
                 departureDate: it.returnDepartureDate ?? "",
                 returnDate: it.returnReturnDate ?? "",
-                outboundFlightNumber: it.outboundFlightNumber ?? "",
-                returnFlightNumber: it.returnFlightNumber ?? "",
                 stops: [{ city: (it.returnToCity ?? "").trim(), country: primaryCountry, order: 1 }],
             });
         } else if (it.tripType === "multi") {
@@ -1359,7 +1357,7 @@ const QuestionInput = ({
         case "trip_itinerary":
             return (
                 <TripItineraryFlow
-                    value={(value as TripItineraryData) || { tripType: "one" }}
+                    value={(value as TripItineraryData) || { tripType: "one-way" }}
                     onChange={(data) => onChange(data)}
                 />
             );

@@ -11,6 +11,7 @@ import TrustSection from "../../components/sections/TrustSection";
 import WhatAICoversSection from "../../components/sections/WhatAICoversSection";
 // import WhoWeAreSection from "../../components/sections/WhoWeAreSection";
 import SEOHead from "../../lib/seo";
+import WhoWeAreSection from "../../components/sections/WhoWeAreSection";
 
 const Home = () => {
     const heroLayout = useMemo(() => Math.floor(Math.random() * 7), []);
@@ -21,12 +22,12 @@ const Home = () => {
             <HeroSection layout={heroLayout} />
             {/* <BrandsSection /> */}
             <HowItWorksSection />
-            <SamplePlanSection />
-            <WhatAICoversSection />
-            <AudienceSection />
-            {/*<WhoWeAreSection />*/}
+            {/*<SamplePlanSection />*/}
+            {/*<WhatAICoversSection />*/}
+            {/*<AudienceSection />*/}
+          <WhoWeAreSection /> 
             <TrustSection />
-            <PricingSection />
+            {/*<PricingSection />*/}
             <FAQSection />
             <FinalCTASection />
         </main>

@@ -108,9 +108,12 @@ const EmailVerification = () => {
             <h1 className="text-3xl md:text-4xl font-serif text-heading mb-2">
                 Verify your email.
             </h1>
-            <p className="text-sm text-body mb-8">
+            <p className="text-sm text-body mb-2">
                 We sent a 6-digit code to{" "}
                 <strong className="text-heading">{email}</strong>
+            </p>
+            <p className="text-xs text-muted mb-8">
+                Can't find it? Check your spam or promotions folder.
             </p>
 
             <div className="flex justify-center gap-3 mb-8" onPaste={handlePaste}>

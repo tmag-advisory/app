@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LucideUser, LucideBuilding2, LucideArrowRight, LucideArrowLeft, LucideCheck, LucideGift, LucideZap, LucideShield, LucideActivity, LucideMinus, LucidePlus, LucideSparkles } from "lucide-react";
+import { LucideArrowRight, LucideCheck, LucideGift, LucideZap, LucideShield, LucideActivity, LucideMinus, LucidePlus, LucideSparkles } from "lucide-react";
 import { useUpsertOnboarding, useAdvanceOnboardingStage, useUpdateProfile, useOnboarding, useValidateCompanyCode, useMyCompanies, useInitiateCreditPurchase } from "../../api/hooks";
 import type { BillingCurrency } from "../../api/types";
 import { useOnboardingStore } from "../../context/OnboardingContext";
@@ -50,7 +50,7 @@ const fadeUp = {
 const Onboarding = () => {
     const navigate = useNavigate();
     const { user, refreshProfile } = useAuth();
-    const { setUserType: storeSetUserType, reset: resetOnboarding } = useOnboardingStore();
+    const { reset: resetOnboarding } = useOnboardingStore();
     const { selectedCurrency } = useCurrencyStore();
     const affiliateDiscountRate = getStoredAffiliateDiscountRate();
     const [searchParams] = useSearchParams();
@@ -66,27 +66,25 @@ const Onboarding = () => {
     const planCode = user?.user_credit_plan?.code;
     const isPaidIndividualPlan = (planCode === "STANDARD" || planCode === "PREMIUM") && !isInvitedUser;
 
-    // Get Credits is step 2 for paid individual users — shown after profile (name, phone, country),
-    // before Welcome. Skip goes directly to Welcome.
+    // User type is selected at signup, so onboarding skips straight to Profile.
+    // Get Credits step is shown for paid individual users between Profile and Welcome.
     const steps = isPaidIndividualPlan
-        ? ["User Type", "Profile", "Get Credits", "Welcome"]
-        : ["User Type", "Profile", "Welcome"];
+        ? ["Profile", "Get Credits", "Welcome"]
+        : ["Profile", "Welcome"];
 
-    const S_USERTYPE = 0;
-    const S_PROFILE  = 1;
-    const S_CREDITS  = isPaidIndividualPlan ? 2 : -1;
-    const S_WELCOME  = isPaidIndividualPlan ? 3 : 2;
+    const S_PROFILE = 0;
+    const S_CREDITS = isPaidIndividualPlan ? 1 : -1;
+    const S_WELCOME = isPaidIndividualPlan ? 2 : 1;
 
     const stage = user?.onboarding_stage ?? 0;
     const getInitialStep = () => {
         if (isPaidIndividualPlan) {
             if (stage >= 5) return S_WELCOME;
             if (stage >= 4) return S_CREDITS;
-            if (stage >= 3) return S_PROFILE;
-            return S_USERTYPE;
+            return S_PROFILE;
         }
         if (stage >= 5) return S_WELCOME;
-        return Math.min(Math.max(stage - 2, 0), S_WELCOME);
+        return S_PROFILE;
     };
     const [step, setStep] = useState(getInitialStep);
     const didMountRefresh = useRef(false);
@@ -182,7 +180,7 @@ const Onboarding = () => {
     }, [invitedCompany]);
 
     useEffect(() => {
-        if(user && user.extend && user.extend.role_name.toLowerCase() === "individual") {
+        if (user && user.extend && user.extend.role_name.toLowerCase() === "individual") {
             setUserType(user?.extend?.role_name.toLowerCase() as "individual" | "company");
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -195,20 +193,6 @@ const Onboarding = () => {
         setDirection(next > step ? 1 : -1);
         setError("");
         setStep(next);
-    };
-
-    const handleUserTypeNext = async () => {
-        if (!userType) return;
-        setError("");
-        try {
-            storeSetUserType(userType);
-            await upsertOnboarding.mutateAsync({ userType: userType });
-            await advanceStage.mutateAsync({ stage: 3 });
-            await refreshProfile();
-            goTo(S_PROFILE);
-        } catch {
-            setError("Failed to save. Please try again.");
-        }
     };
 
     const handleProfileNext = async () => {
@@ -296,9 +280,7 @@ const Onboarding = () => {
     const handleSaveAndExit = async () => {
         setIsSavingExit(true);
         try {
-            if (step === S_USERTYPE && userType) {
-                await upsertOnboarding.mutateAsync({ userType });
-            } else if (step === S_PROFILE) {
+            if (step === S_PROFILE) {
                 await updateProfile.mutateAsync({
                     first_name: profile.firstName.trim(),
                     last_name: profile.lastName.trim(),
@@ -375,23 +357,21 @@ const Onboarding = () => {
                         {steps.map((s, i) => (
                             <div
                                 key={s}
-                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${
-                                    i === step ?
-                                        "bg-accent/10 border border-accent/20"
+                                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${i === step ?
+                                    "bg-accent/10 border border-accent/20"
                                     : i < step ? "text-accent"
-                                    : "text-muted"
-                                }`}
+                                        : "text-muted"
+                                    }`}
                             >
                                 <div
-                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
-                                        i < step ? "bg-accent text-white"
+                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${i < step ? "bg-accent text-white"
                                         : i === step ? "bg-heading text-white"
-                                        : "bg-border-light text-muted"
-                                    }`}
+                                            : "bg-border-light text-muted"
+                                        }`}
                                 >
                                     {i < step ?
                                         <LucideCheck className="w-3.5 h-3.5" />
-                                    :   i + 1}
+                                        : i + 1}
                                 </div>
                                 <span
                                     className={`text-sm font-medium ${i === step ? "text-heading" : ""}`}
@@ -416,8 +396,8 @@ const Onboarding = () => {
                                     animate={{
                                         width:
                                             i < step ? "100%"
-                                            : i === step ? "50%"
-                                            : "0%",
+                                                : i === step ? "50%"
+                                                    : "0%",
                                     }}
                                     transition={{
                                         duration: 0.5,
@@ -426,9 +406,8 @@ const Onboarding = () => {
                                 />
                             </div>
                             <p
-                                className={`text-[11px] mt-1.5 font-medium transition-colors duration-300 ${
-                                    i <= step ? "text-accent" : "text-muted/50"
-                                }`}
+                                className={`text-[11px] mt-1.5 font-medium transition-colors duration-300 ${i <= step ? "text-accent" : "text-muted/50"
+                                    }`}
                             >
                                 {i < step && (
                                     <LucideCheck className="w-3 h-3 inline -mt-0.5" />
@@ -454,110 +433,6 @@ const Onboarding = () => {
                     )}
 
                     <AnimatePresence mode="wait" custom={direction}>
-                        {/* ── Step: User Type ──────────── */}
-                        {step === S_USERTYPE && (
-                            <motion.div
-                                key="step-usertype"
-                                custom={direction}
-                                variants={stepVariants}
-                                initial="enter"
-                                animate="center"
-                                exit="exit"
-                            >
-                                <motion.h1
-                                    custom={0}
-                                    variants={fadeUp}
-                                    initial="hidden"
-                                    animate="visible"
-                                    className="text-4xl sm:text-5xl font-serif text-heading mb-3 leading-tight"
-                                >
-                                    How will you
-                                    <br />
-                                    use TMAG?
-                                </motion.h1>
-                                <motion.p
-                                    custom={1}
-                                    variants={fadeUp}
-                                    initial="hidden"
-                                    animate="visible"
-                                    className="text-base text-body mb-10 leading-relaxed"
-                                >
-                                    This helps us tailor your experience.
-                                </motion.p>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {[
-                                        {
-                                            type: "individual" as const,
-                                            icon: LucideUser,
-                                            title: "Individual",
-                                            desc: "I'm planning personal or family travel.",
-                                        },
-                                        {
-                                            type: "company" as const,
-                                            icon: LucideBuilding2,
-                                            title: "Company",
-                                            desc: "I am a member of an organization.",
-                                        },
-                                    ].map((opt, i) => (
-                                        <motion.button
-                                            key={opt.type}
-                                            custom={i + 2}
-                                            variants={fadeUp}
-                                            initial="hidden"
-                                            animate="visible"
-                                            type="button"
-                                            onClick={() =>
-                                                !isInvitedUser &&
-                                                setUserType(opt.type)
-                                            }
-                                            disabled={
-                                                isInvitedUser &&
-                                                opt.type !== "company"
-                                            }
-                                            className={`p-7 rounded-2xl border-2 text-left transition-all duration-200 ${
-                                                userType === opt.type ?
-                                                    "border-accent bg-accent/5 shadow-sm"
-                                                :   "border-border-light hover:border-border"
-                                            } ${isInvitedUser && opt.type !== "company" ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
-                                        >
-                                            <opt.icon
-                                                className={`w-7 h-7 mb-4 transition-colors ${
-                                                    userType === opt.type ?
-                                                        "text-accent"
-                                                    :   "text-muted"
-                                                }`}
-                                            />
-                                            <h3 className="text-lg font-semibold text-heading mb-1">
-                                                {opt.title}
-                                            </h3>
-                                            <p className="text-sm text-body">
-                                                {opt.desc}
-                                            </p>
-                                        </motion.button>
-                                    ))}
-                                </div>
-
-                                <motion.button
-                                    custom={4}
-                                    variants={fadeUp}
-                                    initial="hidden"
-                                    animate="visible"
-                                    onClick={handleUserTypeNext}
-                                    disabled={!userType || isLoading}
-                                    className="w-full mt-8 py-3.5 rounded-2xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                                >
-                                    {isLoading ?
-                                        "Saving…"
-                                    :   <>
-                                            Continue{" "}
-                                            <LucideArrowRight className="w-4 h-4" />
-                                        </>
-                                    }
-                                </motion.button>
-                            </motion.div>
-                        )}
-
                         {/* ── Step: Profile ─────────────── */}
                         {step === S_PROFILE && (
                             <motion.div
@@ -691,15 +566,14 @@ const Onboarding = () => {
                                                     }
                                                     readOnly={isInvitedUser}
                                                     placeholder="TMA-XXXX"
-                                                    className={`w-full border-2 rounded-2xl px-5 py-3.5 pr-12 text-base text-heading placeholder:text-muted/40 outline-none transition-colors duration-200 ${
-                                                        isInvitedUser ?
-                                                            "bg-button-secondary border-border-light/60 cursor-not-allowed"
+                                                    className={`w-full border-2 rounded-2xl px-5 py-3.5 pr-12 text-base text-heading placeholder:text-muted/40 outline-none transition-colors duration-200 ${isInvitedUser ?
+                                                        "bg-button-secondary border-border-light/60 cursor-not-allowed"
                                                         : codeIsValid ?
                                                             "bg-white border-green-400 focus:border-green-500"
-                                                        : codeIsInvalid ?
-                                                            "bg-white border-red-400 focus:border-red-500"
-                                                        :   "bg-white border-border-light/60 focus:border-accent"
-                                                    }`}
+                                                            : codeIsInvalid ?
+                                                                "bg-white border-red-400 focus:border-red-500"
+                                                                : "bg-white border-border-light/60 focus:border-accent"
+                                                        }`}
                                                 />
                                                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
                                                     {codeValidating && (
@@ -747,14 +621,6 @@ const Onboarding = () => {
                                     className="flex gap-3 mt-8"
                                 >
                                     <button
-                                        onClick={() => goTo(S_USERTYPE)}
-                                        disabled={isLoading}
-                                        className="py-3.5 px-6 rounded-2xl bg-button-secondary text-heading font-semibold text-sm cursor-pointer hover:bg-border-light transition-colors duration-200 flex items-center gap-2 disabled:opacity-40"
-                                    >
-                                        <LucideArrowLeft className="w-4 h-4" />{" "}
-                                        Back
-                                    </button>
-                                    <button
                                         onClick={handleProfileNext}
                                         disabled={
                                             isLoading ||
@@ -770,12 +636,12 @@ const Onboarding = () => {
                                     >
                                         {isLoading ?
                                             "Saving…"
-                                        : codeValidating ?
-                                            "Checking…"
-                                        :   <>
-                                                Continue{" "}
-                                                <LucideArrowRight className="w-4 h-4" />
-                                            </>
+                                            : codeValidating ?
+                                                "Checking…"
+                                                : <>
+                                                    Continue{" "}
+                                                    <LucideArrowRight className="w-4 h-4" />
+                                                </>
                                         }
                                     </button>
                                 </motion.div>
@@ -900,7 +766,7 @@ const Onboarding = () => {
                                 >
                                     {isLoading ?
                                         "Setting up…"
-                                    :   <>
+                                        : <>
                                             Get started{" "}
                                             <LucideArrowRight className="w-4 h-4" />
                                         </>
@@ -918,11 +784,11 @@ const Onboarding = () => {
                                 const basePricePerCredit =
                                     selectedCurrency === "NGN" ?
                                         (plan?.basePriceNgn ?? 0)
-                                    :   (plan?.basePriceUsd ?? 0);
+                                        : (plan?.basePriceUsd ?? 0);
                                 const pricePerCredit =
                                     affiliateDiscountRate > 0 ?
                                         basePricePerCredit * (1 - affiliateDiscountRate / 100)
-                                    :   basePricePerCredit;
+                                        : basePricePerCredit;
                                 const symbol =
                                     selectedCurrency === "NGN" ? "₦" : "$";
                                 const total = pricePerCredit * creditsToBuy;
@@ -965,27 +831,15 @@ const Onboarding = () => {
                                             transition={{ delay: 0.2 }}
                                             className="text-4xl sm:text-5xl font-serif text-heading mb-3 leading-tight"
                                         >
-                                            Stock up on
-                                            <br />
-                                            credits.
+                                            Lets Get You Ready to Travel!
                                         </motion.h1>
-
-                                        <motion.p
-                                            initial={{ opacity: 0, y: 12 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.3 }}
-                                            className="text-base text-body mb-2 leading-relaxed max-w-sm mx-auto"
-                                        >
-                                            Buy credits now to start generating
-                                            plans.
-                                        </motion.p>
 
                                         {/* 1 credit = 1 plan — bold callout */}
                                         <motion.div
                                             initial={{ opacity: 0, y: 8 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: 0.35 }}
-                                            className="inline-flex items-center gap-2 mb-8 px-5 py-2.5 rounded-xl bg-background-secondary text-heading"
+                                            className="inline-flex items-center gap-2 mb-4 px-5 py-2.5 rounded-xl bg-background-secondary text-heading"
                                         >
                                             <LucideZap className="w-4 h-4 shrink-0" />
                                             <span className="text-sm font-bold tracking-tight">
@@ -993,84 +847,98 @@ const Onboarding = () => {
                                             </span>
                                         </motion.div>
 
-                                        {/* Credit stepper */}
+                                        {/* BOGO promo banner — TODO: backend must grant bonus credit on first purchase */}
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.38 }}
+                                            className="flex items-center gap-3 mb-6 px-4 py-3 rounded-2xl bg-linear-to-r from-accent/10 to-amber-50 border border-accent/20 max-w-md mx-auto"
+                                        >
+                                            <LucideGift className="w-5 h-5 text-accent shrink-0" />
+                                            <p className="text-left text-xs sm:text-sm text-heading">
+                                                <span className="font-bold">Launch offer:</span> Buy now and get{" "}
+                                                <span className="font-bold text-accent">1 free credit</span>{" "}
+                                                toward your next trip.
+                                            </p>
+                                        </motion.div>
+
+                                        {/* Stepper + price card */}
                                         <motion.div
                                             initial={{ opacity: 0, y: 12 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: 0.4 }}
-                                            className="mb-3"
+                                            className="mb-6 p-6 rounded-3xl bg-linear-to-br from-background-secondary to-white border border-border-light/60"
                                         >
                                             <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-4">
                                                 How many credits?
                                             </p>
-                                            <div className="flex items-center justify-center gap-5">
-                                                <button
+                                            <div className="flex items-center justify-center gap-5 mb-5">
+                                                <motion.button
+                                                    whileTap={{ scale: 0.9 }}
                                                     onClick={() =>
                                                         setCreditsToBuy(
                                                             Math.max(
                                                                 1,
-                                                                creditsToBuy -
-                                                                    1,
+                                                                creditsToBuy - 1,
                                                             ),
                                                         )
                                                     }
-                                                    className="w-11 h-11 rounded-2xl border-2 border-border-light flex items-center justify-center text-heading hover:border-accent hover:text-accent transition-colors"
+                                                    className="w-12 h-12 rounded-2xl border-2 border-border-light flex items-center justify-center text-heading hover:border-accent hover:text-accent transition-colors cursor-pointer"
                                                 >
                                                     <LucideMinus className="w-4 h-4" />
-                                                </button>
-                                                <div className="text-center min-w-[4rem]">
-                                                    <span className="text-5xl font-serif text-heading tabular-nums">
+                                                </motion.button>
+                                                <div className="text-center min-w-[5rem]">
+                                                    <motion.span
+                                                        key={creditsToBuy}
+                                                        initial={{ scale: 0.85, opacity: 0.5 }}
+                                                        animate={{ scale: 1, opacity: 1 }}
+                                                        transition={{ type: "spring", stiffness: 380, damping: 22 }}
+                                                        className="text-6xl font-serif text-heading tabular-nums inline-block"
+                                                    >
                                                         {creditsToBuy}
-                                                    </span>
+                                                    </motion.span>
                                                     <p className="text-xs text-muted mt-1">
                                                         {creditsToBuy === 1 ?
                                                             "credit"
-                                                        :   "credits"}
+                                                            : "credits"}
                                                     </p>
                                                 </div>
-                                                <button
+                                                <motion.button
+                                                    whileTap={{ scale: 0.9 }}
                                                     onClick={() =>
                                                         setCreditsToBuy(
                                                             Math.min(
                                                                 100,
-                                                                creditsToBuy +
-                                                                    1,
+                                                                creditsToBuy + 1,
                                                             ),
                                                         )
                                                     }
-                                                    className="w-11 h-11 rounded-2xl border-2 border-border-light flex items-center justify-center text-heading hover:border-accent hover:text-accent transition-colors"
+                                                    className="w-12 h-12 rounded-2xl border-2 border-border-light flex items-center justify-center text-heading hover:border-accent hover:text-accent transition-colors cursor-pointer"
                                                 >
                                                     <LucidePlus className="w-4 h-4" />
-                                                </button>
+                                                </motion.button>
                                             </div>
-                                        </motion.div>
 
-                                        {/* Price summary */}
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 8 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.45 }}
-                                            className="mb-8"
-                                        >
-                                            <p className="text-sm text-muted">
-                                                {symbol}
-                                                {pricePerCredit.toLocaleString()}{" "}
-                                                per credit
+                                            {/* Price summary */}
+                                            <div className="pt-4 border-t border-border-light/60">
+                                                <div className="flex items-baseline justify-center gap-1.5 mb-1">
+                                                    <span className="text-3xl font-serif text-heading tabular-nums">
+                                                        {symbol}
+                                                        {total.toLocaleString()}
+                                                    </span>
+                                                    <span className="text-xs text-muted">total</span>
+                                                </div>
+                                                <p className="text-xs text-muted">
+                                                    {symbol}
+                                                    {pricePerCredit.toLocaleString()}{" "}
+                                                    per credit
+                                                </p>
                                                 {affiliateDiscountRate > 0 && (
-                                                    <span className="text-accent font-semibold">
-                                                        {" "}
-                                                        · {affiliateDiscountRate}% affiliate discount
+                                                    <span className="inline-block mt-2 text-[11px] font-semibold text-accent bg-accent/10 px-2.5 py-1 rounded-full">
+                                                        {affiliateDiscountRate}% affiliate discount applied
                                                     </span>
                                                 )}
-                                                {creditsToBuy > 1 && (
-                                                    <span className="text-heading font-semibold">
-                                                        {" "}
-                                                        · {symbol}
-                                                        {total.toLocaleString()}{" "}
-                                                        total
-                                                    </span>
-                                                )}
-                                            </p>
+                                            </div>
                                         </motion.div>
 
                                         {/* Actions */}
@@ -1087,23 +955,21 @@ const Onboarding = () => {
                                             >
                                                 {isLoading ?
                                                     "Processing…"
-                                                :   <>
+                                                    : <>
                                                         Buy {creditsToBuy}{" "}
                                                         {creditsToBuy === 1 ?
                                                             "credit"
-                                                        :   "credits"}{" "}
-                                                        — {symbol}
-                                                        {total.toLocaleString()}{" "}
+                                                            : "credits"}{" "}
                                                         <LucideArrowRight className="w-4 h-4" />
                                                     </>
                                                 }
                                             </button>
-                                            <button
+                                            {/*<button
                                                 onClick={handleSkipCredits}
                                                 className="w-full py-3 text-sm cursor-pointer text-muted hover:text-heading transition-colors"
                                             >
                                                 Skip for now — Continue
-                                            </button>
+                                            </button>*/}
                                         </motion.div>
                                     </motion.div>
                                 );

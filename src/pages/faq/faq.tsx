@@ -26,12 +26,16 @@ const faqCategories = [
         category: "Credits & billing",
         questions: [
             {
-                q: "What consumes a credit?",
-                a: "Generating one full travel health plan for one trip consumes one credit. A trip can include multiple destinations. Viewing, downloading, or sharing an existing plan does not consume a credit.",
+                q: "How do credits work?",
+                a: "One credit generates one complete travel health plan for one trip. A trip can include multiple destinations. Individual users can buy credits directly; company plans include signup credits distributed to employees. Viewing, downloading, or sharing an existing plan does not consume a credit.",
+            },
+            {
+                q: "Can I buy more credits later?",
+                a: "Yes. Individual users can purchase credits anytime from the dashboard. Company admins can top up credits or request additional allocations from the company dashboard.",
             },
             {
                 q: "Is the first plan really free?",
-                a: "Yes. You can sign up and generate your first plan at no cost, with no credit card required. This lets you see exactly what you'll get before paying for anything.",
+                a: "Yes. Every new account receives 1 free Essential credit — a destination health education report with no personal data required. Upgrade to Standard or Premium for a fully personalised plan.",
             },
             {
                 q: "Do credits expire?",
@@ -46,6 +50,10 @@ const faqCategories = [
     {
         category: "Plans & features",
         questions: [
+            {
+                q: "What's the difference between Standard and Premium?",
+                a: "Standard generates a fully personalised travel health report covering vaccines, medications, risks, and emergency contacts. Premium adds a Pre-Travel Checklist, Medication Packing List, and a Doctor-Ready Clinical Summary Letter for your GP.",
+            },
             {
                 q: "What's included in a plan?",
                 a: "Each plan includes: required and recommended vaccinations, medication recommendations, disease risk alerts, water and food safety guidance, emergency contacts and nearby clinics, insurance considerations, packing checklist, and any pre-existing condition adjustments.",
@@ -87,6 +95,10 @@ const faqCategories = [
             {
                 q: "How does the corporate plan differ?",
                 a: "Corporate accounts include an HR dashboard for managing travelers, bulk plan generation, compliance reporting, duty-of-care documentation, credit allocation across departments, and API access for integration with travel platforms.",
+            },
+            {
+                q: "Can I upgrade my company plan?",
+                a: "Yes. Contact our sales team and we'll migrate your account to a higher tier. Any unused credits transfer over.",
             },
             {
                 q: "Can we integrate TMAG with our travel booking system?",

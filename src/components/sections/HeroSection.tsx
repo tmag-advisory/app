@@ -29,9 +29,9 @@ interface HeroVariant {
 
 const HERO_VARIANT: HeroVariant = {
     eyebrow: "Personalized Travel Health Intelligence",
-    headlineLines: ["Travel Far.", "Come Back", "Safe."],
+    headlineLines: ["Travel", "Return", "Safe."],
     subtext:
-        "Physician validated. Tailored to your  itinerary and health history. Any time, any where.",
+        "Physician validated. Tailored to your itinerary and health history. Anytime, anywhere.",
     cta: "Get Started",
     destinations: [
         {
@@ -271,13 +271,11 @@ const Divider = ({ className = "" }: { className?: string }) => (
 );
 
 const TYPING_WORDS = [
-    "Safe.",
-    "Covered.",
-    "Prepared.",
-    "Protected.",
-    "Informed.",
+    "Far.",
     "Ready.",
-    "Advised.",
+    "Smart.",
+    "Prepared.",
+    "Informed.",
 ];
 
 const TypewriterWord = ({ hl }: { hl: string }) => {
@@ -331,7 +329,7 @@ const TypewriterWord = ({ hl }: { hl: string }) => {
     }, []);
 
     return (
-        <span className={`block ${hl} italic text-accent`}>
+        <span className={`${hl} italic text-accent inline-block`}>
             {text}
             <span
                 ref={cursorRef}
@@ -472,15 +470,14 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                                 className="font-serif text-heading leading-[0.88] tracking-tight"
                             >
                                 <span className={`block ${hl}`}>
-                                    {variant.headlineLines[0]}
+                                    {variant.headlineLines[0]}{" "}
+                                    <TypewriterWord hl={hl} />
                                 </span>
                                 <span className={`block ${hl}`}>
                                     {variant.headlineLines[1]}
                                 </span>
-                                <span
-                                    className={`block ${hl} italic text-accent`}
-                                >
-                                    <TypewriterWord hl={hl} />
+                                <span className={`block ${hl}`}>
+                                    {variant.headlineLines[2]}
                                 </span>
                             </h1>
                             <Divider />
@@ -549,13 +546,14 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                         className="font-serif text-heading leading-[0.88] tracking-tight max-w-4xl"
                     >
                         <span className={`block ${hl}`}>
-                            {variant.headlineLines[0]}
+                            {variant.headlineLines[0]}{" "}
+                            <TypewriterWord hl={hl} />
                         </span>
                         <span className={`block ${hl}`}>
                             {variant.headlineLines[1]}
                         </span>
-                        <span className={`block ${hl} italic text-accent`}>
-                            <TypewriterWord hl={hl} />
+                        <span className={`block ${hl}`}>
+                            {variant.headlineLines[2]}
                         </span>
                     </h1>
                     <Divider className="max-w-sm mx-auto" />
@@ -636,15 +634,14 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                                 className="font-serif text-heading leading-[0.88] tracking-tight"
                             >
                                 <span className={`block ${hl}`}>
-                                    {variant.headlineLines[0]}
+                                    {variant.headlineLines[0]}{" "}
+                                    <TypewriterWord hl={hl} />
                                 </span>
                                 <span className={`block ${hl}`}>
                                     {variant.headlineLines[1]}
                                 </span>
-                                <span
-                                    className={`block ${hl} italic text-accent`}
-                                >
-                                    <TypewriterWord hl={hl} />
+                                <span className={`block ${hl}`}>
+                                    {variant.headlineLines[2]}
                                 </span>
                             </h1>
                             <Divider />
@@ -699,13 +696,14 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                         className="font-serif text-heading leading-[0.85] tracking-tight"
                     >
                         <span className={`block ${hl}`}>
-                            {variant.headlineLines[0]}
+                            {variant.headlineLines[0]}{" "}
+                            <TypewriterWord hl={hl} />
                         </span>
                         <span className={`block ${hl}`}>
                             {variant.headlineLines[1]}
                         </span>
-                        <span className={`block ${hl} italic text-accent`}>
-                            <TypewriterWord hl={hl} />
+                        <span className={`block ${hl}`}>
+                            {variant.headlineLines[2]}
                         </span>
                     </h1>
                     <Divider className="max-w-lg" />
@@ -772,13 +770,14 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                         className="font-serif text-heading leading-[0.90] tracking-tight"
                     >
                         <span className={`block ${hl}`}>
-                            {variant.headlineLines[0]}
+                            {variant.headlineLines[0]}{" "}
+                            <TypewriterWord hl={hl} />
                         </span>
                         <span className={`block ${hl}`}>
                             {variant.headlineLines[1]}
                         </span>
-                        <span className={`block ${hl} italic text-accent`}>
-                            <TypewriterWord hl={hl} />
+                        <span className={`block ${hl}`}>
+                            {variant.headlineLines[2]}
                         </span>
                     </h1>
                     <Divider className="max-w-xs mx-auto" />
@@ -845,12 +844,11 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                             >
                                 <span className={`block ${hl}`}>
                                     {variant.headlineLines[0]}{" "}
+                                    <TypewriterWord hl={hl} />{" "}
                                     {variant.headlineLines[1]}
                                 </span>
-                                <span
-                                    className={`block ${hl} italic text-accent`}
-                                >
-                                    <TypewriterWord hl={hl} />
+                                <span className={`block ${hl}`}>
+                                    {variant.headlineLines[2]}
                                 </span>
                             </h1>
                             <Divider className="max-w-lg" />
@@ -925,13 +923,14 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                     className="font-serif text-heading leading-[0.88] tracking-tight max-w-4xl"
                 >
                     <span className={`block ${hl}`}>
-                        {variant.headlineLines[0]}
+                        {variant.headlineLines[0]}{" "}
+                        <TypewriterWord hl={hl} />
                     </span>
                     <span className={`block ${hl}`}>
                         {variant.headlineLines[1]}
                     </span>
-                    <span className={`block ${hl} italic text-accent`}>
-                        <TypewriterWord hl={hl} />
+                    <span className={`block ${hl}`}>
+                        {variant.headlineLines[2]}
                     </span>
                 </h1>
                 <Divider className="max-w-sm mx-auto" />
