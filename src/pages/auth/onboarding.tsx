@@ -265,9 +265,9 @@ const Onboarding = () => {
         }
     };
 
-    const handleSkipCredits = () => {
-        goTo(S_WELCOME);
-    };
+    // const handleSkipCredits = () => {
+    //     goTo(S_WELCOME);
+    // };
 
     const isLoading =
         upsertOnboarding.isPending ||

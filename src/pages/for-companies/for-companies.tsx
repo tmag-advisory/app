@@ -1,5 +1,4 @@
 import {
-    LucideBuilding2,
     LucideShieldCheck,
     LucideUsers,
     LucideBarChart3,
