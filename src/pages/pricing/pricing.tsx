@@ -563,13 +563,16 @@ const PricingPage = () => {
                         <p className="text-sm text-body mb-8 max-w-lg mx-auto">
                             Credits, plan tiers, refunds, and more — all answered in one place.
                         </p>
-                        <Button
-                            variant="secondary"
-                            icon={<LucideArrowRight />}
-                            link="/faq"
-                        >
-                            See our FAQ
-                        </Button>
+                        <div className="flex items-center justify-center">
+
+                            <Button
+                                variant="secondary"
+                                icon={<LucideArrowRight />}
+                                link="/faq"
+                            >
+                                See our FAQ
+                            </Button>
+                        </div>
                     </AnimateIn>
                 </section>
             </div>
