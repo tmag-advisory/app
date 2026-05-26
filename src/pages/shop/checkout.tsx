@@ -11,6 +11,9 @@ import {
 import { cn } from "../../lib/utils";
 import toast from "react-hot-toast";
 import SEOHead from "../../lib/seo";
+import { useLaunchDiscount } from "../../api";
+import { applyLaunchToBase } from "../../lib/launchDiscount";
+import LaunchDiscountBanner from "../../components/sections/LaunchDiscountBanner";
 
 export default function CheckoutPage() {
     const [searchParams] = useSearchParams();
@@ -47,7 +50,17 @@ export default function CheckoutPage() {
         }).filter(Boolean) as { ebook: NonNullable<typeof ebooks>[0]; version: NonNullable<typeof ebooks>[0]["versions"][0] }[]
         : [];
 
-    const cartTotal = cartItems.reduce((sum, item) => sum + convertFrom(item.version.price, item.version.currency), 0);
+    const { data: launchDiscount } = useLaunchDiscount();
+    const launchPct = launchDiscount?.active ? launchDiscount.percentage : 0;
+    const applyLaunch = (n: number) => (launchPct > 0 ? applyLaunchToBase(n, launchPct) : n);
+    const formatMoney = (n: number) =>
+        n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const originalCartTotal = cartItems.reduce(
+        (sum, item) => sum + convertFrom(item.version.price, item.version.currency),
+        0,
+    );
+    const cartTotal = applyLaunch(originalCartTotal);
     const cartSymbol = symbol();
 
     useEffect(() => {
@@ -276,7 +289,7 @@ export default function CheckoutPage() {
                                 ) : (
                                     <>
                                         <LucideLock className="w-4 h-4" />
-                                        Proceed to Secure Payment — {isCartCheckout ? cartSymbol : symbol()}{(isCartCheckout ? cartTotal : convertFrom(version?.price ?? 0, version?.currency ?? "USD")).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        Proceed to Secure Payment — {isCartCheckout ? cartSymbol : symbol()}{formatMoney(isCartCheckout ? cartTotal : applyLaunch(convertFrom(version?.price ?? 0, version?.currency ?? "USD")))}
                                     </>
                                 )}
                             </button>
@@ -292,6 +305,8 @@ export default function CheckoutPage() {
                     <div className="md:col-span-2">
                         <div className="bg-white rounded-2xl border border-border-light p-6 sticky top-8">
                             <h3 className="text-xs font-bold tracking-wider text-muted uppercase mb-4">Order Summary</h3>
+
+                            <LaunchDiscountBanner variant="inline" className="mb-4" />
 
                             {isCartCheckout ? (
                                 <div className="space-y-3 mb-5">
@@ -311,7 +326,19 @@ export default function CheckoutPage() {
                                                 </p>
                                                 <p className="text-xs text-muted mt-0.5">{ver.label}</p>
                                                 <p className="text-sm font-semibold text-heading mt-1">
-                                                    {symbol()}{convertFrom(ver.price, ver.currency).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    {(() => {
+                                                        const original = convertFrom(ver.price, ver.currency);
+                                                        const discounted = applyLaunch(original);
+                                                        if (launchPct > 0 && discounted !== original) {
+                                                            return (
+                                                                <>
+                                                                    <span className="line-through text-muted mr-1">{symbol()}{formatMoney(original)}</span>
+                                                                    {symbol()}{formatMoney(discounted)}
+                                                                </>
+                                                            );
+                                                        }
+                                                        return <>{symbol()}{formatMoney(original)}</>;
+                                                    })()}
                                                 </p>
                                             </div>
                                         </div>
@@ -366,7 +393,13 @@ export default function CheckoutPage() {
                                         <div key={ver.id} className="flex items-center justify-between text-sm">
                                             <span className="text-body truncate mr-2">{ver.label}</span>
                                             <span className="font-medium text-heading whitespace-nowrap">
-                                                {symbol()}{convertFrom(ver.price, ver.currency).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                {(() => {
+                                                    const original = convertFrom(ver.price, ver.currency);
+                                                    const discounted = applyLaunch(original);
+                                                    return launchPct > 0 && discounted !== original
+                                                        ? `${symbol()}${formatMoney(discounted)}`
+                                                        : `${symbol()}${formatMoney(original)}`;
+                                                })()}
                                             </span>
                                         </div>
                                     ))}
@@ -377,7 +410,7 @@ export default function CheckoutPage() {
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm font-semibold text-heading">Total</span>
                                     <span className="text-xl font-bold text-accent">
-                                        {isCartCheckout ? cartSymbol : symbol()}{(isCartCheckout ? cartTotal : convertFrom(version?.price ?? 0, version?.currency ?? "USD")).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        {isCartCheckout ? cartSymbol : symbol()}{formatMoney(isCartCheckout ? cartTotal : applyLaunch(convertFrom(version?.price ?? 0, version?.currency ?? "USD")))}
                                     </span>
                                 </div>
                             </div>

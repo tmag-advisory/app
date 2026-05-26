@@ -18,6 +18,9 @@ import {
     familyPlans,
     formatFamilyPlanPrice,
 } from "../../constants/companyPlans";
+import { useLaunchDiscount } from "../../api";
+import { applyLaunchToBase } from "../../lib/launchDiscount";
+import LaunchDiscountBanner from "../../components/sections/LaunchDiscountBanner";
 import { useCurrencyStore } from "../../stores/currencyStore";
 import {
     getStoredAffiliateDiscountRate,
@@ -38,6 +41,8 @@ const BuyAdditionalPlan = () => {
     const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(
         getStoredAffiliateDiscountRate,
     );
+    const { data: launchDiscount } = useLaunchDiscount();
+    const launchPct = launchDiscount?.active ? launchDiscount.percentage : 0;
 
     useEffect(() => {
         let cancelled = false;
@@ -261,14 +266,20 @@ const BuyAdditionalPlan = () => {
             )}
 
             {/* ── Available plans for purchase ── */}
+
+            <LaunchDiscountBanner variant="page" className="mb-4 max-w-md" />
             <section className="max-w-md">
                 {familyPlans.map((plan) => {
                     const currencySymbol =
                         selectedCurrency === "NGN" ? "₦" : "$";
-                    const basePrice =
+                    const originalBasePrice =
                         selectedCurrency === "NGN" ?
                             plan.priceNgn
                         :   plan.priceUsd;
+                    const basePrice =
+                        launchPct > 0
+                            ? applyLaunchToBase(originalBasePrice, launchPct)
+                            : originalBasePrice;
                     const discountAmt =
                         affiliateDiscountRate > 0 ?
                             Math.round(
@@ -302,26 +313,27 @@ const BuyAdditionalPlan = () => {
                                 </p>
                                 <div className="flex items-baseline gap-1.5 mb-1">
                                     <span className="text-4xl font-serif text-[#1a5c52]">
-                                        {formatFamilyPlanPrice(
-                                            plan,
-                                            selectedCurrency,
-                                        )}
+                                        {launchPct > 0 || affiliateDiscountRate > 0
+                                            ? `${currencySymbol}${discountedPrice.toLocaleString()}`
+                                            : formatFamilyPlanPrice(plan, selectedCurrency)}
                                     </span>
                                 </div>
 
-                                {affiliateDiscountRate > 0 && (
+                                {(launchPct > 0 || affiliateDiscountRate > 0) && (
                                     <div className="mt-1 mb-2">
                                         <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded-lg px-2.5 py-1.5 w-fit">
                                             <LucideTag className="w-3 h-3" />
                                             <span className="font-medium">
-                                                {affiliateDiscountRate}%
-                                                affiliate discount
+                                                {[
+                                                    launchPct > 0 ? `${launchPct}% launch` : null,
+                                                    affiliateDiscountRate > 0 ? `${affiliateDiscountRate}% affiliate` : null,
+                                                ].filter(Boolean).join(" + ")} off
                                             </span>
                                         </div>
                                         <p className="text-sm text-green-700 mt-1">
                                             <span className="line-through text-muted text-xs">
                                                 {currencySymbol}
-                                                {basePrice.toLocaleString()}
+                                                {originalBasePrice.toLocaleString()}
                                             </span>{" "}
                                             <span className="font-semibold">
                                                 {currencySymbol}

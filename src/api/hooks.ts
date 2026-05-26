@@ -36,6 +36,8 @@ import {
   settingsApi,
   familyPackagePurchaseApi,
 } from "./api";
+import { platformApi, LAUNCH_DISCOUNT_FALLBACK } from "./platform";
+import type { LaunchDiscount } from "./platform";
 import type {
   LoginRequest,
   RegisterRequest,
@@ -1552,5 +1554,21 @@ export function useOnboardingPricingPreview(credits: number) {
     queryFn: () => companyOnboardingApi.getPricingPreview(credits),
     enabled: credits > 0,
     staleTime: 60_000,
+  });
+}
+
+// ─── Platform Discount Hook ───────────────────────────────────
+/**
+ * Fetches the platform-wide launch discount state. Falls back to a disabled
+ * shape when the request errors so price-rendering sites can render
+ * unconditionally without null-checks.
+ */
+export function useLaunchDiscount() {
+  return useQuery<LaunchDiscount>({
+    queryKey: ["launch-discount"],
+    queryFn: () => platformApi.getLaunchDiscount(),
+    staleTime: 5 * 60_000,
+    retry: 1,
+    placeholderData: LAUNCH_DISCOUNT_FALLBACK,
   });
 }

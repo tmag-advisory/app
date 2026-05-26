@@ -18,6 +18,8 @@ const HRPaymentCallback = () => {
     const txRef = searchParams.get("tx_ref");
     const flwStatus = searchParams.get("status");
     const transactionId = searchParams.get("transaction_id");
+    const callbackSuccess = searchParams.get("success");
+    const callbackError = searchParams.get("error");
 
     useEffect(() => {
         if (hasVerified.current) return;
@@ -25,16 +27,17 @@ const HRPaymentCallback = () => {
         const verifyPayment = async () => {
             if (!txRef) {
                 setStatus("failed");
-                setErrorMessage("Missing transaction reference");
+                setErrorMessage(callbackError || "Missing transaction reference");
                 return;
             }
 
-            if (flwStatus && flwStatus !== "successful" && flwStatus !== "completed") {
+            if (callbackSuccess === "false" || (flwStatus && flwStatus !== "successful" && flwStatus !== "completed")) {
                 setStatus("failed");
                 setErrorMessage(
-                    flwStatus === "cancelled"
+                    callbackError ||
+                    (flwStatus === "cancelled"
                         ? "Payment was cancelled"
-                        : "Payment was not completed"
+                        : "Payment was not completed")
                 );
                 return;
             }
@@ -69,7 +72,7 @@ const HRPaymentCallback = () => {
         };
 
         verifyPayment();
-    }, [txRef, flwStatus, transactionId, verifyPurchase]);
+    }, [txRef, flwStatus, transactionId, callbackSuccess, callbackError, verifyPurchase]);
 
     return (
         <div className="min-h-[60vh] flex items-center justify-center px-6">
