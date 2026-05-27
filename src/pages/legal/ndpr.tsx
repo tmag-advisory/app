@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { LucideShieldCheck } from "lucide-react";
 import AnimateIn from "../../components/animations/AnimateIn";
 import SEOHead from "../../lib/seo";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 const NDPRCompliance = () => {
     return (
@@ -9,9 +10,7 @@ const NDPRCompliance = () => {
  <SEOHead title="NDPR Compliance — Travel Medicine Advisory Global" description="Nigeria Data Protection Regulation compliance information for TMAG travel health platform." path="/ndpr" robots="noindex, follow" />
             <section className="px-8 lg:px-16 pt-20 pb-24 max-w-4xl mx-auto">
                 <AnimateIn>
-                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                        Legal
-                    </span>
+                    <SectionEyebrow className="mb-6">Legal</SectionEyebrow>
                     <h1 className="text-4xl md:text-5xl text-heading font-serif leading-[1.1] mb-4">
                         NDPR Compliance
                     </h1>

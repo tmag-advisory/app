@@ -5,6 +5,7 @@ import {
     LucideDroplets,
 } from "lucide-react";
 import AnimateIn from "../animations/AnimateIn";
+import SectionEyebrow from "../ui/SectionEyebrow";
 
 const planItems = [
     {
@@ -41,9 +42,7 @@ const SamplePlanSection = () => {
         <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
             <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                 <div>
-                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                        Sample plan
-                    </span>
+                    <SectionEyebrow className="mb-6">Sample plan</SectionEyebrow>
                     <h2 className="text-4xl md:text-5xl lg:text-6xl text-heading leading-[1.1] font-serif max-w-lg">
                         See what your plan{" "}
                         <span className="italic">looks</span> like.

@@ -1,8 +1,16 @@
-import { LucideShieldCheck, LucideGraduationCap, LucideLock, LucideRefreshCw } from "lucide-react";
+import {
+    LucideShieldCheck,
+    LucideGraduationCap,
+    LucideLock,
+    LucideRefreshCw,
+    LucideStethoscope,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import StarRating from "../ui/StarRating";
 import AnimateIn from "../animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
+import SectionEyebrow from "../ui/SectionEyebrow";
+
 const badges = [
     {
         icon: <LucideShieldCheck className="w-5 h-5" />,
@@ -51,24 +59,35 @@ const TrustSection = () => {
         <div className="bg-background-secondary">
             <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
                 <AnimateIn className="text-center mb-14">
-                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                        Trusted & verified
-                    </span>
+                    <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+                        <SectionEyebrow>Clinically grounded</SectionEyebrow>
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-accent bg-accent/10 border border-accent/20 rounded-full px-3 py-1">
+                            <LucideStethoscope
+                                width={12}
+                                height={12}
+                                strokeWidth={2.25}
+                            />
+                            Physician-reviewed
+                        </span>
+                    </div>
                     <h2 className="text-4xl md:text-5xl lg:text-6xl text-heading leading-[1.1] font-serif max-w-2xl mx-auto">
-                        Your health data is in{" "}
-                        <span className="italic">safe</span> hands.
+                        Trusted by physicians.{" "}
+                        <span className="italic">Globally aligned.</span>
                     </h2>
                 </AnimateIn>
 
                 {/* Trust badges */}
-                <StaggerGroup className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14" stagger={0.1}>
+                <StaggerGroup
+                    className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14"
+                    stagger={0.1}
+                >
                     {badges.map((b) => (
                         <motion.div
                             variants={staggerItem}
                             key={b.label}
                             className="flex flex-col items-center gap-3 bg-background-primary rounded-2xl py-6 px-4 text-center"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-button-secondary flex items-center justify-center text-heading">
+                            <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
                                 {b.icon}
                             </div>
                             <span className="text-sm font-semibold text-heading">
@@ -79,7 +98,10 @@ const TrustSection = () => {
                 </StaggerGroup>
 
                 {/* Testimonials */}
-                <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-6" stagger={0.12}>
+                <StaggerGroup
+                    className="grid grid-cols-1 md:grid-cols-3 gap-6"
+                    stagger={0.12}
+                >
                     {testimonials.map((t) => (
                         <motion.div
                             variants={staggerItem}
@@ -89,11 +111,13 @@ const TrustSection = () => {
                             <div>
                                 <StarRating count={5} />
                                 <p className="text-base font-medium text-heading leading-relaxed mt-4 mb-6">
-                                    "{t.quote}"
+                                    &ldquo;{t.quote}&rdquo;
                                 </p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${t.color}`}>
+                                <div
+                                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${t.color}`}
+                                >
                                     {t.initials}
                                 </div>
                                 <div>

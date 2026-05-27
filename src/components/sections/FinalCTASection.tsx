@@ -25,30 +25,73 @@ const FinalCTASection = () => {
                     }}
                 />
 
-                <AnimateIn type="scaleUp" className="relative z-10 max-w-xl mx-auto">
+                {/* Decorative arc behind headline */}
+                <svg
+                    aria-hidden
+                    className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[44rem] max-w-full h-40"
+                    viewBox="0 0 800 160"
+                    fill="none"
+                >
+                    <path
+                        d="M 40 130 Q 400 -40 760 130"
+                        stroke="#ffffff"
+                        strokeOpacity="0.18"
+                        strokeWidth="1.5"
+                        strokeDasharray="4 8"
+                        fill="none"
+                    />
+                    <path
+                        d="M 80 130 Q 400 0 720 130"
+                        stroke="#c4953a"
+                        strokeOpacity="0.35"
+                        strokeWidth="1.5"
+                        strokeDasharray="2 6"
+                        fill="none"
+                    />
+                </svg>
+
+                <AnimateIn
+                    type="scaleUp"
+                    className="relative z-10 max-w-xl mx-auto"
+                >
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                        <span className="relative flex w-2.5 h-2.5">
+                            <span
+                                className="absolute inset-0 rounded-full animate-ping"
+                                style={{ backgroundColor: "#c4953a", opacity: 0.6 }}
+                            />
+                            <span
+                                className="relative inline-flex w-2.5 h-2.5 rounded-full"
+                                style={{ backgroundColor: "#c4953a" }}
+                            />
+                        </span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
+                            Live travel intelligence
+                        </span>
+                    </div>
                     <h2 className="text-4xl md:text-5xl lg:text-6xl text-white leading-[1.1] font-serif mb-4">
-                        Travel healthy.{" "}
-                        <span className="italic">Travel&nbsp;smart.</span>
+                        Travel Smart.{" "}
+                        <span className="italic">Travel&nbsp;Safe.</span>
                     </h2>
                     <p className="text-sm text-white/70 leading-relaxed max-w-md mx-auto mb-8">
                         Get your personalized travel health plan in under two
-                        minutes free to start, no credit card required.
+                        minutes. Free to start, no credit card required.
                     </p>
                     <div className="flex items-center justify-center gap-4 flex-wrap">
                         <Button
                             variant="primary"
                             className="bg-white !text-dark hover:bg-white/90"
-                            link="/register"
+                            link="/pricing"
                         >
-                            Get started
+                            Get Started
                         </Button>
                         <Button
                             variant="secondary"
                             icon={<LucideArrowRight />}
                             className="!bg-white/15 !text-white hover:!bg-white/25 border-none"
-                            link="/contact?type=SALES"
+                            link="/pricing?tab=company"
                         >
-                            Talk to sales
+                            For Organisations
                         </Button>
                     </div>
                 </AnimateIn>

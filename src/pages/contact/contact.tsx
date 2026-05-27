@@ -5,6 +5,7 @@ import AnimateIn from "../../components/animations/AnimateIn";
 import { useSubmitContact } from "../../api/hooks";
 import type { ContactInquiryType } from "../../api/types";
 import SEOHead from "../../lib/seo";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 const INQUIRY_LABELS: Record<ContactInquiryType, string> = {
     SUPPORT: "Support request",
@@ -101,9 +102,7 @@ const ContactPage = () => {
                 as="section"
                 className="flex flex-col items-center text-center pt-20 pb-10 px-6"
             >
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    Get in touch
-                </span>
+                <SectionEyebrow className="mb-6">Get in touch</SectionEyebrow>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl text-heading leading-[1.1] font-serif max-w-3xl mb-4">
                     How can we help?
                 </h1>

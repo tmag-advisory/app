@@ -6,6 +6,7 @@ import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGr
 import Button from "../../components/ui/Button";
 import { useNewsletterSubscribe } from "../../api/hooks";
 import SEOHead from "../../lib/seo";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 const featuredPost = {
     title: "How Technology Is Changing Travel Health Preparation",
@@ -69,9 +70,7 @@ const Blog = () => {
  <SEOHead title="Blog — Travel Medicine Advisory Global" description="Travel health tips, product updates, and behind-the-scenes from the TMAG team." path="/blog" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    Blog
-                </span>
+                <SectionEyebrow className="mb-6">Blog</SectionEyebrow>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading font-serif max-w-3xl">
                     Insights &{" "}
                     <span className="italic">updates.</span>

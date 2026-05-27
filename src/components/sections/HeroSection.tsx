@@ -1,4 +1,11 @@
-import { LucideArrowRight, LucideShield, LucideCheck } from "lucide-react";
+import {
+    LucideArrowRight,
+    LucideShield,
+    LucideCheck,
+    LucideStethoscope,
+    LucideShieldCheck,
+    LucideGlobe,
+} from "lucide-react";
 import { useRef, useLayoutEffect, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import gsap from "gsap";
@@ -19,75 +26,60 @@ interface SampleTripData {
     progressSteps: ProgressStep[];
 }
 
-interface HeroVariant {
-    eyebrow: string;
-    headlineLines: [string, string, string];
-    subtext: string;
-    cta: string;
-    destinations: SampleTripData[];
-}
-
-const HERO_VARIANT: HeroVariant = {
-    eyebrow: "Personalized Travel Health Intelligence",
-    headlineLines: ["Travel", "Return", "Safe."],
-    subtext:
-        "Physician validated. Tailored to your itinerary and health history. Anytime, anywhere.",
-    cta: "Get Started",
-    destinations: [
-        {
-            country: "Japan",
-            flag: "🇯🇵",
-            tripType: "Business Travel",
-            detail: "7-day Tokyo itinerary",
-            completeness: 85,
-            progressSteps: [
-                { label: "Medical Review", done: true },
-                { label: "Vaccinations", done: true },
-                { label: "Travel Insurance", done: true },
-                { label: "Medication Plan", done: true },
-            ],
-        },
-        {
-            country: "Kenya",
-            flag: "🇰🇪",
-            tripType: "Family Vacation",
-            detail: "Wildlife & beach getaway",
-            completeness: 45,
-            progressSteps: [
-                { label: "Medical Review", done: true },
-                { label: "Vaccinations", done: true },
-                { label: "Travel Insurance", done: false },
-                { label: "Travel Advisories", done: false },
-            ],
-        },
-        {
-            country: "Brazil",
-            flag: "🇧🇷",
-            tripType: "Medical Mission",
-            detail: "Rio & Amazon trek",
-            completeness: 60,
-            progressSteps: [
-                { label: "Medical Review", done: true },
-                { label: "Vaccinations", done: true },
-                { label: "Medication Plan", done: false },
-                { label: "Travel Advisories", done: false },
-            ],
-        },
-        {
-            country: "India",
-            flag: "🇮🇳",
-            tripType: "Study Abroad",
-            detail: "Cultural immersion program",
-            completeness: 30,
-            progressSteps: [
-                { label: "Medical Review", done: true },
-                { label: "Vaccinations", done: false },
-                { label: "Travel Insurance", done: false },
-                { label: "Travel Advisories", done: false },
-            ],
-        },
-    ],
-};
+const DESTINATIONS: SampleTripData[] = [
+    {
+        country: "Japan",
+        flag: "\ud83c\uddef\ud83c\uddf5",
+        tripType: "Business Travel",
+        detail: "7-day Tokyo itinerary",
+        completeness: 85,
+        progressSteps: [
+            { label: "Medical Review", done: true },
+            { label: "Vaccinations", done: true },
+            { label: "Travel Insurance", done: true },
+            { label: "Medication Plan", done: true },
+        ],
+    },
+    {
+        country: "Kenya",
+        flag: "\ud83c\uddf0\ud83c\uddea",
+        tripType: "Family Vacation",
+        detail: "Wildlife & beach getaway",
+        completeness: 45,
+        progressSteps: [
+            { label: "Medical Review", done: true },
+            { label: "Vaccinations", done: true },
+            { label: "Travel Insurance", done: false },
+            { label: "Travel Advisories", done: false },
+        ],
+    },
+    {
+        country: "Brazil",
+        flag: "\ud83c\udde7\ud83c\uddf7",
+        tripType: "Medical Mission",
+        detail: "Rio & Amazon trek",
+        completeness: 60,
+        progressSteps: [
+            { label: "Medical Review", done: true },
+            { label: "Vaccinations", done: true },
+            { label: "Medication Plan", done: false },
+            { label: "Travel Advisories", done: false },
+        ],
+    },
+    {
+        country: "India",
+        flag: "\ud83c\uddee\ud83c\uddf3",
+        tripType: "Study Abroad",
+        detail: "Cultural immersion program",
+        completeness: 30,
+        progressSteps: [
+            { label: "Medical Review", done: true },
+            { label: "Vaccinations", done: false },
+            { label: "Travel Insurance", done: false },
+            { label: "Travel Advisories", done: false },
+        ],
+    },
+];
 
 const CARD_CLS =
     "rounded-2xl border border-border bg-background-secondary shadow-sm p-4 cursor-default select-none";
@@ -98,17 +90,10 @@ const OFFSETS_R: {
     right?: string;
     rotate: number;
 }[] = [
-    { top: "3%", left: "2%", rotate: -2.5 },
-    { top: "6%", right: "0%", rotate: 2 },
-    { top: "50%", left: "6%", rotate: 1.5 },
-    { top: "54%", right: "3%", rotate: -1.5 },
-];
-
-const OFFSETS_L: typeof OFFSETS_R = [
-    { top: "3%", right: "2%", rotate: 2.5 },
-    { top: "6%", left: "0%", rotate: -2 },
-    { top: "50%", right: "6%", rotate: -1.5 },
-    { top: "54%", left: "3%", rotate: 1.5 },
+    { top: "2%", left: "0%", rotate: -2.5 },
+    { top: "5%", right: "0%", rotate: 2 },
+    { top: "52%", left: "4%", rotate: 1.5 },
+    { top: "56%", right: "0%", rotate: -1.5 },
 ];
 
 const FLOAT = [
@@ -118,20 +103,16 @@ const FLOAT = [
     { y: 9, dur: 4.0 },
 ];
 
-// const STATS = [
-//     { value: "1K+", label: "Travel Plans Created" },
-//     { value: "120+", label: "Countries covered" },
-//     { value: "5+", label: "Health Professionals" },
-// ];
+const HEADLINE_SIZE =
+    "text-5xl md:text-6xl lg:text-7xl xl:text-[5.25rem]";
 
-const HL_SIZE = [
-    "text-5xl md:text-6xl lg:text-7xl xl:text-[5.25rem]",
-    "text-5xl md:text-6xl lg:text-7xl xl:text-[5.25rem]",
-    "text-5xl md:text-6xl lg:text-7xl xl:text-[5.25rem]",
-    "text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl",
-    "text-4xl md:text-5xl lg:text-6xl",
-    "text-5xl md:text-6xl lg:text-7xl xl:text-8xl",
-];
+const riskFor = (
+    completeness: number,
+): { label: string; color: string } => {
+    if (completeness >= 70) return { label: "Low", color: "#4f9e6a" };
+    if (completeness >= 40) return { label: "Medium", color: "#d4a04a" };
+    return { label: "High", color: "#d46a4a" };
+};
 
 const ProgressChecklist = ({ steps }: { steps: ProgressStep[] }) => (
     <div className="mt-2 space-y-1">
@@ -162,9 +143,28 @@ const ProgressChecklist = ({ steps }: { steps: ProgressStep[] }) => (
     </div>
 );
 
+const MicroBadges = ({ completeness }: { completeness: number }) => {
+    const risk = riskFor(completeness);
+    return (
+        <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-background-primary border border-border text-heading">
+                <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ backgroundColor: risk.color }}
+                />
+                AI Risk: {risk.label}
+            </span>
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
+                <LucideCheck size={9} strokeWidth={3} />
+                Dr. Reviewed
+            </span>
+        </div>
+    );
+};
+
 const CardContent = ({ d }: { d: SampleTripData }) => (
     <>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 min-w-0">
                 <span className="text-xl shrink-0">{d.flag}</span>
                 <span className="font-semibold text-heading text-sm truncate">
@@ -175,6 +175,7 @@ const CardContent = ({ d }: { d: SampleTripData }) => (
                 {d.tripType}
             </span>
         </div>
+        <MicroBadges completeness={d.completeness} />
         <p className="text-xs text-muted leading-snug">{d.detail}</p>
         <ProgressChecklist steps={d.progressSteps} />
         <div className="mt-2">
@@ -204,56 +205,58 @@ const CardContent = ({ d }: { d: SampleTripData }) => (
 
 const MobileCards = ({ dests }: { dests: SampleTripData[] }) => (
     <div data-hero-anim className="grid grid-cols-2 gap-3 mt-10 lg:hidden">
-        {dests.slice(0, 2).map((d) => (
-            <div
-                key={d.country}
-                className="rounded-2xl border border-border bg-background-secondary p-3"
-            >
-                <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-base">{d.flag}</span>
-                    <span className="font-semibold text-heading text-xs truncate">
-                        {d.country}
-                    </span>
-                </div>
-                <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-accent/10 text-accent">
-                    {d.tripType}
-                </span>
-                <p className="text-xs text-muted mt-1.5 leading-snug">
-                    {d.detail}
-                </p>
-                <ProgressChecklist steps={d.progressSteps} />
-                <div className="mt-2 flex items-center gap-2">
-                    <div className="flex-1 h-1 rounded-full bg-border overflow-hidden">
-                        <div
-                            className="h-full rounded-full"
-                            style={{
-                                width: `${d.completeness}%`,
-                                backgroundColor:
-                                    d.completeness >= 70 ? "#4f9e6a"
-                                    : d.completeness >= 40 ? "#d4a04a"
-                                    : "#d46a4a",
-                            }}
-                        />
+        {dests.slice(0, 2).map((d) => {
+            const risk = riskFor(d.completeness);
+            return (
+                <div
+                    key={d.country}
+                    className="rounded-2xl border border-border bg-background-secondary p-3"
+                >
+                    <div className="flex items-center gap-1.5 mb-2">
+                        <span className="text-base">{d.flag}</span>
+                        <span className="font-semibold text-heading text-xs truncate">
+                            {d.country}
+                        </span>
                     </div>
-                    <span className="text-[10px] font-semibold text-heading tabular-nums">
-                        {d.completeness}%
-                    </span>
+                    <div className="flex items-center gap-1 mb-1.5 flex-wrap">
+                        <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-background-primary border border-border text-heading">
+                            <span
+                                className="w-1.5 h-1.5 rounded-full"
+                                style={{ backgroundColor: risk.color }}
+                            />
+                            {risk.label}
+                        </span>
+                        <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
+                            <LucideCheck size={9} strokeWidth={3} />
+                            Dr.
+                        </span>
+                    </div>
+                    <p className="text-xs text-muted leading-snug">
+                        {d.detail}
+                    </p>
+                    <ProgressChecklist steps={d.progressSteps} />
+                    <div className="mt-2 flex items-center gap-2">
+                        <div className="flex-1 h-1 rounded-full bg-border overflow-hidden">
+                            <div
+                                className="h-full rounded-full"
+                                style={{
+                                    width: `${d.completeness}%`,
+                                    backgroundColor:
+                                        d.completeness >= 70 ? "#4f9e6a"
+                                        : d.completeness >= 40 ? "#d4a04a"
+                                        : "#d46a4a",
+                                }}
+                            />
+                        </div>
+                        <span className="text-[10px] font-semibold text-heading tabular-nums">
+                            {d.completeness}%
+                        </span>
+                    </div>
                 </div>
-            </div>
-        ))}
+            );
+        })}
     </div>
 );
-
-// const StatsRow = ({ className = "" }: { className?: string }) => (
-//     <div data-hero-anim className={`flex flex-wrap items-center gap-8 mt-10 pt-8 border-t border-border-light ${className}`}>
-//         {STATS.map((s) => (
-//             <div key={s.label}>
-//                 <p className="text-2xl font-bold font-serif text-heading">{s.value}</p>
-//                 <p className="text-xs text-muted mt-0.5">{s.label}</p>
-//             </div>
-//         ))}
-//     </div>
-// );
 
 const Divider = ({ className = "" }: { className?: string }) => (
     <div
@@ -270,23 +273,18 @@ const Divider = ({ className = "" }: { className?: string }) => (
     </div>
 );
 
-const TYPING_WORDS = [
-    "Far.",
-    "Ready.",
-    "Smart.",
-    "Prepared.",
-    "Informed.",
-];
+const TYPING_WORDS = ["Far.", "Ready.", "Smart.", "Prepared.", "Informed."];
 
 const TypewriterWord = ({ hl }: { hl: string }) => {
     const [text, setText] = useState("");
     const wordIdxRef = useRef(0);
     const phaseRef = useRef<"typing" | "pause" | "deleting">("typing");
-    const textRef = useRef(text);
+    const textStateRef = useRef(text);
     const cursorRef = useRef<HTMLSpanElement>(null);
 
-    // Keep textRef synced during render
-    textRef.current = text;
+    useEffect(() => {
+        textStateRef.current = text;
+    });
 
     useEffect(() => {
         let mounted = true;
@@ -296,7 +294,7 @@ const TypewriterWord = ({ hl }: { hl: string }) => {
             if (!mounted) return;
             const word = TYPING_WORDS[wordIdxRef.current];
             const phase = phaseRef.current;
-            const currentText = textRef.current;
+            const currentText = textStateRef.current;
 
             if (phase === "typing") {
                 if (currentText.length < word.length) {
@@ -314,7 +312,8 @@ const TypewriterWord = ({ hl }: { hl: string }) => {
                     setText(word.slice(0, currentText.length - 1));
                     timeoutId = setTimeout(tick, 35);
                 } else {
-                    wordIdxRef.current = (wordIdxRef.current + 1) % TYPING_WORDS.length;
+                    wordIdxRef.current =
+                        (wordIdxRef.current + 1) % TYPING_WORDS.length;
                     phaseRef.current = "typing";
                     timeoutId = setTimeout(tick, 250);
                 }
@@ -340,15 +339,111 @@ const TypewriterWord = ({ hl }: { hl: string }) => {
     );
 };
 
-interface HeroSectionProps {
-    layout?: number;
-}
+const GlobeBackdrop = () => (
+    <svg
+        aria-hidden
+        className="pointer-events-none absolute inset-0 m-auto w-[34rem] h-[34rem] max-w-full max-h-full"
+        viewBox="0 0 600 600"
+        fill="none"
+    >
+        <defs>
+            <radialGradient id="globe-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#2a7a6a" stopOpacity="0.10" />
+                <stop offset="60%" stopColor="#2a7a6a" stopOpacity="0.02" />
+                <stop offset="100%" stopColor="#2a7a6a" stopOpacity="0" />
+            </radialGradient>
+        </defs>
+        <circle cx="300" cy="300" r="270" fill="url(#globe-glow)" />
+        <circle
+            cx="300"
+            cy="300"
+            r="240"
+            stroke="#2a7a6a"
+            strokeOpacity="0.22"
+            strokeWidth="1"
+        />
+        {[200, 150, 100, 50, 20].map((ry, i) => (
+            <ellipse
+                key={`lat-${i}`}
+                cx="300"
+                cy="300"
+                rx="240"
+                ry={ry}
+                stroke="#2a7a6a"
+                strokeOpacity="0.14"
+                strokeWidth="1"
+            />
+        ))}
+        {[200, 150, 100, 50, 20].map((rx, i) => (
+            <ellipse
+                key={`lon-${i}`}
+                cx="300"
+                cy="300"
+                rx={rx}
+                ry="240"
+                stroke="#2a7a6a"
+                strokeOpacity="0.14"
+                strokeWidth="1"
+            />
+        ))}
+        <path
+            d="M 120 280 Q 300 80 480 320"
+            stroke="#c4953a"
+            strokeOpacity="0.55"
+            strokeWidth="1.5"
+            strokeDasharray="4 5"
+            fill="none"
+        />
+        <path
+            d="M 180 420 Q 320 540 470 380"
+            stroke="#2a7a6a"
+            strokeOpacity="0.55"
+            strokeWidth="1.5"
+            strokeDasharray="4 5"
+            fill="none"
+        />
+        <path
+            d="M 100 360 Q 240 200 420 260"
+            stroke="#2a7a6a"
+            strokeOpacity="0.35"
+            strokeWidth="1"
+            strokeDasharray="2 6"
+            fill="none"
+        />
+        <circle
+            cx="120"
+            cy="280"
+            r="9"
+            fill="#c4953a"
+            fillOpacity="0.2"
+            className="animate-pulse"
+        />
+        <circle cx="120" cy="280" r="4" fill="#c4953a" />
+        <circle
+            cx="480"
+            cy="320"
+            r="9"
+            fill="#c4953a"
+            fillOpacity="0.2"
+            className="animate-pulse"
+        />
+        <circle cx="480" cy="320" r="4" fill="#c4953a" />
+        <circle
+            cx="180"
+            cy="420"
+            r="7"
+            fill="#2a7a6a"
+            fillOpacity="0.25"
+            className="animate-pulse"
+        />
+        <circle cx="180" cy="420" r="3.5" fill="#2a7a6a" />
+        <circle cx="470" cy="380" r="3.5" fill="#2a7a6a" />
+    </svg>
+);
 
-const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
+const HeroSection = () => {
     const sectionRef = useRef<HTMLElement>(null);
     const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
-
-    const variant = HERO_VARIANT;
 
     useLayoutEffect(() => {
         const ctx = gsap.context(() => {
@@ -360,18 +455,8 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                 stagger: 0.1,
             });
 
-            const fromX =
-                layout === 0 ? 60
-                : layout === 2 ? -60
-                : layout === 5 ? 40
-                : 0;
-            const fromY =
-                layout === 6 ? -30
-                : fromX === 0 ? 30
-                : 0;
             gsap.from("[data-dest-card]", {
-                x: fromX,
-                y: fromY,
+                x: 60,
                 opacity: 0.8,
                 duration: 0.75,
                 ease: "back.out(1.3)",
@@ -379,584 +464,181 @@ const HeroSection = ({ layout = 0 }: HeroSectionProps) => {
                 delay: 0.35,
             });
 
-            if (layout === 0 || layout === 2) {
-                cardsRef.current.forEach((el, i) => {
-                    if (!el) return;
-                    gsap.to(el, {
-                        y: -FLOAT[i].y,
-                        duration: FLOAT[i].dur,
-                        ease: "sine.inOut",
-                        repeat: -1,
-                        yoyo: true,
-                        delay: 1.5 + i * 0.3,
-                    });
+            cardsRef.current.forEach((el, i) => {
+                if (!el) return;
+                gsap.to(el, {
+                    y: -FLOAT[i].y,
+                    duration: FLOAT[i].dur,
+                    ease: "sine.inOut",
+                    repeat: -1,
+                    yoyo: true,
+                    delay: 1.5 + i * 0.3,
                 });
-            }
+            });
         }, sectionRef);
 
         return () => ctx.revert();
-    }, [layout]);
+    }, []);
 
-    const dotBg = (
-        <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-[0.18]"
-            style={{
-                backgroundImage:
-                    "radial-gradient(circle,#7a6a5a 1px,transparent 1px)",
-                backgroundSize: "26px 26px",
-            }}
-        />
-    );
-
-    const coords = (side: "right" | "left" = "right") => (
-        <div
-            aria-hidden
-            className={`pointer-events-none absolute top-6 ${side === "right" ? "right-8 text-right" : "left-8"} hidden lg:block select-none`}
+    return (
+        <section
+            ref={sectionRef}
+            className="relative overflow-hidden px-6 pt-14 pb-16 lg:px-14 lg:pt-20 lg:pb-20"
         >
-            <p className="font-mono text-[10px] tracking-widest text-brand-muted opacity-50">
-                TMAG — GLOBAL HEALTH ADVISORY
-            </p>
-        </div>
-    );
+            {/* Dot grid background */}
+            <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-[0.18]"
+                style={{
+                    backgroundImage:
+                        "radial-gradient(circle,#7a6a5a 1px,transparent 1px)",
+                    backgroundSize: "26px 26px",
+                }}
+            />
 
-    const hl = HL_SIZE[layout] ?? HL_SIZE[0];
-    const base =
-        "relative overflow-hidden px-6 pt-14 pb-16 lg:px-14 lg:pt-20 lg:pb-24";
+            {/* Top mono tag */}
+            <div
+                aria-hidden
+                className="pointer-events-none absolute top-6 right-8 hidden lg:block select-none text-right"
+            >
+                <p className="font-mono text-[10px] tracking-widest text-brand-muted opacity-50">
+                    TMAG — GLOBAL HEALTH ADVISORY
+                </p>
+            </div>
 
-    const floatingCards = (offsets: typeof OFFSETS_R) =>
-        variant.destinations.map((d, i) => {
-            const pos = offsets[i];
-            return (
-                <div
-                    key={d.country}
-                    data-dest-card
-                    ref={(el: HTMLDivElement | null) => {
-                        cardsRef.current[i] = el;
-                    }}
-                    className={`absolute w-52 ${CARD_CLS}`}
-                    style={{
-                        top: pos.top,
-                        ...(pos.left != null && { left: pos.left }),
-                        ...(pos.right != null && { right: pos.right }),
-                        transform: `rotate(${pos.rotate}deg)`,
-                    }}
-                >
-                    <CardContent d={d} />
-                </div>
-            );
-        });
-
-    if (layout === 0) {
-        return (
-            <section ref={sectionRef} className={base}>
-                {dotBg}
-                {coords("right")}
-                <div className="relative z-10 mx-auto max-w-7xl">
-                    <div className="grid lg:grid-cols-[1fr_0.85fr] lg:gap-12 items-center">
-                        <div className="flex flex-col items-start">
-                            <div
-                                data-hero-anim
-                                className="flex flex-col items-start gap-3 mb-5"
-                            >
-                                <StarRating count={5} />
-                                <br />
-                                <span className="text-sm font-medium text-muted">
-                                    {variant.eyebrow}
-                                </span>
-                            </div>
-                            <h1
-                                data-hero-anim
-                                className="font-serif text-heading leading-[0.88] tracking-tight"
-                            >
-                                <span className={`block ${hl}`}>
-                                    {variant.headlineLines[0]}{" "}
-                                    <TypewriterWord hl={hl} />
-                                </span>
-                                <span className={`block ${hl}`}>
-                                    {variant.headlineLines[1]}
-                                </span>
-                                <span className={`block ${hl}`}>
-                                    {variant.headlineLines[2]}
-                                </span>
-                            </h1>
-                            <Divider />
-                            <p
-                                data-hero-anim
-                                className="text-body leading-relaxed max-w-md sm:text-lg"
-                            >
-                                {variant.subtext}
-                            </p>
-                            <div
-                                data-hero-anim
-                                className="flex flex-wrap items-center gap-4 mt-8"
-                            >
-                                <Button variant="primary" link="/pricing">
-                                    {variant.cta}
-                                </Button>
-                                <Link
-                                    to="/how-it-works"
-                                    className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group"
-                                >
-                                    Learn More{" "}
-                                    <span className="group-hover:translate-x-0.5 transition-transform">
-                                        →
-                                    </span>
-                                </Link>
-                            </div>
-                            {/*<StatsRow />*/}
-                        </div>
-                        <div className="relative hidden lg:block h-115">
-                            <div
-                                aria-hidden
-                                className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                            >
-                                <LucideShield
-                                    size={300}
-                                    strokeWidth={0.4}
-                                    className="text-accent opacity-[0.06]"
-                                />
-                            </div>
-                            {floatingCards(OFFSETS_R)}
-                        </div>
-                    </div>
-                    <MobileCards dests={variant.destinations} />
-                </div>
-            </section>
-        );
-    }
-
-    if (layout === 1) {
-        return (
-            <section ref={sectionRef} data-id={layout} className={base}>
-                {dotBg}
-                <div className="relative z-10 mx-auto max-w-5xl flex flex-col items-center text-center">
-                    <div
-                        data-hero-anim
-                        className="flex flex-col items-center gap-3 mb-5"
-                    >
-                        <StarRating count={5} />
-                        <br />
-                        <span className="text-sm font-medium text-muted">
-                            {variant.eyebrow}
-                        </span>
-                    </div>
-                    <h1
-                        data-hero-anim
-                        className="font-serif text-heading leading-[0.88] tracking-tight max-w-4xl"
-                    >
-                        <span className={`block ${hl}`}>
-                            {variant.headlineLines[0]}{" "}
-                            <TypewriterWord hl={hl} />
-                        </span>
-                        <span className={`block ${hl}`}>
-                            {variant.headlineLines[1]}
-                        </span>
-                        <span className={`block ${hl}`}>
-                            {variant.headlineLines[2]}
-                        </span>
-                    </h1>
-                    <Divider className="max-w-sm mx-auto" />
-                    <p
-                        data-hero-anim
-                        className="text-body leading-relaxed max-w-xl sm:text-lg"
-                    >
-                        {variant.subtext}
-                    </p>
-                    <div
-                        data-hero-anim
-                        className="flex flex-wrap items-center justify-center gap-4 mt-8"
-                    >
-                        <Button variant="primary" link="/pricing">
-                            {variant.cta}
-                        </Button>
-                        <Link
-                            to="/how-it-works"
-                            className="text-sm font-medium text-heading hover:text-accent transition-colors duration-200 flex items-center gap-1.5 group"
+            <div className="relative z-10 mx-auto max-w-7xl">
+                <div className="grid lg:grid-cols-[1fr_0.9fr] lg:gap-12 items-center">
+                    {/* Left: copy */}
+                    <div className="flex flex-col items-start">
+                        <div
+                            data-hero-anim
+                            className="flex flex-col items-start gap-3 mb-5"
                         >
-                            Learn More{" "}
-                            <span className="group-hover:translate-x-0.5 transition-transform">
-                                →
+                            <StarRating count={5} />
+                            <span className="inline-flex items-center gap-2 text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5">
+                                <span className="relative flex w-2 h-2">
+                                    <span className="absolute inset-0 rounded-full bg-accent opacity-60 animate-ping" />
+                                    <span className="relative inline-flex w-2 h-2 rounded-full bg-accent" />
+                                </span>
+                                AI-Powered &middot; Physician-Validated
                             </span>
-                        </Link>
-                    </div>
-                    <div className="hidden lg:grid grid-cols-4 gap-4 mt-12 w-full">
-                        {variant.destinations.map((d) => (
-                            <div
-                                key={d.country}
-                                data-dest-card
-                                className={CARD_CLS}
-                            >
-                                <CardContent d={d} />
-                            </div>
-                        ))}
-                    </div>
-                    <MobileCards dests={variant.destinations} />
-                    {/*/!*<StatsRow className="justify-center" />*!/*/}
-                </div>
-            </section>
-        );
-    }
+                        </div>
 
-    if (layout === 2) {
-        return (
-            <section ref={sectionRef} data-id={layout} className={base}>
-                {dotBg}
-                {coords("left")}
-                <div className="relative z-10 mx-auto max-w-7xl">
-                    <div className="grid lg:grid-cols-[0.85fr_1fr] lg:gap-12 items-center">
-                        <div className="relative hidden lg:block h-115">
-                            <div
-                                aria-hidden
-                                className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                            >
-                                <LucideShield
-                                    size={300}
-                                    strokeWidth={0.4}
-                                    className="text-accent opacity-[0.06]"
-                                />
-                            </div>
-                            {floatingCards(OFFSETS_L)}
-                        </div>
-                        <div className="flex flex-col items-start lg:items-end lg:text-right">
-                            <div
-                                data-hero-anim
-                                className="flex flex-col items-end gap-3 mb-5 flex-wrap"
-                            >
-                                <StarRating count={5} />
-                                <br />
-                                <span className="text-sm font-medium text-muted">
-                                    {variant.eyebrow}
-                                </span>
-                            </div>
-                            <h1
-                                data-hero-anim
-                                className="font-serif text-heading leading-[0.88] tracking-tight"
-                            >
-                                <span className={`block ${hl}`}>
-                                    {variant.headlineLines[0]}{" "}
-                                    <TypewriterWord hl={hl} />
-                                </span>
-                                <span className={`block ${hl}`}>
-                                    {variant.headlineLines[1]}
-                                </span>
-                                <span className={`block ${hl}`}>
-                                    {variant.headlineLines[2]}
-                                </span>
-                            </h1>
-                            <Divider />
-                            <p
-                                data-hero-anim
-                                className="text-body leading-relaxed max-w-md sm:text-lg"
-                            >
-                                {variant.subtext}
-                            </p>
-                            <div
-                                data-hero-anim
-                                className="flex flex-wrap items-center gap-4 mt-8 lg:flex-row-reverse"
-                            >
-                                <Button variant="primary" link="/pricing">
-                                    {variant.cta}
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    link="/how-it-works"
-                                    icon={<LucideArrowRight />}
-                                >
-                                    Learn More
-                                </Button>
-                            </div>
-                            {/*<StatsRow className="lg:justify-end" />*/}
-                        </div>
-                    </div>
-                    <MobileCards dests={variant.destinations} />
-                </div>
-            </section>
-        );
-    }
+                        <h1
+                            data-hero-anim
+                            className="font-serif text-heading leading-[0.88] tracking-tight"
+                        >
+                            <span className={`block ${HEADLINE_SIZE}`}>
+                                Travel <TypewriterWord hl={HEADLINE_SIZE} />
+                            </span>
+                            <span className={`block ${HEADLINE_SIZE}`}>
+                                Return Safe.
+                            </span>
+                        </h1>
 
-    if (layout === 3) {
-        return (
-            <section ref={sectionRef} data-id={layout} className={base}>
-                {dotBg}
-                {coords("right")}
-                <div className="relative z-10 mx-auto max-w-7xl">
-                    <div
-                        data-hero-anim
-                        className="flex flex-col items-start gap-3 mb-5"
-                    >
-                        <StarRating count={5} />
-                        <br />
-                        <span className="text-sm font-medium text-muted">
-                            {variant.eyebrow}
-                        </span>
-                    </div>
-                    <h1
-                        data-hero-anim
-                        className="font-serif text-heading leading-[0.85] tracking-tight"
-                    >
-                        <span className={`block ${hl}`}>
-                            {variant.headlineLines[0]}{" "}
-                            <TypewriterWord hl={hl} />
-                        </span>
-                        <span className={`block ${hl}`}>
-                            {variant.headlineLines[1]}
-                        </span>
-                        <span className={`block ${hl}`}>
-                            {variant.headlineLines[2]}
-                        </span>
-                    </h1>
-                    <Divider className="max-w-lg" />
-                    <div className="grid lg:grid-cols-[1fr_1fr] lg:gap-16 items-start">
-                        <div>
-                            <p
-                                data-hero-anim
-                                className="text-body leading-relaxed max-w-md sm:text-lg"
-                            >
-                                {variant.subtext}
-                            </p>
-                            <div
-                                data-hero-anim
-                                className="flex flex-wrap items-center gap-4 mt-8"
-                            >
-                                <Button variant="primary" link="/pricing">
-                                    {variant.cta}
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    link="/how-it-works"
-                                    icon={<LucideArrowRight />}
-                                >
-                                    Learn More
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="hidden lg:grid grid-cols-2 gap-3">
-                            {variant.destinations.map((d) => (
-                                <div
-                                    key={d.country}
-                                    data-dest-card
-                                    className={CARD_CLS}
-                                >
-                                    <CardContent d={d} />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <MobileCards dests={variant.destinations} />
-                    {/*/!*<StatsRow />*!/*/}
-                </div>
-            </section>
-        );
-    }
+                        <Divider />
 
-    if (layout === 4) {
-        return (
-            <section ref={sectionRef} data-id={layout} className={base}>
-                {dotBg}
-                <div className="relative z-10 mx-auto max-w-3xl flex flex-col items-center text-center">
-                    <div
-                        data-hero-anim
-                        className="flex flex-col items-center gap-3 mb-5"
-                    >
-                        <StarRating count={5} />
-                        <br />
-                        <span className="text-sm font-medium text-muted">
-                            {variant.eyebrow}
-                        </span>
-                    </div>
-                    <h1
-                        data-hero-anim
-                        className="font-serif text-heading leading-[0.90] tracking-tight"
-                    >
-                        <span className={`block ${hl}`}>
-                            {variant.headlineLines[0]}{" "}
-                            <TypewriterWord hl={hl} />
-                        </span>
-                        <span className={`block ${hl}`}>
-                            {variant.headlineLines[1]}
-                        </span>
-                        <span className={`block ${hl}`}>
-                            {variant.headlineLines[2]}
-                        </span>
-                    </h1>
-                    <Divider className="max-w-xs mx-auto" />
-                    <p
-                        data-hero-anim
-                        className="text-body leading-relaxed max-w-lg sm:text-lg"
-                    >
-                        {variant.subtext}
-                    </p>
-                    <div
-                        data-hero-anim
-                        className="flex justify-center sm:flex-row sm:items-center sm:justify-center gap-6 mt-8 w-full"
-                    >
-                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4">
+                        <p
+                            data-hero-anim
+                            className="text-body leading-relaxed max-w-md sm:text-lg"
+                        >
+                            Get a personalized travel health plan in minutes
+                            built around your exact destination, dates,
+                            and health history.
+                        </p>
+
+                        <div
+                            data-hero-anim
+                            className="flex flex-wrap items-center gap-4 mt-8"
+                        >
                             <Button variant="primary" link="/pricing">
-                                {variant.cta}
+                                Get Started
                             </Button>
                             <Button
                                 variant="secondary"
-                                link="/how-it-works"
+                                link="/pricing?tab=company"
                                 icon={<LucideArrowRight />}
                             >
-                                Learn More
+                                For Organisations
                             </Button>
                         </div>
                     </div>
-                    <div className="flex gap-3 mt-10 overflow-x-auto pb-2 w-full lg:grid lg:grid-cols-4 lg:overflow-visible">
-                        {variant.destinations.map((d) => (
-                            <div
-                                key={d.country}
-                                data-dest-card
-                                className={`${CARD_CLS} min-w-[11rem] flex-shrink-0 lg:min-w-0`}
-                            >
-                                <CardContent d={d} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-        );
-    }
 
-    if (layout === 5) {
-        return (
-            <section ref={sectionRef} data-id={layout} className={base}>
-                {dotBg}
-                {coords("right")}
-                <div className="relative z-10 mx-auto max-w-7xl">
-                    <div className="grid lg:grid-cols-[1fr_auto] lg:gap-10 items-start">
-                        <div className="flex flex-col items-start">
-                            <div
-                                data-hero-anim
-                                className="flex flex-col items-start gap-3 mb-5"
-                            >
-                                <StarRating count={5} />
-                                <br />
-                                <span className="text-sm font-medium text-muted">
-                                    {variant.eyebrow}
-                                </span>
-                            </div>
-                            <h1
-                                data-hero-anim
-                                className="font-serif text-heading leading-[0.88] tracking-tight"
-                            >
-                                <span className={`block ${hl}`}>
-                                    {variant.headlineLines[0]}{" "}
-                                    <TypewriterWord hl={hl} />{" "}
-                                    {variant.headlineLines[1]}
-                                </span>
-                                <span className={`block ${hl}`}>
-                                    {variant.headlineLines[2]}
-                                </span>
-                            </h1>
-                            <Divider className="max-w-lg" />
-                            <p
-                                data-hero-anim
-                                className="text-body leading-relaxed max-w-lg sm:text-lg"
-                            >
-                                {variant.subtext}
-                            </p>
-                            <div
-                                data-hero-anim
-                                className="flex flex-wrap items-center gap-4 mt-8"
-                            >
-                                <Button variant="primary" link="/pricing">
-                                    {variant.cta}
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    link="/how-it-works"
-                                    icon={<LucideArrowRight />}
-                                >
-                                    Learn More
-                                </Button>
-                            </div>
-                            {/*<StatsRow />*/}
-                        </div>
-                        <div className="hidden lg:flex flex-col gap-3 w-52 pt-2">
-                            {variant.destinations.map((d) => (
+                    {/* Right: globe + floating cards */}
+                    <div className="relative hidden lg:block h-[34rem]">
+                        <GlobeBackdrop />
+                        {DESTINATIONS.map((d, i) => {
+                            const pos = OFFSETS_R[i];
+                            return (
                                 <div
                                     key={d.country}
                                     data-dest-card
-                                    className={CARD_CLS}
+                                    ref={(el: HTMLDivElement | null) => {
+                                        cardsRef.current[i] = el;
+                                    }}
+                                    className={`absolute w-56 ${CARD_CLS}`}
+                                    style={{
+                                        top: pos.top,
+                                        ...(pos.left != null && {
+                                            left: pos.left,
+                                        }),
+                                        ...(pos.right != null && {
+                                            right: pos.right,
+                                        }),
+                                        transform: `rotate(${pos.rotate}deg)`,
+                                    }}
                                 >
                                     <CardContent d={d} />
                                 </div>
-                            ))}
-                        </div>
+                            );
+                        })}
                     </div>
-                    <MobileCards dests={variant.destinations} />
                 </div>
-            </section>
-        );
-    }
 
-    return (
-        <section ref={sectionRef} data-id={layout} className={base}>
-            {dotBg}
-            <div className="relative z-10 mx-auto max-w-5xl flex flex-col items-center text-center">
-                <div className="hidden lg:grid grid-cols-4 gap-4 mb-10 w-full">
-                    {variant.destinations.map((d) => (
-                        <div
-                            key={d.country}
-                            data-dest-card
-                            className={CARD_CLS}
-                        >
-                            <CardContent d={d} />
-                        </div>
-                    ))}
-                </div>
+                <MobileCards dests={DESTINATIONS} />
+
+                {/* Global reach strip */}
                 <div
                     data-hero-anim
-                    className="flex flex-col items-center gap-3 mb-5"
+                    className="mt-12 lg:mt-16 pt-6 border-t border-border/60 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs text-muted"
                 >
-                    <StarRating count={5} />
-                    <br />
-                    <span className="text-sm font-medium text-muted">
-                        {variant.eyebrow}
+                    <span className="inline-flex items-center gap-2">
+                        <LucideGlobe
+                            width={14}
+                            height={14}
+                            className="text-accent"
+                        />
+                        Trusted by travellers across 120+ countries
                     </span>
-                </div>
-                <h1
-                    data-hero-anim
-                    className="font-serif text-heading leading-[0.88] tracking-tight max-w-4xl"
-                >
-                    <span className={`block ${hl}`}>
-                        {variant.headlineLines[0]}{" "}
-                        <TypewriterWord hl={hl} />
-                    </span>
-                    <span className={`block ${hl}`}>
-                        {variant.headlineLines[1]}
-                    </span>
-                    <span className={`block ${hl}`}>
-                        {variant.headlineLines[2]}
-                    </span>
-                </h1>
-                <Divider className="max-w-sm mx-auto" />
-                <p
-                    data-hero-anim
-                    className="text-body leading-relaxed max-w-xl sm:text-lg"
-                >
-                    {variant.subtext}
-                </p>
-                <div
-                    data-hero-anim
-                    className="flex flex-wrap items-center justify-center gap-4 mt-8"
-                >
-                    <Button variant="primary" link="/pricing">
-                        {variant.cta}
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        link="/how-it-works"
-                        icon={<LucideArrowRight />}
+                    <span
+                        aria-hidden
+                        className="hidden sm:inline text-border"
                     >
-                        Learn More
-                    </Button>
+                        &middot;
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                        <LucideShieldCheck
+                            width={14}
+                            height={14}
+                            className="text-accent"
+                        />
+                        WHO + CDC aligned
+                    </span>
+                    <span
+                        aria-hidden
+                        className="hidden sm:inline text-border"
+                    >
+                        &middot;
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                        <LucideStethoscope
+                            width={14}
+                            height={14}
+                            className="text-accent"
+                        />
+                        Reviewed by licensed physicians
+                    </span>
                 </div>
-                <MobileCards dests={variant.destinations} />
-                {/*<StatsRow className="justify-center" />*/}
             </div>
         </section>
     );

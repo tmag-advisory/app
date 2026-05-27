@@ -25,6 +25,7 @@ import LaunchDiscountBanner from "../../components/sections/LaunchDiscountBanner
 import PriceDiscountBadge from "../../components/pricing/PriceDiscountBadge";
 import { formatStackedPrice as formatPrice } from "../../lib/launchDiscount";
 import { useLaunchDiscount } from "../../api";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 type Audience = "individual" | "family" | "company";
 
@@ -93,9 +94,7 @@ const PricingPage = () => {
                 as="section"
                 className="flex flex-col items-center text-center pt-20 pb-12 px-6"
             >
-                <span className="inline-block text-sm text-teal-700 font-semibold px-4 py-1.5 mb-6">
-                    Pricing
-                </span>
+                <SectionEyebrow className="mb-6">Pricing</SectionEyebrow>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading font-serif max-w-3xl">
                     Simple, <span className="italic">honest</span> pricing.
                 </h1>

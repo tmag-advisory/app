@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import AnimateIn from "../animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
+import SectionEyebrow from "../ui/SectionEyebrow";
 
 const stats = [
     { value: "1,500+", label: "Travelers advised monthly" },
@@ -15,9 +16,7 @@ const WhoWeAreSection = () => {
                 {/* Header area */}
                 <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                     <div>
-                        <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                            Who we are
-                        </span>
+                        <SectionEyebrow className="mb-6">Who we are</SectionEyebrow>
                         <h2 className="text-4xl md:text-5xl lg:text-6xl text-heading leading-[1.1] font-serif">
                             The travel health advisory
                             <br />

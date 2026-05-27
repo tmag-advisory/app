@@ -23,6 +23,7 @@ import PriceDiscountBadge from "../pricing/PriceDiscountBadge";
 import { formatStackedPrice as formatPrice } from "../../lib/launchDiscount";
 import LaunchDiscountBanner from "./LaunchDiscountBanner";
 import { useLaunchDiscount } from "../../api";
+import SectionEyebrow from "../ui/SectionEyebrow";
 
 type Audience = "individual" | "family" | "company";
 
@@ -53,9 +54,7 @@ const PricingSection = () => {
         <div className="bg-background-secondary">
             <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
                 <AnimateIn className="text-center mb-14">
-                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                        Pricing
-                    </span>
+                    <SectionEyebrow className="mb-6">Pricing</SectionEyebrow>
                     <h2 className="text-4xl md:text-5xl lg:text-6xl text-heading leading-[1.1] font-serif">
                         Simple, <span className="italic">transparent</span> pricing.
                     </h2>

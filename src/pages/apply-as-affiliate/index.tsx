@@ -19,6 +19,7 @@ import {
     LucidePhone,
 } from "lucide-react";
 import api from "../../api/axios";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -574,9 +575,7 @@ const ApplyAsAffiliate = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="text-center mb-16"
                 >
-                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-5">
-                        Affiliate Programme
-                    </span>
+                    <SectionEyebrow className="mb-5">Affiliate Programme</SectionEyebrow>
                     <h1 className="text-4xl md:text-5xl font-serif text-heading mb-4 leading-tight">
                         Partner with TMAG
                     </h1>

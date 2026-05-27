@@ -3,6 +3,7 @@ import { LucidePlus, LucideMinus, LucideArrowRight } from "lucide-react";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import SEOHead from "../../lib/seo";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 const faqCategories = [
     {
@@ -155,9 +156,7 @@ const FAQPage = () => {
  <SEOHead title="FAQ — Travel Medicine Advisory Global" description="Frequently asked questions about TMAG travel health plans, pricing, data privacy, and how our platform works." path="/faq" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    FAQ
-                </span>
+                <SectionEyebrow className="mb-6">FAQ</SectionEyebrow>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading font-serif max-w-3xl">
                     Questions?{" "}
                     <span className="italic">Answered.</span>
