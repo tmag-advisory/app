@@ -15,6 +15,7 @@ import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 import Button from "../../components/ui/Button";
 import SEOHead from "../../lib/seo";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 const doctorBenefits = [
     {
@@ -71,9 +72,7 @@ const Careers = () => {
                 as="section"
                 className="flex flex-col items-center text-center pt-20 pb-12 px-6"
             >
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    Careers
-                </span>
+                <SectionEyebrow className="mb-6">Careers</SectionEyebrow>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading font-serif max-w-3xl">
                     Join the TMAG{" "}
                     <span className="italic">team.</span>

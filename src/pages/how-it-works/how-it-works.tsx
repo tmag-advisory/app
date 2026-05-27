@@ -12,6 +12,7 @@ import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 import SEOHead from "../../lib/seo";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 const processSteps = [
     {
@@ -59,9 +60,7 @@ const HowItWorks = () => {
  <SEOHead title="How It Works — Travel Medicine Advisory Global" description="Learn how TMAG generates personalized travel health plans in minutes using AI-powered technology." path="/how-it-works" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    Learn More
-                </span>
+                <SectionEyebrow className="mb-6">Learn More</SectionEyebrow>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading font-serif max-w-3xl">
                     From question to{" "}
                     <span className="italic">plan</span> in minutes.
@@ -100,9 +99,7 @@ const HowItWorks = () => {
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                     <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                         <div>
-                            <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                                Our data sources
-                            </span>
+                            <SectionEyebrow className="mb-6">Our data sources</SectionEyebrow>
                             <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif max-w-lg">
                                 Backed by the world's{" "}
                                 <span className="italic">best</span> health data.
@@ -138,9 +135,7 @@ const HowItWorks = () => {
             {/* What's in a plan */}
             <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                 <AnimateIn className="text-center mb-14">
-                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                        What's included
-                    </span>
+                    <SectionEyebrow className="mb-6">What's included</SectionEyebrow>
                     <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
                         Everything in your{" "}
                         <span className="italic">plan.</span>
@@ -163,9 +158,7 @@ const HowItWorks = () => {
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                     <div className="flex flex-col md:flex-row gap-12 md:gap-20">
                         <AnimateIn type="fadeLeft" className="md:w-1/2">
-                            <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                                Credits
-                            </span>
+                            <SectionEyebrow className="mb-6">Credits</SectionEyebrow>
                             <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif mb-4">
                                 How credits{" "}
                                 <span className="italic">work.</span>

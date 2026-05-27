@@ -18,6 +18,7 @@ import {
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import { useCreditPlans, useSubmitCompanyOnboarding, useInitiateOnboardingPayment, useOnboardingPricingPreview } from "../../api/hooks";
+import LaunchDiscountBanner from "../../components/sections/LaunchDiscountBanner";
 import type { TeamMember, PlatformEmployee, CompanyOnboardingResponse, PublicPricingPreview } from "../../api/types";
 import { useCurrencyStore } from "../../stores/currencyStore";
 import {
@@ -458,6 +459,8 @@ const CompanyOnboarding = () => {
                                         size and reporting needs.
                                     </p>
                                 </div>
+
+                                <LaunchDiscountBanner variant="page" />
 
                                 {plansLoading ?
                                     <div className="flex justify-center py-12">
@@ -1726,6 +1729,8 @@ const CompanyOnboarding = () => {
                                                 to submit it for approval.
                                             </p>
                                         </div>
+
+                                        <LaunchDiscountBanner variant="page" />
 
                                         <div
                                             className={`${panelClassName} text-left`}

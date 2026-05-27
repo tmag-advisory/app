@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 import SEOHead from "../../lib/seo";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 const values = [
     {
@@ -43,9 +44,7 @@ const About = () => {
  <SEOHead title="About — Travel Medicine Advisory Global" description="We built TMAG because finding reliable, personalized travel health advice shouldn't require hours of research." path="/about" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    About TMAG
-                </span>
+                <SectionEyebrow className="mb-6">About TMAG</SectionEyebrow>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading font-serif max-w-3xl">
                     Travel health,{" "}
                     <span className="italic">demystified.</span>
@@ -62,9 +61,7 @@ const About = () => {
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                     <div className="flex flex-col md:flex-row gap-12 md:gap-20">
                         <AnimateIn type="fadeLeft" className="md:w-1/2">
-                            <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                                Our mission
-                            </span>
+                            <SectionEyebrow className="mb-6">Our mission</SectionEyebrow>
                             <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
                                 Make travel health advice{" "}
                                 <span className="italic">accessible</span> to
@@ -96,9 +93,7 @@ const About = () => {
             {/* Values */}
             <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                 <AnimateIn className="text-center mb-14">
-                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                        Our values
-                    </span>
+                    <SectionEyebrow className="mb-6">Our values</SectionEyebrow>
                     <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
                         What we <span className="italic">stand</span> for.
                     </h2>
@@ -129,9 +124,7 @@ const About = () => {
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                     <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                         <div>
-                            <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                                Data ethics
-                            </span>
+                            <SectionEyebrow className="mb-6">Data ethics</SectionEyebrow>
                             <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif max-w-lg">
                                 How we handle your{" "}
                                 <span className="italic">data.</span>

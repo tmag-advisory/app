@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 import SEOHead from "../../lib/seo";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 const services = [
     {
@@ -86,9 +87,7 @@ const Status = () => {
             <SEOHead title="Status — Travel Medicine Advisory Global" description="Check the current status of TMAG services and platform availability." path="/status" robots="noindex, follow" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    Status
-                </span>
+                <SectionEyebrow className="mb-6">Status</SectionEyebrow>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading font-serif max-w-3xl">
                     System{" "}
                     <span className="italic">status.</span>

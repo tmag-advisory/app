@@ -1119,6 +1119,12 @@ export interface CompanyAdminCreditQuoteResponse {
   pricePerCredit: number;
   appliedTier: string | null;
   qualifiesForContactSales: boolean;
+  /** Per-credit price before the platform launch discount, when active. */
+  originalPricePerCredit?: number | null;
+  /** Total price before the platform launch discount, when active. */
+  originalTotalAmount?: number | null;
+  /** Absolute discount applied to the total, when active. */
+  launchDiscountAmount?: number | null;
 }
 
 export interface CompanyAdminPurchaseInitiateResponse {

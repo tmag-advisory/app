@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LucidePlus, LucideMinus } from "lucide-react";
 import AnimateIn from "../animations/AnimateIn";
+import SectionEyebrow from "../ui/SectionEyebrow";
 
 const faqs = [
     {
@@ -71,9 +72,7 @@ const FAQSection = () => {
         <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row gap-12 md:gap-20">
                 <AnimateIn type="fadeLeft" className="md:w-1/3 shrink-0">
-                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                        FAQ
-                    </span>
+                    <SectionEyebrow className="mb-6">FAQ</SectionEyebrow>
                     <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
                         Questions?{" "}
                         <span className="italic">Answers.</span>

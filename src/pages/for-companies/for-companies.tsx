@@ -24,11 +24,17 @@ import {
     type SignupRange,
 } from "../../constants/companyPlans";
 import SEOHead from "../../lib/seo";
+import { useLaunchDiscount } from "../../api";
+import { applyLaunchToBase } from "../../lib/launchDiscount";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
+import LaunchDiscountBanner from "../../components/sections/LaunchDiscountBanner";
 
-function formatPrice(priceUsd: number, priceNgn: number, currency: string): string {
+function formatPrice(priceUsd: number, priceNgn: number, currency: string, launchPct = 0): string {
     if (priceUsd === 0 && currency !== "NGN") return "Free";
     if (priceNgn === 0 && currency === "NGN") return "Free";
-    return currency === "NGN" ? `₦${priceNgn.toLocaleString()}` : `$${priceUsd.toLocaleString()}`;
+    const base = currency === "NGN" ? priceNgn : priceUsd;
+    const discounted = launchPct > 0 ? applyLaunchToBase(base, launchPct) : base;
+    return currency === "NGN" ? `₦${discounted.toLocaleString()}` : `$${discounted.toLocaleString()}`;
 }
 
 const workflowSteps = [
@@ -70,15 +76,15 @@ const features = [
 
 const ForCompanies = () => {
     const { selectedCurrency } = useCurrencyStore();
+    const { data: launchDiscount } = useLaunchDiscount();
+    const launchPct = launchDiscount?.active ? launchDiscount.percentage : 0;
 
     return (
         <main>
  <SEOHead title="For Companies — Travel Medicine Advisory Global" description="Protect your employees with corporate travel health plans. HR dashboard, compliance reporting, and bulk plan management." path="/for-companies" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    For companies
-                </span>
+                <SectionEyebrow className="mb-6">For companies</SectionEyebrow>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading font-serif max-w-4xl">
                     Protect your people.{" "}
                     <span className="italic">Prove</span> it.
@@ -122,13 +128,13 @@ const ForCompanies = () => {
             {/* Company plans */}
             <section className="px-8 lg:px-16 pb-20 max-w-7xl mx-auto">
                 <AnimateIn className="text-center mb-12">
-                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                        Company plans
-                    </span>
+                    <SectionEyebrow className="mb-6">Company plans</SectionEyebrow>
                     <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
                         Enterprise tiers matched to your <span className="italic">team size</span>.
                     </h2>
                 </AnimateIn>
+
+                <LaunchDiscountBanner variant="page" className="max-w-5xl mx-auto mb-8" />
                 <div className="space-y-12 max-w-5xl mx-auto">
                     {signupRanges.map((range) => (
                         <div key={range.value}>
@@ -161,8 +167,20 @@ const ForCompanies = () => {
                                                 </p>
                                                 <div className="flex items-baseline gap-1.5 mb-1">
                                                     <p className={`text-3xl font-serif ${colors.textPrimary}`}>
-                                                        {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency)}
+                                                        {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency, launchPct)}
                                                     </p>
+                                                    {launchPct > 0 && (() => {
+                                                        const base = selectedCurrency === "NGN" ? basePlan.priceNgn : basePlan.priceUsd;
+                                                        if (base === 0) return null;
+                                                        const symbol = selectedCurrency === "NGN" ? "₦" : "$";
+                                                        return (
+                                                            <span className="ml-2 text-sm">
+                                                                <span className="line-through text-muted">
+                                                                    {symbol}{base.toLocaleString()}
+                                                                </span>
+                                                            </span>
+                                                        );
+                                                    })()}
                                                 </div>
                                                 <span className={`text-xs mb-5 ${colors.textMuted}`}>per credit</span>
                                                 <ul className="space-y-2.5 flex-1">
@@ -194,9 +212,7 @@ const ForCompanies = () => {
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                     <AnimateIn className="text-center mb-14">
-                        <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                            How it works for HR
-                        </span>
+                        <SectionEyebrow className="mb-6">How it works for HR</SectionEyebrow>
                         <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
                             Four steps to full{" "}
                             <span className="italic">compliance.</span>
@@ -229,9 +245,7 @@ const ForCompanies = () => {
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                     <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                         <div>
-                            <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                                Credit allocation
-                            </span>
+                            <SectionEyebrow className="mb-6">Credit allocation</SectionEyebrow>
                             <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif max-w-lg">
                                 Allocate credits across{" "}
                                 <span className="italic">teams.</span>
@@ -261,9 +275,7 @@ const ForCompanies = () => {
             {/* Integration */}
             <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                 <AnimateIn className="text-center mb-14">
-                    <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                        Integrations
-                    </span>
+                    <SectionEyebrow className="mb-6">Integrations</SectionEyebrow>
                     <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
                         Fits into your{" "}
                         <span className="italic">existing</span> stack.

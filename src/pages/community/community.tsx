@@ -10,6 +10,7 @@ import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
 import Button from "../../components/ui/Button";
 import SEOHead from "../../lib/seo";
+import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 const channels = [
     {
@@ -55,9 +56,7 @@ const Community = () => {
             <SEOHead title="Community — Travel Medicine Advisory Global" description="Join the TMAG community of travelers, healthcare professionals, and global health enthusiasts." path="/community" />
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
-                <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    Community
-                </span>
+                <SectionEyebrow className="mb-6">Community</SectionEyebrow>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl leading-[0.9] text-heading font-serif max-w-3xl">
                     Travel healthy,{" "}
                     <span className="italic">together.</span>
@@ -90,9 +89,7 @@ const Community = () => {
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                     <AnimateIn className="text-center mb-14">
-                        <span className="inline-block text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5 mb-6">
-                            Get involved
-                        </span>
+                        <SectionEyebrow className="mb-6">Get involved</SectionEyebrow>
                         <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
                             Ways to <span className="italic">connect.</span>
                         </h2>

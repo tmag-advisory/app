@@ -1,7 +1,9 @@
 import { LucideCheck, LucideX, LucideLoader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "../../lib/utils";
-import { useUpgradeUserPlan } from "../../api/hooks";
+import { useUpgradeUserPlan, useLaunchDiscount } from "../../api";
+import { applyLaunchToBase } from "../../lib/launchDiscount";
+import LaunchDiscountBanner from "../sections/LaunchDiscountBanner";
 import { individualPlans, individualPlanFeatures } from "../../constants/companyPlans";
 import type { BillingCurrency } from "../../api/types";
 
@@ -26,6 +28,9 @@ export default function PlanUpgradeModal({
   currency,
 }: PlanUpgradeModalProps) {
   const upgradePlan = useUpgradeUserPlan();
+  const { data: launchDiscount } = useLaunchDiscount();
+  const launchPct = launchDiscount?.active ? launchDiscount.percentage : 0;
+
 
   if (!isOpen) return null;
 
@@ -67,13 +72,16 @@ export default function PlanUpgradeModal({
           </p>
         </div>
 
+        <LaunchDiscountBanner variant="page" className="mb-4" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {plans.map((plan) => {
             const isCurrentPlan = currentPlan === plan.code;
-            const price =
+            const originalPrice =
               currency === "USD"
                 ? plan.priceUsd
                 : (plan.priceNgn ?? plan.priceUsd);
+            const price =
+              launchPct > 0 ? applyLaunchToBase(originalPrice, launchPct) : originalPrice;
             const symbol = CURRENCY_SYMBOLS[currency] || currency;
             const tierKey = (plan.tier as "standard" | "premium") || "standard";
             const features = individualPlanFeatures[tierKey] || [];
@@ -109,6 +117,14 @@ export default function PlanUpgradeModal({
                     </span>
                     <span className="text-xs text-muted">/credit</span>
                   </div>
+                  {launchPct > 0 && price !== originalPrice && (
+                    <p className="text-xs text-emerald-700 mb-1">
+                      <span className="line-through text-muted mr-1">
+                        {symbol}{originalPrice.toLocaleString()}
+                      </span>
+                      {launchPct}% launch off
+                    </p>
+                  )}
                 </div>
 
                 <div className="mb-6 pt-6 border-t border-border-light/50">
