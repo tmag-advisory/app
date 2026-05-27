@@ -7,7 +7,6 @@ import {
     LucideGlobe,
 } from "lucide-react";
 import { useRef, useLayoutEffect, useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import gsap from "gsap";
 import Button from "../ui/Button";
 import StarRating from "../ui/StarRating";
