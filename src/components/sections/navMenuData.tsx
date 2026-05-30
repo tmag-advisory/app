@@ -88,7 +88,6 @@ export const MENU: MenuCategory[] = [
             { label: "Blog", href: "/blog", desc: "Travel medicine insights and field notes.", icon: LucideBookOpen, badge: "Soon" },
             { label: "Help Center", href: "/help", desc: "Step-by-step answers to common questions.", icon: LucideLifeBuoy },
             { label: "FAQ", href: "/faq", desc: "Quick answers about plans, billing, and care.", icon: LucideHelpCircle },
-            { label: "Documentation", href: "/docs", desc: "API and integration documentation.", icon: LucideFileText },
             { label: "Press", href: "/press", desc: "Coverage, media kits, and announcements.", icon: LucideNewspaper },
             { label: "System Status", href: "/status", desc: "Live uptime for the TMAG platform.", icon: LucideActivity },
         ],
