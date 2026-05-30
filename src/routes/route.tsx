@@ -26,7 +26,6 @@ const Careers = lazy(() => import("../pages/careers/careers"));
 const Blog = lazy(() => import("../pages/blog/blog"));
 const Press = lazy(() => import("../pages/press/press"));
 const HelpCenter = lazy(() => import("../pages/help/help"));
-const Documentation = lazy(() => import("../pages/docs/docs"));
 const Status = lazy(() => import("../pages/status/status"));
 const Community = lazy(() => import("../pages/community/community"));
 const ContactPage = lazy(() => import("../pages/contact/contact"));
@@ -129,7 +128,6 @@ const router = createBrowserRouter([
             { path: "blog", element: <Blog /> },
             { path: "press", element: <Press /> },
             { path: "help", element: <HelpCenter /> },
-            { path: "docs", element: <Documentation /> },
             { path: "status", element: <Status /> },
             { path: "community", element: <Community /> },
             { path: "contact", element: <ContactPage /> },
