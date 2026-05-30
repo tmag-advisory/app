@@ -9,7 +9,6 @@ import {
     LucideBookOpen,
     LucideLifeBuoy,
     LucideHelpCircle,
-    LucideFileText,
     LucideNewspaper,
     LucideActivity,
     LucideStethoscope,
