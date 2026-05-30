@@ -1,8 +1,4 @@
 import {
-    LucideShieldCheck,
-    LucideGraduationCap,
-    LucideLock,
-    LucideRefreshCw,
     LucideStethoscope,
 } from "lucide-react";
 import { motion } from "framer-motion";

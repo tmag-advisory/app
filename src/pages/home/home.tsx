@@ -4,7 +4,6 @@ import FeaturesSection from "../../components/sections/FeaturesSection";
 import FinalCTASection from "../../components/sections/FinalCTASection";
 import HeroSection from "../../components/sections/HeroSection";
 import MissionSection from "../../components/sections/MissionSection";
-import ProblemSection from "../../components/sections/ProblemSection";
 import TrustSection from "../../components/sections/TrustSection";
 import SEOHead from "../../lib/seo";
 

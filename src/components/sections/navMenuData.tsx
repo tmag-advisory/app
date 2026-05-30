@@ -12,7 +12,6 @@ import {
     LucideFileText,
     LucideNewspaper,
     LucideActivity,
-    LucideBriefcase,
     LucideStethoscope,
     LucideUsers,
     LucideMap,

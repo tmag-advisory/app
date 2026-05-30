@@ -1,22 +1,12 @@
 import {
-    LucideBrainCircuit,
-    LucideStethoscope,
-    LucideMapPin,
     LucideShieldCheck,
-    LucideUserCheck,
-    LucideHeartPulse,
     LucideCheck,
     LucideFileText,
     LucidePlaneTakeoff,
 } from "lucide-react";
-import type { ComponentType, SVGProps } from "react";
+
 import AnimateIn from "../animations/AnimateIn";
 import SectionEyebrow from "../ui/SectionEyebrow";
-
-interface Chip {
-    icon: ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>;
-    label: string;
-}
 
 
 const MissionSection = () => {

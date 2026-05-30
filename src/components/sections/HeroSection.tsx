@@ -9,7 +9,6 @@ import {
 import { useRef, useLayoutEffect, useState, useEffect } from "react";
 import gsap from "gsap";
 import Button from "../ui/Button";
-import StarRating from "../ui/StarRating";
 
 interface ProgressStep {
     label: string;

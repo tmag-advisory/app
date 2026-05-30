@@ -21,7 +21,6 @@ import {
 } from "../../constants/companyPlans";
 import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 import SEOHead from "../../lib/seo";
-import LaunchDiscountBanner from "../../components/sections/LaunchDiscountBanner";
 import PriceDiscountBadge from "../../components/pricing/PriceDiscountBadge";
 import IndividualPlanCard from "../../components/pricing/IndividualPlanCard";
 import { formatStackedPrice as formatPrice } from "../../lib/launchDiscount";
