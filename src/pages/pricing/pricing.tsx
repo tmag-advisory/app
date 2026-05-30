@@ -21,8 +21,8 @@ import {
 } from "../../constants/companyPlans";
 import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 import SEOHead from "../../lib/seo";
-import LaunchDiscountBanner from "../../components/sections/LaunchDiscountBanner";
 import PriceDiscountBadge from "../../components/pricing/PriceDiscountBadge";
+import IndividualPlanCard from "../../components/pricing/IndividualPlanCard";
 import { formatStackedPrice as formatPrice } from "../../lib/launchDiscount";
 import { useLaunchDiscount } from "../../api";
 import SectionEyebrow from "../../components/ui/SectionEyebrow";
@@ -100,12 +100,6 @@ const PricingPage = () => {
                 </h1>
             </AnimateIn>
 
-            {(launchDiscount?.active ?? false) && (
-                <div className="px-8 lg:px-16 max-w-6xl mx-auto mt-2 mb-4">
-                    <LaunchDiscountBanner variant="page" />
-                </div>
-            )}
-
             {/* Controls row — audience tabs + currency toggle */}
             <div className="px-8 lg:px-16 max-w-6xl mx-auto mb-10">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -149,161 +143,22 @@ const PricingPage = () => {
                 </div>
             </div>
 
-            {affiliateDiscountRate > 0 && (
-                <div className="px-8 lg:px-16 max-w-7xl mx-auto mb-8">
-                    <div className="max-w-5xl mx-auto rounded border border-accent/20 bg-accent/10 px-5 py-3 text-sm font-semibold text-accent text-center">
-                        Affiliate discount active — {affiliateDiscountRate}% off paid credits at checkout.
-                    </div>
-                </div>
-            )}
-
             {/* Individual plans */}
             {audience === "individual" && (
                 <section className="px-8 lg:px-16 pb-24 max-w-7xl mx-auto">
                     <StaggerGroup
-                        className="grid grid-cols-1 md:grid-cols-3 max-w-5xl mx-auto"
+                        className="grid grid-cols-1 md:grid-cols-3 max-w-5xl mx-auto items-stretch"
                         stagger={0.12}
                     >
-                        {individualPlans.map((plan) => {
-                            const isHighlighted = plan.highlighted;
-                            const isPremium = plan.tier === "premium";
-                            const isEssential = plan.tier === "essential";
-                            return (
-                                <motion.div
-                                    variants={staggerItem}
-                                    key={plan.name}
-                                    className={`relative p-8 flex flex-col justify-between overflow-hidden ${isEssential ?
-                                        "bg-white border border-stone-200"
-                                        : isHighlighted ?
-                                            "border border-accent/25"
-                                            : "border border-gold/35"
-                                        }`}
-                                >
-                                    {(isHighlighted || isPremium) && (
-                                        <div
-                                            className="absolute inset-0"
-                                            style={{
-                                                background:
-                                                    isHighlighted ?
-                                                        "linear-gradient(145deg, #eaf7f4 0%, #dff2ee 45%, #e6f5f1 100%)"
-                                                        : "linear-gradient(145deg, #fdf8f0 0%, #faf3e4 45%, #fdf7ee 100%)",
-                                            }}
-                                        />
-                                    )}
-                                    {isHighlighted && (
-                                        <div className="absolute top-0 left-0 w-full h-0.5 bg-accent" />
-                                    )}
-                                    {isHighlighted && (
-                                        <span className="absolute top-6 right-6 text-xs font-semibold text-white bg-accent px-3 py-1 rounded-full">
-                                            Most popular
-                                        </span>
-                                    )}
-                                    {isPremium && (
-                                        <span className="absolute top-6 right-6 text-xs font-semibold text-[#9a7020] bg-gold/15 px-3 py-1 rounded-full">
-                                            Best report
-                                        </span>
-                                    )}
-                                    <div className="relative z-10">
-                                        <h3
-                                            className={`text-lg font-semibold mb-1 ${isHighlighted ? "text-[#1a3c38]"
-                                                : "text-stone-800"
-                                                }`}
-                                        >
-                                            {plan.name}
-                                        </h3>
-                                        <p
-                                            className={`text-sm mb-6 ${isHighlighted ?
-                                                "text-[#2a5858]/80"
-                                                : "text-stone-500"
-                                                }`}
-                                        >
-                                            {plan.description}
-                                        </p>
-                                        <div className="flex items-baseline gap-1.5 mb-1">
-                                            <span
-                                                className={`text-4xl font-serif ${isHighlighted ?
-                                                    "text-[#1a5c52]"
-                                                    : isPremium ?
-                                                        "text-[#9a7020]"
-                                                        : "text-stone-800"
-                                                    }`}
-                                            >
-                                                {formatPrice(
-                                                    plan.priceUsd,
-                                                    plan.priceNgn,
-                                                    selectedCurrency,
-                                                    affiliateDiscountRate,
-                                                    launchPct,
-                                                )}
-                                            </span>
-                                        </div>
-
-                                        <PriceDiscountBadge
-                                            priceUsd={plan.priceUsd}
-                                            priceNgn={plan.priceNgn}
-                                            currency={selectedCurrency}
-                                            affiliatePct={affiliateDiscountRate}
-                                            launchPct={launchPct}
-                                        />
-                                        <p
-                                            className={`text-xs mb-8 ${isHighlighted ?
-                                                "text-[#2a5858]/60"
-                                                : "text-stone-400"
-                                                }`}
-                                        >
-                                            {plan.priceNote}
-                                        </p>
-                                        <ul className="space-y-3 mb-8">
-                                            {plan.features.map((f) => (
-                                                <li
-                                                    key={f}
-                                                    className={`flex items-start gap-3 text-sm ${isHighlighted ?
-                                                        "text-[#1a3c38]"
-                                                        : "text-stone-700"
-                                                        }`}
-                                                >
-                                                    <LucideCheck
-                                                        className={`w-4 h-4 mt-0.5 shrink-0 ${isEssential ?
-                                                            "text-emerald-600"
-                                                            : isPremium ?
-                                                                "text-gold"
-                                                                : "text-accent"
-                                                            }`}
-                                                    />
-                                                    {f}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                    {isHighlighted ?
-                                        <Button
-                                            variant="primary"
-                                            link={`/register?plan=${plan.code}`}
-                                            className="relative z-10 self-stretch bg-accent text-white! hover:bg-[#246858] text-center justify-center flex"
-                                        >
-                                            {plan.cta}
-                                        </Button>
-                                        : isPremium ?
-                                            <Button
-                                                variant="secondary"
-                                                icon={<LucideArrowRight />}
-                                                link={`/register?plan=${plan.code}`}
-                                                className="relative z-10 self-start border-gold/60 text-[#9a7020] hover:bg-gold/10"
-                                            >
-                                                {plan.cta}
-                                            </Button>
-                                            : <Button
-                                                variant="secondary"
-                                                icon={<LucideArrowRight />}
-                                                link={`/register?plan=${plan.code}`}
-                                                className="relative z-10 self-start"
-                                            >
-                                                {plan.cta}
-                                            </Button>
-                                    }
-                                </motion.div>
-                            );
-                        })}
+                        {individualPlans.map((plan) => (
+                            <IndividualPlanCard
+                                key={plan.name}
+                                plan={plan}
+                                currency={selectedCurrency}
+                                affiliatePct={affiliateDiscountRate}
+                                launchPct={launchPct}
+                            />
+                        ))}
                     </StaggerGroup>
                 </section>
             )}

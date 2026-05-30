@@ -66,3 +66,53 @@ export function formatStackedPrice(
     minimumFractionDigits: afterAffiliate % 1 === 0 ? 0 : 2,
   })}`;
 }
+
+/** Breakdown of a stacked launch + affiliate discount for one base price. */
+export interface DiscountBreakdown {
+  /** Original, pre-discount price in the selected currency. */
+  base: number;
+  /** Final price after launch then affiliate discounts (unrounded). */
+  final: number;
+  /** Amount saved versus {@link base}. */
+  savings: number;
+  /** Effective percentage off, 0..100 (may be fractional, e.g. 52.5). */
+  pctOff: number;
+  /** True when {@link savings} is greater than zero. */
+  active: boolean;
+}
+
+/**
+ * Compute the stacked-discount breakdown for a single base price. Uses the
+ * same multiplicative, unrounded math as {@link formatStackedPrice} so the
+ * headline price, strike-through original, and "you save" figure always
+ * reconcile (e.g. $50 → $23.75 with $26.25 saved at 52.5% off).
+ */
+export function computeDiscount(
+  base: number,
+  launchPct = 0,
+  affiliatePct = 0,
+): DiscountBreakdown {
+  const inactive: DiscountBreakdown = { base, final: base, savings: 0, pctOff: 0, active: false };
+  if (!Number.isFinite(base) || base <= 0) return inactive;
+  if (launchPct <= 0 && affiliatePct <= 0) return inactive;
+
+  const afterLaunch = launchPct > 0 ? base * (1 - launchPct / 100) : base;
+  const final = affiliatePct > 0 ? afterLaunch * (1 - affiliatePct / 100) : afterLaunch;
+  const savings = Math.max(0, base - final);
+  const pctOff = (savings / base) * 100;
+  return { base, final, savings, pctOff, active: savings > 0 };
+}
+
+/**
+ * Format a raw currency amount using the same locale rules as
+ * {@link formatStackedPrice}: NGN is whole-number, USD shows cents only when
+ * the value is fractional.
+ */
+export function formatCurrencyAmount(amount: number, currency: string): string {
+  if (currency === "NGN") return `₦${Math.round(amount).toLocaleString()}`;
+  const fractional = Math.abs(amount % 1) > 0;
+  return `$${amount.toLocaleString(undefined, {
+    maximumFractionDigits: fractional ? 2 : 0,
+    minimumFractionDigits: fractional ? 2 : 0,
+  })}`;
+}

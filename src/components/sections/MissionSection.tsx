@@ -1,34 +1,13 @@
 import {
-    LucideBrainCircuit,
-    LucideStethoscope,
-    LucideMapPin,
     LucideShieldCheck,
-    LucideUserCheck,
-    LucideHeartPulse,
     LucideCheck,
     LucideFileText,
     LucidePlaneTakeoff,
 } from "lucide-react";
-import type { ComponentType, SVGProps } from "react";
+
 import AnimateIn from "../animations/AnimateIn";
 import SectionEyebrow from "../ui/SectionEyebrow";
 
-interface Chip {
-    icon: ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>;
-    label: string;
-}
-
-const POSITIONING_CHIPS: Chip[] = [
-    { icon: LucideBrainCircuit, label: "AI-driven risk assessment" },
-    { icon: LucideStethoscope, label: "Physician-validated guidance" },
-    { icon: LucideUserCheck, label: "Individuals & mobile teams" },
-];
-
-const VALUES_CHIPS: Chip[] = [
-    { icon: LucideMapPin, label: "Destination-specific" },
-    { icon: LucideHeartPulse, label: "Clinically grounded" },
-    { icon: LucideShieldCheck, label: "Physician-reviewed" },
-];
 
 const MissionSection = () => {
     return (
@@ -36,7 +15,7 @@ const MissionSection = () => {
             {/* Soft accent orb */}
             <div
                 aria-hidden
-                className="pointer-events-none absolute -top-24 -left-16 w-[26rem] h-[26rem] rounded-full"
+                className="pointer-events-none absolute -top-24 -left-16 w-104 h-104 rounded-full"
                 style={{
                     background:
                         "radial-gradient(circle, rgba(42,122,106,0.14) 0%, rgba(42,122,106,0.04) 45%, transparent 70%)",
@@ -69,7 +48,7 @@ const MissionSection = () => {
                         {/* Warm glow behind image */}
                         <div
                             aria-hidden
-                            className="pointer-events-none absolute -inset-6 rounded-[2rem]"
+                            className="pointer-events-none absolute -inset-6 rounded-4xl"
                             style={{
                                 background:
                                     "radial-gradient(circle at 70% 30%, rgba(196,149,58,0.22) 0%, rgba(232,120,80,0.08) 45%, transparent 70%)",
@@ -113,17 +92,6 @@ const MissionSection = () => {
                                         "linear-gradient(135deg, transparent 0%, transparent 55%, #000 100%)",
                                 }}
                             />
-
-                            {/* Floating stat chip */}
-                            <div className="absolute top-5 left-5 inline-flex items-center gap-2 rounded-full bg-background-secondary/95 backdrop-blur-sm border border-border px-3 py-1.5 shadow-sm">
-                                <span className="relative flex w-2 h-2">
-                                    <span className="absolute inset-0 rounded-full bg-accent opacity-60 animate-ping" />
-                                    <span className="relative inline-flex w-2 h-2 rounded-full bg-accent" />
-                                </span>
-                                <span className="text-[11px] font-semibold uppercase tracking-wider text-heading">
-                                    1 in 3 face preventable illness
-                                </span>
-                            </div>
 
                             {/* Bottom corner accent */}
                             <div className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full bg-accent text-white px-3 py-1.5 shadow-sm">
@@ -252,63 +220,6 @@ const MissionSection = () => {
                         </p>
                     </div>
                 </div>
-            </AnimateIn>
-
-            {/* Positioning two-column */}
-            <div className="mt-14 grid md:grid-cols-2 gap-8 md:gap-12">
-                <AnimateIn type="fadeUp">
-                    <p className="text-base lg:text-lg text-body leading-relaxed">
-                        AI-driven risk assessment. Physician-validated guidance.
-                        Built for individuals and globally mobile teams.
-                    </p>
-                    <div className="mt-5 flex flex-wrap gap-2">
-                        {POSITIONING_CHIPS.map(({ icon: Icon, label }) => (
-                            <span
-                                key={label}
-                                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-accent/10 text-accent border border-accent/20"
-                            >
-                                <Icon
-                                    width={13}
-                                    height={13}
-                                    strokeWidth={2.25}
-                                />
-                                {label}
-                            </span>
-                        ))}
-                    </div>
-                </AnimateIn>
-
-                <AnimateIn type="fadeUp" delay={0.1}>
-                    <p className="text-base lg:text-lg text-body leading-relaxed">
-                        Destination-specific. Clinically grounded.
-                        Physician-reviewed.
-                    </p>
-                    <div className="mt-5 flex flex-wrap gap-2">
-                        {VALUES_CHIPS.map(({ icon: Icon, label }) => (
-                            <span
-                                key={label}
-                                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-button-secondary text-heading border border-border"
-                            >
-                                <Icon
-                                    width={13}
-                                    height={13}
-                                    strokeWidth={2.25}
-                                    className="text-accent"
-                                />
-                                {label}
-                            </span>
-                        ))}
-                    </div>
-                </AnimateIn>
-            </div>
-
-            {/* Tagline */}
-            <AnimateIn type="scaleUp" delay={0.15} className="mt-16 text-center">
-                <SectionEyebrow className="mb-4">The TMAG promise</SectionEyebrow>
-                <h3 className="font-serif text-heading text-4xl md:text-5xl lg:text-6xl tracking-tight">
-                    Travel Smart.{" "}
-                    <span className="italic text-accent">Travel Safe.</span>
-                </h3>
             </AnimateIn>
         </section>
     );
