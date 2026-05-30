@@ -18,7 +18,6 @@ const Home = () => {
             />
             <HeroSection />
             <MissionSection />
-            <ProblemSection />
             <FeaturesSection />
             <AudienceSection />
             <TrustSection />

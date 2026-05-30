@@ -11,24 +11,6 @@ import AnimateIn from "../animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
 import SectionEyebrow from "../ui/SectionEyebrow";
 
-const badges = [
-    {
-        icon: <LucideShieldCheck className="w-5 h-5" />,
-        label: "WHO & CDC aligned",
-    },
-    {
-        icon: <LucideGraduationCap className="w-5 h-5" />,
-        label: "Reviewed by physicians",
-    },
-    {
-        icon: <LucideLock className="w-5 h-5" />,
-        label: "NDPR-aligned",
-    },
-    {
-        icon: <LucideRefreshCw className="w-5 h-5" />,
-        label: "Updated in real time",
-    },
-];
 
 const testimonials = [
     {
@@ -75,27 +57,6 @@ const TrustSection = () => {
                         <span className="italic">Globally aligned.</span>
                     </h2>
                 </AnimateIn>
-
-                {/* Trust badges */}
-                <StaggerGroup
-                    className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14"
-                    stagger={0.1}
-                >
-                    {badges.map((b) => (
-                        <motion.div
-                            variants={staggerItem}
-                            key={b.label}
-                            className="flex flex-col items-center gap-3 bg-background-primary rounded-2xl py-6 px-4 text-center"
-                        >
-                            <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
-                                {b.icon}
-                            </div>
-                            <span className="text-sm font-semibold text-heading">
-                                {b.label}
-                            </span>
-                        </motion.div>
-                    ))}
-                </StaggerGroup>
 
                 {/* Testimonials */}
                 <StaggerGroup

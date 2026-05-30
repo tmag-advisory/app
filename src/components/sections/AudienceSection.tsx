@@ -138,7 +138,7 @@ const AudienceSection = () => {
                                 </ul>
                             </div>
                             <Button
-                                variant={isDark ? "primary" : "secondary"}
+                                variant={isDark ? "primary" : "primary"}
                                 link={a.link}
                                 icon={<LucideArrowRight />}
                                 className={`relative z-10 self-start ${isDark ? "bg-white text-dark! hover:bg-white/90" : ""}`}

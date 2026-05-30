@@ -89,11 +89,11 @@ const OFFSETS_R: {
     right?: string;
     rotate: number;
 }[] = [
-    { top: "2%", left: "0%", rotate: -2.5 },
-    { top: "5%", right: "0%", rotate: 2 },
-    { top: "52%", left: "4%", rotate: 1.5 },
-    { top: "56%", right: "0%", rotate: -1.5 },
-];
+        { top: "2%", left: "0%", rotate: -2.5 },
+        { top: "5%", right: "0%", rotate: 2 },
+        { top: "52%", left: "4%", rotate: 1.5 },
+        { top: "56%", right: "0%", rotate: -1.5 },
+    ];
 
 const FLOAT = [
     { y: 10, dur: 3.2 },
@@ -118,9 +118,8 @@ const ProgressChecklist = ({ steps }: { steps: ProgressStep[] }) => (
         {steps.map((step, i) => (
             <div key={i} className="flex items-center gap-1.5">
                 <div
-                    className={`w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        step.done ? "bg-accent" : "border border-border"
-                    }`}
+                    className={`w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0 ${step.done ? "bg-accent" : "border border-border"
+                        }`}
                 >
                     {step.done && (
                         <LucideCheck
@@ -131,9 +130,8 @@ const ProgressChecklist = ({ steps }: { steps: ProgressStep[] }) => (
                     )}
                 </div>
                 <span
-                    className={`text-[10px] leading-tight ${
-                        step.done ? "text-heading font-medium" : "text-muted"
-                    }`}
+                    className={`text-[10px] leading-tight ${step.done ? "text-heading font-medium" : "text-muted"
+                        }`}
                 >
                     {step.label}
                 </span>
@@ -193,8 +191,8 @@ const CardContent = ({ d }: { d: SampleTripData }) => (
                         width: `${d.completeness}%`,
                         backgroundColor:
                             d.completeness >= 70 ? "#4f9e6a"
-                            : d.completeness >= 40 ? "#d4a04a"
-                            : "#d46a4a",
+                                : d.completeness >= 40 ? "#d4a04a"
+                                    : "#d46a4a",
                     }}
                 />
             </div>
@@ -242,8 +240,8 @@ const MobileCards = ({ dests }: { dests: SampleTripData[] }) => (
                                     width: `${d.completeness}%`,
                                     backgroundColor:
                                         d.completeness >= 70 ? "#4f9e6a"
-                                        : d.completeness >= 40 ? "#d4a04a"
-                                        : "#d46a4a",
+                                            : d.completeness >= 40 ? "#d4a04a"
+                                                : "#d46a4a",
                                 }}
                             />
                         </div>
@@ -513,7 +511,6 @@ const HeroSection = () => {
                             data-hero-anim
                             className="flex flex-col items-start gap-3 mb-5"
                         >
-                            <StarRating count={5} />
                             <span className="inline-flex items-center gap-2 text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5">
                                 <span className="relative flex w-2 h-2">
                                     <span className="absolute inset-0 rounded-full bg-accent opacity-60 animate-ping" />
@@ -541,9 +538,7 @@ const HeroSection = () => {
                             data-hero-anim
                             className="text-body leading-relaxed max-w-md sm:text-lg"
                         >
-                            Get a personalized travel health plan in minutes
-                            built around your exact destination, dates,
-                            and health history.
+                            Prepare for international travel with personalized physician-reviewed health guidance.
                         </p>
 
                         <div
@@ -607,7 +602,7 @@ const HeroSection = () => {
                             height={14}
                             className="text-accent"
                         />
-                        Trusted by travellers across 120+ countries
+                        Travel Advisories for 190+ countries
                     </span>
                     <span
                         aria-hidden
