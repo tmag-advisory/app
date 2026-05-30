@@ -121,6 +121,5 @@ export const MENU: MenuCategory[] = [
 
 /** Top-level links rendered inline beside the mega-menu triggers. */
 export const DIRECT_LINKS: DirectLink[] = [
-    { label: "Pricing", href: "/pricing" },
     { label: "Contact", href: "/contact" },
 ];
