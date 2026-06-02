@@ -87,7 +87,7 @@ const Employees = () => {
     const handleRemoveEmployee = (id: number) => {
         deleteEmployee.mutate(id, {
             onSuccess: () => {
-                toast.success("Employee removed successfully")
+                toast.success("Member removed successfully")
             },
             onError: (error) => {
                 if (error instanceof AxiosError) {
@@ -101,7 +101,7 @@ const Employees = () => {
 
     return (
         <div>
-            <DashboardHeader title="Employees" />
+            <DashboardHeader title="Members" />
 
             {/* Actions bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -111,7 +111,7 @@ const Employees = () => {
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search employees..."
+                        placeholder="Search members..."
                         className="w-full border border-border-light/55 bg-white/80 backdrop-blur-md rounded-xl pl-10 pr-4 py-2.5 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200 shadow-sm"
                     />
                 </div>
@@ -119,14 +119,14 @@ const Employees = () => {
                     onClick={() => setShowInvite(!showInvite)}
                     className="flex items-center gap-2 py-2.5 px-5 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200"
                 >
-                    <LucideUserPlus className="w-4 h-4" /> Invite employee
+                    <LucideUserPlus className="w-4 h-4" /> Invite member
                 </button>
             </div>
 
             {/* Invite form */}
             {showInvite && (
                 <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6 mb-6 max-w-lg")}>
-                    <h3 className="text-base font-semibold text-heading mb-4">Invite new employee</h3>
+                    <h3 className="text-base font-semibold text-heading mb-4">Invite new member</h3>
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input
@@ -183,7 +183,7 @@ const Employees = () => {
                     <table className="w-full min-w-135">
                         <thead>
                             <tr className="border-b border-border-light/50">
-                                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">Employee</th>
+                                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">Member</th>
                                 <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3 hidden md:table-cell">Department</th>
                                 <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">Credits</th>
                                 <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3 hidden sm:table-cell">Plans</th>
@@ -294,7 +294,7 @@ const Employees = () => {
                             {!isLoading && employees.length === 0 && (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center">
-                                        <p className="text-sm text-muted">No employees found.</p>
+                                        <p className="text-sm text-muted">No members found.</p>
                                     </td>
                                 </tr>
                             )}

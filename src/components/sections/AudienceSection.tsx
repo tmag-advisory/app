@@ -52,9 +52,9 @@ const audiences: Audience[] = [
         description:
             "Protect your people at scale, meet duty-of-care obligations, and keep every traveller informed.",
         features: [
-            "Bulk employee travel assessments",
+            "Bulk member travel assessments",
             "Compliance-ready duty-of-care reports",
-            "Dashboard for HR & Employee",
+            "Dashboard for HR & Member",
         ],
         link: "/pricing?tab=company",
         cta: "Explore team plans",

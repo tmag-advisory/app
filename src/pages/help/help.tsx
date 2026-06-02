@@ -40,7 +40,7 @@ const helpCategories = [
         icon: <LucideMail className="w-6 h-6" />,
         title: "Corporate accounts",
         description:
-            "Set up your HR dashboard, manage employee travel, and configure compliance reporting.",
+            "Set up your HR dashboard, manage member travel, and configure compliance reporting.",
         articleCount: 10,
     },
 ];

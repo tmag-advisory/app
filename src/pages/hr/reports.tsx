@@ -77,7 +77,7 @@ const Reports = () => {
             id: "usage",
             icon: <LucideBarChart3 className="w-5 h-5" />,
             title: "Usage report",
-            description: "Credit usage, plans generated, and employee activity for the current period.",
+            description: "Credit usage, plans generated, and member activity for the current period.",
             format: "CSV",
             onExport: handleExportUsageCsv,
             loading: exporting === "usage",
@@ -95,7 +95,7 @@ const Reports = () => {
             id: "compliance",
             icon: <LucideShieldCheck className="w-5 h-5" />,
             title: "Compliance documentation",
-            description: "Duty-of-care audit trail with timestamped plan delivery and employee acknowledgments.",
+            description: "Duty-of-care audit trail with timestamped plan delivery and member acknowledgments.",
             format: "CSV",
             onExport: handleExportComplianceCsv,
             loading: exporting === "compliance",
@@ -122,7 +122,7 @@ const Reports = () => {
                     ) : (
                         <span className="text-2xl font-serif text-heading block">{employeesData?.pagination.total ?? 0}</span>
                     )}
-                    <span className="text-xs text-muted">Employees</span>
+                    <span className="text-xs text-muted">Members</span>
                 </div>
                 <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5 text-center")}>
                     {isLoading ? (

@@ -999,7 +999,7 @@ export interface MyCompanyMembership {
   extra_plans_available?: number;
 }
 
-// ── Seat allocation for the logged-in company employee (GET /profile/seat-usage) ──
+// ── Seat allocation for the logged-in organization member (GET /profile/seat-usage) ──
 export interface SeatUsageResponse {
   employeeId: number;
   userId: number | null;
@@ -1160,7 +1160,7 @@ export interface CreditPurchaseResponse {
   updatedAt: string;
 }
 
-// ─── Company Admin Credits (HR) ───────────────────────────────────────────
+// ─── Organization Admin Credits (HR) ───────────────────────────────────────────
 
 export interface CompanyAdminCreditQuoteResponse {
   companyId: number;

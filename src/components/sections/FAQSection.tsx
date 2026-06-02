@@ -30,7 +30,7 @@ const faqs = [
     },
     {
         question: "How does the Enterprise plan work?",
-        answer: "Enterprise gives your organization a dashboard to manage travel health for all employees. HR and travel managers can generate reports in bulk, track compliance, and integrate with existing travel booking platforms via our API.",
+        answer: "Enterprise gives your organization a dashboard to manage travel health for all members. HR and travel managers can generate reports in bulk, track compliance, and integrate with existing travel booking platforms via our API.",
     },
     {
         question: "Is my health information secure?",

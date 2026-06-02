@@ -198,11 +198,11 @@ const Onboarding = () => {
     const handleProfileNext = async () => {
         setError("");
         if (userType === "company" && !isInvitedUser && !profile.companyCode.trim()) {
-            setError("A company invite code is required. Please enter your company code.");
+            setError("An organization invite code is required. Please enter your organization code.");
             return;
         }
         if (userType === "company" && !isInvitedUser && !codeIsValid) {
-            setError("Please enter a valid company code before continuing.");
+            setError("Please enter a valid organization code before continuing.");
             return;
         }
         try {

@@ -1144,7 +1144,7 @@ export function useFamilyPackageHistory() {
   });
 }
 
-// ─── Company Admin Credit Hooks (HR) ─────────────────────────────────
+// ─── Organization Admin Credit Hooks (HR) ─────────────────────────────────
 
 export function useHrCreditQuote() {
   return useMutation({
@@ -1579,7 +1579,7 @@ export function useSeatOnboardingQuote(seats: number, currency: string) {
   });
 }
 
-/** Logged-in company employee's seat plan allowance (null for individual users). */
+/** Logged-in organization member's seat plan allowance (null for individual users). */
 export function useSeatUsage(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["profile-seat-usage"],

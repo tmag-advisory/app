@@ -42,7 +42,7 @@ const testimonials = [
         color: "bg-accent/12 text-accent",
     },
     {
-        quote: "We rolled this out to 200+ employees travelling across Africa. The compliance reports alone saved us weeks of work.",
+        quote: "We rolled this out to 200+ members travelling across Africa. The compliance reports alone saved us weeks of work.",
         name: "James L.",
         role: "Head of Global Mobility · TechCorp",
         initials: "JL",

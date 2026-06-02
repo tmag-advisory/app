@@ -153,7 +153,7 @@ const BillingTab = ({ onRefreshProfile }: BillingTabProps) => {
         return;
       }
       if (!company?.id) {
-        toast.error("Company not found");
+        toast.error("Organization not found");
         return;
       }
       setRequestingCredits(true);
@@ -417,7 +417,7 @@ const BillingTab = ({ onRefreshProfile }: BillingTabProps) => {
             <p className="text-xs text-muted">
               Your travel plans are provided by{" "}
               <span className="font-semibold text-heading">{company?.name}</span>. Need more?
-              Contact your company admin to be assigned additional plans.
+              Contact your organization admin to be assigned additional plans.
             </p>
             {company?.renewal_date && (
               <p className="text-xs text-muted mt-2">
@@ -546,7 +546,7 @@ const BillingTab = ({ onRefreshProfile }: BillingTabProps) => {
               const plan = user?.user_credit_plan;
               const planName =
                 plan?.displayName ??
-                (isCompanyUser ? "Company" : "Individual");
+                (isCompanyUser ? "Organization" : "Individual");
               const planDescription =
                 plan?.description ??
                 (isCompanyUser

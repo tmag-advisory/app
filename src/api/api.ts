@@ -599,7 +599,7 @@ export const familyPackagePurchaseApi = {
     api.get<ApiResponse<FamilyPackagePurchaseResponse[]>>("/family-package-purchases/history").then((r) => r.data.data),
 };
 
-// ─── Company Admin Credits (HR Payment) ────────────────────────────────────
+// ─── Organization Admin Credits (HR Payment) ────────────────────────────────────
 export const companyAdminCreditsApi = {
   getQuote: (companyId: number, credits: number) =>
     api.post<ApiResponse<CompanyAdminCreditQuoteResponse>>("/company-admin/credits/quote", null, { params: { companyId, credits } }).then((r) => r.data.data),

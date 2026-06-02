@@ -90,7 +90,7 @@ const familyNav: NavItem[] = [
 
 const hrNav: NavItem[] = [
     { label: "Dashboard", href: "/hr", icon: <LucideLayoutDashboard className="w-4 h-4" /> },
-    { label: "Employees", href: "/hr/employees", icon: <LucideUsers className="w-4 h-4" /> },
+    { label: "Members", href: "/hr/employees", icon: <LucideUsers className="w-4 h-4" /> },
     { label: "Create Plan", href: "/hr/create-plan", icon: <LucidePlusCircle className="w-4 h-4" /> },
     { label: "Credit Requests", href: "/hr/credit-requests", icon: <LucideInbox className="w-4 h-4" /> },
     { label: "Reports", href: "/hr/reports", icon: <LucideBarChart3 className="w-4 h-4" /> },
@@ -127,7 +127,7 @@ const CompanySwitcher = ({
                 </div>
                 <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-white truncate">
-                        {currentCompany?.name ?? "Select company"}
+                        {currentCompany?.name ?? "Select organization"}
                     </p>
                     <p className="text-[10px] text-white/30 capitalize">
                         {currentCompany?.plan} plan
