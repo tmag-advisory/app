@@ -17,6 +17,7 @@ import {
   useFamilyPackageActive,
   useFamilyPackageHistory,
   useCreateCreditRequest,
+  useSeatUsage,
 } from "../../../api/hooks";
 import { DASHBOARD_GLASS_SURFACE } from "../../../components/dashboard/dashboardChrome";
 import { cn } from "../../../lib/utils";
@@ -62,6 +63,10 @@ const BillingTab = ({ onRefreshProfile }: BillingTabProps) => {
   const isCompanyUser = !!(myCompanies && myCompanies.length > 0);
   const company = isCompanyUser ? myCompanies[0] : null;
   const isFamily = user?.type?.toUpperCase() === "FAMILY";
+  const isSeatEmployee = company?.billing_model === "SEAT";
+  const { data: seatUsage } = useSeatUsage({ enabled: isSeatEmployee });
+  const seatIncludedRemaining = seatUsage ? Math.max(0, seatUsage.includedLimit - seatUsage.includedUsed) : 0;
+  const seatExtraRemaining = seatUsage ? Math.max(0, seatUsage.extraAllocated - seatUsage.extraUsed) : 0;
 
   const { data: activeFamilyPackages, isLoading: loadingFamilyPackage } =
     useFamilyPackageActive();
@@ -380,8 +385,57 @@ const BillingTab = ({ onRefreshProfile }: BillingTabProps) => {
             ))}
           </div>
         </>
+      ) : isSeatEmployee ? (
+        /* ── Company employee on a seat subscription (no credits, no requests) ── */
+        <>
+          <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6")}>
+            <h2 className="text-base font-semibold text-heading mb-4">
+              Company travel plans
+            </h2>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="bg-background-primary rounded-xl p-4">
+                <p className="text-xs text-muted mb-1">Included remaining</p>
+                <p className="text-2xl font-serif text-heading">
+                  {seatIncludedRemaining}
+                  <span className="text-sm text-muted font-sans font-normal">
+                    {" "}/ {seatUsage?.includedLimit ?? 4}
+                  </span>
+                </p>
+              </div>
+              <div className="bg-background-primary rounded-xl p-4">
+                <p className="text-xs text-muted mb-1">Extra plans assigned</p>
+                <p className="text-2xl font-serif text-heading">
+                  {seatUsage?.extraAllocated ?? 0}
+                  {(seatUsage?.extraAllocated ?? 0) > 0 && (
+                    <span className="text-sm text-muted font-sans font-normal">
+                      {" "}({seatExtraRemaining} left)
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-muted">
+              Your travel plans are provided by{" "}
+              <span className="font-semibold text-heading">{company?.name}</span>. Need more?
+              Contact your company admin to be assigned additional plans.
+            </p>
+            {company?.renewal_date && (
+              <p className="text-xs text-muted mt-2">
+                Plans reset on renewal: {new Date(company.renewal_date).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+
+          <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6")}>
+            <h2 className="text-base font-semibold text-heading mb-1">Billing</h2>
+            <p className="text-xs text-muted">
+              Billing and renewals for your travel plans are managed by your company. Individual
+              credit purchases do not apply to company accounts.
+            </p>
+          </div>
+        </>
       ) : (
-        /* ── Standard billing (individual/company) ── */
+        /* ── Standard billing (individual) ── */
         <>
           {/* Credits Overview */}
           <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6")}>

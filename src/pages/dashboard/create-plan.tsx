@@ -9,7 +9,10 @@ import {
     useUpdateDraftPlan,
     useDeleteDraftPlan,
     useOnboardingQuestions,
+    useMyCompanies,
+    useSeatUsage,
 } from "../../api/hooks";
+import { useQueryClient } from "@tanstack/react-query";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import { DashboardAmbientBackground } from "../../components/dashboard/dashboardChrome";
 import QuestionnaireProgressBanner from "../../components/dashboard/QuestionnaireProgressBanner";
@@ -79,7 +82,19 @@ const CreatePlan = () => {
     const navigate = useNavigate();
     const { user, refreshProfile } = useAuth();
     const createPlan = useCreateTravelPlan();
+    const queryClient = useQueryClient();
     const credits = user?.credits ?? 0;
+
+    // Company employees on a seat subscription consume from their seat allowance,
+    // not from User.credits. Individual users keep the credit flow unchanged.
+    const { data: myCompanies } = useMyCompanies();
+    const companyMembership = myCompanies?.[0];
+    const isSeatEmployee = companyMembership?.billing_model === "SEAT";
+    const { data: seatUsage } = useSeatUsage({ enabled: isSeatEmployee });
+    const includedRemaining = seatUsage ? Math.max(0, seatUsage.includedLimit - seatUsage.includedUsed) : 0;
+    const extraRemaining = seatUsage ? Math.max(0, seatUsage.extraAllocated - seatUsage.extraUsed) : 0;
+    const seatRemaining = seatUsage?.totalRemaining ?? 0;
+    const effectiveRemaining = isSeatEmployee ? seatRemaining : credits;
 
     // Draft support
     const { data: drafts, isLoading: draftsLoading } = useDraftPlans();
@@ -132,8 +147,12 @@ const CreatePlan = () => {
     // ─── Handlers ──────────────────────────────────────────
 
     const handleSubmit = async (payload: QuestionnairePlanPayload) => {
-        if (credits <= 0) {
-            toast.error("You don't have enough credits.");
+        if (effectiveRemaining <= 0) {
+            toast.error(
+                isSeatEmployee
+                    ? "You've used all your company travel plans. Contact your company admin for more."
+                    : "You don't have enough credits.",
+            );
             return;
         }
         try {
@@ -164,6 +183,9 @@ const CreatePlan = () => {
             setModalOpen(false);
             navigate(`/dashboard/plans/${result.id}`);
             await refreshProfile();
+            if (isSeatEmployee) {
+                void queryClient.invalidateQueries({ queryKey: ["profile-seat-usage"] });
+            }
         } catch {
             toast.error("Failed to generate plan. Please try again.");
         }
@@ -229,7 +251,31 @@ const CreatePlan = () => {
             <DashboardAmbientBackground />
             <DashboardHeader title="Create travel plan" />
 
-            {credits === 0 && (
+            {/* Seat employee: company plan allowance status */}
+            {isSeatEmployee && seatUsage && effectiveRemaining > 0 && (
+                <div className="relative z-10 max-w-5xl mb-8">
+                    <div className="bg-accent/5 border border-accent/20 rounded-2xl p-5 md:p-6">
+                        <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Company travel plans remaining</p>
+                                <p className="text-lg font-semibold text-heading">
+                                    {includedRemaining} of {seatUsage.includedLimit}
+                                </p>
+                            </div>
+                            {seatUsage.extraAllocated > 0 && (
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-muted">Extra plans assigned</p>
+                                    <p className="text-lg font-semibold text-heading">
+                                        {seatUsage.extraAllocated}{extraRemaining !== seatUsage.extraAllocated ? ` (${extraRemaining} left)` : ""}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {effectiveRemaining === 0 && (
                 <div className="relative z-10 max-w-5xl mb-8">
                     <div className="bg-gold/10 border border-gold/20 rounded-2xl p-5 md:p-6">
                         <div className="flex items-start gap-3">
@@ -250,11 +296,12 @@ const CreatePlan = () => {
                             </div>
                             <div className="flex-1">
                                 <p className="text-sm font-semibold text-heading mb-1">
-                                    No credits remaining
+                                    {isSeatEmployee ? "No company travel plans remaining" : "No credits remaining"}
                                 </p>
                                 <p className="text-sm text-muted">
-                                    Purchase more credits to generate a new
-                                    plan.
+                                    {isSeatEmployee
+                                        ? "You've used all your included and extra travel plans for this year. Contact your company admin to request additional plans."
+                                        : "Purchase more credits to generate a new plan."}
                                 </p>
                             </div>
                         </div>
@@ -329,7 +376,7 @@ const CreatePlan = () => {
             >
                 <div className="max-w-3xl mx-auto px-3 sm:px-8 py-6 lg:pt-8 lg:pb-16">
                     <PlanQuestionnaireFlow
-                        credits={credits}
+                        credits={effectiveRemaining}
                         isSubmitting={createPlan.isPending}
                         onSubmitPlan={handleSubmit}
                         onSaveDraft={handleSaveDraft}

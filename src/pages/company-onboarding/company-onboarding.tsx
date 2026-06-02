@@ -1,358 +1,214 @@
 import { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     LucideCheck,
     LucideArrowRight,
     LucideArrowLeft,
-    LucideBuilding2,
     LucideCreditCard,
     LucideLoader2,
     LucidePlus,
     LucideX,
     LucideUsers,
-    LucideTag,
-    LucidePhone,
     LucideUpload,
+    LucideFileText,
+    LucideDownload,
+    LucideArmchair,
+    LucideShieldCheck,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
-import AnimateIn from "../../components/animations/AnimateIn";
-import { useCreditPlans, useSubmitCompanyOnboarding, useInitiateOnboardingPayment, useOnboardingPricingPreview } from "../../api/hooks";
-import LaunchDiscountBanner from "../../components/sections/LaunchDiscountBanner";
-import type { TeamMember, PlatformEmployee, CompanyOnboardingResponse, PublicPricingPreview } from "../../api/types";
-import { useCurrencyStore } from "../../stores/currencyStore";
 import {
-    enterpriseTierColors,
-    featuresByServiceLevel,
-    signupRanges,
-    type SignupRange,
-} from "../../constants/companyPlans";
+    useSubmitCompanyOnboarding,
+    useInitiateOnboardingPayment,
+    useSeatOnboardingQuote,
+} from "../../api/hooks";
+import type { TeamMember, PlatformEmployee, CompanyOnboardingResponse } from "../../api/types";
+import { useCurrencyStore } from "../../stores/currencyStore";
 import toast, { Toaster } from "react-hot-toast";
 import Navbar from "../../components/sections/Navbar";
 import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 
 const steps = [
-    { id: 1, title: "Plan & Needs", icon: <LucideBuilding2 className="w-4 h-4" /> },
-    { id: 2, title: "Team Setup", icon: <LucideUsers className="w-4 h-4" /> },
-    { id: 3, title: "Review & Submit", icon: <LucideCheck className="w-4 h-4" /> },
+    { id: 1, title: "Seats", icon: <LucideArmchair className="w-4 h-4" /> },
+    { id: 2, title: "Team", icon: <LucideUsers className="w-4 h-4" /> },
+    { id: 3, title: "Review", icon: <LucideCheck className="w-4 h-4" /> },
     { id: 4, title: "Payment", icon: <LucideCreditCard className="w-4 h-4" /> },
 ];
 
 const industries = [
-    "Technology",
-    "Finance & Banking",
-    "Healthcare",
-    "Oil & Gas",
-    "Manufacturing",
-    "Consulting",
-    "Education",
-    "Government",
-    "Logistics & Transportation",
-    "Other",
+    "Technology", "Finance & Banking", "Healthcare", "Oil & Gas", "Manufacturing",
+    "Consulting", "Education", "Government", "Logistics & Transportation", "Other",
 ];
 
-const teamMembersCsvSample = "firstName,lastName,email\nJane,Doe,jane@example.com\nJohn,Smith,john@example.com\n";
+const MSA_DOC_URL = "/docs/TMAG-MSA.pdf";
+const employeesCsvSample = "firstName,lastName,email\nJane,Doe,jane@example.com\nJohn,Smith,john@example.com\n";
 
-const parseTeamMembersCsv = (csv: string): TeamMember[] => {
-    const rows = csv
-        .split(/\r?\n/)
-        .map((row) => row.trim())
-        .filter(Boolean);
+const TIER_LABELS: Record<string, string> = {
+    TIER_1: "Tier 1 · 1–49 seats",
+    TIER_2: "Tier 2 · 50–199 seats",
+    TIER_3: "Tier 3 · 200–499 seats",
+    TIER_4: "Tier 4 · 500+ seats",
+};
 
+const parseEmployeesCsv = (csv: string): PlatformEmployee[] => {
+    const rows = csv.split(/\r?\n/).map((row) => row.trim()).filter(Boolean);
     if (rows.length === 0) return [];
-
     const headers = rows[0].toLowerCase().split(",").map((h) => h.trim());
     const hasHeader = headers.some((column) => ["firstname", "first_name", "name", "email"].includes(column));
-
     return rows.slice(hasHeader ? 1 : 0).map((row, index) => {
         const cols = row.split(",").map((value) => value.trim());
-        let firstName = "";
-        let lastName = "";
-        let email = "";
-
+        let firstName = "", lastName = "", email = "";
         if (cols.length >= 3) {
-            firstName = cols[0];
-            lastName = cols[1];
-            email = cols[2];
+            firstName = cols[0]; lastName = cols[1]; email = cols[2];
         } else {
             const [rawName = "", rawEmail = ""] = cols;
             const nameParts = rawName.split(/\s+/);
-            firstName = nameParts[0] || "";
-            lastName = nameParts.slice(1).join(" ") || "";
-            email = rawEmail;
+            firstName = nameParts[0] || ""; lastName = nameParts.slice(1).join(" ") || ""; email = rawEmail;
         }
-
         if (!firstName || !email) {
             throw new Error(`Row ${index + (hasHeader ? 2 : 1)} must include first name and email.`);
         }
-
-        return {
-            firstName,
-            lastName,
-            email,
-            role: "admin" as const,
-        };
+        return { email, firstName, lastName };
     });
 };
 
-function getRangeFromPlanCode(code: string): SignupRange {
-    if (code.includes("GOLD") || code.includes("ELITE")) return "100-500";
-    if (code.includes("PLATINUM") || code.includes("SIGNATURE")) return ">500";
-    return "0-100";
-}
+// ── Shared styles (brand: warm bg, teal accent, gold, serif headings) ──
+const field =
+    "w-full rounded-xl border border-border-light bg-background-primary px-4 py-3 text-sm text-heading placeholder:text-muted/60 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/10";
+const compactField =
+    "rounded-xl border border-border-light bg-background-primary px-3.5 py-2.5 text-sm text-heading placeholder:text-muted/60 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/10";
+const panel = "rounded-2xl border border-border-light/70 bg-white/70 backdrop-blur-sm p-6 shadow-[0_1px_3px_rgba(10,20,18,0.04)]";
+const ghostBtn =
+    "inline-flex items-center gap-1.5 rounded-xl border border-border-light bg-white px-3.5 py-2 text-xs font-semibold text-heading transition-colors hover:border-accent hover:text-accent";
+const solidBtn =
+    "inline-flex items-center gap-1.5 rounded-xl bg-accent px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent/90";
+const removeBtn =
+    "flex items-center justify-center rounded-xl border border-border-light px-3 text-muted transition-colors hover:border-red-300 hover:text-red-500";
 
-const fieldClassName =
-    "w-full rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:ring-4 focus:ring-accent/15";
-const selectClassName = `${fieldClassName} cursor-pointer`;
-const compactFieldClassName =
-    "rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15";
-const panelClassName = "rounded-2xl border border-slate-200 bg-white p-6";
-const actionButtonClassName =
-    "inline-flex items-center gap-2 rounded-xl border border-accent bg-accent px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-accent/90";
-const secondaryActionClassName =
-    "inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 transition-colors hover:border-accent hover:text-accent";
+const SectionTitle = ({ eyebrow, title, hint }: { eyebrow: string; title: string; hint?: string }) => (
+    <div className="mb-5">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">{eyebrow}</span>
+        <h3 className="text-lg font-serif text-heading mt-1">{title}</h3>
+        {hint && <p className="text-xs text-muted mt-1">{hint}</p>}
+    </div>
+);
 
 const CompanyOnboarding = () => {
-    const [searchParams] = useSearchParams();
-    const planFromUrl = searchParams.get("plan") ?? "";
-
     const [currentStep, setCurrentStep] = useState(1);
     const [direction, setDirection] = useState(1);
     const [submitting, setSubmitting] = useState(false);
     const [onboardingResult, setOnboardingResult] = useState<CompanyOnboardingResponse | null>(null);
 
-    // Step 1 state
-    const [selectedPlan, setSelectedPlan] = useState<string>(planFromUrl);
-    const [selectedRange, setSelectedRange] = useState<SignupRange>(() =>
-        planFromUrl ? getRangeFromPlanCode(planFromUrl) : "0-100"
-    );
-    const [creditCount, setCreditCount] = useState<string>("10");
-    const [sampleRequest, setSampleRequest] = useState("");
+    // Step 1 — seat count can be pre-filled from /pricing via ?seats=N
+    const [searchParams] = useSearchParams();
+    const initialSeats = (() => {
+        const raw = searchParams.get("seats");
+        const n = raw ? parseInt(raw, 10) : NaN;
+        return Number.isFinite(n) && n > 0 ? String(n) : "10";
+    })();
+    const [seatCount, setSeatCount] = useState<string>(initialSeats);
     const [billingCurrency, setBillingCurrency] = useState("USD");
     const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-    // Step 2 state
+    // Step 2
     const [companyName, setCompanyName] = useState("");
     const [industry, setIndustry] = useState("");
     const [contactEmail, setContactEmail] = useState("");
     const [contactPhone, setContactPhone] = useState("");
     const [website, setWebsite] = useState("");
-    const [teamMembersCsv, setTeamMembersCsv] = useState<File | null>(null);
-    const [teamMembersCsvError, setTeamMembersCsvError] = useState("");
-    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
-        { firstName: "", lastName: "", email: "", role: "admin" },
-    ]);
-    const [platformEmployees, setPlatformEmployees] = useState<PlatformEmployee[]>([
-        { email: "", firstName: "", lastName: "" },
-    ]);
+    const [admins, setAdmins] = useState<TeamMember[]>([{ firstName: "", lastName: "", email: "", role: "admin" }]);
+    const [employees, setEmployees] = useState<PlatformEmployee[]>([]);
+    const [employeesCsv, setEmployeesCsv] = useState<File | null>(null);
+    const [employeesCsvError, setEmployeesCsvError] = useState("");
+    const [msaDocument, setMsaDocument] = useState<File | null>(null);
 
-    const { data: plans, isLoading: plansLoading } = useCreditPlans();
     const submitOnboarding = useSubmitCompanyOnboarding();
     const initiatePayment = useInitiateOnboardingPayment();
     const { selectedCurrency } = useCurrencyStore();
 
-    const numericCreditCount = creditCount === "" ? 0 : Number(creditCount);
-    const { data: pricingPreviews } = useOnboardingPricingPreview(numericCreditCount);
+    const numericSeatCount = seatCount === "" ? 0 : Math.max(0, Math.floor(Number(seatCount)));
+    const { data: quote, isLoading: quoteLoading } = useSeatOnboardingQuote(numericSeatCount, billingCurrency);
 
-    useEffect(() => {
-        setBillingCurrency(selectedCurrency || "USD");
-    }, [selectedCurrency]);
+    useEffect(() => { setBillingCurrency(selectedCurrency || "USD"); }, [selectedCurrency]);
 
     useEffect(() => {
         let cancelled = false;
         void refreshAffiliateDiscount()
-            .then((discount) => {
-                if (!cancelled && discount?.active) {
-                    setAffiliateDiscountRate(Number(discount.discount_rate));
-                }
-            })
+            .then((discount) => { if (!cancelled && discount?.active) setAffiliateDiscountRate(Number(discount.discount_rate)); })
             .catch(() => undefined);
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     }, []);
 
-    const enterprisePlans = useMemo(
-        () => plans?.filter((p) => p.isCompanyPlan) ?? [],
-        [plans]
-    );
+    const currencySymbol = quote?.currencySymbol ?? (billingCurrency === "NGN" ? "₦" : "$");
+    const includedPlans = quote?.includedPlansPerSeat ?? 4;
 
-    const rangeEnterprisePlans = useMemo(
-        () =>
-            enterprisePlans
-                .filter((p) => p.signupRangeLabel === selectedRange)
-                .sort((a, b) => a.basePriceUsd - b.basePriceUsd),
-        [enterprisePlans, selectedRange]
-    );
+    const validAdmins = useMemo(() => admins.filter((a) => a.firstName.trim() && a.email.trim()), [admins]);
+    const validEmployees = useMemo(() => employees.filter((e) => e.email.trim()), [employees]);
+    const totalPeople = validAdmins.length + validEmployees.length;
 
-    const getCurrencySymbol = () => {
-        switch (billingCurrency.toUpperCase()) {
-            case "NGN": return "₦";
-            case "EUR": return "€";
-            case "GBP": return "£";
-            default: return "$";
-        }
-    };
+    const canProceedStep1 = numericSeatCount >= 1;
+    const seatsCoverTeam = numericSeatCount >= totalPeople;
+    const canProceedStep2 = companyName.trim() && contactEmail.trim() && validAdmins.length >= 1 && seatsCoverTeam;
 
-    const getSelectedPlanData = () => plans?.find((p) => p.code === selectedPlan) ?? null;
+    const goToStep = (step: number) => { setDirection(step > currentStep ? 1 : -1); setCurrentStep(step); };
 
-    const getVolumePricing = (): PublicPricingPreview | null => {
-        if (!pricingPreviews || !selectedPlanData) return null;
-        const serviceLevel = selectedPlanData.serviceLevel ?? "STANDARD";
-        return pricingPreviews.find(
-            (p) => p.serviceLevel === serviceLevel && p.currency === billingCurrency
-        ) ?? null;
-    };
+    const addAdmin = () => setAdmins([...admins, { firstName: "", lastName: "", email: "", role: "hr" }]);
+    const removeAdmin = (i: number) => setAdmins(admins.filter((_, idx) => idx !== i));
+    const updateAdmin = (i: number, f: keyof TeamMember, v: string) => setAdmins(admins.map((a, idx) => (idx === i ? { ...a, [f]: v } : a)));
 
-    const getDiscountInfo = () => {
-        const vp = getVolumePricing();
-        if (!vp || vp.contactSales) return null;
-        if (vp.appliedTier === "TIER_3") return { label: "20% volume discount", pct: 20 };
-        if (vp.appliedTier === "TIER_2") return { label: "10% volume discount", pct: 10 };
-        return null;
-    };
+    const addEmployee = () => setEmployees([...employees, { email: "", firstName: "", lastName: "" }]);
+    const removeEmployee = (i: number) => setEmployees(employees.filter((_, idx) => idx !== i));
+    const updateEmployee = (i: number, f: keyof PlatformEmployee, v: string) => setEmployees(employees.map((e, idx) => (idx === i ? { ...e, [f]: v } : e)));
 
-    const getAffiliateDiscountInfo = () => {
-        if (affiliateDiscountRate <= 0) return null;
-        return { label: `${affiliateDiscountRate}% affiliate discount`, pct: affiliateDiscountRate };
-    };
-
-    const getEstimatedTotal = () => {
-        const plan = getSelectedPlanData();
-        if (!plan || plan.basePriceUsd === 0) return null;
-        const volumePricing = getVolumePricing();
-        let baseTotal: number;
-        if (volumePricing) {
-            baseTotal = volumePricing.totalAmount;
-        } else {
-            baseTotal = billingCurrency === "NGN" ? (plan.basePriceNgn ?? 0) * numericCreditCount : plan.basePriceUsd * numericCreditCount;
-        }
-        // Apply affiliate discount on top of volume pricing
-        if (affiliateDiscountRate > 0) {
-            return Math.round(baseTotal * (1 - affiliateDiscountRate / 100));
-        }
-        return baseTotal;
-    };
-
-    const formatTotal = (total: number | null) => {
-        if (total === null) return "Free";
-        if (billingCurrency === "NGN") return `₦${total.toLocaleString()} NGN`;
-        return `$${total.toLocaleString()} USD`;
-    };
-
-    const formatPricePerCredit = (plan: ReturnType<typeof getSelectedPlanData>) => {
-        if (!plan) return "";
-        if (plan.basePriceUsd === 0) return "Free tier";
-        const volumePricing = getVolumePricing();
-        if (volumePricing) {
-            const sym = billingCurrency === "NGN" ? "₦" : "$";
-            const suffix = billingCurrency === "NGN" ? " NGN" : " USD";
-            if (volumePricing.contactSales) return "Contact sales for pricing";
-            return `${sym}${volumePricing.pricePerCredit.toLocaleString()}${suffix}/credit × ${numericCreditCount} credits`;
-        }
-        if (billingCurrency === "NGN")
-            return `₦${(plan.basePriceNgn ?? 0).toLocaleString()} NGN/credit × ${numericCreditCount} credits`;
-        return `$${plan.basePriceUsd} USD/credit × ${numericCreditCount} credits`;
-    };
-
-    const addTeamMember = () => {
-        setTeamMembers([...teamMembers, { firstName: "", lastName: "", email: "", role: "admin" }]);
-    };
-
-    const removeTeamMember = (index: number) => {
-        if (teamMembers.length > 1) {
-            setTeamMembers(teamMembers.filter((_, i) => i !== index));
-        }
-    };
-
-    const updateTeamMember = (index: number, field: keyof TeamMember, value: string) => {
-        const updated = [...teamMembers];
-        updated[index] = { ...updated[index], [field]: value };
-        setTeamMembers(updated);
-    };
-
-    const addPlatformEmployee = () => {
-        setPlatformEmployees([...platformEmployees, { email: "", firstName: "", lastName: "" }]);
-    };
-
-    const removePlatformEmployee = (index: number) => {
-        if (platformEmployees.length > 1) {
-            setPlatformEmployees(platformEmployees.filter((_, i) => i !== index));
-        }
-    };
-
-    const updatePlatformEmployee = (index: number, field: keyof PlatformEmployee, value: string) => {
-        const updated = [...platformEmployees];
-        updated[index] = { ...updated[index], [field]: value };
-        setPlatformEmployees(updated);
-    };
-
-    const handleTeamMembersCsvUpload = async (file: File | null) => {
-        setTeamMembersCsvError("");
+    const handleEmployeesCsvUpload = async (file: File | null) => {
+        setEmployeesCsvError("");
         if (!file) return;
-
         if (!file.name.toLowerCase().endsWith(".csv")) {
-            setTeamMembersCsv(null);
-            setTeamMembersCsvError("Please upload a CSV file.");
-            return;
+            setEmployeesCsv(null); setEmployeesCsvError("Please upload a CSV file."); return;
         }
-
         try {
-            const importedMembers = parseTeamMembersCsv(await file.text());
-            if (importedMembers.length === 0) {
-                setTeamMembersCsvError("The CSV did not include any employees.");
-                return;
-            }
-
-            const imported: PlatformEmployee[] = importedMembers.map((m) => ({ email: m.email, firstName: m.firstName, lastName: m.lastName }));
-            const hasOnlyEmptyStarter = platformEmployees.length === 1 && !platformEmployees[0].email.trim();
-            setPlatformEmployees(hasOnlyEmptyStarter ? imported : [...platformEmployees, ...imported]);
-            setTeamMembersCsv(file);
+            const imported = parseEmployeesCsv(await file.text());
+            if (imported.length === 0) { setEmployeesCsvError("The CSV did not include any employees."); return; }
+            const hasOnlyEmpty = employees.length === 0 || (employees.length === 1 && !employees[0].email.trim());
+            setEmployees(hasOnlyEmpty ? imported : [...employees.filter((e) => e.email.trim()), ...imported]);
+            setEmployeesCsv(file);
+            toast.success(`${imported.length} employee${imported.length === 1 ? "" : "s"} imported from CSV`);
         } catch (err) {
-            setTeamMembersCsv(null);
-            setTeamMembersCsvError(err instanceof Error ? err.message : "Failed to read CSV file.");
+            setEmployeesCsv(null);
+            setEmployeesCsvError(err instanceof Error ? err.message : "Failed to read CSV file.");
         }
     };
 
-    const selectedPlanData = getSelectedPlanData();
-    const isContactSalesRequired = numericCreditCount >= 500 && !!selectedPlanData && selectedPlanData.basePriceUsd > 0;
-    const canProceedStep1 =
-        selectedPlan &&
-        (selectedPlanData?.basePriceUsd === 0 || numericCreditCount > 0) &&
-        !isContactSalesRequired;
-    const canProceedStep2 =
-        companyName.trim() &&
-        contactEmail.trim() &&
-        teamMembers.every((m) => m.firstName.trim() && m.email.trim());
-
-    const goToStep = (step: number) => {
-        setDirection(step > currentStep ? 1 : -1);
-        setCurrentStep(step);
+    const downloadCsvSample = () => {
+        const blob = new Blob([employeesCsvSample], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "tmag-employees-template.csv"; a.click();
+        URL.revokeObjectURL(url);
     };
 
     const handleSubmit = async () => {
+        if (!seatsCoverTeam) { toast.error("Seat count must cover everyone you've added."); return; }
         setSubmitting(true);
         try {
             const result = await submitOnboarding.mutateAsync({
-                companyName,
-                industry,
-                contactEmail,
-                contactPhone,
-                website,
-                billingCurrency,
-                selectedPlanCode: selectedPlan,
-                creditCount: numericCreditCount,
-                sampleRequest,
-                teamMembers,
-                teamMembersCsv,
-                platformEmployees: platformEmployees.filter((e) => e.email.trim()),
+                companyName, industry, contactEmail, contactPhone, website, billingCurrency,
+                billingModel: "SEAT",
+                seatCount: numericSeatCount,
+                selectedPlanCode: "PREMIUM",
+                sampleRequest: "",
+                teamMembers: validAdmins,
+                teamMembersCsv: employeesCsv,
+                msaDocument,
+                platformEmployees: validEmployees,
                 affiliate_referral_code: affiliateDiscountRate > 0 ? getAffiliateReferralCode() : undefined,
             });
             setOnboardingResult(result);
             goToStep(4);
         } catch (err) {
             console.error("Submit failed:", err);
-            alert("Failed to submit. Please check your inputs and try again.");
+            toast.error("Failed to submit. Please check your inputs and try again.");
         } finally {
             setSubmitting(false);
         }
@@ -365,1456 +221,337 @@ const CompanyOnboarding = () => {
             window.location.href = payment.paymentLink;
         } catch (err) {
             console.error("Payment initiation failed:", err);
-            alert("Failed to initiate payment. Please try again.");
+            toast.error("Failed to initiate payment. Please try again.");
         }
     };
 
-    const slideVariants = {
-        enter: (dir: number) => ({ x: dir > 0 ? 200 : -200, opacity: 0 }),
+    const slide = {
+        enter: (d: number) => ({ x: d > 0 ? 60 : -60, opacity: 0 }),
         center: { x: 0, opacity: 1 },
-        exit: (dir: number) => ({ x: dir > 0 ? -200 : 200, opacity: 0 }),
+        exit: (d: number) => ({ x: d > 0 ? -60 : 60, opacity: 0 }),
     };
+
+    const fmt = (n: number | undefined) => (n ?? 0).toLocaleString();
+
+    // ── Live order summary (sticky sidebar, steps 1–3) ──
+    const OrderSummary = () => (
+        <div className={`${panel} lg:sticky lg:top-24`}>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">Your order</span>
+            <h3 className="text-lg font-serif text-heading mt-1 mb-5">Annual subscription</h3>
+
+            {quoteLoading && numericSeatCount > 0 ? (
+                <div className="flex items-center gap-2 text-sm text-muted py-6">
+                    <LucideLoader2 className="h-4 w-4 animate-spin" /> Calculating…
+                </div>
+            ) : quote && numericSeatCount > 0 ? (
+                <>
+                    <span className="inline-block text-[11px] font-semibold text-accent bg-accent/10 px-2.5 py-1 rounded-full mb-4">
+                        {TIER_LABELS[quote.tier] ?? quote.tier}
+                    </span>
+                    <dl className="space-y-2.5 text-sm">
+                        <div className="flex justify-between"><dt className="text-muted">Seats</dt><dd className="font-semibold text-heading">{numericSeatCount}</dd></div>
+                        <div className="flex justify-between"><dt className="text-muted">Per seat / year</dt><dd className="font-semibold text-heading">{currencySymbol}{fmt(quote.pricePerSeat)}</dd></div>
+                        <div className="flex justify-between"><dt className="text-muted">Plans / seat</dt><dd className="font-semibold text-heading">{includedPlans} / year</dd></div>
+                        {totalPeople > 0 && (
+                            <div className="flex justify-between"><dt className="text-muted">People added</dt><dd className={`font-semibold ${seatsCoverTeam ? "text-heading" : "text-red-500"}`}>{totalPeople}</dd></div>
+                        )}
+                    </dl>
+                    <div className="flex items-baseline justify-between border-t border-border-light/70 mt-4 pt-4">
+                        <span className="text-sm font-semibold text-heading">Total / year</span>
+                        <span className="text-3xl font-serif text-heading">{currencySymbol}{fmt(quote.totalAnnualAmount)}</span>
+                    </div>
+                </>
+            ) : (
+                <p className="text-sm text-muted py-6">Enter a seat count to see your annual price.</p>
+            )}
+
+            <ul className="space-y-2 mt-6 pt-5 border-t border-border-light/70">
+                {[`${includedPlans} travel plans per seat / year`, "CSV employee onboarding"].map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-xs text-body">
+                        <LucideCheck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent" />{f}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
 
     return (
         <main className="min-h-screen bg-background-primary">
             <Navbar />
-            <Toaster
-                position="top-right"
-                containerStyle={{ fontSize: "14px" }}
-            />
-            <AnimateIn
-                as="section"
-                className="flex flex-col items-center text-center pt-16 pb-8 px-6"
-            >
-                <span className="inline-block text-xs text-accent bg-accent/20 font-semibold rounded-xl px-4 py-1.5 mb-6">
-                    Company Onboarding
-                </span>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl leading-[0.9] text-heading font-serif max-w-3xl">
-                    Get your team <span className="italic">protected.</span>
-                </h1>
-                <p className="text-sm text-body mt-4 max-w-lg leading-relaxed">
-                    Choose a plan, set up your team, and start generating travel
-                    health plans in minutes.
-                </p>
-            </AnimateIn>
+            <Toaster position="top-center" />
 
-            {/* Step indicator */}
-            <div className="px-8 max-w-3xl mx-auto mb-10">
-                <div className="flex items-center justify-between">
-                    {steps.map((step, i) => (
-                        <div key={step.id} className="flex items-center">
-                            <button
-                                onClick={() => {
-                                    if (step.id < currentStep)
-                                        goToStep(step.id);
-                                }}
-                                disabled={step.id > currentStep}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                                    step.id === currentStep ?
-                                        "bg-dark text-white"
-                                    : step.id < currentStep ?
-                                        "bg-accent/10 text-accent cursor-pointer hover:bg-accent/20"
-                                    :   "bg-button-secondary text-muted cursor-not-allowed"
-                                }`}
-                            >
-                                {step.id < currentStep ?
-                                    <LucideCheck className="w-3.5 h-3.5" />
-                                :   step.icon}
-                                <span className="hidden sm:inline">
-                                    {step.title}
-                                </span>
-                            </button>
-                            {i < steps.length - 1 && (
-                                <div className="relative mx-1 flex w-8 sm:w-16 items-center">
-                                    <div className={`h-0.5 flex-1 ${step.id < currentStep ? "bg-accent" : "bg-border-light/50"}`} />
-                                    <LucideArrowRight className={`absolute left-1/2 h-3.5 w-3.5 -translate-x-1/2 ${step.id < currentStep ? "text-accent" : "text-border"}`} />
+            {/* Hero band */}
+            <div className="border-b border-border-light/60">
+                <div className="max-w-6xl mx-auto px-6 pt-28 pb-10 text-center">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Company onboarding</span>
+                    <h1 className="font-serif text-4xl md:text-5xl text-heading mt-3 leading-[1.05]">
+                        Cover your team in <span className="italic">minutes</span>.
+                    </h1>
+                    <p className="mx-auto mt-4 max-w-md text-sm text-body">
+                        Buy a seat per traveller each includes {includedPlans} travel plans a year. Pick seats,
+                        add your roster, pay once.
+                    </p>
+
+                    {/* Stepper */}
+                    <div className="mt-9 flex items-center justify-center gap-1.5 sm:gap-3">
+                        {steps.map((step, i) => {
+                            const active = step.id === currentStep;
+                            const done = step.id < currentStep;
+                            return (
+                                <div key={step.id} className="flex items-center gap-1.5 sm:gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-bold transition-colors ${active ? "border-accent bg-accent text-white shadow-sm"
+                                            : done ? "border-accent/40 bg-accent/10 text-accent"
+                                                : "border-border-light bg-white text-muted"
+                                            }`}>
+                                            {done ? <LucideCheck className="h-4 w-4" /> : step.icon}
+                                        </span>
+                                        <span className={`hidden text-xs font-semibold sm:block ${active ? "text-heading" : "text-muted"}`}>{step.title}</span>
+                                    </div>
+                                    {i < steps.length - 1 && <span className={`h-px w-5 sm:w-8 ${done ? "bg-accent/40" : "bg-border-light"}`} />}
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 
-            {/* Step content */}
-            <div className="px-8 max-w-4xl mx-auto pb-20">
-                <AnimatePresence mode="wait" custom={direction}>
-                    <motion.div
-                        key={currentStep}
-                        custom={direction}
-                        variants={slideVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                    >
-                        {/* Step 1: Plan Selection */}
-                        {currentStep === 1 && (
-                            <div className="space-y-8">
-                                <div>
-                                    <h2 className="text-2xl font-serif text-heading mb-2">
-                                        Select your plan
-                                    </h2>
-                                    <p className="text-sm text-body">
-                                        Choose the plan that best fits your team
-                                        size and reporting needs.
-                                    </p>
-                                </div>
+            {/* Body */}
+            <div className={`max-w-6xl mx-auto px-6 py-10 ${currentStep === 4 ? "" : "grid lg:grid-cols-[1fr_340px] gap-8 items-start"}`}>
+                <div className="min-w-0">
+                    <AnimatePresence mode="wait" custom={direction}>
+                        <motion.div key={currentStep} custom={direction} variants={slide} initial="enter" animate="center" exit="exit" transition={{ duration: 0.22 }}>
 
-                                <LaunchDiscountBanner variant="page" />
+                            {/* ── Step 1 ── */}
+                            {currentStep === 1 && (
+                                <div className="space-y-5">
+                                    <div className={panel}>
+                                        <SectionTitle eyebrow="Step 1" title="How many seats do you need?" hint={`Each seat covers one employee and includes ${includedPlans} travel plans per year.`} />
+                                        <input type="number" min={1} value={seatCount} onChange={(e) => setSeatCount(e.target.value)} className={`${field} text-lg font-semibold`} placeholder="e.g. 25" />
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            {[10, 25, 50, 100, 250].map((n) => (
+                                                <button key={n} type="button" onClick={() => setSeatCount(String(n))}
+                                                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${numericSeatCount === n ? "border-accent bg-accent/10 text-accent" : "border-border-light text-muted hover:border-accent/50"}`}>
+                                                    {n}
+                                                </button>
+                                            ))}
+                                        </div>
 
-                                {plansLoading ?
-                                    <div className="flex justify-center py-12">
-                                        <LucideLoader2 className="w-8 h-8 animate-spin text-muted" />
-                                    </div>
-                                :   <div className="space-y-6">
-                                        {/* Signup-range selector */}
-                                        <div>
-                                            <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
-                                                How many employees will sign up?
-                                            </p>
-                                            <div className="inline-flex items-center bg-white border border-slate-200 rounded-2xl p-1 gap-1 shadow-sm">
-                                                {signupRanges.map((r) => (
-                                                    <button
-                                                        key={r.value}
-                                                        onClick={() => {
-                                                            setSelectedRange(
-                                                                r.value,
-                                                            );
-                                                            setSelectedPlan("");
-                                                        }}
-                                                        className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                                                            (
-                                                                selectedRange ===
-                                                                r.value
-                                                            ) ?
-                                                                "bg-accent shadow-sm text-white"
-                                                            :   "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
-                                                        }`}
-                                                    >
-                                                        {r.label}
+                                        <div className="mt-6">
+                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Currency</p>
+                                            <div className="flex gap-2">
+                                                {["USD", "NGN"].map((c) => (
+                                                    <button key={c} type="button" onClick={() => setBillingCurrency(c)}
+                                                        className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${billingCurrency === c ? "border-accent bg-accent/10 text-accent" : "border-border-light text-muted hover:border-accent/50"}`}>
+                                                        {c === "NGN" ? "₦ NGN" : "$ USD"}
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
 
-                                        {/* Enterprise plan cards for the selected range */}
-                                        <div className="grid grid-cols-1 min-h-125 md:grid-cols-2 gap-5">
-                                            {rangeEnterprisePlans.map(
-                                                (plan) => {
-                                                    const isPremium =
-                                                        plan.serviceLevel ===
-                                                        "PREMIUM";
-                                                    const isSelected =
-                                                        selectedPlan ===
-                                                        plan.code;
-                                                    const serviceLevel =
-                                                        (
-                                                            plan.serviceLevel ===
-                                                            "PREMIUM"
-                                                        ) ?
-                                                            "premium"
-                                                        :   "standard";
-                                                    const colors =
-                                                        enterpriseTierColors[
-                                                            selectedRange
-                                                        ][serviceLevel];
-                                                    const features =
-                                                        featuresByServiceLevel[
-                                                            plan.serviceLevel ??
-                                                                "STANDARD"
-                                                        ];
-                                                    const displayPrice =
-                                                        (
-                                                            billingCurrency ===
-                                                            "NGN"
-                                                        ) ?
-                                                            `₦${(plan.basePriceNgn ?? 0).toLocaleString()}`
-                                                        :   `$${plan.basePriceUsd}`;
-
-                                                    return (
-                                                        <button
-                                                            key={plan.code}
-                                                            onClick={() =>
-                                                                setSelectedPlan(
-                                                                    plan.code,
-                                                                )
-                                                            }
-                                                            className={`relative overflow-hidden text-left p-6 transition-all hover:-translate-y-0.5 ${colors.border} ${
-                                                                isSelected ?
-                                                                    "ring-2 ring-offset-2 ring-stone-900/20"
-                                                                :   ""
-                                                            }`}
-                                                        >
-                                                            <div
-                                                                className="absolute inset-0"
-                                                                style={{
-                                                                    background:
-                                                                        colors.gradient,
-                                                                }}
-                                                            />
-                                                            <div
-                                                                className={`absolute top-0 left-0 w-1 h-full ${colors.sideAccent}`}
-                                                            />
-                                                            <span
-                                                                className={`absolute top-6 right-6 text-xs font-semibold ${colors.badgeBg} ${colors.badgeText} px-3 py-1 rounded-full`}
-                                                            >
-                                                                {isPremium ?
-                                                                    "Best report"
-                                                                :   "Most popular"
-                                                                }
-                                                            </span>
-                                                            <div className="relative z-10 flex items-start justify-between mb-1 pr-28">
-                                                                <h3
-                                                                    className={`text-lg font-serif ${colors.textPrimary}`}
-                                                                >
-                                                                    {
-                                                                        plan.displayName
-                                                                    }
-                                                                </h3>
-                                                                {isSelected && (
-                                                                    <div
-                                                                        className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ml-2 ${isPremium ? "bg-gold" : "bg-stone-900"}`}
-                                                                    >
-                                                                        <LucideCheck className="w-3.5 h-3.5 text-white" />
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            <p
-                                                                className={`relative z-10 text-xs font-medium uppercase tracking-wide mb-3 ${colors.textMuted}`}
-                                                            >
-                                                                {isPremium ?
-                                                                    "Premium service"
-                                                                :   "Standard service"
-                                                                }
-                                                            </p>
-                                                            <p
-                                                                className={`relative z-10 text-2xl font-serif mb-0.5 ${colors.textPrimary}`}
-                                                            >
-                                                                {displayPrice}
-                                                            </p>
-                                                            <p
-                                                                className={`relative z-10 text-xs mb-4 ${colors.textMuted}`}
-                                                            >
-                                                                per credit
-                                                            </p>
-                                                            <ul className="relative z-10 space-y-2 mb-4">
-                                                                {features.map(
-                                                                    (f) => (
-                                                                        <li
-                                                                            key={
-                                                                                f
-                                                                            }
-                                                                            className={`flex items-start gap-2 text-xs ${colors.textPrimary}`}
-                                                                        >
-                                                                            <LucideCheck
-                                                                                className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${colors.checkColor}`}
-                                                                            />
-                                                                            {f}
-                                                                        </li>
-                                                                    ),
-                                                                )}
-                                                            </ul>
-                                                        </button>
-                                                    );
-                                                },
-                                            )}
-                                        </div>
-                                    </div>
-                                }
-
-                                {/* Credit count input */}
-                                {selectedPlan &&
-                                    (() => {
-                                        const plan = getSelectedPlanData();
-                                        const discountInfo = getDiscountInfo();
-                                        return plan && plan.basePriceUsd > 0 ?
-                                                <div>
-                                                    <label className="block text-sm font-semibold text-heading mb-2">
-                                                        How many credits to
-                                                        purchase upfront?
-                                                    </label>
-                                                    <p className="text-xs text-muted mb-3">
-                                                        Each credit generates
-                                                        one travel health plan
-                                                        for one employee trip.
-                                                        Volume discounts apply
-                                                        automatically.
-                                                    </p>
-                                                    <div className="flex items-center gap-3">
-                                                        <input
-                                                            type="number"
-                                                            min={1}
-                                                            max={10000}
-                                                            value={creditCount}
-                                                            onChange={(e) => {
-                                                                const rawValue =
-                                                                    e.target
-                                                                        .value;
-                                                                if (
-                                                                    rawValue ===
-                                                                    ""
-                                                                ) {
-                                                                    setCreditCount(
-                                                                        "",
-                                                                    );
-                                                                    return;
-                                                                }
-                                                                const value =
-                                                                    Number(
-                                                                        rawValue,
-                                                                    );
-                                                                if (
-                                                                    !Number.isFinite(
-                                                                        value,
-                                                                    ) ||
-                                                                    value < 0
-                                                                )
-                                                                    return;
-                                                                if (
-                                                                    value >
-                                                                    10000
-                                                                ) {
-                                                                    toast.error(
-                                                                        "Maximum credit count is 10,000",
-                                                                    );
-                                                                    setCreditCount(
-                                                                        "10000",
-                                                                    );
-                                                                    return;
-                                                                }
-                                                                setCreditCount(
-                                                                    rawValue,
-                                                                );
-                                                            }}
-                                                            onBlur={() => {
-                                                                if (
-                                                                    creditCount ===
-                                                                        "" ||
-                                                                    Number(
-                                                                        creditCount,
-                                                                    ) < 1
-                                                                )
-                                                                    setCreditCount(
-                                                                        "1",
-                                                                    );
-                                                            }}
-                                                            className={`w-32 ${compactFieldClassName} ${
-                                                                (
-                                                                    isContactSalesRequired
-                                                                ) ?
-                                                                    "border-amber-400 bg-amber-50 focus:border-amber-500 focus:ring-amber-200"
-                                                                :   ""
-                                                            }`}
-                                                        />
-                                                        <span className="text-sm text-muted">
-                                                            credits
-                                                        </span>
-                                                        {(
-                                                            isContactSalesRequired
-                                                        ) ?
-                                                            <span className="text-sm font-semibold text-amber-700 ml-auto">
-                                                                Contact sales
-                                                                for custom
-                                                                pricing
-                                                            </span>
-                                                        :   <span className="text-sm font-semibold text-heading ml-auto flex items-center gap-2">
-                                                                {getCurrencySymbol()}
-                                                                {(
-                                                                    getEstimatedTotal() ??
-                                                                    0
-                                                                ).toLocaleString()}{" "}
-                                                                {
-                                                                    billingCurrency
-                                                                }{" "}
-                                                                estimated
-                                                                {discountInfo && (
-                                                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full animate-pulse">
-                                                                        <LucideTag className="w-3 h-3" />
-                                                                        {
-                                                                            discountInfo.label
-                                                                        }
-                                                                    </span>
-                                                                )}
-                                                                {getAffiliateDiscountInfo() && (
-                                                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-                                                                        <LucideTag className="w-3 h-3" />
-                                                                        {getAffiliateDiscountInfo()!.label}
-                                                                    </span>
-                                                                )}
-                                                            </span>
-                                                        }
-                                                    </div>
-
-                                                    {/* Discount tier progress indicator */}
-                                                    {!isContactSalesRequired &&
-                                                        selectedPlanData && (
-                                                            <div className="mt-3">
-                                                                <div className="flex items-center gap-1 mb-1.5">
-                                                                    {[
-                                                                        {
-                                                                            min: 1,
-                                                                            max: 49,
-                                                                            label: "1–49",
-                                                                        },
-                                                                        {
-                                                                            min: 50,
-                                                                            max: 99,
-                                                                            label: "50–99",
-                                                                        },
-                                                                        {
-                                                                            min: 100,
-                                                                            max: 499,
-                                                                            label: "100–499",
-                                                                        },
-                                                                    ].map(
-                                                                        (
-                                                                            tier,
-                                                                        ) => {
-                                                                            const isActive =
-                                                                                numericCreditCount >=
-                                                                                    tier.min &&
-                                                                                numericCreditCount <=
-                                                                                    tier.max;
-                                                                            const isPast =
-                                                                                numericCreditCount >
-                                                                                tier.max;
-                                                                            return (
-                                                                                <div
-                                                                                    key={
-                                                                                        tier.label
-                                                                                    }
-                                                                                    className="flex-1"
-                                                                                >
-                                                                                    <div
-                                                                                        className={`h-1.5 rounded-full transition-colors duration-300 ${
-                                                                                            (
-                                                                                                isActive
-                                                                                            ) ?
-                                                                                                "bg-accent"
-                                                                                            : (
-                                                                                                isPast
-                                                                                            ) ?
-                                                                                                "bg-accent/40"
-                                                                                            :   "bg-border-light"
-                                                                                        }`}
-                                                                                    />
-                                                                                    <p
-                                                                                        className={`text-[10px] mt-0.5 text-center transition-colors ${
-                                                                                            (
-                                                                                                isActive
-                                                                                            ) ?
-                                                                                                "text-accent font-semibold"
-                                                                                            :   "text-muted"
-                                                                                        }`}
-                                                                                    >
-                                                                                        {
-                                                                                            tier.label
-                                                                                        }
-                                                                                    </p>
-                                                                                </div>
-                                                                            );
-                                                                        },
-                                                                    )}
-                                                                    <div className="flex-1">
-                                                                        <div
-                                                                            className={`h-1.5 rounded-full transition-colors duration-300 ${
-                                                                                (
-                                                                                    numericCreditCount >=
-                                                                                    500
-                                                                                ) ?
-                                                                                    "bg-amber-400"
-                                                                                :   "bg-border-light"
-                                                                            }`}
-                                                                        />
-                                                                        <p
-                                                                            className={`text-[10px] mt-0.5 text-center transition-colors ${
-                                                                                (
-                                                                                    numericCreditCount >=
-                                                                                    500
-                                                                                ) ?
-                                                                                    "text-amber-600 font-semibold"
-                                                                                :   "text-muted"
-                                                                            }`}
-                                                                        >
-                                                                            500+
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                    {/* Contact sales CTA for 500+ */}
-                                                    {isContactSalesRequired && (
-                                                        <div className="mt-4 p-5 bg-amber-50 border-2 border-amber-300 rounded-2xl">
-                                                            <div className="flex items-start gap-3">
-                                                                <div className="p-2 bg-amber-100 rounded-xl shrink-0">
-                                                                    <LucidePhone className="w-5 h-5 text-amber-600" />
-                                                                </div>
-                                                                <div className="flex-1">
-                                                                    <p className="text-sm font-semibold text-amber-800 mb-1">
-                                                                        Custom
-                                                                        pricing
-                                                                        available
-                                                                        for{" "}
-                                                                        {numericCreditCount.toLocaleString()}{" "}
-                                                                        credits
-                                                                    </p>
-                                                                    <p className="text-xs text-amber-700 mb-3">
-                                                                        For
-                                                                        orders
-                                                                        of 500+
-                                                                        credits,
-                                                                        our
-                                                                        sales
-                                                                        team can
-                                                                        offer
-                                                                        tailored
-                                                                        packages
-                                                                        with
-                                                                        deeper
-                                                                        discounts.
-                                                                        Contact
-                                                                        us for a
-                                                                        personalized
-                                                                        quote.
-                                                                    </p>
-                                                                    <a
-                                                                        href="/contact"
-                                                                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white text-sm font-semibold rounded-xl hover:bg-amber-600 transition-colors"
-                                                                    >
-                                                                        <LucidePhone className="w-4 h-4" />
-                                                                        Contact
-                                                                        Sales
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Discount applied celebration for 50-499 */}
-                                                    {discountInfo &&
-                                                        !isContactSalesRequired && (
-                                                            <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
-                                                                <div className="p-1.5 bg-emerald-100 rounded-lg shrink-0">
-                                                                    <LucideTag className="w-4 h-4 text-emerald-600" />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-xs font-semibold text-emerald-800">
-                                                                        {
-                                                                            discountInfo.label
-                                                                        }{" "}
-                                                                        applied!
-                                                                    </p>
-                                                                    <p className="text-xs text-emerald-600">
-                                                                        You're
-                                                                        saving{" "}
-                                                                        {
-                                                                            discountInfo.pct
-                                                                        }
-                                                                        % per
-                                                                        credit
-                                                                        at{" "}
-                                                                        {
-                                                                            numericCreditCount
-                                                                        }{" "}
-                                                                        credits
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                    {/* Affiliate discount celebration */}
-                                                    {getAffiliateDiscountInfo() &&
-                                                        !isContactSalesRequired && (
-                                                            <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
-                                                                <div className="p-1.5 bg-emerald-100 rounded-lg shrink-0">
-                                                                    <LucideTag className="w-4 h-4 text-emerald-600" />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-xs font-semibold text-emerald-800">
-                                                                        {getAffiliateDiscountInfo()!.label} applied!
-                                                                    </p>
-                                                                    <p className="text-xs text-emerald-600">
-                                                                        Referral discount on top of any volume pricing
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                </div>
-                                            :   null;
-                                    })()}
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-heading mb-2">
-                                        Describe your typical travel health
-                                        needs (optional)
-                                    </label>
-                                    <textarea
-                                        value={sampleRequest}
-                                        onChange={(e) =>
-                                            setSampleRequest(e.target.value)
-                                        }
-                                        placeholder="E.g., We send 50+ employees to Southeast Asia and Africa quarterly. We need vaccination plans, medication guidance, and emergency contact info for each destination..."
-                                        rows={4}
-                                        className={`${fieldClassName} resize-none`}
-                                    />
-                                </div>
-
-                                <div className="flex justify-end">
-                                    <Button
-                                        variant="primary"
-                                        onClick={() => goToStep(2)}
-                                        disabled={!canProceedStep1}
-                                        icon={<LucideArrowRight />}
-                                    >
-                                        Continue
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Step 2: Company Info & Team Setup */}
-                        {currentStep === 2 && (
-                            <div className="space-y-8">
-                                <div>
-                                    <h2 className="text-2xl font-serif text-heading mb-2">
-                                        Company & team details
-                                    </h2>
-                                    <p className="text-sm text-body">
-                                        Tell us about your company and who
-                                        should have access.
-                                    </p>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-heading mb-1.5">
-                                            Company name *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={companyName}
-                                            onChange={(e) =>
-                                                setCompanyName(e.target.value)
-                                            }
-                                            placeholder="Acme Corp"
-                                            className={fieldClassName}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-heading mb-1.5">
-                                            Industry
-                                        </label>
-                                        <select
-                                            value={industry}
-                                            onChange={(e) =>
-                                                setIndustry(e.target.value)
-                                            }
-                                            className={selectClassName}
-                                        >
-                                            <option value="">
-                                                Select industry
-                                            </option>
-                                            {industries.map((ind) => (
-                                                <option key={ind} value={ind}>
-                                                    {ind}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-heading mb-1.5">
-                                            Contact email *
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={contactEmail}
-                                            onChange={(e) =>
-                                                setContactEmail(e.target.value)
-                                            }
-                                            placeholder="hr@acmecorp.com"
-                                            className={fieldClassName}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-heading mb-1.5">
-                                            Contact phone
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            value={contactPhone}
-                                            onChange={(e) =>
-                                                setContactPhone(e.target.value)
-                                            }
-                                            placeholder="+1 555 000 0000"
-                                            className={fieldClassName}
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-xs font-semibold text-heading mb-1.5">
-                                            Website
-                                        </label>
-                                        <input
-                                            type="url"
-                                            value={website}
-                                            onChange={(e) =>
-                                                setWebsite(e.target.value)
-                                            }
-                                            placeholder="https://acmecorp.com"
-                                            className={fieldClassName}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Team members */}
-                                <div>
-                                    <div className="flex items-start md:items-center justify-between mb-3">
-                                        <label className="text-sm font-semibold text-heading">
-                                            Admin team members *
-                                        </label>
-                                        <button
-                                            onClick={addTeamMember}
-                                            className={secondaryActionClassName}
-                                        >
-                                            <LucidePlus className="w-3.5 h-3.5" />
-                                            Add another
-                                        </button>
-                                    </div>
-                                    <div className="space-y-3">
-                                        {teamMembers.map((member, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex gap-3 items-start"
-                                            >
-                                                <span className="inline-flex items-center px-3 py-3 rounded-xl border border-accent/30 bg-accent/10 text-xs font-bold text-accent whitespace-nowrap">
-                                                    Admin
-                                                </span>
-                                                <input
-                                                    type="text"
-                                                    value={member.firstName}
-                                                    onChange={(e) =>
-                                                        updateTeamMember(
-                                                            index,
-                                                            "firstName",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="First name"
-                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
-                                                />
-                                                <input
-                                                    type="text"
-                                                    value={member.lastName}
-                                                    onChange={(e) =>
-                                                        updateTeamMember(
-                                                            index,
-                                                            "lastName",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Last name"
-                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
-                                                />
-                                                <input
-                                                    type="email"
-                                                    value={member.email}
-                                                    onChange={(e) =>
-                                                        updateTeamMember(
-                                                            index,
-                                                            "email",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Email address"
-                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
-                                                />
-
-                                                {teamMembers.length > 1 && (
-                                                    <button
-                                                        onClick={() =>
-                                                            removeTeamMember(
-                                                                index,
-                                                            )
-                                                        }
-                                                        className="p-3 rounded-xl border border-transparent text-slate-500 hover:border-red-200 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                                    >
-                                                        <LucideX className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <p className="text-xs text-muted mt-2">
-                                        Admin users have full dashboard access and can manage employees and travel plans.
-                                    </p>
-                                </div>
-
-                                {/* Platform employees */}
-                                <div>
-                                    <div className="flex items-start md:items-center justify-between mb-3">
-                                        <div>
-                                            <label className="text-sm font-semibold text-heading">
-                                                Platform Employees
-                                            </label>
-                                            <p className="text-xs text-muted mt-0.5">
-                                                Add existing TMAG users by email to link them as employees of this company.
+                                        <div className="mt-6 rounded-xl border border-accent/20 bg-accent/5 p-4">
+                                            <p className="text-sm font-semibold text-heading flex items-center gap-2">
+                                                <LucideShieldCheck className="w-4 h-4 text-accent" /> Premium reports for every traveller
+                                            </p>
+                                            <p className="mt-1 text-xs text-muted">
+                                                All company travel plans are Premium physician-reviewed, with a doctor reviewed, with summary included at no extra cost.
                                             </p>
                                         </div>
-                                        <div className="flex flex-wrap items-center gap-3">
-                                            <label className={`${actionButtonClassName} cursor-pointer`}>
-                                                <LucideUpload className="w-3.5 h-3.5" />
-                                                Upload CSV
-                                                <input
-                                                    type="file"
-                                                    accept=".csv,text/csv"
-                                                    className="hidden"
-                                                    onChange={(e) =>
-                                                        void handleTeamMembersCsvUpload(
-                                                            e.target.files?.[0] ?? null,
-                                                        )
-                                                    }
-                                                />
-                                            </label>
-                                            <a
-                                                href={`data:text/csv;charset=utf-8,${encodeURIComponent(teamMembersCsvSample)}`}
-                                                download="employees-template.csv"
-                                                className={secondaryActionClassName}
-                                            >
-                                                Download sample
+                                    </div>
+
+                                    {/* Terms acceptance — required before adding company details */}
+                                    <label className="flex items-start gap-3 cursor-pointer group rounded-2xl border border-border-light/70 bg-white/70 backdrop-blur-sm px-4 py-3.5 transition-colors hover:border-accent/40">
+                                        <span className="relative mt-0.5 shrink-0">
+                                            <input type="checkbox" className="sr-only" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} />
+                                            <span className={`flex h-5 w-5 items-center justify-center rounded-md border-2 transition-colors ${acceptedTerms ? "border-accent bg-accent" : "border-border-light bg-white group-hover:border-muted/50"}`}>
+                                                {acceptedTerms && <LucideCheck className="h-3 w-3 text-white" />}
+                                            </span>
+                                        </span>
+                                        <span className="text-sm text-body leading-relaxed">
+                                            I have read and accept TMAG's{" "}
+                                            <a href="/terms" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="font-semibold text-accent underline underline-offset-2 hover:opacity-80">
+                                                Terms and Conditions
                                             </a>
-                                            <button
-                                                onClick={addPlatformEmployee}
-                                                className={secondaryActionClassName}
-                                            >
-                                                <LucidePlus className="w-3.5 h-3.5" />
-                                                Add employee
-                                            </button>
+                                            .
+                                        </span>
+                                    </label>
+
+                                    <div className="flex justify-end">
+                                        <Button
+                                            icon={<LucideArrowRight className="ml-1 h-4 w-4" />}
+                                            variant="secondary" disabled={!canProceedStep1} onClick={() => {
+                                                if (!acceptedTerms) { toast.error("Please accept the Terms and Conditions to continue."); return; }
+                                                goToStep(2);
+                                            }}>
+                                            Continue
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ── Step 2 ── */}
+                            {currentStep === 2 && (
+                                <div className="space-y-5">
+                                    <div className={panel}>
+                                        <SectionTitle eyebrow="Step 2" title="Company details" />
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            <input className={field} placeholder="Company name *" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                                            <select className={`${field} cursor-pointer`} value={industry} onChange={(e) => setIndustry(e.target.value)}>
+                                                <option value="">Select industry</option>
+                                                {industries.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
+                                            </select>
+                                            <input className={field} placeholder="Contact email *" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
+                                            <input className={field} placeholder="Contact phone" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+                                            <input className={`${field} sm:col-span-2`} placeholder="Website" value={website} onChange={(e) => setWebsite(e.target.value)} />
                                         </div>
                                     </div>
-                                    <div className="mb-3 rounded-xl bg-white/50 px-4 py-3 text-xs text-slate-600">
-                                        CSV columns:{" "}
-                                        <span className="font-semibold text-heading">name,email</span>
-                                        . Each row links an existing platform user to this company.
-                                        {teamMembersCsv && (
-                                            <span className="block mt-1 text-accent">
-                                                Uploaded: {teamMembersCsv.name}
-                                            </span>
-                                        )}
-                                        {teamMembersCsvError && (
-                                            <span className="block mt-1 text-red-500">
-                                                {teamMembersCsvError}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="space-y-3">
-                                        {platformEmployees.map((emp, index) => (
-                                            <div key={index} className="flex gap-3 items-start">
-                                                <input
-                                                    type="text"
-                                                    value={emp.firstName ?? ""}
-                                                    onChange={(e) =>
-                                                        updatePlatformEmployee(index, "firstName", e.target.value)
-                                                    }
-                                                    placeholder="First name (optional)"
-                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
-                                                />
-                                                <input
-                                                    type="text"
-                                                    value={emp.lastName ?? ""}
-                                                    onChange={(e) =>
-                                                        updatePlatformEmployee(index, "lastName", e.target.value)
-                                                    }
-                                                    placeholder="Last name (optional)"
-                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
-                                                />
-                                                <input
-                                                    type="email"
-                                                    value={emp.email}
-                                                    onChange={(e) =>
-                                                        updatePlatformEmployee(index, "email", e.target.value)
-                                                    }
-                                                    placeholder="Platform user email"
-                                                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/50 px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-colors focus:border-accent focus:ring-4 focus:ring-accent/15"
-                                                />
-                                                {platformEmployees.length > 1 && (
-                                                    <button
-                                                        onClick={() => removePlatformEmployee(index)}
-                                                        className="p-3 rounded-xl border border-transparent text-slate-500 hover:border-red-200 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                                    >
-                                                        <LucideX className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <p className="text-xs text-muted mt-2">
-                                        Leave empty to skip. Linked users will be associated with this company upon approval.
-                                    </p>
-                                </div>
 
-                                <div className="flex justify-between">
-                                    <Button
-                                        variant="secondary"
-                                        onClick={() => goToStep(1)}
-                                        icon={<LucideArrowLeft />}
-                                    >
-                                        Back
-                                    </Button>
-                                    <Button
-                                        variant="primary"
-                                        onClick={() => goToStep(3)}
-                                        disabled={!canProceedStep2}
-                                        icon={<LucideArrowRight />}
-                                    >
-                                        Review
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Step 3: Review & Submit */}
-                        {currentStep === 3 && (
-                            <div className="space-y-8">
-                                <div>
-                                    <h2 className="text-2xl font-serif text-heading mb-2">
-                                        Review your order
-                                    </h2>
-                                    <p className="text-sm text-body">
-                                        Please verify all details before
-                                        proceeding to payment.
-                                    </p>
-                                </div>
-
-                                {/* Plan summary */}
-                                <div className={panelClassName}>
-                                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
-                                        Selected Plan
-                                    </h3>
-                                    {(() => {
-                                        const plan = getSelectedPlanData();
-                                        if (!plan) return null;
-                                        const total = getEstimatedTotal();
-                                        const discountInfo = getDiscountInfo();
-                                        return (
-                                            <>
-                                                <div className="flex items-start justify-between">
-                                                    <div>
-                                                        <p className="text-lg font-serif text-heading">
-                                                            {plan.displayName}
-                                                        </p>
-                                                        <p className="text-sm text-body">
-                                                            {formatPricePerCredit(
-                                                                plan,
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-2xl font-serif text-heading">
-                                                            {formatTotal(total)}
-                                                        </p>
-                                                        {discountInfo && (
-                                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full mt-1">
-                                                                <LucideTag className="w-3 h-3" />
-                                                                {
-                                                                    discountInfo.label
-                                                                }
-                                                            </span>
-                                                        )}
-                                                        {getAffiliateDiscountInfo() && (
-                                                            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full mt-1">
-                                                                <LucideTag className="w-3 h-3" />
-                                                                {getAffiliateDiscountInfo()!.label}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                    <div className={panel}>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <SectionTitle eyebrow="Admins" title="Account admins" hint="They manage seats & employees. Each admin uses a seat." />
+                                            <button type="button" onClick={addAdmin} className={ghostBtn}><LucidePlus className="h-3.5 w-3.5" /> Add</button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {admins.map((a, i) => (
+                                                <div key={i} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_1.4fr_auto]">
+                                                    <input className={compactField} placeholder="First name *" value={a.firstName} onChange={(e) => updateAdmin(i, "firstName", e.target.value)} />
+                                                    <input className={compactField} placeholder="Last name" value={a.lastName} onChange={(e) => updateAdmin(i, "lastName", e.target.value)} />
+                                                    <input className={compactField} placeholder="Email *" type="email" value={a.email} onChange={(e) => updateAdmin(i, "email", e.target.value)} />
+                                                    {admins.length > 1 && <button type="button" onClick={() => removeAdmin(i)} className={removeBtn}><LucideX className="h-4 w-4" /></button>}
                                                 </div>
-                                                {isContactSalesRequired && (
-                                                    <div className="mt-4 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl">
-                                                        <div className="flex items-start gap-3">
-                                                            <LucidePhone className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
-                                                            <div>
-                                                                <p className="text-sm font-semibold text-amber-800">
-                                                                    Custom
-                                                                    pricing for{" "}
-                                                                    {numericCreditCount.toLocaleString()}{" "}
-                                                                    credits
-                                                                </p>
-                                                                <p className="text-xs text-amber-700 mt-1">
-                                                                    Orders of
-                                                                    500+ credits
-                                                                    qualify for
-                                                                    tailored
-                                                                    packages
-                                                                    with deeper
-                                                                    discounts.
-                                                                    Please
-                                                                    contact our
-                                                                    sales team
-                                                                    before
-                                                                    proceeding.
-                                                                </p>
-                                                                <a
-                                                                    href="/contact"
-                                                                    className="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-amber-500 text-white text-xs font-semibold rounded-xl hover:bg-amber-600 transition-colors"
-                                                                >
-                                                                    <LucidePhone className="w-3.5 h-3.5" />
-                                                                    Contact
-                                                                    Sales
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </>
-                                        );
-                                    })()}
-                                </div>
-
-                                {/* Volume pricing table */}
-                                {selectedPlanData &&
-                                    selectedPlanData.basePriceUsd > 0 &&
-                                    pricingPreviews &&
-                                    pricingPreviews.length > 0 && (
-                                        <div className={panelClassName}>
-                                            <div className="flex items-center justify-between mb-3">
-                                                <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
-                                                    Volume Pricing
-                                                </h3>
-                                                {getDiscountInfo() && (
-                                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-                                                        <LucideTag className="w-3 h-3" />
-                                                        {
-                                                            getDiscountInfo()!
-                                                                .label
-                                                        }{" "}
-                                                        active
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="overflow-x-auto">
-                                                <table className="w-full text-sm">
-                                                    <thead>
-                                                        <tr className="text-left text-muted border-b border-border-light/50">
-                                                            <th className="pb-2 pr-4">
-                                                                Credits
-                                                            </th>
-                                                            <th className="pb-2 pr-4">
-                                                                Standard
-                                                            </th>
-                                                            <th className="pb-2 pr-4">
-                                                                Premium
-                                                            </th>
-                                                            <th className="pb-2">
-                                                                Savings
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="text-heading">
-                                                        <tr
-                                                            className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_1" ? "bg-accent/5" : ""}`}
-                                                        >
-                                                            <td className="py-2.5 pr-4">
-                                                                1–49
-                                                            </td>
-                                                            <td className="py-2.5 pr-4">
-                                                                {(
-                                                                    billingCurrency ===
-                                                                    "NGN"
-                                                                ) ?
-                                                                    "₦50,000"
-                                                                :   "$50"}
-                                                            </td>
-                                                            <td className="py-2.5 pr-4">
-                                                                {(
-                                                                    billingCurrency ===
-                                                                    "NGN"
-                                                                ) ?
-                                                                    "₦100,000"
-                                                                :   "$100"}
-                                                            </td>
-                                                            <td className="py-2.5 text-muted">
-                                                                —
-                                                            </td>
-                                                        </tr>
-                                                        <tr
-                                                            className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_2" ? "bg-accent/5" : ""}`}
-                                                        >
-                                                            <td className="py-2.5 pr-4">
-                                                                50–99
-                                                            </td>
-                                                            <td className="py-2.5 pr-4">
-                                                                {(
-                                                                    billingCurrency ===
-                                                                    "NGN"
-                                                                ) ?
-                                                                    "₦45,000"
-                                                                :   "$45"}
-                                                            </td>
-                                                            <td className="py-2.5 pr-4">
-                                                                {(
-                                                                    billingCurrency ===
-                                                                    "NGN"
-                                                                ) ?
-                                                                    "₦90,000"
-                                                                :   "$90"}
-                                                            </td>
-                                                            <td className="py-2.5 text-emerald-600 font-medium">
-                                                                10%
-                                                            </td>
-                                                        </tr>
-                                                        <tr
-                                                            className={`border-b border-border-light/30 ${getVolumePricing()?.appliedTier === "TIER_3" ? "bg-accent/5" : ""}`}
-                                                        >
-                                                            <td className="py-2.5 pr-4">
-                                                                100–499
-                                                            </td>
-                                                            <td className="py-2.5 pr-4">
-                                                                {(
-                                                                    billingCurrency ===
-                                                                    "NGN"
-                                                                ) ?
-                                                                    "₦40,000"
-                                                                :   "$40"}
-                                                            </td>
-                                                            <td className="py-2.5 pr-4">
-                                                                {(
-                                                                    billingCurrency ===
-                                                                    "NGN"
-                                                                ) ?
-                                                                    "₦80,000"
-                                                                :   "$80"}
-                                                            </td>
-                                                            <td className="py-2.5 text-emerald-600 font-medium">
-                                                                20%
-                                                            </td>
-                                                        </tr>
-                                                        <tr
-                                                            className={
-                                                                (
-                                                                    numericCreditCount >=
-                                                                    500
-                                                                ) ?
-                                                                    "bg-amber-50"
-                                                                :   ""
-                                                            }
-                                                        >
-                                                            <td className="py-2.5 pr-4">
-                                                                500+
-                                                            </td>
-                                                            <td
-                                                                colSpan={2}
-                                                                className="py-2.5 text-amber-600 italic font-medium"
-                                                            >
-                                                                Contact sales
-                                                            </td>
-                                                            <td className="py-2.5 text-amber-600 font-medium">
-                                                                Custom
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            {getDiscountInfo() &&
-                                                (() => {
-                                                    const vp =
-                                                        getVolumePricing();
-                                                    if (!vp) return null;
-                                                    const tier1Price =
-                                                        (
-                                                            vp.serviceLevel ===
-                                                            "PREMIUM"
-                                                        ) ?
-                                                            (
-                                                                billingCurrency ===
-                                                                "NGN"
-                                                            ) ?
-                                                                100000
-                                                            :   100
-                                                        : (
-                                                            billingCurrency ===
-                                                            "NGN"
-                                                        ) ?
-                                                            50000
-                                                        :   50;
-                                                    const savingsPerCredit =
-                                                        tier1Price -
-                                                        vp.pricePerCredit;
-                                                    const totalSavings =
-                                                        savingsPerCredit *
-                                                        numericCreditCount;
-                                                    return (
-                                                        <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
-                                                            <div className="flex items-center gap-2">
-                                                                <LucideTag className="w-4 h-4 text-emerald-600" />
-                                                                <span className="text-xs font-semibold text-emerald-800">
-                                                                    {
-                                                                        getDiscountInfo()!
-                                                                            .label
-                                                                    }{" "}
-                                                                    applied
-                                                                </span>
-                                                            </div>
-                                                            <span className="text-sm font-bold text-emerald-700">
-                                                                You save{" "}
-                                                                {(
-                                                                    billingCurrency ===
-                                                                    "NGN"
-                                                                ) ?
-                                                                    "₦"
-                                                                :   "$"}
-                                                                {totalSavings.toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                    );
-                                                })()}
+                                            ))}
                                         </div>
+                                    </div>
+
+                                    <div className={panel}>
+                                        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                                            <SectionTitle eyebrow="Travellers" title="Employees" hint="Add the people who get travel plans, or upload a CSV." />
+                                            <div className="flex gap-2">
+                                                <button type="button" onClick={downloadCsvSample} className={ghostBtn}><LucideDownload className="h-3.5 w-3.5" /> Template</button>
+                                                <label className={`${solidBtn} cursor-pointer`}>
+                                                    <LucideUpload className="h-3.5 w-3.5" /> Upload CSV
+                                                    <input type="file" accept=".csv" className="hidden" onChange={(e) => void handleEmployeesCsvUpload(e.target.files?.[0] ?? null)} />
+                                                </label>
+                                                <button type="button" onClick={addEmployee} className={ghostBtn}><LucidePlus className="h-3.5 w-3.5" /> Add</button>
+                                            </div>
+                                        </div>
+                                        {employeesCsvError && <p className="mb-2 text-xs text-red-500">{employeesCsvError}</p>}
+                                        {employeesCsv && <p className="mb-2 text-xs text-emerald-600 flex items-center gap-1"><LucideCheck className="w-3.5 h-3.5" /> {employeesCsv.name}</p>}
+                                        {employees.length === 0 ? (
+                                            <p className="rounded-xl border border-dashed border-border-light p-5 text-center text-xs text-muted">
+                                                No employees yet. Upload a CSV or add them manually.
+                                            </p>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {employees.map((e, i) => (
+                                                    <div key={i} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_1.4fr_auto]">
+                                                        <input className={compactField} placeholder="First name" value={e.firstName} onChange={(ev) => updateEmployee(i, "firstName", ev.target.value)} />
+                                                        <input className={compactField} placeholder="Last name" value={e.lastName} onChange={(ev) => updateEmployee(i, "lastName", ev.target.value)} />
+                                                        <input className={compactField} placeholder="Email *" type="email" value={e.email} onChange={(ev) => updateEmployee(i, "email", ev.target.value)} />
+                                                        <button type="button" onClick={() => removeEmployee(i)} className={removeBtn}><LucideX className="h-4 w-4" /></button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className={panel}>
+                                        <SectionTitle eyebrow="Documentation" title="MSA & company docs" hint="Download our Master Service Agreement, sign it, and upload the completed copy." />
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <a href={MSA_DOC_URL} download className={ghostBtn}><LucideFileText className="h-3.5 w-3.5" /> Download MSA</a>
+                                            <label className={`${solidBtn} cursor-pointer`}>
+                                                <LucideUpload className="h-3.5 w-3.5" /> Upload signed MSA
+                                                <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => setMsaDocument(e.target.files?.[0] ?? null)} />
+                                            </label>
+                                            {msaDocument && <span className="text-xs text-emerald-600 flex items-center gap-1"><LucideCheck className="w-3.5 h-3.5" /> {msaDocument.name}</span>}
+                                        </div>
+                                    </div>
+
+                                    {!seatsCoverTeam && (
+                                        <p className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-center text-xs font-semibold text-red-600">
+                                            You've added {totalPeople} people but only have {numericSeatCount} seats. Increase seats in step 1 or remove people.
+                                        </p>
                                     )}
 
-                                {/* Company info summary */}
-                                <div className={panelClassName}>
-                                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
-                                        Company Information
-                                    </h3>
-                                    <div className="grid grid-cols-2 gap-3 text-sm">
-                                        <div>
-                                            <p className="text-muted">
-                                                Company
-                                            </p>
-                                            <p className="text-heading font-medium">
-                                                {companyName}
-                                            </p>
-                                        </div>
-                                        {industry && (
-                                            <div>
-                                                <p className="text-muted">
-                                                    Industry
-                                                </p>
-                                                <p className="text-heading font-medium">
-                                                    {industry}
-                                                </p>
-                                            </div>
-                                        )}
-                                        <div>
-                                            <p className="text-muted">
-                                                Contact Email
-                                            </p>
-                                            <p className="text-heading font-medium">
-                                                {contactEmail}
-                                            </p>
-                                        </div>
-                                        {contactPhone && (
-                                            <div>
-                                                <p className="text-muted">
-                                                    Phone
-                                                </p>
-                                                <p className="text-heading font-medium">
-                                                    {contactPhone}
-                                                </p>
-                                            </div>
-                                        )}
+                                    <div className="flex justify-between">
+                                        <Button icon={<LucideArrowLeft className="mr-1 h-4 w-4" />} variant="secondary" onClick={() => goToStep(1)}> Back</Button>
+                                        <Button variant="primary" disabled={!canProceedStep2} onClick={() => goToStep(3)}>Review </Button>
                                     </div>
                                 </div>
+                            )}
 
-                                {/* Sample request */}
-                                {sampleRequest.trim() && (
-                                    <div className={panelClassName}>
-                                        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
-                                            Sample Request
-                                        </h3>
-                                        <p className="text-sm text-body leading-relaxed">
-                                            {sampleRequest}
-                                        </p>
-                                    </div>
-                                )}
-
-                                {/* Team members summary */}
-                                <div className={panelClassName}>
-                                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
-                                        Team Members ({teamMembers.length})
-                                    </h3>
-                                    <div className="space-y-2">
-                                        {teamMembers.map((member, i) => (
-                                            <div
-                                                key={i}
-                                                className="flex items-center justify-between text-sm"
-                                            >
-                                                <div>
-                                                    <span className="text-heading font-medium">
-                                                        {member.firstName} {member.lastName}
-                                                    </span>
-                                                    <span className="text-muted ml-2">
-                                                        ({member.email})
-                                                    </span>
-                                                </div>
-                                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-accent/10 text-accent">
-                                                    Admin
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Platform employees summary */}
-                                {platformEmployees.some((e) => e.email.trim()) && (
-                                    <div className={panelClassName}>
-                                        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
-                                            Platform Employees ({platformEmployees.filter((e) => e.email.trim()).length})
-                                        </h3>
-                                        <div className="space-y-2">
-                                            {platformEmployees.filter((e) => e.email.trim()).map((emp, i) => (
-                                                <div key={i} className="flex items-center justify-between text-sm">
-                                                    <div>
-                                                        {(emp.firstName || emp.lastName) && (
-                                                            <span className="text-heading font-medium">{emp.firstName} {emp.lastName}</span>
-                                                        )}
-                                                        <span className="text-muted">({emp.email})</span>
-                                                    </div>
-                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
-                                                        Employee
-                                                    </span>
+                            {/* ── Step 3 ── */}
+                            {currentStep === 3 && (
+                                <div className="space-y-5">
+                                    <div className={panel}>
+                                        <SectionTitle eyebrow="Step 3" title="Review & confirm" />
+                                        <dl className="divide-y divide-border-light/60 text-sm">
+                                            {[
+                                                ["Company", companyName],
+                                                ["Industry", industry || "—"],
+                                                ["Contact", contactEmail],
+                                                ["Seats", String(numericSeatCount)],
+                                                ["Report level", "Premium"],
+                                                ["Admins", String(validAdmins.length)],
+                                                ["Employees", String(validEmployees.length)],
+                                                ["Employee CSV", employeesCsv ? employeesCsv.name : "—"],
+                                                ["Signed MSA", msaDocument ? msaDocument.name : "Not attached"],
+                                            ].map(([k, v]) => (
+                                                <div key={k} className="flex items-center justify-between gap-4 py-2.5">
+                                                    <dt className="text-muted">{k}</dt>
+                                                    <dd className="font-semibold text-heading text-right truncate max-w-[60%]">{v}</dd>
                                                 </div>
                                             ))}
-                                        </div>
+                                        </dl>
+                                        <p className="mt-4 flex items-start gap-2 text-xs text-muted">
+                                            <LucideShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-accent" />
+                                            Billed once for the year. Your subscription renews manually after 12 months and every seat's plans reset.
+                                        </p>
                                     </div>
-                                )}
 
-                                <div className="flex justify-between">
-                                    <Button
-                                        variant="secondary"
-                                        onClick={() => goToStep(2)}
-                                        icon={<LucideArrowLeft />}
-                                    >
-                                        Back
-                                    </Button>
-                                    <Button
-                                        variant="primary"
-                                        onClick={handleSubmit}
-                                        disabled={
-                                            submitting || isContactSalesRequired
-                                        }
-                                    >
-                                        {submitting ?
-                                            <span className="flex items-center gap-2">
-                                                <LucideLoader2 className="w-4 h-4 animate-spin" />
-                                                Submitting...
-                                            </span>
-                                        : isContactSalesRequired ?
-                                            "Contact sales to proceed"
-                                        :   "Submit & Proceed to Payment"}
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Step 4: Payment */}
-                        {currentStep === 4 && (
-                            <div className="space-y-8 max-w-lg mx-auto text-center">
-                                {onboardingResult ?
-                                    <>
-                                        <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto">
-                                            <LucideCreditCard className="w-8 h-8 text-accent" />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-2xl font-serif text-heading mb-2">
-                                                Complete your payment
-                                            </h2>
-                                            <p className="text-sm text-body">
-                                                Your registration for{" "}
-                                                <strong>
-                                                    {
-                                                        onboardingResult.companyName
-                                                    }
-                                                </strong>{" "}
-                                                has been saved. Complete payment
-                                                to submit it for approval.
-                                            </p>
-                                        </div>
-
-                                        <LaunchDiscountBanner variant="page" />
-
-                                        <div
-                                            className={`${panelClassName} text-left`}
-                                        >
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-sm text-muted">
-                                                    Plan
-                                                </span>
-                                                <span className="text-sm font-semibold text-heading">
-                                                    {selectedPlanData?.displayName ??
-                                                        onboardingResult.selectedPlanCode}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm text-muted">
-                                                    Credits
-                                                </span>
-                                                <span className="text-sm font-semibold text-heading">
-                                                    {onboardingResult.creditCount ??
-                                                        numericCreditCount}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between mt-2">
-                                                <span className="text-sm text-muted">
-                                                    Amount
-                                                </span>
-                                                <span className="text-lg font-serif text-heading">
-                                                    {(() => {
-                                                        const estimated =
-                                                            getEstimatedTotal();
-                                                        if (
-                                                            estimated !==
-                                                                null &&
-                                                            estimated > 0
-                                                        )
-                                                            return formatTotal(
-                                                                estimated,
-                                                            );
-                                                        if (
-                                                            onboardingResult.paymentAmount !=
-                                                                null &&
-                                                            onboardingResult.paymentAmount >
-                                                                0
-                                                        )
-                                                            return `${getCurrencySymbol()}${onboardingResult.paymentAmount.toLocaleString()}`;
-                                                        return "Free";
-                                                    })()}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <Button
-                                            variant="primary"
-                                            onClick={handlePay}
-                                            disabled={initiatePayment.isPending}
-                                            className="w-full"
-                                        >
-                                            {initiatePayment.isPending ?
-                                                <span className="flex items-center gap-2">
-                                                    <LucideLoader2 className="w-4 h-4 animate-spin" />
-                                                    Processing...
-                                                </span>
-                                            :   "Pay Now"}
+                                    <div className="flex justify-between">
+                                        <Button icon={<LucideArrowLeft className="mr-1 h-4 w-4" />} variant="secondary" onClick={() => goToStep(2)}> Back</Button>
+                                        <Button variant="primary" disabled={submitting} onClick={handleSubmit}>
+                                            {submitting ? <><LucideLoader2 className="mr-1 h-4 w-4 animate-spin" /> Submitting…</> : <>Submit & pay </>}
                                         </Button>
-
-                                        <p className="text-xs text-muted">
-                                            You will be redirected to our secure
-                                            payment partner (Flutterwave) to
-                                            complete the transaction. After
-                                            payment, your registration will be
-                                            reviewed by our team.
-                                        </p>
-                                    </>
-                                :   <div className="py-12">
-                                        <LucideLoader2 className="w-8 h-8 animate-spin text-muted mx-auto mb-4" />
-                                        <p className="text-sm text-muted">
-                                            Loading...
-                                        </p>
                                     </div>
-                                }
-                            </div>
-                        )}
-                    </motion.div>
-                </AnimatePresence>
+                                </div>
+                            )}
+
+                            {/* ── Step 4 ── */}
+                            {currentStep === 4 && onboardingResult && (
+                                <div className="max-w-md mx-auto">
+                                    <div className={`${panel} text-center`}>
+                                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                                            <LucideCheck className="h-7 w-7" />
+                                        </div>
+                                        <h3 className="text-xl font-serif text-heading">Request submitted</h3>
+                                        <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
+                                            Complete your annual payment to activate <strong>{onboardingResult.companyName}</strong>.
+                                            Our team then reviews and provisions your seats.
+                                        </p>
+                                        <div className="mx-auto mt-6 rounded-2xl bg-background-secondary/70 border border-border-light/60 p-5">
+                                            <div className="flex items-baseline justify-between">
+                                                <span className="text-sm text-muted">Total / year</span>
+                                                <span className="text-3xl font-serif text-heading">{currencySymbol}{fmt(quote?.totalAnnualAmount ?? onboardingResult.paymentAmount)}</span>
+                                            </div>
+                                            <div className="flex items-baseline justify-between mt-1">
+                                                <span className="text-xs text-muted">Seats</span>
+                                                <span className="text-xs font-semibold text-heading">{numericSeatCount} · {includedPlans} plans each</span>
+                                            </div>
+                                        </div>
+                                        <button onClick={handlePay} disabled={initiatePayment.isPending}
+                                            className="mx-auto mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-accent/90 disabled:opacity-50">
+                                            {initiatePayment.isPending ? <><LucideLoader2 className="h-4 w-4 animate-spin" /> Redirecting…</> : <><LucideCreditCard className="h-4 w-4" /> Proceed to payment</>}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+
+                {currentStep !== 4 && <OrderSummary />}
             </div>
         </main>
     );

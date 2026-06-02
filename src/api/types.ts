@@ -223,10 +223,10 @@ export interface UpdateEmployeeStatusRequest {
 }
 
 export interface InviteEmployeeRequest {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   department: string;
-  creditsAllocated: number;
   companyId: number;
 }
 
@@ -984,6 +984,60 @@ export interface MyCompanyMembership {
   role: string;
   credits_allocated?: number;
   credits_used?: number;
+  // ── Seat-based subscription (present when billing_model === "SEAT") ──
+  billing_model?: "CREDIT" | "SEAT";
+  seats_total?: number;
+  seats_used?: number;
+  seats_remaining?: number;
+  seat_tier?: string;
+  price_per_seat?: number;
+  total_annual_amount?: number;
+  renewal_date?: string;
+  subscription_status?: string;
+  subscription_expired?: boolean;
+  extra_plans_purchased?: number;
+  extra_plans_available?: number;
+}
+
+// ── Seat allocation for the logged-in company employee (GET /profile/seat-usage) ──
+export interface SeatUsageResponse {
+  employeeId: number;
+  userId: number | null;
+  name: string;
+  email: string;
+  department: string | null;
+  status: string | null;
+  includedUsed: number;
+  includedLimit: number;
+  extraAllocated: number;
+  extraUsed: number;
+  totalRemaining: number;
+  allocationPeriodStart: string | null;
+}
+
+// ── Public seat pricing (GET /public/organization-seat-pricing) ──
+export interface SeatTierRow {
+  tier: string;
+  minSeats: number;
+  maxSeats: number | null;
+  pricePerSeatUsd: number;
+  pricePerSeatNgn: number;
+}
+
+export interface OrganizationSeatPricingTable {
+  tiers: SeatTierRow[];
+  includedPlansPerSeat: number;
+}
+
+export interface SeatQuote {
+  seatCount: number;
+  tier: string;
+  pricePerSeat: number;
+  totalAnnualAmount: number;
+  extraPlanPrice: number;
+  currency: string;
+  currencySymbol: string;
+  includedPlansPerSeat: number;
 }
 
 // ─── Onboarding ──────────────────────────────────────────────
@@ -1402,7 +1456,7 @@ export interface TeamMember {
   firstName: string;
   lastName: string;
   email: string;
-  role: "admin";
+  role: "admin" | "hr";
 }
 
 export interface PlatformEmployee {
@@ -1420,9 +1474,12 @@ export interface CompanyOnboardingRequest {
   billingCurrency: string;
   selectedPlanCode: string;
   creditCount?: number;
+  seatCount?: number;
+  billingModel?: "CREDIT" | "SEAT";
   sampleRequest: string;
   teamMembers: TeamMember[];
   teamMembersCsv?: File | null;
+  msaDocument?: File | null;
   platformEmployees?: PlatformEmployee[];
   affiliate_referral_code?: string;
 }

@@ -31,6 +31,7 @@ import {
   exchangeRatesApi,
   publicPlansApi,
   companyOnboardingApi,
+  organizationSeatPricingApi,
   doctorApi,
   adminDoctorApi,
   settingsApi,
@@ -1554,6 +1555,37 @@ export function useOnboardingPricingPreview(credits: number) {
     queryFn: () => companyOnboardingApi.getPricingPreview(credits),
     enabled: credits > 0,
     staleTime: 60_000,
+  });
+}
+
+// ─── Seat-based Organization Hooks ────────────────────────────
+
+/** Public seat pricing tiers ($99/$89/$79/$69 per seat / year). */
+export function useOrganizationSeatPricing() {
+  return useQuery({
+    queryKey: ["organization-seat-pricing"],
+    queryFn: () => organizationSeatPricingApi.getTable(),
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Live seat quote (tier, per-seat price, total annual cost) for onboarding. */
+export function useSeatOnboardingQuote(seats: number, currency: string) {
+  return useQuery({
+    queryKey: ["organization-seat-quote", seats, currency],
+    queryFn: () => organizationSeatPricingApi.getQuote(seats, currency),
+    enabled: seats > 0,
+    staleTime: 60_000,
+  });
+}
+
+/** Logged-in company employee's seat plan allowance (null for individual users). */
+export function useSeatUsage(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["profile-seat-usage"],
+    queryFn: () => profileApi.seatUsage(),
+    enabled: options?.enabled ?? true,
+    staleTime: 30_000,
   });
 }
 
