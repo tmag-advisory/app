@@ -2,154 +2,308 @@ import {
     LucideUser,
     LucideBuilding2,
     LucideUsers,
-    LucideArrowRight,
     LucideCheck,
+    LucideCompass,
+    LucideArrowRight,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { motion } from "framer-motion";
 import Button from "../ui/Button";
 import AnimateIn from "../animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
-import { motion } from "framer-motion";
 import SectionEyebrow from "../ui/SectionEyebrow";
+import { cn } from "../../lib/utils";
 
-const audiences = [
+const DARK_GRADIENT =
+    "linear-gradient(135deg, #2a7a6a 0%, #1a6a7a 30%, #187080 55%, #1a6878 80%, #246858 100%)";
+
+interface Audience {
+    index: string;
+    Icon: LucideIcon;
+    title: string;
+    scenario?: string;
+    description: string;
+    features: string[];
+    link: string;
+    cta: string;
+    variant: "light" | "dark";
+}
+
+const audiences: Audience[] = [
     {
-        icon: <LucideUser className="w-6 h-6" />,
-        title: "Individual Travellers",
+        index: "01",
+        Icon: LucideUser,
+        title: "Solo travellers",
         description:
-            "Solo adventurers, digital nomads, and vacationers get a plan built for your exact trip and health profile.",
+            "Backpackers, digital nomads, and holidaymakers get a plan built around their exact trip and health profile.",
         features: [
-            "Personalized vaccine checklist",
-            "Medication & supply packing list",
+            "Personalised vaccine checklist",
             "Risk alerts for your exact itinerary",
-            "Downloadable PDF health plan",
-            "Doctor-ready summary you can share",
+            "PDF plan you can share with any clinic",
         ],
         link: "/pricing",
-        cta: "Get Started",
-        variant: "light" as const,
+        cta: "Get started",
+        variant: "light",
     },
     {
-        icon: <LucideBuilding2 className="w-6 h-6" />,
-        title: "Corporate Teams",
+        index: "02",
+        Icon: LucideBuilding2,
+        title: "Organizations",
         description:
-            "Protect your people at scale. Meet duty-of-care obligations and keep every traveler informed.",
+            "Protect your people at scale, meet duty-of-care obligations, and keep every traveller informed.",
         features: [
             "Bulk employee travel assessments",
-            "Compliance-ready health reports",
-            "Dashboard for HR & travel managers",
-            "Duty-of-care documentation",
-            "API integration with travel platforms",
+            "Compliance-ready duty-of-care reports",
+            "Dashboard for HR & Employee",
         ],
         link: "/pricing?tab=company",
-        cta: "Get Started",
-        variant: "dark" as const,
+        cta: "Explore team plans",
+        variant: "dark",
     },
-
     {
-        icon: <LucideUsers className="w-6 h-6" />,
+        index: "03",
+        Icon: LucideUsers,
         title: "Families",
         description:
-            "Multi-generational trips made simple. Plans tailored for children, seniors, and everyone in between.",
+            "Multi-generational trips made simple, with guidance tailored to children, seniors, and everyone between.",
         features: [
             "Age-specific vaccination guidance",
-            "Family medication packing lists",
-            "Paediatric and geriatric risk flags",
-            "Shared family health dashboard",
+            "Paediatric & geriatric risk flags",
+            "One shared family health dashboard",
         ],
         link: "/pricing",
-        cta: "Get Started",
-        variant: "light" as const,
+        cta: "Get started",
+        variant: "light",
     },
 ];
 
 const AudienceSection = () => {
     return (
-        <section className="px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
-            <AnimateIn className="text-center mb-14">
-                <SectionEyebrow className="mb-6">Built for everyone</SectionEyebrow>
-                <h2 className="text-4xl md:text-5xl lg:text-6xl text-heading leading-[1.1] font-serif">
-                    Wherever you&apos;re <span className="italic">going.</span>
-                </h2>
-            </AnimateIn>
+        <div className="bg-background-secondary">
+            <section className="relative overflow-hidden px-6 pt-24 pb-24 sm:px-8 lg:px-16">
+                {/* Soft accent orb */}
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute -right-20 -top-10 h-96 w-96 rounded-full"
+                    style={{
+                        background:
+                            "radial-gradient(circle, rgba(42,122,106,0.10) 0%, rgba(42,122,106,0.03) 45%, transparent 70%)",
+                        filter: "blur(50px)",
+                    }}
+                />
 
-            <StaggerGroup
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                stagger={0.1}
-            >
-                {audiences.map((a) => {
-                    const isDark = a.variant === "dark";
-                    return (
-                        <motion.div
-                            variants={staggerItem}
-                            key={a.title}
-                            className={`relative rounded-3xl p-8 md:p-10 flex flex-col justify-between overflow-hidden ${isDark ? "" : "bg-button-secondary"}`}
-                        >
-                            {isDark && (
-                                <div
-                                    className="absolute inset-0"
-                                    style={{
-                                        background:
-                                            "linear-gradient(135deg, #2a7a6a 0%, #1a6a7a 30%, #187080 55%, #1a6878 80%, #246858 100%)",
+                <div className="relative z-10 mx-auto max-w-7xl">
+                    <AnimateIn className="mx-auto mb-14 max-w-2xl text-center lg:mb-16">
+                        <SectionEyebrow className="mb-6">
+                            Who it&apos;s for
+                        </SectionEyebrow>
+                        <h2 className="font-serif text-4xl leading-[1.08] tracking-tight text-heading md:text-5xl lg:text-6xl">
+                            One platform for everyone who{" "}
+                            <span className="italic text-accent">
+                                crosses a border.
+                            </span>
+                        </h2>
+                    </AnimateIn>
+
+                    <StaggerGroup
+                        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                        stagger={0.1}
+                    >
+                        {audiences.map((a) => {
+                            const isDark = a.variant === "dark";
+                            return (
+                                <motion.div
+                                    variants={staggerItem}
+                                    whileHover={{
+                                        y: -4,
+                                        transition: {
+                                            duration: 0.25,
+                                            ease: "easeOut",
+                                        },
                                     }}
-                                />
-                            )}
-                            <div className="relative z-10">
-                                <div
-                                    className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 ${isDark ? "" : "bg-heading text-background-primary"}`}
+                                    key={a.title}
+                                    className={cn(
+                                        "group relative flex flex-col overflow-hidden rounded-3xl p-8 lg:p-9",
+                                        isDark
+                                            ? "text-white shadow-xl shadow-dark/10 transition-shadow duration-300 hover:shadow-2xl"
+                                            : "border border-border bg-background-primary transition-[border-color,box-shadow] duration-300 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5",
+                                    )}
                                     style={
                                         isDark
-                                            ? {
-                                                background:
-                                                    "rgba(255,255,255,0.15)",
-                                            }
+                                            ? { background: DARK_GRADIENT }
                                             : undefined
                                     }
                                 >
-                                    <span
-                                        className={
-                                            isDark ? "text-white" : ""
-                                        }
-                                    >
-                                        {a.icon}
-                                    </span>
-                                </div>
-                                <h3
-                                    className={`text-2xl font-serif mb-2 ${isDark ? "text-white" : "text-heading"}`}
-                                >
-                                    {a.title}
-                                </h3>
-                                <p
-                                    className={`text-sm leading-relaxed mb-6 ${isDark ? "text-white/70" : "text-body"}`}
-                                >
-                                    {a.description}
-                                </p>
-                                <ul className="space-y-3 mb-8">
-                                    {a.features.map((f) => (
-                                        <li
-                                            key={f}
-                                            className={`flex items-start gap-3 text-sm ${isDark ? "text-white" : "text-heading"}`}
-                                        >
-                                            <LucideCheck
-                                                className={`w-4 h-4 mt-0.5 shrink-0 ${isDark ? "text-white/60" : "text-accent"}`}
+                                    {isDark && (
+                                        <>
+                                            <div
+                                                aria-hidden
+                                                className="pointer-events-none absolute inset-0 opacity-[0.12]"
+                                                style={{
+                                                    backgroundImage:
+                                                        "radial-gradient(circle,#ffffff 1px,transparent 1px)",
+                                                    backgroundSize: "22px 22px",
+                                                }}
                                             />
-                                            {f}
-                                        </li>
-                                    ))}
-                                </ul>
+                                            <div
+                                                aria-hidden
+                                                className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full"
+                                                style={{
+                                                    background:
+                                                        "radial-gradient(circle, rgba(196,149,58,0.35) 0%, rgba(232,120,80,0.10) 45%, transparent 70%)",
+                                                    filter: "blur(36px)",
+                                                }}
+                                            />
+                                        </>
+                                    )}
+
+                                    <div className="relative z-10 flex flex-1 flex-col">
+                                        <div className="mb-6 flex items-center justify-between">
+                                            <div
+                                                className={cn(
+                                                    "flex h-12 w-12 items-center justify-center rounded-xl transition-colors duration-300",
+                                                    isDark
+                                                        ? "bg-white/15 text-white"
+                                                        : "bg-button-secondary text-heading group-hover:bg-accent/10 group-hover:text-accent",
+                                                )}
+                                            >
+                                                <a.Icon
+                                                    className="h-6 w-6"
+                                                    strokeWidth={1.75}
+                                                    aria-hidden
+                                                />
+                                            </div>
+                                            <span
+                                                className={cn(
+                                                    "font-mono text-sm font-semibold tracking-[0.2em]",
+                                                    isDark
+                                                        ? "text-white/40"
+                                                        : "text-brand-muted",
+                                                )}
+                                            >
+                                                {a.index}
+                                            </span>
+                                        </div>
+
+                                        <h3
+                                            className={cn(
+                                                "font-serif text-2xl",
+                                                isDark
+                                                    ? "text-white"
+                                                    : "text-heading",
+                                            )}
+                                        >
+                                            {a.title}
+                                        </h3>
+                                        <p
+                                            className={cn(
+                                                "mt-4 text-sm leading-relaxed",
+                                                isDark
+                                                    ? "text-white/75"
+                                                    : "text-body",
+                                            )}
+                                        >
+                                            {a.description}
+                                        </p>
+
+                                        <div
+                                            aria-hidden
+                                            className={cn(
+                                                "mt-6 h-px w-full",
+                                                isDark
+                                                    ? "bg-white/15"
+                                                    : "bg-border-light",
+                                            )}
+                                        />
+
+                                        <ul className="mt-6 space-y-3">
+                                            {a.features.map((f) => (
+                                                <li
+                                                    key={f}
+                                                    className={cn(
+                                                        "flex items-start gap-3 text-sm",
+                                                        isDark
+                                                            ? "text-white/90"
+                                                            : "text-heading",
+                                                    )}
+                                                >
+                                                    <span
+                                                        className={cn(
+                                                            "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
+                                                            isDark
+                                                                ? "bg-white/20 text-white"
+                                                                : "bg-accent/10 text-accent",
+                                                        )}
+                                                    >
+                                                        <LucideCheck
+                                                            className="h-2.5 w-2.5"
+                                                            strokeWidth={3}
+                                                            aria-hidden
+                                                        />
+                                                    </span>
+                                                    {f}
+                                                </li>
+                                            ))}
+                                        </ul>
+
+                                        <div className="mt-auto pt-8">
+                                            <Button
+                                                variant="primary"
+                                                link={a.link}
+                                                className={cn(
+                                                    "self-start",
+                                                    isDark &&
+                                                    "bg-white !text-dark hover:bg-white/90",
+                                                )}
+                                            >
+                                                {a.cta}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+                    </StaggerGroup>
+
+                    {/* Guidance strip — a clear next step for the undecided */}
+                    <AnimateIn delay={0.1} className="mt-6">
+                        <div className="flex flex-col gap-5 rounded-3xl border border-border bg-background-primary px-6 py-6 sm:flex-row sm:items-center sm:justify-between lg:px-10 lg:py-7">
+                            <div className="flex items-start gap-4 sm:items-center">
+                                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                                    <LucideCompass
+                                        className="h-5 w-5"
+                                        strokeWidth={1.75}
+                                        aria-hidden
+                                    />
+                                </span>
+                                <div>
+                                    <p className="font-serif text-lg leading-snug text-heading">
+                                        Not sure which is right for you?
+                                    </p>
+                                    <p className="mt-1 text-sm leading-relaxed text-body">
+                                        Tell us about your trip and we&apos;ll
+                                        point you to the plan that fits.
+                                    </p>
+                                </div>
                             </div>
                             <Button
-                                variant={isDark ? "primary" : "primary"}
-                                link={a.link}
-                                icon={<LucideArrowRight />}
-                                className={`relative z-10 self-start ${isDark ? "bg-white text-dark! hover:bg-white/90" : ""}`}
+                                variant="secondary"
+                                link="/contact"
+                                icon={
+                                    <LucideArrowRight
+                                        className="h-4 w-4"
+                                        strokeWidth={2}
+                                    />
+                                }
+                                className="shrink-0"
                             >
-                                {a.cta}
+                                Talk to our team
                             </Button>
-                        </motion.div>
-                    );
-                })}
-            </StaggerGroup>
-        </section>
+                        </div>
+                    </AnimateIn>
+                </div>
+            </section>
+        </div>
     );
 };
 

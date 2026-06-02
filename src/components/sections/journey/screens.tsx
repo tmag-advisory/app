@@ -157,7 +157,7 @@ function ToggleRow({ label, value, answered }: { label: string; value: string; a
                 )}
             >
                 {answered && <LucideCheck size={8} strokeWidth={3.5} />}
-                {answered ? value : "\u2014"}
+                {answered ? value : ""}
             </span>
         </div>
     );

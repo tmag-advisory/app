@@ -45,7 +45,7 @@ export const JOURNEY_STEPS: readonly JourneyStep[] = [
         label: "Create account",
         title: "Start with a free account",
         description:
-            "Sign up in seconds with your name and email \u2014 no card required to build your travel health profile.",
+            "Sign up in seconds with your name and email  no card required to build your travel health profile.",
         insight:
             "One secure account covers every trip you take. Your details stay encrypted and are never sold.",
         Icon: LucideUserPlus,
@@ -58,7 +58,7 @@ export const JOURNEY_STEPS: readonly JourneyStep[] = [
         description:
             "Share your destination, dates, purpose of travel, and a quick medical history.",
         insight:
-            "Smart branching means you only answer what's relevant to where \u2014 and who \u2014 you are.",
+            "Smart branching means you only answer what's relevant to where  and who  you are.",
         Icon: LucideClipboardList,
     },
     {
@@ -69,7 +69,7 @@ export const JOURNEY_STEPS: readonly JourneyStep[] = [
         description:
             "Our engine cross-references WHO and CDC guidance, live outbreak data, and your health profile.",
         insight:
-            "Destination requirements, vaccines, and medication checks \u2014 analysed in moments, not weeks.",
+            "Destination requirements, vaccines, and medication checks  analysed in moments, not weeks.",
         Icon: LucideSparkles,
     },
     {
@@ -89,7 +89,7 @@ export const JOURNEY_STEPS: readonly JourneyStep[] = [
         label: "Delivered",
         title: "Your plan lands in your inbox",
         description:
-            "Receive a polished, downloadable travel health plan \u2014 ready to share with clinics or insurers.",
+            "Receive a polished, downloadable travel health plan  ready to share with clinics or insurers.",
         insight:
             "PDF summary, medication lists, and emergency contacts, delivered the moment it's approved.",
         Icon: LucideMailCheck,

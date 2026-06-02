@@ -11,7 +11,7 @@ const Home = () => {
     return (
         <main className="overflow-x-clip">
             <SEOHead
-                title="Travel Medicine Advisory Global \u2014 Personalized Travel Health Intelligence"
+                title="Travel Medicine Advisory Global  Personalized Travel Health Intelligence"
                 description="AI-driven risk assessment and physician-validated travel health for individuals and globally mobile teams."
                 path="/"
             />
