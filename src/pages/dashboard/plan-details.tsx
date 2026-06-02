@@ -481,7 +481,7 @@ function ValidationStatusBadge({ status, validatedAt, validatedByName }: {
     if (!status || status === "NOT_REQUIRED") return null;
     const colors = validationStatusColors[status] ?? validationStatusColors.NOT_REQUIRED;
     return (
-        <div className="mt-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="mt-3 rounded-xl border border-amber-400 bg-white p-4">
             <div className="flex items-center gap-2 mb-1">
                 {status === "APPROVED" ? (
                     <LucideShieldCheckIcon className="h-4 w-4 text-emerald-600" />
@@ -537,7 +537,7 @@ function PlanStatusBadge({ status }: { status: string }) {
     const config = planStatusConfig[status] ?? { label: status, text: "text-gray-600", bg: "bg-gray-100", icon: LucideFileText };
     const Icon = config.icon;
     return (
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${config.text} ${config.bg}`}>
+        <span className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold ${config.text} ${config.bg}`}>
             <Icon className={`h-3.5 w-3.5 ${status === "PROCESSING" ? "animate-spin" : ""}`} aria-hidden />
             {config.label}
         </span>
@@ -1405,66 +1405,94 @@ const PlanDetails = () => {
                 {doctorReviewNotice}
 
                 <motion.div
-                    className={cn(DASHBOARD_GLASS_SURFACE, "mb-6 p-6 md:p-8")}
+                    className={cn(
+                        DASHBOARD_GLASS_SURFACE,
+                        "relative mb-8 overflow-hidden p-6 md:p-8",
+                    )}
                     initial={reduceMotion ? false : { opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ type: "spring", stiffness: 320, damping: 32 }}
                 >
-                    <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                        <GeneratedPlanHeroMeta plan={plan} content={parsedContent} />
-                        <div className="flex flex-wrap items-center gap-3">
-                            <PlanStatusBadge status={plan.status} />
-                            <span
-                                className={`rounded-full px-3 py-1.5 text-xs font-semibold ${riskColors[riskLabel]} ${riskBg[riskLabel]}`}
-                            >
-                                {riskLabel} risk
-                            </span>
-                            <button
-                                type="button"
-                                disabled={pdfLoading || !canDownloadPdf}
-                                title={!canDownloadPdf ? "Download is available when your plan is completed." : undefined}
-                                onClick={() => void handleDownloadPdf()}
-                                className="flex cursor-pointer items-center gap-2 rounded-xl bg-button-secondary px-4 py-2 text-xs font-semibold text-heading transition-colors duration-200 hover:bg-border-light disabled:cursor-not-allowed disabled:opacity-55"
-                            >
-                                {pdfLoading ? (
-                                    <LucideLoader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
-                                ) : (
-                                    <LucideDownload className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                                )}
-                                {pdfLoading ? "Preparing PDF…" : "Download PDF"}
-                            </button>
-                            {showSummaryPdfButton && (
+                    {/* Subtle top gradient accent bar */}
+                    <div
+                        className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-accent/10 via-accent to-accent/10"
+                        aria-hidden
+                    />
+
+                    {/* Hero content: meta + actions */}
+                    <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
+                        <div className="min-w-0 flex-1">
+                            <GeneratedPlanHeroMeta plan={plan} content={parsedContent} />
+                        </div>
+
+                        {/* Badges + actions */}
+                        <div className="flex shrink-0 flex-col items-stretch gap-3 sm:items-end">
+                            <div className="flex flex-wrap items-center gap-2.5">
+                                <PlanStatusBadge status={plan.status} />
+                                <span
+                                    className={`rounded-md px-3 py-1 text-xs font-semibold ${riskColors[riskLabel]} ${riskBg[riskLabel]}`}
+                                >
+                                    {riskLabel} risk
+                                </span>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2.5">
                                 <button
                                     type="button"
-                                    disabled={summaryPdfLoading || !canDownloadSummaryPdf}
-                                    title={!canDownloadPdf ? "Summary download is available when your plan is completed." : undefined}
-                                    onClick={() => void handleDownloadSummaryPdf()}
-                                    className="flex cursor-pointer items-center gap-2 rounded-xl border border-accent/20 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent transition-colors duration-200 hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-55"
+                                    disabled={pdfLoading || !canDownloadPdf}
+                                    title={!canDownloadPdf ? "Download is available when your plan is completed." : undefined}
+                                    onClick={() => void handleDownloadPdf()}
+                                    className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border-light/60 bg-button-secondary px-3.5 py-2 text-xs font-semibold text-heading transition-all duration-200 hover:border-border-light hover:bg-background-secondary active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 disabled:active:scale-100"
                                 >
-                                    {summaryPdfLoading ? (
+                                    {pdfLoading ? (
                                         <LucideLoader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
                                     ) : (
-                                        <LucideFileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                        <LucideDownload className="h-3.5 w-3.5 shrink-0" aria-hidden />
                                     )}
-                                    {summaryPdfLoading ? "Preparing summary…" : "Download Summary"}
+                                    {pdfLoading ? "Preparing PDF…" : "Download PDF"}
                                 </button>
-                            )}
+                                {showSummaryPdfButton && (
+                                    <button
+                                        type="button"
+                                        disabled={summaryPdfLoading || !canDownloadSummaryPdf}
+                                        title={!canDownloadPdf ? "Summary download is available when your plan is completed." : undefined}
+                                        onClick={() => void handleDownloadSummaryPdf()}
+                                        className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-accent/20 bg-accent/[0.06] px-3.5 py-2 text-xs font-semibold text-accent transition-all duration-200 hover:border-accent/35 hover:bg-accent/10 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-55 disabled:active:scale-100"
+                                    >
+                                        {summaryPdfLoading ? (
+                                            <LucideLoader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+                                        ) : (
+                                            <LucideFileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                        )}
+                                        {summaryPdfLoading ? "Preparing summary…" : "Summary"}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
-                    <div className="flex flex-col gap-1 text-xs text-muted sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-1">
-                        <span>Recorded: {new Date(plan.createdAt).toLocaleDateString()}</span>
-                        <span className="hidden sm:inline">·</span>
-                        <span>1 credit consumed</span>
+
+                    {/* Divider + metadata row */}
+                    <div className="mt-5 border-t border-border-light/40 pt-4">
+                        <div className="gap-2 text-xs text-muted sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5">
+                            <span className="inline-flex items-center gap-1.5">
+                                <LucideClock className="h-3 w-3 shrink-0 text-accent/50" aria-hidden />
+                                Created {new Date(plan.createdAt).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                })}
+                            </span>
+                            <DoctorAssignmentIndicator
+                                assignedDoctors={plan.assignedDoctors}
+                                openToAllDoctors={plan.openToAllDoctors}
+                            />
+                            <ValidationStatusBadge
+                                status={plan.doctorValidationStatus}
+                                validatedAt={plan.validatedAt}
+                                validatedByName={plan.validatedByName}
+                            />
+                        </div>
                     </div>
-                    <ValidationStatusBadge
-                        status={plan.doctorValidationStatus}
-                        validatedAt={plan.validatedAt}
-                        validatedByName={plan.validatedByName}
-                    />
-                    <DoctorAssignmentIndicator
-                        assignedDoctors={plan.assignedDoctors}
-                        openToAllDoctors={plan.openToAllDoctors}
-                    />
                 </motion.div>
 
                 <GeneratedPlanReport content={parsedContent} />

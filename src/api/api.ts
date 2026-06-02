@@ -237,7 +237,7 @@ export const employeesApi = {
   updateStatus: (id: number, data: UpdateEmployeeStatusRequest) =>
     api.put<ApiResponse<EmployeeResponse>>(`/employees/${id}/status`, data).then((r) => r.data.data),
 
-  invite: (data: { name: string; email: string; department: string; creditsAllocated: number; companyId: number }) =>
+  invite: (data: { firstName: string; lastName: string; email: string; department: string; companyId: number }) =>
     api.post<ApiResponse<EmployeeResponse>>("/employees/invite", data).then((r) => r.data.data),
 };
 
@@ -512,6 +512,9 @@ export const profileApi = {
 
   upgradePlan: (planCode: string) =>
     api.put<ApiResponse<ProfileResponse>>("/profile/upgrade-plan", { planCode }).then((r) => r.data.data),
+
+  seatUsage: () =>
+    api.get<ApiResponse<import("./types").SeatUsageResponse | null>>("/profile/seat-usage").then((r) => r.data.data),
 };
 
 // ─── Onboarding ──────────────────────────────────────────────
@@ -852,9 +855,10 @@ export const adminDoctorApi = {
 export const companyOnboardingApi = {
   submit: (data: import("./types").CompanyOnboardingRequest) => {
     const formData = new FormData();
-    const { teamMembersCsv, ...payload } = data;
+    const { teamMembersCsv, msaDocument, ...payload } = data;
     formData.append("request", new Blob([JSON.stringify(payload)], { type: "application/json" }));
     if (teamMembersCsv) formData.append("teamMembersCsv", teamMembersCsv);
+    if (msaDocument) formData.append("msaDocument", msaDocument);
 
     return api.post<ApiResponse<import("./types").CompanyOnboardingResponse>>("/public/company-onboarding", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -875,6 +879,19 @@ export const companyOnboardingApi = {
   getPricingPreview: (credits: number) =>
     api.get<ApiResponse<import("./types").PublicPricingPreview[]>>("/public/company-onboarding/pricing", {
       params: { credits },
+    }).then((r) => r.data.data),
+};
+
+// ─── Organization seat pricing (public) ───────────────────────
+
+export const organizationSeatPricingApi = {
+  getTable: () =>
+    api.get<ApiResponse<import("./types").OrganizationSeatPricingTable>>("/public/organization-seat-pricing")
+      .then((r) => r.data.data),
+
+  getQuote: (seats: number, currency: string) =>
+    api.get<ApiResponse<import("./types").SeatQuote>>("/public/organization-seat-pricing/quote", {
+      params: { seats, currency },
     }).then((r) => r.data.data),
 };
 

@@ -22,10 +22,10 @@ const Employees = () => {
 
     const [search, setSearch] = useState("");
     const [showInvite, setShowInvite] = useState(false);
-    const [inviteName, setInviteName] = useState("");
+    const [inviteFirstName, setInviteFirstName] = useState("");
+    const [inviteLastName, setInviteLastName] = useState("");
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteDept, setInviteDept] = useState("");
-    const [inviteCredits, setInviteCredits] = useState("");
     const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
     const [allocatingFor, setAllocatingFor] = useState<number | null>(null);
     const [newCredits, setNewCredits] = useState("");
@@ -42,22 +42,22 @@ const Employees = () => {
     const employees = employeesData?.data || [];
 
     const handleInvite = () => {
-        if (!companyIdNum || !inviteName || !inviteEmail) return;
+        if (!companyIdNum || !inviteFirstName || !inviteEmail) return;
         inviteEmployee.mutate(
             {
                 companyId: companyIdNum,
-                name: inviteName,
+                firstName: inviteFirstName,
+                lastName: inviteLastName,
                 email: inviteEmail,
                 department: inviteDept,
-                creditsAllocated: parseInt(inviteCredits) || 0,
             },
             {
                 onSuccess: () => {
                     setShowInvite(false);
-                    setInviteName("");
+                    setInviteFirstName("");
+                    setInviteLastName("");
                     setInviteEmail("");
                     setInviteDept("");
-                    setInviteCredits("");
                 },
             }
         );
@@ -130,11 +130,19 @@ const Employees = () => {
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input
-                                value={inviteName}
-                                onChange={(e) => setInviteName(e.target.value)}
-                                placeholder="Full name"
+                                value={inviteFirstName}
+                                onChange={(e) => setInviteFirstName(e.target.value)}
+                                placeholder="First name"
                                 className="bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
                             />
+                            <input
+                                value={inviteLastName}
+                                onChange={(e) => setInviteLastName(e.target.value)}
+                                placeholder="Last name"
+                                className="bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input
                                 value={inviteEmail}
                                 onChange={(e) => setInviteEmail(e.target.value)}
@@ -142,26 +150,17 @@ const Employees = () => {
                                 type="email"
                                 className="bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
                             />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <input
                                 value={inviteDept}
                                 onChange={(e) => setInviteDept(e.target.value)}
                                 placeholder="Department"
                                 className="bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
                             />
-                            <input
-                                value={inviteCredits}
-                                onChange={(e) => setInviteCredits(e.target.value)}
-                                placeholder="Credits to allocate"
-                                type="number"
-                                className="bg-background-primary border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
-                            />
                         </div>
                         <div className="flex gap-3">
                             <button
                                 onClick={handleInvite}
-                                disabled={inviteEmployee.isPending || !inviteName || !inviteEmail}
+                                disabled={inviteEmployee.isPending || !inviteFirstName || !inviteEmail}
                                 className="flex items-center gap-2 py-2.5 px-5 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {inviteEmployee.isPending && <LucideLoader2 className="w-3.5 h-3.5 animate-spin" />}

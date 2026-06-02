@@ -331,3 +331,43 @@ export const familyPlans: FamilyPlanDefinition[] = [
     ],
   },
 ];
+
+// ─── Seat-based organization pricing ──────────────────────────
+// Mirrors the backend OrganizationSeatPricingService. NGN follows the app-wide
+// USD×1000 convention and is only shown where a currency toggle exists (/pricing).
+
+export const INCLUDED_PLANS_PER_SEAT = 4;
+
+export interface SeatTierDef {
+  tier: string;
+  label: string;
+  minSeats: number;
+  maxSeats: number | null;
+  priceUsd: number;
+}
+
+export const seatTiers: SeatTierDef[] = [
+  { tier: "TIER_1", label: "1–49 seats", minSeats: 1, maxSeats: 49, priceUsd: 99 },
+  { tier: "TIER_2", label: "50–199 seats", minSeats: 50, maxSeats: 199, priceUsd: 89 },
+  { tier: "TIER_3", label: "200–499 seats", minSeats: 200, maxSeats: 499, priceUsd: 79 },
+  { tier: "TIER_4", label: "500+ seats", minSeats: 500, maxSeats: null, priceUsd: 69 },
+];
+
+export function resolveSeatTier(seats: number): SeatTierDef {
+  return (
+    [...seatTiers].reverse().find((t) => seats >= t.minSeats) ?? seatTiers[0]
+  );
+}
+
+export function seatPricePerSeatUsd(seats: number): number {
+  return resolveSeatTier(seats).priceUsd;
+}
+
+/** Per-seat price in the given currency (NGN = USD×1000, matching the rest of the app). */
+export function seatPricePerSeat(seats: number, currency: string): number {
+  const usd = seatPricePerSeatUsd(seats);
+  return currency === "NGN" ? usd * 1000 : usd;
+}
+
+/** Preset seat packages surfaced as cards on /pricing (plus a "Custom" option). */
+export const seatPackages = [20, 50, 200];

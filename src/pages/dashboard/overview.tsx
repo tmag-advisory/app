@@ -4,6 +4,8 @@ import { useAuth } from "../../context/AuthContext";
 import {
     useTravelPlans,
     useDashboardAnalytics,
+    useMyCompanies,
+    useSeatUsage,
 } from "../../api/hooks";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatCard from "../../components/dashboard/StatCard";
@@ -267,6 +269,10 @@ const IndividualOverview = () => {
         useDashboardAnalytics(undefined);
     const plans = plansData?.data || [];
 
+    const { data: myCompanies } = useMyCompanies();
+    const isSeatEmployee = myCompanies?.[0]?.billing_model === "SEAT";
+    const { data: seatUsage } = useSeatUsage({ enabled: isSeatEmployee });
+
     useEffect(() => {
         async function checkAndRefreshProfile() {
             await refreshProfile()
@@ -285,8 +291,8 @@ const IndividualOverview = () => {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <StatCard
-                    label="Credits remaining"
-                    value={user?.credits ?? 0}
+                    label={isSeatEmployee ? "Travel plans remaining" : "Credits remaining"}
+                    value={isSeatEmployee ? (seatUsage?.totalRemaining ?? 0) : (user?.credits ?? 0)}
                     icon={<LucideCoins className="w-4 h-4" />}
                     accent
                 />

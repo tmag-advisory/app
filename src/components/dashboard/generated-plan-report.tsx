@@ -338,7 +338,7 @@ export function GeneratedPlanReport({ content }: { content: GeneratedPlanContent
                         ) : null}
 
                         {content.medicalCare.embassyContacts &&
-                        content.medicalCare.embassyContacts.length > 0 ? (
+                            content.medicalCare.embassyContacts.length > 0 ? (
                             <div>
                                 <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
                                     <LucideShieldCheck className="h-3.5 w-3.5" aria-hidden />
@@ -361,7 +361,7 @@ export function GeneratedPlanReport({ content }: { content: GeneratedPlanContent
                         ) : null}
 
                         {content.medicalCare.emergencyContacts &&
-                        content.medicalCare.emergencyContacts.length > 0 ? (
+                            content.medicalCare.emergencyContacts.length > 0 ? (
                             <div>
                                 <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
                                     <LucidePhone className="h-3.5 w-3.5" aria-hidden />
@@ -385,11 +385,11 @@ export function GeneratedPlanReport({ content }: { content: GeneratedPlanContent
             ) : null}
 
             {content.itineraryGuidance &&
-            (
-                (content.itineraryGuidance.summary && content.itineraryGuidance.summary.trim()) ||
-                (content.itineraryGuidance.routeAdvice && content.itineraryGuidance.routeAdvice.length > 0) ||
-                (content.itineraryGuidance.returnGuidance && content.itineraryGuidance.returnGuidance.length > 0)
-            ) ? (
+                (
+                    (content.itineraryGuidance.summary && content.itineraryGuidance.summary.trim()) ||
+                    (content.itineraryGuidance.routeAdvice && content.itineraryGuidance.routeAdvice.length > 0) ||
+                    (content.itineraryGuidance.returnGuidance && content.itineraryGuidance.returnGuidance.length > 0)
+                ) ? (
                 <SectionCard icon={<LucideNavigation />} title="Itinerary-specific guidance">
                     <div className="space-y-4">
                         {content.itineraryGuidance.tripType ? (
@@ -464,26 +464,55 @@ export function GeneratedPlanHeroMeta({
     const traveller = content?.travellerName?.trim();
 
     return (
-        <div className="space-y-3">
-            <div>
-                <h2 className="font-serif text-xl text-heading md:text-2xl">{title}</h2>
-                <p className="mt-1 text-sm text-muted">
-                    {[plan.country, plan.duration ? `${plan.duration} days` : null, plan.purpose]
-                        .filter(Boolean)
-                        .join(" · ")}
-                </p>
-                {dates ? (
-                    <p className="mt-1 flex items-center gap-1.5 text-sm text-heading/90">
-                        <LucideCalendarRange className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
-                        {dates}
+        <div className="flex gap-4">
+            {/* Left accent bar */}
+            <div className="hidden w-1 shrink-0 rounded-full bg-gradient-to-b from-accent via-accent/70 to-accent/20 sm:block" />
+
+            <div className="min-w-0 flex-1 space-y-3.5">
+                {/* Title + subtitle row */}
+                <div>
+                    <h2 className="font-serif text-xl leading-tight text-heading md:text-2xl">
+                        {title}
+                    </h2>
+                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+                        <LucideMapPin className="h-3.5 w-3.5 shrink-0 text-accent/70" aria-hidden />
+                        <span>{plan.country}</span>
+                        {plan.duration ? (
+                            <>
+                                <span className="hidden h-1 w-1 rounded-full bg-border-light sm:inline" aria-hidden />
+                                <span className="flex items-center gap-1">
+                                    <LucideCalendarRange className="h-3 w-3 shrink-0 text-accent/50" aria-hidden />
+                                    {plan.duration} days
+                                </span>
+                            </>
+                        ) : null}
+                        {plan.purpose ? (
+                            <>
+                                <span className="hidden h-1 w-1 rounded-full bg-border-light sm:inline" aria-hidden />
+                                <span className="flex items-center gap-1">
+                                    <LucideNavigation className="h-3 w-3 shrink-0 text-accent/50" aria-hidden />
+                                    {plan.purpose}
+                                </span>
+                            </>
+                        ) : null}
                     </p>
-                ) : null}
-                {traveller ? (
-                    <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-muted">
-                        <LucideUser className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                        {traveller}
-                    </p>
-                ) : null}
+                </div>
+
+                {/* Info chips */}
+                <div className="flex flex-wrap items-center gap-3">
+                    {dates ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-lg border border-border-light/50 bg-accent/[0.04] px-2.5 py-1.5 text-xs font-medium text-heading/85">
+                            <LucideCalendarRange className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
+                            {dates}
+                        </span>
+                    ) : null}
+                    {traveller ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-lg border border-border-light/50 bg-background-secondary/50 px-2.5 py-1.5 text-xs font-medium text-muted">
+                            <LucideUser className="h-3.5 w-3.5 shrink-0 text-accent/60" aria-hidden />
+                            {traveller}
+                        </span>
+                    ) : null}
+                </div>
             </div>
         </div>
     );

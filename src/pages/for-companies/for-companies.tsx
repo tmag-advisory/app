@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
     LucideShieldCheck,
     LucideUsers,
@@ -5,83 +6,68 @@ import {
     LucideArrowRight,
     LucideCheck,
     LucideFileText,
-    LucidePlug,
+    LucideUserPlus,
+    LucideCalendarClock,
+    LucidePlusCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
 import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGroup";
-import { useCurrencyStore } from "../../stores/currencyStore";
-import {
-    creditPlans,
-    enterprisePlanCodes,
-    enterpriseTierColors,
-    enterpriseTiers,
-    individualPlanFeatures,
-    premiumFeatures,
-    signupRanges,
-    type ServiceLevel,
-    type SignupRange,
-} from "../../constants/companyPlans";
 import SEOHead from "../../lib/seo";
-import { useLaunchDiscount } from "../../api";
-import { applyLaunchToBase } from "../../lib/launchDiscount";
 import SectionEyebrow from "../../components/ui/SectionEyebrow";
-import LaunchDiscountBanner from "../../components/sections/LaunchDiscountBanner";
+import { seatTiers, INCLUDED_PLANS_PER_SEAT } from "../../constants/companyPlans";
 
-function formatPrice(priceUsd: number, priceNgn: number, currency: string, launchPct = 0): string {
-    if (priceUsd === 0 && currency !== "NGN") return "Free";
-    if (priceNgn === 0 && currency === "NGN") return "Free";
-    const base = currency === "NGN" ? priceNgn : priceUsd;
-    const discounted = launchPct > 0 ? applyLaunchToBase(base, launchPct) : base;
-    return currency === "NGN" ? `₦${discounted.toLocaleString()}` : `$${discounted.toLocaleString()}`;
-}
-
-const workflowSteps = [
+const onboardingSteps = [
     {
         icon: <LucideUsers className="w-5 h-5" />,
-        title: "Add travelers",
+        title: "Choose your seats",
         description:
-            "Upload your employee roster or add travelers individually. Set destinations, dates, and any known health requirements.",
+            "Enter how many travellers you need to cover. We instantly show your per-seat price and total annual cost no quotes, no back-and-forth.",
     },
     {
         icon: <LucideFileText className="w-5 h-5" />,
-        title: "Generate plans in bulk",
+        title: "Upload your roster",
         description:
-            "One click generates personalized health plans for every traveler. Each plan is tailored to their profile and destination.",
-    },
-    {
-        icon: <LucideBarChart3 className="w-5 h-5" />,
-        title: "Track compliance",
-        description:
-            "Your dashboard shows who has received their plan, who's reviewed it, and where gaps exist giving HR full visibility.",
+            "Add employees individually or upload a CSV. Download and submit your signed MSA and documentation right inside the flow.",
     },
     {
         icon: <LucideShieldCheck className="w-5 h-5" />,
-        title: "Export reports",
+        title: "Checkout once a year",
         description:
-            "Download duty-of-care documentation and risk reports per trip, per employee, or per destination for your compliance records.",
+            "Pay your annual subscription securely at checkout. One payment covers every seat for the full year.",
+    },
+    {
+        icon: <LucideBarChart3 className="w-5 h-5" />,
+        title: "Manage from your dashboard",
+        description:
+            "Track per-employee usage, assign extra plans, add seats, and renew all from your company admin dashboard.",
     },
 ];
 
-const features = [
-    "Centralized traveler health dashboard",
-    "Bulk plan generation (CSV upload)",
-    "Per-employee and per-destination risk reports",
-    "Duty-of-care audit trail",
-    "Credit allocation across departments",
-    "Role-based access (HR, travel managers, admins)",
-    ...premiumFeatures,
+const manageFeatures = [
+    "Centralized traveller health dashboard",
+    "Per-employee plan usage tracking (X of 4 used)",
+    "Bulk employee onboarding via CSV upload",
+    "Assign extra travel plans to specific employees",
+    "Buy additional seats anytime at your current tier",
+    "Duty-of-care reports and compliance audit trail",
 ];
 
 const ForCompanies = () => {
-    const { selectedCurrency } = useCurrencyStore();
-    const { data: launchDiscount } = useLaunchDiscount();
-    const launchPct = launchDiscount?.active ? launchDiscount.percentage : 0;
+    const includedPlans = INCLUDED_PLANS_PER_SEAT;
+    const [tableCurrency, setTableCurrency] = useState<"USD" | "NGN">("USD");
+    const seatSymbol = tableCurrency === "NGN" ? "₦" : "$";
+    const seatPrice = (priceUsd: number) => (tableCurrency === "NGN" ? priceUsd * 1000 : priceUsd);
 
     return (
         <main>
- <SEOHead title="For Companies — Travel Medicine Advisory Global" description="Protect your employees with corporate travel health plans. HR dashboard, compliance reporting, and bulk plan management." path="/for-companies" />
+            <SEOHead
+                title="For Companies — Travel Medicine Advisory Global"
+                description="Cover your whole team with seat-based travel health plans. Each seat includes 4 travel plans per year. Simple annual pricing, CSV onboarding, and a company admin dashboard."
+                path="/for-companies"
+            />
+
             {/* Hero */}
             <AnimateIn as="section" className="flex flex-col items-center text-center pt-20 pb-12 px-6">
                 <SectionEyebrow className="mb-6">For companies</SectionEyebrow>
@@ -90,181 +76,136 @@ const ForCompanies = () => {
                     <span className="italic">Prove</span> it.
                 </h1>
                 <p className="sm:text-lg text-body mt-6 max-w-xl leading-relaxed">
-                    Travel health compliance shouldn't take weeks. Generate
-                    personalized health plans for your entire team in minutes.
+                    Buy a seat for each traveller. Every seat includes{" "}
+                    <strong>{includedPlans} travel plans per year</strong> personalised,
+                    physician-grade health plans generated in minutes.
                 </p>
                 <div className="flex items-center gap-4 mt-8 flex-wrap justify-center">
-                    <Button variant="primary" link="/company-onboarding">Get started</Button>
-                    <Button variant="secondary" icon={<LucideArrowRight />} link="/pricing">
-                        View pricing
+                    <Button variant="secondary" icon={<LucideArrowRight />} link="/pricing?tab=company">
+                        View Plans
                     </Button>
                 </div>
             </AnimateIn>
 
-            {/* Social proof bar */}
-            <section className="px-8 lg:px-16 pb-16 max-w-5xl mx-auto">
-                <StaggerGroup className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {[
-                        { value: "500+", label: "Companies onboarded" },
-                        { value: "98%", label: "Compliance rate achieved" },
-                        { value: "< 2 min", label: "Average plan generation" },
-                    ].map((stat) => (
-                        <motion.div
-                            variants={staggerItem}
-                            key={stat.label}
-                            className="bg-button-secondary rounded-2xl py-6 px-4 text-center"
-                        >
-                            <span className="text-3xl font-serif text-heading block mb-1">
-                                {stat.value}
-                            </span>
-                            <span className="text-xs text-muted">
-                                {stat.label}
-                            </span>
-                        </motion.div>
-                    ))}
-                </StaggerGroup>
-            </section>
-
-            {/* Company plans */}
-            <section className="px-8 lg:px-16 pb-20 max-w-7xl mx-auto">
-                <AnimateIn className="text-center mb-12">
-                    <SectionEyebrow className="mb-6">Company plans</SectionEyebrow>
-                    <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
-                        Enterprise tiers matched to your <span className="italic">team size</span>.
-                    </h2>
-                </AnimateIn>
-
-                <LaunchDiscountBanner variant="page" className="max-w-5xl mx-auto mb-8" />
-                <div className="space-y-12 max-w-5xl mx-auto">
-                    {signupRanges.map((range) => (
-                        <div key={range.value}>
-                            <h3 className="text-sm font-semibold text-muted text-center mb-5">
-                                {range.label} signups
-                            </h3>
-                            <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-6" stagger={0.12}>
-                                {(["standard", "premium"] as ServiceLevel[]).map((level) => {
-                                    const colors = enterpriseTierColors[range.value as SignupRange][level];
-                                    const basePlan = creditPlans.find((p) => p.tier === level)!;
-                                    const features = level === "standard" ? individualPlanFeatures.standard : individualPlanFeatures.premium;
-
-                                    return (
-                                        <motion.div
-                                            variants={staggerItem}
-                                            key={`${range.value}-${level}`}
-                                            className={`relative p-6 border flex flex-col overflow-hidden ${colors.border}`}
-                                        >
-                                            <div className="absolute inset-0" style={{ background: colors.gradient }} />
-                                            <div className={`absolute top-0 left-0 w-1 h-full ${colors.sideAccent}`} />
-                                            <span className={`absolute top-6 right-6 text-xs font-semibold ${colors.badgeBg} ${colors.badgeText} px-3 py-1 rounded-full`}>
-                                                {level === "standard" ? "Most popular" : "Best report"}
-                                            </span>
-                                            <div className="relative z-10 flex flex-col flex-1">
-                                                <h3 className={`text-xl font-serif mb-1 ${colors.textPrimary}`}>
-                                                    {enterpriseTiers[range.value as SignupRange][level]}
-                                                </h3>
-                                                <p className={`text-xs mb-4 ${colors.textSecondary}`}>
-                                                    {basePlan.description}
-                                                </p>
-                                                <div className="flex items-baseline gap-1.5 mb-1">
-                                                    <p className={`text-3xl font-serif ${colors.textPrimary}`}>
-                                                        {formatPrice(basePlan.priceUsd, basePlan.priceNgn, selectedCurrency, launchPct)}
-                                                    </p>
-                                                    {launchPct > 0 && (() => {
-                                                        const base = selectedCurrency === "NGN" ? basePlan.priceNgn : basePlan.priceUsd;
-                                                        if (base === 0) return null;
-                                                        const symbol = selectedCurrency === "NGN" ? "₦" : "$";
-                                                        return (
-                                                            <span className="ml-2 text-sm">
-                                                                <span className="line-through text-muted">
-                                                                    {symbol}{base.toLocaleString()}
-                                                                </span>
-                                                            </span>
-                                                        );
-                                                    })()}
-                                                </div>
-                                                <span className={`text-xs mb-5 ${colors.textMuted}`}>per credit</span>
-                                                <ul className="space-y-2.5 flex-1">
-                                                    {features.map((f) => (
-                                                        <li key={f} className={`flex items-start gap-2 text-xs ${colors.textPrimary}`}>
-                                                            <LucideCheck className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${colors.checkColor}`} />
-                                                            {f}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                                <Button
-                                                    variant="primary"
-                                                    link={`/company-onboarding?plan=${enterprisePlanCodes[range.value as SignupRange][level]}`}
-                                                    className={`mt-6 text-center justify-center flex ${level === "premium" ? "bg-gold text-white! hover:bg-[#b07a22]" : "bg-stone-900 text-white! hover:bg-stone-800"}`}
-                                                >
-                                                    Get started
-                                                </Button>
-                                            </div>
-                                        </motion.div>
-                                    );
-                                })}
-                            </StaggerGroup>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* HR workflow */}
+            {/* How onboarding works */}
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                     <AnimateIn className="text-center mb-14">
-                        <SectionEyebrow className="mb-6">How it works for HR</SectionEyebrow>
+                        <SectionEyebrow className="mb-6">How onboarding works</SectionEyebrow>
                         <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
-                            Four steps to full{" "}
-                            <span className="italic">compliance.</span>
+                            From sign-up to covered in{" "}
+                            <span className="italic">one sitting.</span>
                         </h2>
                     </AnimateIn>
                     <StaggerGroup stagger={0.1} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {workflowSteps.map((step) => (
+                        {onboardingSteps.map((step, i) => (
                             <motion.div
                                 variants={staggerItem}
                                 key={step.title}
-                                className="bg-background-primary rounded-2xl p-6 flex flex-col gap-4"
+                                className="bg-background-primary rounded-2xl p-6 flex flex-col gap-4 relative"
                             >
+                                <span className="absolute top-6 right-6 text-xs font-semibold text-muted/50">
+                                    0{i + 1}
+                                </span>
                                 <div className="w-10 h-10 rounded-xl bg-dark text-background-primary flex items-center justify-center">
                                     {step.icon}
                                 </div>
-                                <h3 className="text-base font-semibold text-heading">
-                                    {step.title}
-                                </h3>
-                                <p className="text-sm text-body leading-relaxed">
-                                    {step.description}
-                                </p>
+                                <h3 className="text-base font-semibold text-heading">{step.title}</h3>
+                                <p className="text-sm text-body leading-relaxed">{step.description}</p>
                             </motion.div>
                         ))}
                     </StaggerGroup>
                 </section>
             </div>
 
-            {/* Credit allocation */}
+            {/* How seat pricing works — informational */}
+            <section className="px-8 lg:px-16 py-24 max-w-3xl mx-auto">
+                <AnimateIn className="text-center mb-10">
+                    <SectionEyebrow className="mb-6">How seat pricing works</SectionEyebrow>
+                    <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
+                        The bigger your team, the <span className="italic">lower the rate.</span>
+                    </h2>
+                    <p className="text-sm text-body mt-5 max-w-xl mx-auto leading-relaxed">
+                        You buy one seat per traveller, billed once a year. Every seat includes{" "}
+                        <strong>{includedPlans} travel plans per year</strong>. Your volume tier is
+                        applied automatically you confirm seats, currency and total at checkout.
+                    </p>
+                </AnimateIn>
+
+                <AnimateIn delay={0.1}>
+                    {/* Currency toggle */}
+                    <div className="flex justify-center mb-5">
+                        <div className="inline-flex items-center bg-button-secondary rounded-xl p-1 gap-1">
+                            {(["USD", "NGN"] as const).map((c) => (
+                                <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setTableCurrency(c)}
+                                    className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                                        tableCurrency === c ? "bg-white shadow-sm text-heading" : "text-muted hover:text-heading"
+                                    }`}
+                                >
+                                    {c === "USD" ? "$ USD" : "₦ NGN"}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="overflow-hidden rounded-2xl border border-border-light bg-background-primary">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-border-light bg-button-secondary/50 text-left">
+                                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted">Team size</th>
+                                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted">Price / seat / year</th>
+                                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted">Plans included</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {seatTiers.map((t) => (
+                                    <tr key={t.tier} className="border-b border-border-light/60 last:border-0">
+                                        <td className="px-5 py-4 text-heading font-medium">{t.label}</td>
+                                        <td className="px-5 py-4">
+                                            <span className="font-serif text-lg text-heading">{seatSymbol}{seatPrice(t.priceUsd).toLocaleString()}</span>
+                                            <span className="text-xs text-muted"> / seat / yr</span>
+                                        </td>
+                                        <td className="px-5 py-4 text-body">{includedPlans} plans per seat</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p className="text-center text-xs text-muted mt-5">
+                        Need more plans for one person? Admins can buy and assign extra plans anytime
+                        from the dashboard.
+                    </p>
+                    <div className="flex justify-center mt-8">
+                        <Button variant="primary" link="/company-onboarding">Get your price &amp; start</Button>
+                    </div>
+                </AnimateIn>
+            </section>
+
+            {/* Manage employees */}
             <div className="bg-background-secondary">
                 <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                     <AnimateIn className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-14">
                         <div>
-                            <SectionEyebrow className="mb-6">Credit allocation</SectionEyebrow>
+                            <SectionEyebrow className="mb-6">Manage your team</SectionEyebrow>
                             <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif max-w-lg">
-                                Allocate credits across{" "}
-                                <span className="italic">teams.</span>
+                                Everything HR needs,{" "}
+                                <span className="italic">in one place.</span>
                             </h2>
                         </div>
                         <p className="text-sm text-muted leading-relaxed max-w-sm md:mt-10 font-medium">
-                            Purchase credits centrally and distribute them across
-                            departments, offices, or individual travelers.
-                            Admins control the budget managers use the credits.
+                            Upload employees by CSV, watch each person's usage against their included
+                            plans, top up with extra plans where needed, and add seats as your team grows.
                         </p>
                     </AnimateIn>
                     <AnimateIn delay={0.15} className="bg-background-primary rounded-2xl p-8">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4">
-                            {features.map((f) => (
+                            {manageFeatures.map((f) => (
                                 <div key={f} className="flex items-start gap-3 py-2">
                                     <LucideCheck className="w-4 h-4 mt-0.5 text-accent shrink-0" />
-                                    <span className="text-sm text-heading">
-                                        {f}
-                                    </span>
+                                    <span className="text-sm text-heading">{f}</span>
                                 </div>
                             ))}
                         </div>
@@ -272,31 +213,31 @@ const ForCompanies = () => {
                 </section>
             </div>
 
-            {/* Integration */}
+            {/* Growth & billing */}
             <section className="px-8 lg:px-16 py-24 max-w-7xl mx-auto">
                 <AnimateIn className="text-center mb-14">
-                    <SectionEyebrow className="mb-6">Integrations</SectionEyebrow>
+                    <SectionEyebrow className="mb-6">Grow & renew</SectionEyebrow>
                     <h2 className="text-4xl md:text-5xl text-heading leading-[1.1] font-serif">
-                        Fits into your{" "}
-                        <span className="italic">existing</span> stack.
+                        Built to scale with{" "}
+                        <span className="italic">your team.</span>
                     </h2>
                 </AnimateIn>
                 <StaggerGroup stagger={0.12} className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {[
                         {
-                            icon: <LucidePlug className="w-5 h-5" />,
-                            title: "REST API",
-                            desc: "Trigger plan generation from your travel booking platform or HRIS with a simple API call.",
+                            icon: <LucideUserPlus className="w-5 h-5" />,
+                            title: "Add seats anytime",
+                            desc: "Hiring more travellers mid-year? Buy additional seats at your company's current tier price — each one adds 4 plans.",
                         },
                         {
-                            icon: <LucideFileText className="w-5 h-5" />,
-                            title: "CSV & bulk upload",
-                            desc: "Upload a spreadsheet of travelers and destinations. Plans are generated and delivered automatically.",
+                            icon: <LucidePlusCircle className="w-5 h-5" />,
+                            title: "Buy & assign extra plans",
+                            desc: "Need more than 4 plans for one person? Purchase extra plans at your company rate and assign them to specific employees.",
                         },
                         {
-                            icon: <LucideBarChart3 className="w-5 h-5" />,
-                            title: "Reporting webhooks",
-                            desc: "Get notified when plans are generated, delivered, and reviewed. Pipe events to your BI tools.",
+                            icon: <LucideCalendarClock className="w-5 h-5" />,
+                            title: "Simple annual renewal",
+                            desc: "Billing is once a year. When your term ends, renew in a click and every seat's included plans reset for the new year.",
                         },
                     ].map((item) => (
                         <motion.div
@@ -307,18 +248,14 @@ const ForCompanies = () => {
                             <div className="w-10 h-10 rounded-xl bg-dark text-background-primary flex items-center justify-center">
                                 {item.icon}
                             </div>
-                            <h3 className="text-base font-semibold text-heading">
-                                {item.title}
-                            </h3>
-                            <p className="text-sm text-body leading-relaxed">
-                                {item.desc}
-                            </p>
+                            <h3 className="text-base font-semibold text-heading">{item.title}</h3>
+                            <p className="text-sm text-body leading-relaxed">{item.desc}</p>
                         </motion.div>
                     ))}
                 </StaggerGroup>
             </section>
 
-            {/* Demo CTA */}
+            {/* CTA */}
             <section className="px-8 lg:px-16 pt-8 pb-24 max-w-7xl mx-auto">
                 <div className="relative rounded-3xl overflow-hidden px-8 py-20 md:py-24 text-center">
                     <div
@@ -338,18 +275,18 @@ const ForCompanies = () => {
                     />
                     <AnimateIn type="scaleUp" className="relative z-10 max-w-xl mx-auto">
                         <h2 className="text-4xl md:text-5xl text-white leading-[1.1] font-serif mb-4">
-                            Ready to get started?
+                            Ready to cover your team?
                         </h2>
                         <p className="text-sm text-white/70 leading-relaxed max-w-md mx-auto mb-8">
-                            Choose a plan, set up your team, and start generating
-                            travel health plans for your employees in minutes.
+                            Choose your seats, upload your roster, and start generating travel
+                            health plans for your employees today.
                         </p>
                         <Button
                             variant="primary"
-                            link="/pricing?tab=company"
+                            link="/company-onboarding"
                             className="bg-white text-dark! hover:bg-white/90 mx-auto"
                         >
-                            Start Onboarding
+                            Start onboarding
                         </Button>
                     </AnimateIn>
                 </div>

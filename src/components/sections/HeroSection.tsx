@@ -1,5 +1,4 @@
 import {
-    LucideArrowRight,
     LucideShield,
     LucideCheck,
     LucideStethoscope,
@@ -117,7 +116,7 @@ const ProgressChecklist = ({ steps }: { steps: ProgressStep[] }) => (
         {steps.map((step, i) => (
             <div key={i} className="flex items-center gap-1.5">
                 <div
-                    className={`w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0 ${step.done ? "bg-accent" : "border border-border"
+                    className={`w-3 h-3 rounded-full flex items-center justify-center shrink-0 ${step.done ? "bg-accent" : "border border-border"
                         }`}
                 >
                     {step.done && (
@@ -508,14 +507,11 @@ const HeroSection = () => {
                     <div className="flex flex-col items-start">
                         <div
                             data-hero-anim
-                            className="flex flex-col items-start gap-3 mb-5"
+                            className="flex flex-col items-start gap-3"
                         >
-                            <span className="inline-flex items-center gap-2 text-sm text-muted bg-button-secondary font-semibold rounded-xl px-4 py-1.5">
-                                <span className="relative flex w-2 h-2">
-                                    <span className="absolute inset-0 rounded-full bg-accent opacity-60 animate-ping" />
-                                    <span className="relative inline-flex w-2 h-2 rounded-full bg-accent" />
-                                </span>
-                                AI-Powered &middot; Physician-Validated
+                            <span className="inline-flex items-center gap-2 min-w-80 text-wrap text-md text-muted py-1.5">
+                                Personalized travel risk guidance <br /> for travelers and organizations
+                                {/*AI-Powered &middot; Physician-Validated*/}
                             </span>
                         </div>
 
@@ -535,9 +531,9 @@ const HeroSection = () => {
 
                         <p
                             data-hero-anim
-                            className="text-body leading-relaxed max-w-md sm:text-lg"
+                            className="text-body leading-relaxed max-w-md sm:text-xl"
                         >
-                            Prepare for international travel with personalized physician-reviewed health guidance.
+                            Helping you identify, understand, and reduce preventable travel risks before departure.
                         </p>
 
                         <div
@@ -546,13 +542,6 @@ const HeroSection = () => {
                         >
                             <Button variant="primary" link="/pricing">
                                 Get Started
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                link="/pricing?tab=company"
-                                icon={<LucideArrowRight />}
-                            >
-                                For Organisations
                             </Button>
                         </div>
                     </div>

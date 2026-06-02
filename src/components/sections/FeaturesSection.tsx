@@ -1,256 +1,370 @@
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
-    LucideBrainCircuit,
-    LucideMapPin,
-    LucideSyringe,
-    LucideStethoscope,
-    LucideClipboardCheck,
-    LucideBuilding2,
-    LucideCheck,
-    LucideShieldCheck,
-    LucideHeartPulse,
-    LucidePill,
-    LucidePhone,
-    LucideBell,
-    LucideArrowRight,
-} from "lucide-react";
-import StaggerGroup, { staggerItem } from "../animations/StaggerGroup";
-import { motion } from "framer-motion";
-import AnimateIn from "../animations/AnimateIn";
+    AnimatePresence,
+    motion,
+    useMotionValueEvent,
+    useReducedMotion,
+    useScroll,
+} from "framer-motion";
+import { LucideCheck } from "lucide-react";
+import { cn } from "../../lib/utils";
+import { JOURNEY_STEPS, EASE_SMOOTH } from "./journey/steps";
+import PhoneFrame from "./journey/PhoneFrame";
 import SectionEyebrow from "../ui/SectionEyebrow";
 
-const features = [
-    {
-        icon: <LucideBrainCircuit className="w-6 h-6" />,
-        title: "AI Risk Assessment",
-        description:
-            "Our engine analyses your destination, itinerary, and health history to surface the precise risks you need to know about.",
-    },
-    {
-        icon: <LucideMapPin className="w-6 h-6" />,
-        title: "Destination-Specific Guidance",
-        description:
-            "Real-time health data for 120+ countries outbreaks, local hospital quality, water safety, and more.",
-    },
-    {
-        icon: <LucideSyringe className="w-6 h-6" />,
-        title: "Vaccination Awareness",
-        description:
-            "Clear vaccination requirements, contraindication checks, and schedules aligned to your travel dates.",
-    },
-    {
-        icon: <LucideStethoscope className="w-6 h-6" />,
-        title: "Physician-Reviewed Plans",
-        description:
-            "High-risk itineraries are flagged for clinical review by licensed physicians before you receive your plan.",
-    },
-    {
-        icon: <LucideClipboardCheck className="w-6 h-6" />,
-        title: "Travel Readiness",
-        description:
-            "Downloadable health plans with medication lists, packing guides, emergency contacts, and insurance-ready summaries.",
-    },
-    {
-        icon: <LucideBuilding2 className="w-6 h-6" />,
-        title: "Organisation-Level Planning",
-        description:
-            "Bulk assessments, compliance dashboards, and duty-of-care reporting for teams of any size.",
-    },
-];
+/* ── Constants ────────────────────────────────────────────────────────── */
 
-const PhoneMockup = () => (
-    <div className="relative mx-auto w-[18rem] h-[35rem] rounded-[2.5rem] shadow-2xl border-[10px] border-dark bg-dark">
-        {/* Notch */}
-        <div
-            aria-hidden
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-dark rounded-b-2xl z-20"
-        />
+const STEP_COUNT = JOURNEY_STEPS.length;
 
-        {/* Screen */}
-        <div className="absolute inset-0 rounded-[2rem] overflow-hidden bg-background-primary">
-            {/* Dot grid bg */}
-            <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 opacity-[0.12]"
-                style={{
-                    backgroundImage:
-                        "radial-gradient(circle,#7a6a5a 1px,transparent 1px)",
-                    backgroundSize: "18px 18px",
-                }}
-            />
+/* ── Progress rail (left column, desktop only) ────────────────────────── */
 
-            {/* Status bar */}
-            <div className="relative flex items-center justify-between px-6 pt-3 pb-1 text-[10px] font-bold text-heading tabular-nums">
-                <span>9:41</span>
-                <div className="flex items-center gap-1">
-                    <span className="block w-3 h-1.5 rounded-sm border border-heading">
-                        <span className="block w-full h-full bg-heading rounded-[1px]" />
-                    </span>
-                </div>
-            </div>
+function ProgressRail({ active }: { active: number }) {
+    return (
+        <div className="flex flex-col" aria-hidden>
+            {JOURNEY_STEPS.map((step, i) => {
+                const isActive = i === active;
+                const isDone = i < active;
 
-            {/* App header */}
-            <div className="relative flex items-center justify-between px-5 pt-3 pb-3">
-                <span className="font-serif font-bold text-heading text-lg">
-                    TMAG
-                </span>
-                <div className="w-7 h-7 rounded-full bg-button-secondary border border-border flex items-center justify-center">
-                    <LucideBell
-                        width={13}
-                        height={13}
-                        strokeWidth={2}
-                        className="text-heading"
-                    />
-                </div>
-            </div>
-
-            {/* Current trip card */}
-            <div className="relative mx-4 rounded-2xl border border-border bg-background-secondary p-3 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-muted">
-                        Current Trip
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
-                        <LucideShieldCheck size={9} strokeWidth={2.5} />
-                        Dr. Reviewed
-                    </span>
-                </div>
-                <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg leading-none">
-                        {"\ud83c\uddef\ud83c\uddf5"}
-                    </span>
-                    <span className="font-semibold text-heading text-sm">
-                        Japan &middot; Tokyo
-                    </span>
-                </div>
-                <p className="text-[10px] text-muted mb-2.5">
-                    7-day Business Travel
-                </p>
-                <div className="flex items-center justify-between mb-1">
-                    <span className="text-[9px] font-semibold uppercase tracking-wider text-muted">
-                        Readiness
-                    </span>
-                    <span className="text-[10px] font-bold text-heading tabular-nums">
-                        85%
-                    </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-border overflow-hidden">
-                    <div
-                        className="h-full rounded-full"
-                        style={{
-                            width: "85%",
-                            backgroundColor: "#4f9e6a",
-                        }}
-                    />
-                </div>
-            </div>
-
-            {/* Quick actions grid */}
-            <div className="relative mx-4 mt-3 grid grid-cols-2 gap-2">
-                {[
-                    {
-                        icon: LucideSyringe,
-                        label: "Vaccines",
-                        meta: "4 / 4",
-                        active: true,
-                    },
-                    {
-                        icon: LucidePill,
-                        label: "Medication",
-                        meta: "Ready",
-                        active: true,
-                    },
-                    {
-                        icon: LucideHeartPulse,
-                        label: "Insurance",
-                        meta: "Verified",
-                        active: true,
-                    },
-                    {
-                        icon: LucidePhone,
-                        label: "Emergency",
-                        meta: "Contacts",
-                        active: false,
-                    },
-                ].map(({ icon: Icon, label, meta, active }) => (
-                    <div
-                        key={label}
-                        className="rounded-xl border border-border bg-background-secondary p-2.5"
-                    >
-                        <div className="flex items-center justify-between mb-1.5">
-                            <div
-                                className={`w-6 h-6 rounded-lg flex items-center justify-center ${
-                                    active
-                                        ? "bg-accent/10 border border-accent/20 text-accent"
-                                        : "bg-button-secondary border border-border text-heading"
-                                }`}
+                return (
+                    <div key={step.id} className="flex items-start">
+                        {/* Dot / check */}
+                        <div className="relative flex flex-col items-center">
+                            <motion.div
+                                className={cn(
+                                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors duration-500",
+                                    isActive
+                                        ? "border-accent bg-accent text-white"
+                                        : isDone
+                                            ? "border-accent/40 bg-accent/10 text-accent"
+                                            : "border-border-light bg-background-secondary text-muted",
+                                )}
+                                animate={
+                                    isActive
+                                        ? { scale: [1, 1.08, 1] }
+                                        : { scale: 1 }
+                                }
+                                transition={{ duration: 0.4, ease: EASE_SMOOTH }}
                             >
-                                <Icon
-                                    width={11}
-                                    height={11}
-                                    strokeWidth={2.25}
-                                />
-                            </div>
-                            {active && (
-                                <div className="w-3 h-3 rounded-full bg-accent flex items-center justify-center">
-                                    <LucideCheck
-                                        size={7}
-                                        strokeWidth={4}
-                                        className="text-white"
+                                {isDone ? (
+                                    <LucideCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
+                                ) : (
+                                    <span className="tabular-nums">{step.index}</span>
+                                )}
+                            </motion.div>
+
+                            {/* Connector line */}
+                            {i < STEP_COUNT - 1 && (
+                                <div className="relative h-10 w-px">
+                                    <div className="absolute inset-0 bg-border-light" />
+                                    <motion.div
+                                        className="absolute inset-x-0 top-0 origin-top bg-accent/40"
+                                        initial={false}
+                                        animate={{ scaleY: isDone ? 1 : 0 }}
+                                        transition={{ duration: 0.5, ease: EASE_SMOOTH }}
+                                        style={{ height: "100%" }}
                                     />
                                 </div>
                             )}
                         </div>
-                        <p className="text-[10px] font-semibold text-heading leading-tight">
-                            {label}
-                        </p>
-                        <p className="text-[9px] text-muted">{meta}</p>
+
+                        {/* Label (visible only for active step on the rail) */}
+                        <div className="ml-4 hidden pt-1.5 xl:block">
+                            <span
+                                className={cn(
+                                    "text-xs font-semibold uppercase tracking-[0.15em] transition-colors duration-400",
+                                    isActive ? "text-accent" : "text-muted/50",
+                                )}
+                            >
+                                {step.label}
+                            </span>
+                        </div>
                     </div>
-                ))}
+                );
+            })}
+        </div>
+    );
+}
+
+/* ── Step detail (text beside the phone) ──────────────────────────────── */
+
+const stepVariants = {
+    enter: { opacity: 0, y: 16, filter: "blur(4px)" },
+    center: { opacity: 1, y: 0, filter: "blur(0px)" },
+    exit: { opacity: 0, y: -12, filter: "blur(4px)" },
+};
+
+function StepDetail({
+    active,
+    reducedMotion,
+}: {
+    active: number;
+    reducedMotion: boolean;
+}) {
+    const step = JOURNEY_STEPS[active];
+
+    return (
+        <div className="relative min-h-[16rem]">
+            <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                    key={step.id}
+                    variants={stepVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={
+                        reducedMotion
+                            ? { duration: 0 }
+                            : { duration: 0.4, ease: EASE_SMOOTH }
+                    }
+                >
+                    {/* Step counter */}
+                    <div className="mb-4 flex items-center gap-3">
+                        <span className="font-mono text-sm font-bold tabular-nums text-accent">
+                            {step.index}
+                        </span>
+                        <span className="h-px w-8 bg-accent/30" />
+                        <span className="font-mono text-sm tabular-nums text-muted">
+                            {String(STEP_COUNT).padStart(2, "0")}
+                        </span>
+                    </div>
+
+                    {/* Eyebrow */}
+                    <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">
+                        {step.label}
+                    </span>
+
+                    {/* Title */}
+                    <h3 className="mt-3 font-serif text-3xl leading-[1.15] text-heading lg:text-4xl">
+                        {step.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="mt-4 max-w-md text-base leading-relaxed text-body lg:text-lg">
+                        {step.description}
+                    </p>
+
+                    {/* Insight */}
+                    <div className="mt-6 flex items-start gap-3 rounded-xl border border-border-light bg-background-secondary/60 p-4">
+                        <step.Icon
+                            className="mt-0.5 h-4 w-4 shrink-0 text-accent"
+                            strokeWidth={1.75}
+                            aria-hidden
+                        />
+                        <p className="text-sm leading-relaxed text-muted">
+                            {step.insight}
+                        </p>
+                    </div>
+                </motion.div>
+            </AnimatePresence>
+        </div>
+    );
+}
+
+/* ── Mobile step card ─────────────────────────────────────────────────── */
+
+function MobileStepCard({
+    step,
+    index,
+    isActive,
+    reducedMotion,
+}: {
+    step: (typeof JOURNEY_STEPS)[number];
+    index: number;
+    isActive: boolean;
+    reducedMotion: boolean;
+}) {
+    return (
+        <motion.div
+            className={cn(
+                "rounded-2xl border bg-background-secondary/40 p-6 transition-colors duration-500",
+                isActive
+                    ? "border-accent/20 bg-background-secondary/80"
+                    : "border-border-light",
+            )}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={
+                reducedMotion
+                    ? { duration: 0 }
+                    : { duration: 0.5, delay: index * 0.08, ease: EASE_SMOOTH }
+            }
+        >
+            <div className="mb-3 flex items-center gap-3">
+                <span
+                    className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors duration-400",
+                        isActive
+                            ? "bg-accent text-white"
+                            : "bg-accent/10 text-accent",
+                    )}
+                >
+                    {step.index}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-accent">
+                    {step.label}
+                </span>
             </div>
 
-            {/* AI insight strip */}
-            <div className="relative mx-4 mt-3 rounded-xl bg-dark text-background-primary p-3">
-                <div className="flex items-center gap-1.5 mb-1">
-                    <LucideBrainCircuit
-                        width={11}
-                        height={11}
-                        strokeWidth={2.25}
-                        className="text-gold"
-                    />
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-background-primary/70">
-                        AI Insight
-                    </span>
-                </div>
-                <p className="text-[10px] leading-snug">
-                    Influenza activity rising in Tokyo. Recommend booster
-                    72h before travel.
+            <h3 className="font-serif text-xl leading-[1.2] text-heading">
+                {step.title}
+            </h3>
+
+            <p className="mt-2 text-sm leading-relaxed text-body">
+                {step.description}
+            </p>
+
+            <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-border-light bg-background-primary/80 p-3">
+                <step.Icon
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent"
+                    strokeWidth={1.75}
+                    aria-hidden
+                />
+                <p className="text-xs leading-relaxed text-muted">
+                    {step.insight}
                 </p>
             </div>
+        </motion.div>
+    );
+}
 
-            {/* Bottom CTA */}
-            <div className="absolute bottom-4 left-4 right-4">
-                <div className="flex items-center justify-between rounded-2xl bg-heading text-background-primary px-4 py-3">
-                    <span className="text-[11px] font-semibold">
-                        View full plan
-                    </span>
-                    <LucideArrowRight
-                        width={13}
-                        height={13}
-                        strokeWidth={2.25}
-                    />
-                </div>
-            </div>
-        </div>
-    </div>
-);
+/* ── Main section ─────────────────────────────────────────────────────── */
 
 const FeaturesSection = () => {
+    const sectionRef = useRef<HTMLElement>(null);
+    const [activeStep, setActiveStep] = useState(0);
+    const reducedMotion = useReducedMotion();
+    const [isMobile, setIsMobile] = useState(false);
+
+    /* ── Detect mobile ──────────────────────────────────────────────── */
+    useEffect(() => {
+        const mq = window.matchMedia("(max-width: 1023px)");
+        const handler = (e: MediaQueryListEvent | MediaQueryList) => {
+            setIsMobile(e.matches);
+        };
+        handler(mq);
+        mq.addEventListener("change", handler);
+        return () => mq.removeEventListener("change", handler);
+    }, []);
+
+    /* ── Scroll tracking (desktop sticky-scroll) ────────────────────── */
+    const { scrollYProgress } = useScroll({
+        target: sectionRef,
+        offset: ["start start", "end end"],
+    });
+
+    const updateStep = useCallback(
+        (progress: number) => {
+            const next = Math.min(
+                Math.floor(progress * STEP_COUNT),
+                STEP_COUNT - 1,
+            );
+            setActiveStep((prev) => (prev === next ? prev : next));
+        },
+        [],
+    );
+
+    useMotionValueEvent(scrollYProgress, "change", (v) => {
+        if (!isMobile) updateStep(v);
+    });
+
+    /* ── Mobile: track phone visibility per card via IntersectionObserver */
+    useEffect(() => {
+        if (!isMobile) return;
+
+        const cards = sectionRef.current?.querySelectorAll<HTMLElement>(
+            "[data-step-index]",
+        );
+        if (!cards?.length) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    if (entry.isIntersecting) {
+                        const idx = Number(
+                            (entry.target as HTMLElement).dataset.stepIndex,
+                        );
+                        if (!Number.isNaN(idx)) setActiveStep(idx);
+                    }
+                }
+            },
+            { rootMargin: "-40% 0px -40% 0px", threshold: 0 },
+        );
+
+        cards.forEach((c) => observer.observe(c));
+        return () => observer.disconnect();
+    }, [isMobile]);
+
+    const lite = !!reducedMotion;
+
+    /* ── Mobile render ──────────────────────────────────────────────── */
+    if (isMobile) {
+        return (
+            <section
+                ref={sectionRef}
+                className="relative mx-auto max-w-7xl overflow-clip px-6 py-20 sm:px-8"
+            >
+                {/* Decorative orbs */}
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute -left-20 -top-10 h-[20rem] w-[20rem] rounded-full"
+                    style={{
+                        background:
+                            "radial-gradient(circle, rgba(42,122,106,0.10) 0%, rgba(42,122,106,0.03) 45%, transparent 70%)",
+                        filter: "blur(50px)",
+                    }}
+                />
+
+                {/* Header */}
+                <div className="mb-12">
+                    <SectionEyebrow className="mb-5">How it works</SectionEyebrow>
+                    <h2 className="font-serif text-3xl leading-[1.1] text-heading sm:text-4xl">
+                        Your travel plan, in{" "}
+                        <span className="italic">five guided steps.</span>
+                    </h2>
+                    <p className="mt-4 max-w-lg text-sm leading-relaxed text-body">
+                        From sign-up to a physician-approved plan in your inbox —
+                        here is exactly how TMAG turns your trip into a clear,
+                        personalised travel health roadmap.
+                    </p>
+                </div>
+
+                {/* Sticky phone */}
+                <div className="sticky top-2 z-10 mb-8 flex justify-center">
+                    <div className="relative rounded-[2.5rem] shadow-xl shadow-dark/10">
+                        <PhoneFrame screen={activeStep} lite />
+                    </div>
+                </div>
+
+                {/* Step cards */}
+                <div className="relative space-y-5 pt-4">
+                    {JOURNEY_STEPS.map((step, i) => (
+                        <div key={step.id} data-step-index={i}>
+                            <MobileStepCard
+                                step={step}
+                                index={i}
+                                isActive={i === activeStep}
+                                reducedMotion={!!reducedMotion}
+                            />
+                        </div>
+                    ))}
+                </div>
+            </section>
+        );
+    }
+
+    /* ── Desktop render ─────────────────────────────────────────────── */
     return (
-        <section className="relative overflow-hidden px-8 lg:px-16 pt-24 pb-16 max-w-7xl mx-auto">
+        <section
+            ref={sectionRef}
+            className="relative"
+            style={{ minHeight: `${STEP_COUNT * 100}vh` }}
+            aria-label="How it works — five guided steps"
+        >
             {/* Decorative orbs */}
             <div
                 aria-hidden
-                className="pointer-events-none absolute -top-10 -left-20 w-[26rem] h-[26rem] rounded-full"
+                className="pointer-events-none absolute -left-20 -top-10 h-[26rem] w-[26rem] rounded-full"
                 style={{
                     background:
                         "radial-gradient(circle, rgba(42,122,106,0.12) 0%, rgba(42,122,106,0.04) 45%, transparent 70%)",
@@ -259,7 +373,7 @@ const FeaturesSection = () => {
             />
             <div
                 aria-hidden
-                className="pointer-events-none absolute top-32 -right-20 w-[24rem] h-[24rem] rounded-full"
+                className="pointer-events-none absolute -right-20 top-32 h-[24rem] w-[24rem] rounded-full"
                 style={{
                     background:
                         "radial-gradient(circle, rgba(196,149,58,0.16) 0%, rgba(232,120,80,0.05) 45%, transparent 70%)",
@@ -267,110 +381,63 @@ const FeaturesSection = () => {
                 }}
             />
 
-            {/* Header + device mockup */}
-            <div className="relative grid lg:grid-cols-[1fr_auto] lg:gap-16 items-center mb-16">
-                <AnimateIn type="fadeLeft">
-                    <SectionEyebrow className="mb-6">Key features</SectionEyebrow>
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl text-heading leading-[1.1] font-serif">
-                        Everything you need to{" "}
-                        <span className="italic">travel healthy.</span>
-                    </h2>
-                    <p className="text-body leading-relaxed mt-6 max-w-md">
-                        From AI risk assessment to clinical review, every
-                        feature is built to give travellers and organisations a
-                        single, trustworthy source of travel health truth.
-                    </p>
-                    <div className="mt-6 flex flex-wrap gap-2">
-                        {[
-                            "Real-time risk data",
-                            "Physician oversight",
-                            "Compliance-ready",
-                        ].map((label) => (
-                            <span
-                                key={label}
-                                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-accent/10 text-accent border border-accent/20"
+            {/* Sticky viewport */}
+            <div className="sticky top-0 flex min-h-screen items-center">
+                <div className="mx-auto grid w-full max-w-7xl grid-cols-12 gap-8 px-6 sm:px-8 lg:px-16">
+                    {/* ── Left column: header + progress + detail ── */}
+                    <div className="col-span-7 flex flex-col justify-center py-20">
+                        {/* Section header */}
+                        <div className="mb-12">
+                            <SectionEyebrow className="mb-5">
+                                How it works
+                            </SectionEyebrow>
+                            <h2 className="font-serif text-4xl leading-[1.1] text-heading lg:text-5xl">
+                                Your travel plan, in{" "}
+                                <span className="italic">five guided steps.</span>
+                            </h2>
+                        </div>
+
+                        {/* Progress rail + detail */}
+                        <div className="flex gap-8">
+                            <ProgressRail active={activeStep} />
+                            <div className="flex-1 pt-1">
+                                <StepDetail
+                                    active={activeStep}
+                                    reducedMotion={!!reducedMotion}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── Right column: phone ── */}
+                    <div className="col-span-5 flex items-center justify-center py-20">
+                        <div className="relative">
+                            {/* Glow behind phone */}
+                            <div
+                                aria-hidden
+                                className="absolute left-1/2 top-1/2 h-[28rem] w-[22rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60"
+                                style={{
+                                    background:
+                                        "radial-gradient(ellipse, rgba(42,122,106,0.10) 0%, transparent 70%)",
+                                    filter: "blur(40px)",
+                                }}
+                            />
+                            <motion.div
+                                className="relative"
+                                initial={{ opacity: 0, y: 32 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, amount: 0.3 }}
+                                transition={{
+                                    duration: 0.7,
+                                    ease: EASE_SMOOTH,
+                                }}
                             >
-                                <LucideCheck
-                                    width={12}
-                                    height={12}
-                                    strokeWidth={2.5}
-                                />
-                                {label}
-                            </span>
-                        ))}
-                    </div>
-                </AnimateIn>
-
-                <AnimateIn type="fadeRight" delay={0.15}>
-                    <div className="relative mt-12 lg:mt-0">
-                        {/* Floating "Plan ready" notification chip */}
-                        <div className="hidden md:flex absolute -left-4 lg:-left-12 top-10 z-20 items-center gap-2 rounded-xl border border-border bg-background-secondary shadow-lg px-3 py-2 rotate-[-3deg]">
-                            <div className="w-7 h-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center">
-                                <LucideShieldCheck
-                                    width={13}
-                                    height={13}
-                                    strokeWidth={2.25}
-                                    className="text-accent"
-                                />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted">
-                                    Plan ready
-                                </p>
-                                <p className="text-[11px] font-semibold text-heading">
-                                    100% reviewed
-                                </p>
-                            </div>
+                                <PhoneFrame screen={activeStep} lite={lite} />
+                            </motion.div>
                         </div>
-
-                        {/* Floating outbreak alert chip */}
-                        <div className="hidden md:flex absolute -right-4 lg:-right-10 bottom-16 z-20 items-center gap-2 rounded-xl border border-border bg-background-secondary shadow-lg px-3 py-2 rotate-[3deg]">
-                            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gold/15 border border-gold/30">
-                                <LucideBell
-                                    width={13}
-                                    height={13}
-                                    strokeWidth={2.25}
-                                    className="text-gold"
-                                />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted">
-                                    Live alert
-                                </p>
-                                <p className="text-[11px] font-semibold text-heading">
-                                    Tokyo flu spike
-                                </p>
-                            </div>
-                        </div>
-
-                        <PhoneMockup />
                     </div>
-                </AnimateIn>
+                </div>
             </div>
-
-            {/* Feature cards grid */}
-            <StaggerGroup
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                stagger={0.1}
-            >
-                {features.map((f) => (
-                    <motion.div
-                        variants={staggerItem}
-                        key={f.title}
-                        className="bg-background-secondary rounded-2xl p-8 border border-border shadow-sm flex flex-col gap-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
-                    >
-                        <div className="w-12 h-12 rounded-xl bg-heading text-background-primary flex items-center justify-center">
-                            {f.icon}
-                        </div>
-                        <h3 className="text-lg font-semibold text-heading">
-                            {f.title}
-                        </h3>
-                        <p className="text-sm text-body leading-relaxed">
-                            {f.description}
-                        </p>
-                    </motion.div>
-                ))}
-            </StaggerGroup>
         </section>
     );
 };

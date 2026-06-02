@@ -8,50 +8,40 @@ import StaggerGroup, { staggerItem } from "../../components/animations/StaggerGr
 import { useCurrencyStore } from "../../stores/currencyStore";
 import {
     individualPlans,
-    creditPlans,
-    premiumFeatures,
-    enterpriseTiers,
-    enterprisePlanCodes,
-    signupRanges,
-    enterpriseTierColors,
-    individualPlanFeatures,
     familyPlans,
-    type SignupRange,
-    type ServiceLevel,
+    seatPackages,
+    seatPricePerSeat,
+    INCLUDED_PLANS_PER_SEAT,
 } from "../../constants/companyPlans";
 import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 import SEOHead from "../../lib/seo";
 import PriceDiscountBadge from "../../components/pricing/PriceDiscountBadge";
 import IndividualPlanCard from "../../components/pricing/IndividualPlanCard";
-import { formatStackedPrice as formatPrice } from "../../lib/launchDiscount";
+import SeatPlanCard from "../../components/pricing/SeatPlanCard";
+import { formatStackedPrice as formatPrice, formatCurrencyAmount } from "../../lib/launchDiscount";
 import { useLaunchDiscount } from "../../api";
 import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 type Audience = "individual" | "family" | "company";
 
-function resolvePricingSelection(searchParams: URLSearchParams): { audience: Audience; signupRange: SignupRange } {
+// Seat tiers mirror the backend OrganizationSeatPricingService ($99/$89/$79/$69 per seat/year).
+function resolvePricingSelection(searchParams: URLSearchParams): { audience: Audience } {
     const plan = searchParams.get("plan")?.trim().toUpperCase();
     if (plan) {
         if (plan.startsWith("FAMILY")) {
-            return { audience: "family", signupRange: "0-100" };
+            return { audience: "family" };
         }
-
-        for (const range of Object.keys(enterprisePlanCodes) as SignupRange[]) {
-            const codes = enterprisePlanCodes[range];
-            if (Object.values(codes).includes(plan)) {
-                return { audience: "company", signupRange: range };
-            }
+        if (plan.startsWith("ENTERPRISE") || plan.startsWith("SEAT") || plan.startsWith("COMPANY")) {
+            return { audience: "company" };
         }
-
         if (individualPlans.some((p) => p.code === plan)) {
-            return { audience: "individual", signupRange: "0-100" };
+            return { audience: "individual" };
         }
     }
 
     const tab = searchParams.get("tab");
     return {
         audience: tab === "company" ? "company" : tab === "family" ? "family" : "individual",
-        signupRange: "0-100",
     };
 }
 
@@ -60,7 +50,6 @@ const PricingPage = () => {
     const [searchParams] = useSearchParams();
     const initialSelection = resolvePricingSelection(searchParams);
     const [audience, setAudience] = useState<Audience>(initialSelection.audience);
-    const [signupRange, setSignupRange] = useState<SignupRange>(initialSelection.signupRange);
     const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
     const { selectedCurrency, setCurrency } = useCurrencyStore();
     const { data: launchDiscount } = useLaunchDiscount();
@@ -69,7 +58,6 @@ const PricingPage = () => {
     useEffect(() => {
         const selection = resolvePricingSelection(searchParams);
         setAudience(selection.audience);
-        setSignupRange(selection.signupRange);
     }, [searchParams]);
 
     useEffect(() => {
@@ -245,165 +233,52 @@ const PricingPage = () => {
                 </section>
             )}
 
-            {/* Company plans — matrix */}
+            {/* Company plans — seat packages (mirrors individual card chrome) */}
             {audience === "company" && (
-                <section className="px-8 lg:px-16 pb-16 max-w-7xl mx-auto">
-                    {/* Signup-range selector */}
-                    <div className="flex justify-center mb-10">
-                        <div className="inline-flex items-center bg-button-secondary rounded-2xl p-1 gap-1">
-                            {signupRanges.map((r) => (
-                                <button
-                                    key={r.value}
-                                    onClick={() => setSignupRange(r.value)}
-                                    className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${signupRange === r.value ?
-                                        "bg-white shadow-sm text-heading"
-                                        : "text-muted hover:text-heading"
-                                        }`}
-                                >
-                                    {r.label}{" "}
-                                    <span className="text-muted font-normal">
-                                        signups
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                <section className="px-8 lg:px-16 pb-24 max-w-7xl mx-auto">
+                    <AnimateIn className="text-center mb-8">
+                        <p className="text-sm text-body max-w-xl mx-auto leading-relaxed">
+                            Buy one seat per traveller, billed annually. Every seat includes{" "}
+                            <strong>{INCLUDED_PLANS_PER_SEAT} travel plans per year</strong>. Pick a starting
+                            size your per-seat rate drops automatically as you scale.
+                        </p>
+                    </AnimateIn>
 
-                    {/* Two enterprise cards */}
                     <StaggerGroup
-                        className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto"
+                        className="grid grid-cols-1 md:grid-cols-3 max-w-5xl mx-auto items-stretch"
                         stagger={0.12}
                     >
-                        {(["standard", "premium"] as ServiceLevel[]).map(
-                            (level) => {
-                                const tierName =
-                                    enterpriseTiers[signupRange][level];
-                                const colors =
-                                    enterpriseTierColors[signupRange][level];
-                                const features =
-                                    level === "standard" ?
-                                        individualPlanFeatures.standard
-                                        : individualPlanFeatures.premium;
-                                const basePlan = creditPlans.find(
-                                    (p) => p.tier === level,
-                                )!;
-
-                                return (
-                                    <motion.div
-                                        variants={staggerItem}
-                                        key={level}
-                                        className={`relative p-8 flex flex-col justify-between overflow-hidden ${colors.border}`}
-                                    >
-                                        <div
-                                            className="absolute inset-0"
-                                            style={{
-                                                background: colors.gradient,
-                                            }}
-                                        />
-                                        <div
-                                            className={`absolute top-0 left-0 w-1 h-full ${colors.sideAccent}`}
-                                        />
-                                        <span
-                                            className={`absolute top-6 right-6 text-xs font-semibold ${colors.badgeBg} ${colors.badgeText} px-3 py-1 rounded-full`}
-                                        >
-                                            {level === "standard" ?
-                                                "Most popular"
-                                                : "Best report"}
-                                        </span>
-                                        <div className="relative z-10">
-                                            <h3
-                                                className={`text-lg font-semibold mb-0.5 ${colors.textPrimary}`}
-                                            >
-                                                {tierName}
-                                            </h3>
-                                            <p
-                                                className={`text-xs mb-6 font-medium uppercase tracking-wide ${colors.textMuted}`}
-                                            >
-                                                {level === "standard" ?
-                                                    "Standard service"
-                                                    : "Premium service"}
-                                            </p>
-                                            <p
-                                                className={`text-sm mb-6 ${colors.textSecondary}`}
-                                            >
-                                                {basePlan.description}
-                                            </p>
-                                            <div className="flex items-baseline gap-1.5 mb-1">
-                                                <span
-                                                    className={`text-4xl font-serif ${colors.textPrimary}`}
-                                                >
-                                                    {formatPrice(
-                                                        basePlan.priceUsd,
-                                                        basePlan.priceNgn,
-                                                        selectedCurrency,
-                                                        affiliateDiscountRate,
-                                                        launchPct,
-                                                    )}
-                                                </span>
-                                            </div>
-
-                                            <PriceDiscountBadge
-                                                priceUsd={basePlan.priceUsd}
-                                                priceNgn={basePlan.priceNgn}
-                                                currency={selectedCurrency}
-                                                affiliatePct={affiliateDiscountRate}
-                                                launchPct={launchPct}
-                                                unit="per credit"
-                                            />
-                                            <p
-                                                className={`text-xs mb-8 ${colors.textMuted}`}
-                                            >
-                                                per credit
-                                            </p>
-                                            <ul className="space-y-3 mb-8">
-                                                {features.map((f) => (
-                                                    <li
-                                                        key={f}
-                                                        className={`flex items-start gap-3 text-sm ${colors.textPrimary}`}
-                                                    >
-                                                        <LucideCheck
-                                                            className={`w-4 h-4 mt-0.5 shrink-0 ${colors.checkColor}`}
-                                                        />
-                                                        {f}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                        <Button
-                                            variant="primary"
-                                            link={`/company-onboarding?plan=${enterprisePlanCodes[signupRange][level]}`}
-                                            className={`relative z-10 self-stretch text-center justify-center flex ${level === "premium" ?
-                                                "bg-gold text-white! hover:bg-[#b07a22]"
-                                                : "bg-stone-900 text-white! hover:bg-stone-800"
-                                                }`}
-                                        >
-                                            Get started
-                                        </Button>
-                                    </motion.div>
-                                );
-                            },
-                        )}
+                        {seatPackages.map((seats, i) => (
+                            <SeatPlanCard
+                                key={seats}
+                                seats={seats}
+                                currency={selectedCurrency}
+                                variant={(["essential", "standard", "premium"] as const)[i] ?? "standard"}
+                            />
+                        ))}
                     </StaggerGroup>
 
-                    {/* Premium extras callout */}
-                    <AnimateIn className="mt-10 max-w-3xl mx-auto">
-                        <div className="bg-[#fdf9f0] border border-gold/30 p-8">
-                            <h3 className="text-xl font-serif text-heading mb-5">
-                                Exclusive to Premium
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {premiumFeatures.map((feature) => (
-                                    <div
-                                        key={feature}
-                                        className="flex items-start gap-3 text-sm text-heading"
-                                    >
-                                        <LucideCheck className="w-4 h-4 mt-0.5 text-amber-600 shrink-0" />
-                                        {feature}
-                                    </div>
-                                ))}
+                    {/* Custom size */}
+                    <AnimateIn delay={0.1} className="mt-6 max-w-5xl mx-auto">
+                        <div className="rounded-2xl border border-border-light bg-button-secondary/40 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h3 className="text-base font-semibold text-heading">Need a different team size?</h3>
+                                <p className="text-sm text-muted mt-1">
+                                    Enter any number of seats from{" "}
+                                    {formatCurrencyAmount(seatPricePerSeat(500, selectedCurrency), selectedCurrency)}/seat at 500+.
+                                    Every seat still includes {INCLUDED_PLANS_PER_SEAT} plans a year.
+                                </p>
                             </div>
+                            <Button variant="primary" link="/company-onboarding" icon={<LucideArrowRight />} className="shrink-0">
+                                Choose seats
+                            </Button>
                         </div>
                     </AnimateIn>
+
+                    <p className="text-center text-xs text-muted mt-6">
+                        You'll confirm seats, currency and total at checkout.{" "}
+                        <a href="/for-companies" className="text-accent font-medium hover:underline">Learn how it works →</a>
+                    </p>
                 </section>
             )}
 
