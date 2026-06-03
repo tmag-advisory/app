@@ -104,9 +104,9 @@ const SeatPlanCard = ({ seats, currency, variant }: SeatPlanCardProps) => {
 
     const features = [
         `${INCLUDED_PLANS_PER_SEAT} travel plans per seat / year`,
-        "CSV employee onboarding",
-        "Company admin dashboard",
-        "Per-employee usage tracking",
+        "CSV member onboarding",
+        "Organization admin dashboard",
+        "Per-member usage tracking",
         "Buy & assign extra plans anytime",
     ];
 

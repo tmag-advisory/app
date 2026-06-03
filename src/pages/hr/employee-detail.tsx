@@ -28,9 +28,9 @@ const EmployeeDetail = () => {
     if (!employee) {
         return (
             <div className="text-center py-24">
-                <p className="text-sm text-muted">Employee not found.</p>
+                <p className="text-sm text-muted">Member not found.</p>
                 <button onClick={() => navigate("/hr/employees")} className="mt-4 text-sm text-accent hover:underline">
-                    Back to employees
+                    Back to members
                 </button>
             </div>
         );
@@ -42,13 +42,13 @@ const EmployeeDetail = () => {
 
     return (
         <div>
-            <DashboardHeader title="Employee profile" />
+            <DashboardHeader title="Member profile" />
 
             <button
                 onClick={() => navigate("/hr/employees")}
                 className="flex items-center gap-1.5 text-xs text-muted hover:text-heading transition-colors mb-6 cursor-pointer"
             >
-                <LucideArrowLeft className="w-3.5 h-3.5" /> Back to employees
+                <LucideArrowLeft className="w-3.5 h-3.5" /> Back to members
             </button>
 
             {/* Profile header */}

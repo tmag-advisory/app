@@ -56,12 +56,12 @@ const HROverview = () => {
 
     return (
         <div>
-            <DashboardHeader title={`${company?.name ?? "Company"} Dashboard`} />
+            <DashboardHeader title={`${company?.name ?? "Organization"} Dashboard`} />
             {/* Stats grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <StatCard label="Total credits" value={totalCredits} icon={<LucideCoins className="w-4 h-4" />} />
                 <StatCard label="Credits used" value={usedCredits} icon={<LucideCoins className="w-4 h-4" />} detail={`${totalCredits - usedCredits} remaining`} />
-                <StatCard label="Active employees" value={employees.filter((e: { status: string }) => e.status === "active").length} icon={<LucideUsers className="w-4 h-4" />} />
+                <StatCard label="Active members" value={employees.filter((e: { status: string }) => e.status === "active").length} icon={<LucideUsers className="w-4 h-4" />} />
                 <StatCard label="Pending requests" value={pendingRequests} icon={<LucidePlane className="w-4 h-4" />} detail={`${upcomingTrips} approved`} accent />
             </div>
 

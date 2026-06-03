@@ -150,7 +150,7 @@ const CreatePlan = () => {
         if (effectiveRemaining <= 0) {
             toast.error(
                 isSeatEmployee
-                    ? "You've used all your company travel plans. Contact your company admin for more."
+                    ? "You've used all your organization travel plans. Contact your organization admin for more."
                     : "You don't have enough credits.",
             );
             return;
@@ -257,7 +257,7 @@ const CreatePlan = () => {
                     <div className="bg-accent/5 border border-accent/20 rounded-2xl p-5 md:p-6">
                         <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Company travel plans remaining</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Organization travel plans remaining</p>
                                 <p className="text-lg font-semibold text-heading">
                                     {includedRemaining} of {seatUsage.includedLimit}
                                 </p>
@@ -296,11 +296,11 @@ const CreatePlan = () => {
                             </div>
                             <div className="flex-1">
                                 <p className="text-sm font-semibold text-heading mb-1">
-                                    {isSeatEmployee ? "No company travel plans remaining" : "No credits remaining"}
+                                    {isSeatEmployee ? "No organization travel plans remaining" : "No credits remaining"}
                                 </p>
                                 <p className="text-sm text-muted">
                                     {isSeatEmployee
-                                        ? "You've used all your included and extra travel plans for this year. Contact your company admin to request additional plans."
+                                        ? "You've used all your included and extra travel plans for this year. Contact your organization admin to request additional plans."
                                         : "Purchase more credits to generate a new plan."}
                                 </p>
                             </div>

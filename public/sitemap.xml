@@ -1,108 +1,284 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Home -->
   <url>
     <loc>https://travelmedicineadvisory.com/</loc>
+    <lastmod>2026-06-03</lastmod>
     <priority>1.0</priority>
     <changefreq>weekly</changefreq>
   </url>
+
+  <!-- How It Works -->
   <url>
     <loc>https://travelmedicineadvisory.com/how-it-works</loc>
+    <lastmod>2026-06-03</lastmod>
     <priority>0.9</priority>
     <changefreq>monthly</changefreq>
   </url>
+
+  <!-- Pricing -->
   <url>
     <loc>https://travelmedicineadvisory.com/pricing</loc>
+    <lastmod>2026-06-03</lastmod>
     <priority>0.9</priority>
     <changefreq>weekly</changefreq>
   </url>
+
+  <!-- For Companies -->
   <url>
     <loc>https://travelmedicineadvisory.com/for-companies</loc>
+    <lastmod>2026-06-03</lastmod>
     <priority>0.8</priority>
     <changefreq>monthly</changefreq>
   </url>
+
+  <!-- About -->
   <url>
     <loc>https://travelmedicineadvisory.com/about</loc>
+    <lastmod>2026-06-03</lastmod>
     <priority>0.7</priority>
     <changefreq>monthly</changefreq>
   </url>
+
+  <!-- FAQ -->
   <url>
     <loc>https://travelmedicineadvisory.com/faq</loc>
+    <lastmod>2026-06-03</lastmod>
     <priority>0.7</priority>
     <changefreq>monthly</changefreq>
   </url>
+
+  <!-- Blog -->
   <url>
     <loc>https://travelmedicineadvisory.com/blog</loc>
+    <lastmod>2026-06-03</lastmod>
     <priority>0.8</priority>
     <changefreq>weekly</changefreq>
   </url>
-  <url>
-    <loc>https://travelmedicineadvisory.com/contact</loc>
-    <priority>0.6</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://travelmedicineadvisory.com/careers</loc>
-    <priority>0.6</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-  <url>
-    <loc>https://travelmedicineadvisory.com/press</loc>
-    <priority>0.5</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://travelmedicineadvisory.com/help</loc>
-    <priority>0.5</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://travelmedicineadvisory.com/docs</loc>
-    <priority>0.5</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://travelmedicineadvisory.com/community</loc>
-    <priority>0.5</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://travelmedicineadvisory.com/status</loc>
-    <priority>0.4</priority>
-    <changefreq>weekly</changefreq>
-  </url>
+
+  <!-- Shop -->
   <url>
     <loc>https://travelmedicineadvisory.com/shop</loc>
+    <lastmod>2026-06-03</lastmod>
     <priority>0.7</priority>
     <changefreq>weekly</changefreq>
   </url>
+
+  <!-- Shopping Cart -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/shop/cart</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Checkout -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/shop/checkout</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.4</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Order Confirmation -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/shop/order-confirmation</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.3</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Careers -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/careers</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.6</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <!-- Company Onboarding -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/company-onboarding</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.4</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Community -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/community</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Help Center -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/help</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- System Status -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/status</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.5</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <!-- Contact -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/contact</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.6</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Press & Media -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/press</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Apply as Doctor -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/apply-as-doctor</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.6</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Apply as Affiliate -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/apply-as-affiliate</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.6</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Terms of Service -->
   <url>
     <loc>https://travelmedicineadvisory.com/terms</loc>
-    <priority>0.3</priority>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.4</priority>
     <changefreq>monthly</changefreq>
   </url>
+
+  <!-- Privacy Policy -->
   <url>
     <loc>https://travelmedicineadvisory.com/privacy</loc>
-    <priority>0.3</priority>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.4</priority>
     <changefreq>monthly</changefreq>
   </url>
+
+  <!-- Medical Disclaimer -->
   <url>
     <loc>https://travelmedicineadvisory.com/medical-disclaimer</loc>
-    <priority>0.3</priority>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.4</priority>
     <changefreq>monthly</changefreq>
   </url>
+
+  <!-- NDPR Compliance -->
   <url>
     <loc>https://travelmedicineadvisory.com/ndpr</loc>
-    <priority>0.3</priority>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.4</priority>
     <changefreq>monthly</changefreq>
   </url>
+
+  <!-- HIPAA Compliance -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/hipaa</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.4</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Login -->
   <url>
     <loc>https://travelmedicineadvisory.com/login</loc>
+    <lastmod>2026-06-03</lastmod>
     <priority>0.3</priority>
     <changefreq>monthly</changefreq>
   </url>
+
+  <!-- Register -->
   <url>
     <loc>https://travelmedicineadvisory.com/register</loc>
+    <lastmod>2026-06-03</lastmod>
     <priority>0.3</priority>
     <changefreq>monthly</changefreq>
   </url>
+
+  <!-- Forgot Password -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/forgot-password</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.2</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+
+  <!-- Reset Password -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/reset-password</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.2</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+
+  <!-- Accept Invitation -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/accept-invitation</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.2</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+
+  <!-- Verify Email -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/verify-email</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.2</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+
+  <!-- Family Member Login -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/family/login</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.3</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Family Plan Checkout -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/family-checkout</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.3</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Unauthorized -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/unauthorized</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.2</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Server Error -->
+  <url>
+    <loc>https://travelmedicineadvisory.com/server-error</loc>
+    <lastmod>2026-06-03</lastmod>
+    <priority>0.2</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
 </urlset>

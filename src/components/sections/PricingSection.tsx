@@ -78,7 +78,7 @@ const PricingSection = () => {
                                     : "text-muted hover:text-heading"
                                     }`}
                             >
-                                {tab === "individual" ? "Individuals" : tab === "family" ? "Family" : "Company"}
+                                {tab === "individual" ? "Individuals" : tab === "family" ? "Family" : "Organization"}
                             </button>
                         ))}
                     </div>

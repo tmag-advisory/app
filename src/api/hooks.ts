@@ -184,6 +184,9 @@ export const queryKeys = {
     selectAll: () => [...queryKeys.blogPosts.all, "select"] as const,
     details: () => [...queryKeys.blogPosts.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.blogPosts.details(), id] as const,
+    detailBySlug: (slug: string) => [...queryKeys.blogPosts.details(), "slug", slug] as const,
+    categories: () => [...queryKeys.blogPosts.all, "categories"] as const,
+    tags: () => [...queryKeys.blogPosts.all, "tags"] as const,
   },
   faqItems: {
     all: ["faq-items"] as const,
@@ -823,27 +826,33 @@ export function useCreateInvoice() {
 
 // ─── Blog Post Hooks ─────────────────────────────────────────
 
-export function useBlogPosts(params?: PaginationParams) {
+export function useBlogPosts(params?: PaginationParams, filters?: { category?: string; tag?: string }) {
   return useQuery({
-    queryKey: queryKeys.blogPosts.list(params),
-    queryFn: () => blogPostsApi.list(params),
+    queryKey: [...queryKeys.blogPosts.list(params), filters],
+    queryFn: () => blogPostsApi.list(params, filters),
   });
 }
 
-export function useBlogPost(id: number) {
+export function useBlogPostBySlug(slug: string | undefined) {
   return useQuery({
-    queryKey: queryKeys.blogPosts.detail(id),
-    queryFn: () => blogPostsApi.get(id),
-    enabled: id > 0,
+    queryKey: queryKeys.blogPosts.detailBySlug(slug ?? ""),
+    queryFn: () => blogPostsApi.getBySlug(slug ?? ""),
+    enabled: Boolean(slug),
+    retry: false,
   });
 }
 
-export function useUploadBlogFeaturedImage() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, file }: { id: number; file: File }) =>
-      blogPostsApi.uploadFeaturedImage(id, file),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.blogPosts.all }),
+export function useBlogCategories() {
+  return useQuery({
+    queryKey: queryKeys.blogPosts.categories(),
+    queryFn: () => blogPostsApi.categories(),
+  });
+}
+
+export function useBlogTags() {
+  return useQuery({
+    queryKey: queryKeys.blogPosts.tags(),
+    queryFn: () => blogPostsApi.tags(),
   });
 }
 
@@ -1144,7 +1153,7 @@ export function useFamilyPackageHistory() {
   });
 }
 
-// ─── Company Admin Credit Hooks (HR) ─────────────────────────────────
+// ─── Organization Admin Credit Hooks (HR) ─────────────────────────────────
 
 export function useHrCreditQuote() {
   return useMutation({
@@ -1579,7 +1588,7 @@ export function useSeatOnboardingQuote(seats: number, currency: string) {
   });
 }
 
-/** Logged-in company employee's seat plan allowance (null for individual users). */
+/** Logged-in organization member's seat plan allowance (null for individual users). */
 export function useSeatUsage(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["profile-seat-usage"],

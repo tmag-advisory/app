@@ -169,7 +169,7 @@ const CompanyOnboarding = () => {
         }
         try {
             const imported = parseEmployeesCsv(await file.text());
-            if (imported.length === 0) { setEmployeesCsvError("The CSV did not include any employees."); return; }
+            if (imported.length === 0) { setEmployeesCsvError("The CSV did not include any members."); return; }
             const hasOnlyEmpty = employees.length === 0 || (employees.length === 1 && !employees[0].email.trim());
             setEmployees(hasOnlyEmpty ? imported : [...employees.filter((e) => e.email.trim()), ...imported]);
             setEmployeesCsv(file);
@@ -266,7 +266,7 @@ const CompanyOnboarding = () => {
             )}
 
             <ul className="space-y-2 mt-6 pt-5 border-t border-border-light/70">
-                {[`${includedPlans} travel plans per seat / year`, "CSV employee onboarding"].map((f) => (
+                {[`${includedPlans} travel plans per seat / year`, "CSV member onboarding"].map((f) => (
                     <li key={f} className="flex items-start gap-2 text-xs text-body">
                         <LucideCheck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent" />{f}
                     </li>
@@ -283,7 +283,7 @@ const CompanyOnboarding = () => {
             {/* Hero band */}
             <div className="border-b border-border-light/60">
                 <div className="max-w-6xl mx-auto px-6 pt-28 pb-10 text-center">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Company onboarding</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">Organization onboarding</span>
                     <h1 className="font-serif text-4xl md:text-5xl text-heading mt-3 leading-[1.05]">
                         Cover your team in <span className="italic">minutes</span>.
                     </h1>
@@ -393,9 +393,9 @@ const CompanyOnboarding = () => {
                             {currentStep === 2 && (
                                 <div className="space-y-5">
                                     <div className={panel}>
-                                        <SectionTitle eyebrow="Step 2" title="Company details" />
+                                        <SectionTitle eyebrow="Step 2" title="Organization details" />
                                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                            <input className={field} placeholder="Company name *" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                                            <input className={field} placeholder="Organization name *" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
                                             <select className={`${field} cursor-pointer`} value={industry} onChange={(e) => setIndustry(e.target.value)}>
                                                 <option value="">Select industry</option>
                                                 {industries.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
@@ -408,7 +408,7 @@ const CompanyOnboarding = () => {
 
                                     <div className={panel}>
                                         <div className="flex items-center justify-between mb-4">
-                                            <SectionTitle eyebrow="Admins" title="Account admins" hint="They manage seats & employees. Each admin uses a seat." />
+                                            <SectionTitle eyebrow="Admins" title="Account admins" hint="They manage seats & members. Each admin uses a seat." />
                                             <button type="button" onClick={addAdmin} className={ghostBtn}><LucidePlus className="h-3.5 w-3.5" /> Add</button>
                                         </div>
                                         <div className="space-y-3">
@@ -425,7 +425,7 @@ const CompanyOnboarding = () => {
 
                                     <div className={panel}>
                                         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                                            <SectionTitle eyebrow="Travellers" title="Employees" hint="Add the people who get travel plans, or upload a CSV." />
+                                            <SectionTitle eyebrow="Travellers" title="Members" hint="Add the people who get travel plans, or upload a CSV." />
                                             <div className="flex gap-2">
                                                 <button type="button" onClick={downloadCsvSample} className={ghostBtn}><LucideDownload className="h-3.5 w-3.5" /> Template</button>
                                                 <label className={`${solidBtn} cursor-pointer`}>
@@ -456,7 +456,7 @@ const CompanyOnboarding = () => {
                                     </div>
 
                                     <div className={panel}>
-                                        <SectionTitle eyebrow="Documentation" title="MSA & company docs" hint="Download our Master Service Agreement, sign it, and upload the completed copy." />
+                                        <SectionTitle eyebrow="Documentation" title="MSA & organization docs" hint="Download our Master Service Agreement, sign it, and upload the completed copy." />
                                         <div className="flex flex-wrap items-center gap-3">
                                             <a href={MSA_DOC_URL} download className={ghostBtn}><LucideFileText className="h-3.5 w-3.5" /> Download MSA</a>
                                             <label className={`${solidBtn} cursor-pointer`}>
@@ -487,14 +487,14 @@ const CompanyOnboarding = () => {
                                         <SectionTitle eyebrow="Step 3" title="Review & confirm" />
                                         <dl className="divide-y divide-border-light/60 text-sm">
                                             {[
-                                                ["Company", companyName],
+                                                ["Organization", companyName],
                                                 ["Industry", industry || "—"],
                                                 ["Contact", contactEmail],
                                                 ["Seats", String(numericSeatCount)],
                                                 ["Report level", "Premium"],
                                                 ["Admins", String(validAdmins.length)],
-                                                ["Employees", String(validEmployees.length)],
-                                                ["Employee CSV", employeesCsv ? employeesCsv.name : "—"],
+                                                ["Members", String(validEmployees.length)],
+                                                ["Member CSV", employeesCsv ? employeesCsv.name : "—"],
                                                 ["Signed MSA", msaDocument ? msaDocument.name : "Not attached"],
                                             ].map(([k, v]) => (
                                                 <div key={k} className="flex items-center justify-between gap-4 py-2.5">

@@ -877,17 +877,35 @@ export interface CreateInvoiceRequest {
 
 // ─── Blog Post ───────────────────────────────────────────────
 
+export interface BlogCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BlogTag {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 export interface BlogPostResponse {
   id: number;
   title: string;
   slug: string;
   excerpt: string;
   content: string;
-  category: string;
+  category: BlogCategory | null;
+  tags: BlogTag[];
   readTime: number;
   isPublished: boolean;
-  publishedAt?: string;
-  featuredImageId?: number;
+  publishedAt: string | null;
+  featuredImageId: number | null;
+  featuredImageUrl: string | null;
+  authorName: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -999,7 +1017,7 @@ export interface MyCompanyMembership {
   extra_plans_available?: number;
 }
 
-// ── Seat allocation for the logged-in company employee (GET /profile/seat-usage) ──
+// ── Seat allocation for the logged-in organization member (GET /profile/seat-usage) ──
 export interface SeatUsageResponse {
   employeeId: number;
   userId: number | null;
@@ -1160,7 +1178,7 @@ export interface CreditPurchaseResponse {
   updatedAt: string;
 }
 
-// ─── Company Admin Credits (HR) ───────────────────────────────────────────
+// ─── Organization Admin Credits (HR) ───────────────────────────────────────────
 
 export interface CompanyAdminCreditQuoteResponse {
   companyId: number;

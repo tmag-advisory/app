@@ -44,6 +44,7 @@ const Navbar = () => {
         setOpenId(id);
     };
 
+    const isDirectLinkActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
     // Close everything on navigation.
     useEffect(() => {
         setOpenId(null);
@@ -136,17 +137,25 @@ const Navbar = () => {
                                 </button>
                             );
                         })}
-                        {DIRECT_LINKS.map((link) => (
-                            <Link
-                                key={link.href}
-                                to={link.href}
-                                onMouseEnter={() => setOpenId(null)}
-                                onFocus={() => setOpenId(null)}
-                                className={`${triggerBase} text-heading hover:bg-background-secondary`}
-                            >
-                                {link.label}
-                            </Link>
-                        ))}
+                        {DIRECT_LINKS.map((link) => {
+                            const isActive = isDirectLinkActive(link.href);
+                            return (
+                                <Link
+                                    key={link.href}
+                                    to={link.href}
+                                    onMouseEnter={() => setOpenId(null)}
+                                    onFocus={() => setOpenId(null)}
+                                    aria-current={isActive ? "page" : undefined}
+                                    className={`${triggerBase} ${
+                                        isActive
+                                            ? "bg-background-secondary text-accent"
+                                            : "text-heading hover:bg-background-secondary"
+                                    }`}
+                                >
+                                    {link.label}
+                                </Link>
+                            );
+                        })}
                     </div>
 
                     {/* Right cluster */}
@@ -351,17 +360,23 @@ const Navbar = () => {
 
                             {/* Direct links */}
                             <div className="mt-2">
-                                {DIRECT_LINKS.map((link) => (
-                                    <Link
-                                        key={link.href}
-                                        to={link.href}
-                                        onClick={() => setMobileOpen(false)}
-                                        className="flex items-center justify-between py-3.5 text-[15px] font-semibold text-heading"
-                                    >
-                                        {link.label}
-                                        <LucideArrowRight className="h-4 w-4 text-muted" />
-                                    </Link>
-                                ))}
+                                {DIRECT_LINKS.map((link) => {
+                                    const isActive = isDirectLinkActive(link.href);
+                                    return (
+                                        <Link
+                                            key={link.href}
+                                            to={link.href}
+                                            onClick={() => setMobileOpen(false)}
+                                            aria-current={isActive ? "page" : undefined}
+                                            className={`flex items-center justify-between py-3.5 text-[15px] font-semibold ${
+                                                isActive ? "text-accent" : "text-heading"
+                                            }`}
+                                        >
+                                            {link.label}
+                                            <LucideArrowRight className="h-4 w-4 text-muted" />
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         </motion.div>
                     </>

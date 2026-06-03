@@ -29,7 +29,7 @@ const onboardingSteps = [
         icon: <LucideFileText className="w-5 h-5" />,
         title: "Upload your roster",
         description:
-            "Add employees individually or upload a CSV. Download and submit your signed MSA and documentation right inside the flow.",
+            "Add members individually or upload a CSV. Download and submit your signed MSA and documentation right inside the flow.",
     },
     {
         icon: <LucideShieldCheck className="w-5 h-5" />,
@@ -41,15 +41,15 @@ const onboardingSteps = [
         icon: <LucideBarChart3 className="w-5 h-5" />,
         title: "Manage from your dashboard",
         description:
-            "Track per-employee usage, assign extra plans, add seats, and renew all from your company admin dashboard.",
+            "Track per-member usage, assign extra plans, add seats, and renew all from your organization admin dashboard.",
     },
 ];
 
 const manageFeatures = [
     "Centralized traveller health dashboard",
-    "Per-employee plan usage tracking (X of 4 used)",
-    "Bulk employee onboarding via CSV upload",
-    "Assign extra travel plans to specific employees",
+    "Per-member plan usage tracking (X of 4 used)",
+    "Bulk member onboarding via CSV upload",
+    "Assign extra travel plans to specific members",
     "Buy additional seats anytime at your current tier",
     "Duty-of-care reports and compliance audit trail",
 ];
@@ -64,7 +64,7 @@ const ForCompanies = () => {
         <main>
             <SEOHead
                 title="For Companies — Travel Medicine Advisory Global"
-                description="Cover your whole team with seat-based travel health plans. Each seat includes 4 travel plans per year. Simple annual pricing, CSV onboarding, and a company admin dashboard."
+                description="Cover your whole team with seat-based travel health plans. Each seat includes 4 travel plans per year. Simple annual pricing, CSV onboarding, and an organization admin dashboard."
                 path="/for-companies"
             />
 
@@ -227,12 +227,12 @@ const ForCompanies = () => {
                         {
                             icon: <LucideUserPlus className="w-5 h-5" />,
                             title: "Add seats anytime",
-                            desc: "Hiring more travellers mid-year? Buy additional seats at your company's current tier price — each one adds 4 plans.",
+                            desc: "Hiring more travellers mid-year? Buy additional seats at your organization's current tier price — each one adds 4 plans.",
                         },
                         {
                             icon: <LucidePlusCircle className="w-5 h-5" />,
                             title: "Buy & assign extra plans",
-                            desc: "Need more than 4 plans for one person? Purchase extra plans at your company rate and assign them to specific employees.",
+                            desc: "Need more than 4 plans for one person? Purchase extra plans at your organization rate and assign them to specific members.",
                         },
                         {
                             icon: <LucideCalendarClock className="w-5 h-5" />,

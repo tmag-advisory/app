@@ -76,7 +76,7 @@ const PricingPage = () => {
 
     return (
         <main>
-            <SEOHead title="Plans — Travel Medicine Advisory Global" description="Choose the right travel health plan for your needs. Individual, family, and company plans available." path="/pricing" />
+            <SEOHead title="Plans — Travel Medicine Advisory Global" description="Choose the right travel health plan for your needs. Individual, family, and organization plans available." path="/pricing" />
             {/* Hero */}
             <AnimateIn
                 as="section"
@@ -108,7 +108,7 @@ const PricingPage = () => {
                                     "Individuals"
                                     : tab === "family" ?
                                         "Family"
-                                        : "Company"}
+                                        : "Organization"}
                             </button>
                         ))}
                     </div>

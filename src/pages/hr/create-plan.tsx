@@ -60,7 +60,7 @@ const HRCreatePlan = () => {
         if (!selectedEmployee) return null;
         return (
             <div className="rounded-xl border border-border-light/60 bg-background-primary/60 p-3.5">
-                <p className="text-[11px] uppercase tracking-wider font-semibold text-accent mb-1">Employee</p>
+                <p className="text-[11px] uppercase tracking-wider font-semibold text-accent mb-1">Member</p>
                 <p className="text-sm text-heading font-medium">{selectedEmployee.name}</p>
                 <p className="text-xs text-muted">{selectedEmployee.email}</p>
             </div>
@@ -69,11 +69,11 @@ const HRCreatePlan = () => {
 
     const handleSubmit = async (payload: QuestionnairePlanPayload) => {
         if (credits <= 0) {
-            toast.error("Company has no remaining credits.");
+            toast.error("Organization has no remaining credits.");
             return;
         }
         if (!employeeId) {
-            toast.error("Select an employee first.");
+            toast.error("Select a member first.");
             return;
         }
         try {
@@ -100,7 +100,7 @@ const HRCreatePlan = () => {
             });
             setModalOpen(false);
             navigate("/hr/create-plan");
-            toast.success("Plan generated for employee!");
+            toast.success("Plan generated for member!");
         } catch {
             toast.error("Failed to generate plan.");
         }
@@ -113,20 +113,20 @@ const HRCreatePlan = () => {
     return (
         <div className="relative min-h-screen">
             <DashboardAmbientBackground />
-            <DashboardHeader title="Create plan for employee" />
+            <DashboardHeader title="Create plan for member" />
             {!employeeId ?
                 <div
                     className={`relative z-10 max-w-2xl mx-auto px-6 ${DASHBOARD_GLASS_SURFACE} p-8 md:p-10`}
                 >
                     <div className="mb-8">
                         <p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-accent mb-2">
-                            Employee Selection
+                            Member Selection
                         </p>
                         <h2 className="text-3xl md:text-4xl font-serif text-heading mb-3 tracking-tight">
                             Who is this plan for?
                         </h2>
                         <p className="text-sm md:text-base text-muted leading-relaxed">
-                            Choose an active employee first. After selection,
+                            Choose an active member first. After selection,
                             open the questionnaire to complete the same detailed
                             flow used on the dashboard.
                         </p>
@@ -134,7 +134,7 @@ const HRCreatePlan = () => {
                     <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                         {employees.length === 0 ?
                             <p className="text-sm text-muted py-6 text-center">
-                                No active employees found.
+                                No active members found.
                             </p>
                         :   employees.map((emp) => (
                                 <button
@@ -218,7 +218,7 @@ const HRCreatePlan = () => {
                                 }}
                                 className="text-sm font-medium text-muted hover:text-heading transition-colors cursor-pointer"
                             >
-                                Change employee
+                                Change member
                             </button>
                         </div>
                     </div>

@@ -24,6 +24,7 @@ const MedicalDisclaimer = lazy(() => import("../pages/legal/medical-disclaimer")
 const NDPRCompliance = lazy(() => import("../pages/legal/ndpr"));
 const Careers = lazy(() => import("../pages/careers/careers"));
 const Blog = lazy(() => import("../pages/blog/blog"));
+const BlogDetail = lazy(() => import("../pages/blog/blog-detail"));
 const Press = lazy(() => import("../pages/press/press"));
 const HelpCenter = lazy(() => import("../pages/help/help"));
 const Status = lazy(() => import("../pages/status/status"));
@@ -126,6 +127,7 @@ const router = createBrowserRouter([
             { path: "hipaa", element: <NDPRCompliance /> },
             { path: "careers", element: <Careers /> },
             { path: "blog", element: <Blog /> },
+            { path: "blog/:slug", element: <BlogDetail /> },
             { path: "press", element: <Press /> },
             { path: "help", element: <HelpCenter /> },
             { path: "status", element: <Status /> },

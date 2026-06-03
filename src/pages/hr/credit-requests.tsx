@@ -62,7 +62,7 @@ const CreditRequests = () => {
                     <table className="w-full min-w-135">
                         <thead>
                             <tr className="border-b border-border-light/50">
-                                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">Employee</th>
+                                <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">Member</th>
                                 <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">Credits Requested</th>
                                 <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3 hidden sm:table-cell">Reason</th>
                                 <th className="text-left text-xs font-semibold text-muted uppercase tracking-wider px-6 py-3">Status</th>

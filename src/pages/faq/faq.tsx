@@ -19,7 +19,7 @@ const faqCategories = [
             },
             {
                 q: "Who is TMAG for?",
-                a: "Anyone traveling internationally. Solo travelers, families, digital nomads, and corporate travel managers all use TMAG to prepare for trips. We also serve companies that need to meet duty-of-care obligations for employees traveling abroad.",
+                a: "Anyone traveling internationally. Solo travelers, families, digital nomads, and corporate travel managers all use TMAG to prepare for trips. We also serve organizations that need to meet duty-of-care obligations for members traveling abroad.",
             },
         ],
     },
@@ -28,11 +28,11 @@ const faqCategories = [
         questions: [
             {
                 q: "How do credits work?",
-                a: "One credit generates one complete travel health plan for one trip. A trip can include multiple destinations. Individual users can buy credits directly; company plans include signup credits distributed to employees. Viewing, downloading, or sharing an existing plan does not consume a credit.",
+                a: "One credit generates one complete travel health plan for one trip. A trip can include multiple destinations. Individual users can buy credits directly; organization plans include signup credits distributed to members. Viewing, downloading, or sharing an existing plan does not consume a credit.",
             },
             {
                 q: "Can I buy more credits later?",
-                a: "Yes. Individual users can purchase credits anytime from the dashboard. Company admins can top up credits or request additional allocations from the company dashboard.",
+                a: "Yes. Individual users can purchase credits anytime from the dashboard. Organization admins can top up credits or request additional allocations from the organization dashboard.",
             },
             {
                 q: "Is the first plan really free?",
@@ -98,7 +98,7 @@ const faqCategories = [
                 a: "Corporate accounts include an HR dashboard for managing travelers, bulk plan generation, compliance reporting, duty-of-care documentation, credit allocation across departments, and API access for integration with travel platforms.",
             },
             {
-                q: "Can I upgrade my company plan?",
+                q: "Can I upgrade my organization plan?",
                 a: "Yes. Contact our sales team and we'll migrate your account to a higher tier. Any unused credits transfer over.",
             },
             {
@@ -107,7 +107,7 @@ const faqCategories = [
             },
             {
                 q: "What compliance standards does TMAG support?",
-                a: "TMAG supports ISO 31030 travel risk management alignment, provides timestamped plan delivery with read receipts, and generates exportable compliance reports per trip, employee, or destination.",
+                a: "TMAG supports ISO 31030 travel risk management alignment, provides timestamped plan delivery with read receipts, and generates exportable compliance reports per trip, member, or destination.",
             },
         ],
     },
