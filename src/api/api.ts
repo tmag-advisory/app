@@ -65,6 +65,8 @@ import type {
   CreateInvoiceRequest,
   // Blog Post
   BlogPostResponse,
+  BlogCategory,
+  BlogTag,
   // FAQ Item
   FaqItemResponse,
   // Company User
@@ -430,25 +432,19 @@ export const invoicesApi = {
 // ─── Blog Posts ──────────────────────────────────────────────
 
 export const blogPostsApi = {
-  list: (params?: PaginationParams) =>
-    api.get<ApiResponse<PaginatedResponse<BlogPostResponse>>>("/blog-posts", { params: buildParams(params) }).then((r) => r.data.data),
+  list: (params?: PaginationParams, filters?: { category?: string; tag?: string }) =>
+    api.get<ApiResponse<PaginatedResponse<BlogPostResponse>>>("/blog-posts", {
+      params: { ...buildParams(params), category: filters?.category, tag: filters?.tag },
+    }).then((r) => r.data.data),
 
-  listAll: () =>
-    api.get<ApiResponse<SelectOption[]>>("/blog-posts/all").then((r) => r.data.data),
+  getBySlug: (slug: string) =>
+    api.get<ApiResponse<BlogPostResponse>>(`/blog-posts/slug/${encodeURIComponent(slug)}`).then((r) => r.data.data),
 
-  get: (id: number) =>
-    api.get<ApiResponse<BlogPostResponse>>(`/blog-posts/${id}`).then((r) => r.data.data),
+  categories: () =>
+    api.get<ApiResponse<BlogCategory[]>>("/blog-categories").then((r) => r.data.data),
 
-  uploadFeaturedImage: (id: number, file: File) => {
-    const form = new FormData();
-    form.append("file", file);
-    return api.post<ApiResponse<{ url: string }>>(`/blog-posts/${id}/featured-image`, form, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }).then((r) => r.data.data);
-  },
-
-  removeFeaturedImage: (id: number) =>
-    api.delete<ApiResponse<null>>(`/blog-posts/${id}/featured-image`).then((r) => r.data.data),
+  tags: () =>
+    api.get<ApiResponse<BlogTag[]>>("/blog-tags").then((r) => r.data.data),
 };
 
 // ─── FAQ Items ───────────────────────────────────────────────

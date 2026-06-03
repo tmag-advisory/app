@@ -84,7 +84,7 @@ export const MENU: MenuCategory[] = [
         blurb: "Stay informed before, during, and after your trip.",
         icon: LucideBookOpen,
         links: [
-            { label: "Blog", href: "/blog", desc: "Travel medicine insights and field notes.", icon: LucideBookOpen, badge: "Soon" },
+            { label: "Blog", href: "/blog", desc: "Travel medicine insights and field notes.", icon: LucideBookOpen },
             { label: "Help Center", href: "/help", desc: "Step-by-step answers to common questions.", icon: LucideLifeBuoy },
             { label: "FAQ", href: "/faq", desc: "Quick answers about plans, billing, and care.", icon: LucideHelpCircle },
             { label: "Press", href: "/press", desc: "Coverage, media kits, and announcements.", icon: LucideNewspaper },
