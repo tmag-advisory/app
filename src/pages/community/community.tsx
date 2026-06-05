@@ -44,10 +44,7 @@ const channels = [
 ];
 
 const communityStats = [
-    // { value: "12K+", label: "Community members" },
-    // { value: "3K+", label: "Trip reports shared" },
-    // { value: "85+", label: "Destination guides" },
-    { value: "24", label: "Countries represented" },
+    { value: "196+", label: "Countries represented" },
 ];
 
 const Community = () => {
@@ -69,7 +66,7 @@ const Community = () => {
 
             {/* Stats */}
             <section className="px-8 lg:px-16 pb-16 max-w-4xl mx-auto">
-                <StaggerGroup stagger={0.1} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <StaggerGroup stagger={0.1} className="flex items-center justify-center gap-4">
                     {communityStats.map((stat) => (
                         <motion.div
                             key={stat.label}
@@ -110,7 +107,7 @@ const Community = () => {
                                 <p className="text-sm text-body leading-relaxed mb-6">
                                     {channel.description}
                                 </p>
-                                <Button variant="secondary"  icon={<LucideArrowRight />}>
+                                <Button variant="secondary" icon={<LucideArrowRight />}>
                                     {channel.cta}
                                 </Button>
                             </motion.div>

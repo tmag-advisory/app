@@ -552,7 +552,7 @@ const Onboarding = () => {
                                             exit={{ opacity: 0, height: 0 }}
                                         >
                                             <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                                Company invite code
+                                                Organization invite code
                                             </label>
                                             <div className="relative">
                                                 <input
@@ -594,19 +594,19 @@ const Onboarding = () => {
                                             {isInvitedUser && (
                                                 <p className="mt-1.5 text-xs text-green-600">
                                                     Pre-verified — you were
-                                                    invited to this company.
+                                                    invited to this organization.
                                                 </p>
                                             )}
                                             {!isInvitedUser &&
                                                 codeIsInvalid && (
                                                     <p className="mt-1.5 text-xs text-red-500">
-                                                        No company found with
+                                                        No organization found with
                                                         this code.
                                                     </p>
                                                 )}
                                             {!isInvitedUser && codeIsValid && (
                                                 <p className="mt-1.5 text-xs text-green-600">
-                                                    Company code verified.
+                                                    Organization code verified.
                                                 </p>
                                             )}
                                         </motion.div>

@@ -64,7 +64,7 @@ function getTypeLabel(type: string): string {
         case "PLAN_GENERATED": return "Plan Generated";
         case "PLAN_VIEWED": return "Plan Viewed";
         case "new-user-bonus": return "Welcome Bonus";
-        case "company-allocation": return "Company Allocation";
+        case "company-allocation": return "Organization Allocation";
         case "refund": return "Refund";
         default: return type.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     }

@@ -7,7 +7,7 @@ import {
     useMemo,
     type ReactNode,
 } from "react";
-import type { BillingCurrency, LoginRequest, ProfilePictureOption, RegisterRequest } from "../api/types";
+import type { AuthResponse, BillingCurrency, LoginRequest, ProfilePictureOption, RegisterRequest } from "../api/types";
 import { canAccessHR, canAccessDoctor } from "../lib/canAccessHr";
 import api, { getAuthCookie, removeAuthCookie, setAuthCookie } from "../api/axios";
 import { queryclient } from "../lib/queryclient";
@@ -42,6 +42,8 @@ export interface AuthUser {
     type?: string | null;
     redirect_to?: string | null;
     redirect_message?: string | null;
+    two_factor_enabled?: boolean;
+    two_factor_method?: import("../api/types").TwoFactorMethod;
 }
 
 
@@ -50,9 +52,12 @@ interface AuthContextValue {
     user: AuthUser | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (data: LoginRequest) => Promise<AuthUser>;
+    passwordExpired: boolean;
+    login: (data: LoginRequest) => Promise<AuthResponse>;
     register: (data: Partial<RegisterRequest>) => Promise<AuthUser>;
     setAuthFromResponse: (data: Record<string, unknown>) => AuthUser;
+    completeAuthFromResponse: (resp: AuthResponse) => AuthUser;
+    clearPasswordExpired: () => void;
     logout: () => Promise<void>;
     canAccessHR: boolean;
     canAccessDoctor: boolean;
@@ -66,6 +71,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [passwordExpired, setPasswordExpired] = useState(false);
 
     // Revalidate session on mount / page reload via GET /profile
     const getCurrentProfile = useCallback(async () => {
@@ -90,14 +96,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         void getCurrentProfile();
     }, [getCurrentProfile]);
 
-    const login = useCallback(async (data: LoginRequest): Promise<AuthUser> => {
+    const login = useCallback(async (data: LoginRequest): Promise<AuthResponse> => {
         const res = await api.post("/auth/login", data);
-        const d = res.data.data;
-        setAuthCookie(d.accessToken, d.exp);
-
-        const authUser = buildAuthUserFromLogin(d);
-        setUser(authUser);
-        return authUser;
+        // Return the raw AuthResponse so the caller can branch on 2FA / password flags
+        // before any session is established. No cookie/user is set here.
+        return res.data.data as AuthResponse;
     }, []);
 
     const register = useCallback(async (data: Partial<RegisterRequest>): Promise<AuthUser> => {
@@ -106,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthCookie(d.accessToken, d.exp);
         const authUser = buildAuthUserFromLogin(d);
         setUser(authUser);
+        setPasswordExpired(!!d.password_expired);
         return authUser;
     }, []);
 
@@ -113,8 +117,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthCookie(d.accessToken as string, d.exp as number);
         const authUser = buildAuthUserFromLogin(d);
         setUser(authUser);
+        setPasswordExpired(!!d.password_expired);
         return authUser;
     }, []);
+
+    // Establishes the session once an access token has been issued (normal login
+    // path and after a successful 2FA verify). Tracks password_expired for gating.
+    const completeAuthFromResponse = useCallback((resp: AuthResponse): AuthUser => {
+        setAuthCookie(resp.accessToken, resp.exp);
+        const authUser = buildAuthUserFromLogin(resp as unknown as Record<string, unknown>);
+        setUser(authUser);
+        setPasswordExpired(!!resp.password_expired);
+        return authUser;
+    }, []);
+
+    const clearPasswordExpired = useCallback(() => setPasswordExpired(false), []);
 
     const logout = useCallback(async () => {
         try {
@@ -124,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         removeAuthCookie();
         setUser(null);
+        setPasswordExpired(false);
         queryclient.clear();
     }, []);
 
@@ -141,14 +159,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: user !== null,
         isLoading,
+        passwordExpired,
         login,
         register,
         setAuthFromResponse,
+        completeAuthFromResponse,
+        clearPasswordExpired,
         logout,
         canAccessHR: canAccessHR(user),
         canAccessDoctor: canAccessDoctor(user),
         refreshProfile,
-    }), [user, isLoading, login, register, setAuthFromResponse, logout, refreshProfile]);
+    }), [user, isLoading, passwordExpired, login, register, setAuthFromResponse, completeAuthFromResponse, clearPasswordExpired, logout, refreshProfile]);
 
     return (
         <AuthContext.Provider
@@ -198,6 +219,8 @@ function buildAuthUser(d: Record<string, unknown>): AuthUser {
         type: (d.type as string | null) ?? null,
         redirect_to: (d.redirect_to as string | null) ?? null,
         redirect_message: (d.redirect_message as string | null) ?? null,
+        two_factor_enabled: d.two_factor_enabled as boolean | undefined,
+        two_factor_method: d.two_factor_method as import("../api/types").TwoFactorMethod | undefined,
     };
 }
 

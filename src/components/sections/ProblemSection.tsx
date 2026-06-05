@@ -28,7 +28,7 @@ const stats = [
     {
         icon: <LucideBriefcase className="w-5 h-5" />,
         value: "50%",
-        label: "Companies lack duty-of-care plans",
+        label: "Organizations lack duty-of-care plans",
     },
 ];
 

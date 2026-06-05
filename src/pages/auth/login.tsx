@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import AnimateIn from "../../components/animations/AnimateIn";
 import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
-import { getPostAuthRedirect, performRedirect } from "../../lib/roleRedirect";
+import { navigateAfterAuth } from "../../lib/roleRedirect";
 
 const RedirectModal = ({
     message,
@@ -49,7 +49,7 @@ const RedirectModal = ({
 );
 
 const Login = () => {
-    const { login, logout } = useAuth();
+    const { login, completeAuthFromResponse, logout } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [email, setEmail] = useState("");
@@ -73,7 +73,24 @@ const Login = () => {
         setError("");
         setLoading(true);
         try {
-            const user = await login({ email, password });
+            const resp = await login({ email, password });
+
+            // Branch on the 2FA flags BEFORE any session is established.
+            if (resp.two_factor_setup_required) {
+                navigate("/2fa-setup", {
+                    state: { challenge_token: resp.challenge_token, two_factor_method: resp.two_factor_method },
+                });
+                return;
+            }
+            if (resp.two_factor_required) {
+                navigate("/2fa-verify", {
+                    state: { challenge_token: resp.challenge_token, two_factor_method: resp.two_factor_method },
+                });
+                return;
+            }
+
+            // Token present — establish the session.
+            const user = completeAuthFromResponse(resp);
 
             // If the backend says this user should log in from a different app, show a modal
             if (user.redirect_to) {
@@ -84,19 +101,13 @@ const Login = () => {
                 return;
             }
 
-            const stage = user.onboarding_stage;
-            const redirect = searchParams.get("redirect");
-            if (redirect?.startsWith("/") && !redirect.startsWith("//")) {
-                navigate(redirect, { replace: true });
+            // Forced password change takes priority over the normal landing page.
+            if (resp.password_expired) {
+                navigate("/change-password", { replace: true });
                 return;
             }
-            if (stage > 4) {
-                performRedirect(getPostAuthRedirect(user), navigate);
-            } else if (!user.is_verified) {
-                navigate(`/verify-email?email=${encodeURIComponent(email)}`);
-            } else {
-                navigate("/onboarding");
-            }
+
+            navigateAfterAuth(user, navigate, searchParams.get("redirect"));
         } catch (err: unknown) {
             const errData = (err as { response?: { data?: { error?: string; message?: string }; status?: number } })?.response;
             if (errData?.status === 403 && errData?.data?.error === "email_not_verified") {

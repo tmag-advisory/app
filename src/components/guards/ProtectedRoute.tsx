@@ -1,9 +1,10 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import type { ReactNode } from "react";
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading, passwordExpired } = useAuth();
+    const location = useLocation();
 
     if (isLoading) {
         return (
@@ -15,6 +16,11 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
+    }
+
+    // Forced password change blocks every protected route until resolved.
+    if (passwordExpired && location.pathname !== "/change-password") {
+        return <Navigate to="/change-password" replace />;
     }
 
     return <>{children}</>;

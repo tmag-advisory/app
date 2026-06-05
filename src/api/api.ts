@@ -16,6 +16,16 @@ import type {
   ResendVerificationRequest,
   ResetPasswordRequest,
   AuthResponse,
+  Setup2faRequest,
+  Challenge2faRequest,
+  Verify2faRequest,
+  ChangePasswordRequest,
+  TwoFactorSetupResult,
+  TwoFactorChallengeResult,
+  SelfDisable2faRequest,
+  TwoFactorRegenerateBackupResponse,
+  PrivacyPolicyResponse,
+  DeletionRequestResponse,
   GoogleCallbackRequest,
   // Company
   CompanyResponse,
@@ -171,6 +181,43 @@ export const authApi = {
 
   googleCallback: (data: GoogleCallbackRequest) =>
     api.post<ApiResponse<AuthResponse>>("/auth/google/callback", data).then((r) => r.data.data),
+
+  // ─── 2FA + password rotation ───
+  setup2fa: (data: Setup2faRequest) =>
+    api.post<ApiResponse<TwoFactorSetupResult>>("/auth/2fa/setup", data).then((r) => r.data.data),
+
+  challenge2fa: (data: Challenge2faRequest) =>
+    api.post<ApiResponse<TwoFactorChallengeResult>>("/auth/2fa/challenge", data).then((r) => r.data.data),
+
+  /** Login flow (challenge_token present) returns AuthResponse; settings flow returns { message } */
+  verify2fa: (data: Verify2faRequest) =>
+    api.post<ApiResponse<AuthResponse | { message: string }>>("/auth/2fa/verify", data).then((r) => r.data.data) as Promise<AuthResponse | { message: string }>,
+
+  selfDisable2fa: (data: SelfDisable2faRequest) =>
+    api.post<ApiResponse<null>>("/auth/2fa/self-disable", data).then((r) => r.data.data),
+
+  regenerateBackupCodes: () =>
+    api.post<ApiResponse<TwoFactorRegenerateBackupResponse>>("/auth/2fa/regenerate-backup-codes").then((r) => r.data.data),
+
+  changePassword: (data: ChangePasswordRequest) =>
+    api.post<ApiResponse<null>>("/auth/change-password", data).then((r) => r.data.data),
+};
+
+// ─── Privacy ─────────────────────────────────────────────────
+
+export const privacyApi = {
+  getCurrent: () =>
+    api.get<ApiResponse<PrivacyPolicyResponse>>("/public/privacy-policy/current").then((r) => r.data.data),
+};
+
+// ─── Account (right to erasure) ──────────────────────────────
+
+export const accountApi = {
+  requestDeletion: () =>
+    api.post<ApiResponse<DeletionRequestResponse>>("/user/deletion-request").then((r) => r.data.data),
+
+  cancelDeletion: (token: string) =>
+    api.post<ApiResponse<null>>("/public/deletion-requests/cancel", null, { params: { token } }).then((r) => r.data.data),
 };
 
 // ─── Companies ───────────────────────────────────────────────
