@@ -63,7 +63,7 @@ const ForCompanies = () => {
     return (
         <main>
             <SEOHead
-                title="For Companies — Travel Medicine Advisory Global"
+                title="For Organizations — Travel Medicine Advisory Global"
                 description="Cover your whole team with seat-based travel health plans. Each seat includes 4 travel plans per year. Simple annual pricing, CSV onboarding, and an organization admin dashboard."
                 path="/for-companies"
             />

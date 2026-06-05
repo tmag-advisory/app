@@ -50,6 +50,10 @@ const VerifyEmailCallback = lazy(() => import("../pages/auth/verify-email-callba
 const GoogleCallback = lazy(() => import("../pages/auth/google-callback"));
 const Onboarding = lazy(() => import("../pages/auth/onboarding"));
 const TravelHealthQuestionnaire = lazy(() => import("../pages/auth/travel-health-questionnaire"));
+const TwoFactorSetup = lazy(() => import("../pages/auth/two-factor-setup"));
+const TwoFactorVerify = lazy(() => import("../pages/auth/two-factor-verify"));
+const ChangePassword = lazy(() => import("../pages/auth/change-password"));
+const CancelDeletion = lazy(() => import("../pages/account/cancel-deletion"));
 
 // Individual dashboard (lazy-loaded)
 const DashboardOverview = lazy(() => import("../pages/dashboard/overview"));
@@ -138,6 +142,7 @@ const router = createBrowserRouter([
             { path: "shop/cart", element: <CartPage /> },
             { path: "apply-as-doctor", element: <ApplyAsDoctor /> },
             { path: "apply-as-affiliate", element: <ApplyAsAffiliate /> },
+            { path: "account/cancel-deletion", element: <CancelDeletion /> },
         ],
     },
 
@@ -165,6 +170,9 @@ const router = createBrowserRouter([
             { path: "reset-password", element: <ResetPassword /> },
             { path: "accept-invitation", element: <AcceptInvitation /> },
             { path: "verify-email", element: <EmailVerification /> },
+            { path: "2fa-setup", element: <TwoFactorSetup /> },
+            { path: "2fa-verify", element: <TwoFactorVerify /> },
+            { path: "change-password", element: <ChangePassword /> },
         ],
     },
 

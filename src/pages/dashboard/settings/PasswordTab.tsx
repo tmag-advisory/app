@@ -24,13 +24,14 @@ const PasswordTab = () => {
 
     try {
       await updatePassword.mutateAsync({
-        OldPassword: passwordForm.currentPassword,
-        NewPassword: passwordForm.newPassword,
+        current_password: passwordForm.currentPassword,
+        new_password: passwordForm.newPassword,
       });
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       toast.success("Password updated successfully");
-    } catch {
-      toast.error("Failed to update password");
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data;
+      toast.error(data?.message ?? data?.error ?? "Failed to update password");
     }
   };
 

@@ -1,9 +1,40 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { LucideDownload, LucideLoader2 } from "lucide-react";
 import AnimateIn from "../../components/animations/AnimateIn";
 import SEOHead from "../../lib/seo";
 import SectionEyebrow from "../../components/ui/SectionEyebrow";
+import { privacyApi } from "../../api";
+import type { PrivacyPolicyResponse } from "../../api/types";
 
 const PrivacyPolicy = () => {
+    const [policy, setPolicy] = useState<PrivacyPolicyResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let active = true;
+        privacyApi
+            .getCurrent()
+            .then((p) => { if (active) setPolicy(p); })
+            .catch(() => { /* fall back to the static policy below */ })
+            .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, []);
+
+    const downloadPolicy = () => {
+        if (!policy) return;
+        const header = `Privacy Policy — version ${policy.version}\nEffective: ${policy.effective_date}\n\n`;
+        const blob = new Blob([header + policy.content], { type: "text/markdown;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `tmag-privacy-policy-${policy.version}.md`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <main>
             <SEOHead title="Privacy Policy — Travel Medicine Advisory Global" description="Privacy policy for TMAG travel health platform. Learn how we collect, use, and protect your data." path="/privacy" robots="noindex, follow" />
@@ -13,10 +44,40 @@ const PrivacyPolicy = () => {
                     <h1 className="text-4xl md:text-5xl text-heading font-serif leading-[1.1] mb-4">
                         Privacy Policy
                     </h1>
-                    <p className="text-sm text-muted mb-12">
-                        Last updated: February 2026
-                    </p>
+                    {policy ? (
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-10">
+                            <p className="text-sm text-muted">
+                                Version {policy.version} · Effective {policy.effective_date}
+                            </p>
+                            <button
+                                type="button"
+                                onClick={downloadPolicy}
+                                aria-label="Download privacy policy"
+                                className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline cursor-pointer"
+                            >
+                                <LucideDownload className="w-3.5 h-3.5" aria-hidden="true" /> Download
+                            </button>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted mb-12">Last updated: February 2026</p>
+                    )}
                 </AnimateIn>
+
+                {loading && (
+                    <div className="flex items-center gap-2 text-sm text-muted py-6">
+                        <LucideLoader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Loading the latest policy…
+                    </div>
+                )}
+
+                {!loading && policy && (
+                    <AnimateIn type="fade" delay={0.15}>
+                        <div className="text-sm text-body leading-relaxed whitespace-pre-wrap">
+                            {policy.content}
+                        </div>
+                    </AnimateIn>
+                )}
+
+                {!loading && !policy && (
 
                 <AnimateIn type="fade" delay={0.15}>
                     <div className="space-y-10 text-sm text-body leading-relaxed">
@@ -105,7 +166,7 @@ const PrivacyPolicy = () => {
                                 retained as long as your account is active. You
                                 can delete individual plans or your entire
                                 account at any time. Upon account deletion, all
-                                personal data is permanently removed within 30
+                                personal data is permanently removed within 7
                                 days.
                             </p>
                         </section>
@@ -192,6 +253,7 @@ const PrivacyPolicy = () => {
                         </section>
                     </div>
                 </AnimateIn>
+                )}
             </section>
         </main>
     );

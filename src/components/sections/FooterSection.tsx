@@ -7,13 +7,13 @@ const footerLinks = [
         links: [
             { label: "Learn More", href: "/how-it-works" },
             { label: "Pricing", href: "/pricing" },
-            { label: "For Companies", href: "/for-companies" },
+            { label: "For Organizations", href: "/for-companies" },
             { label: "Ebook Shop", href: "/shop" },
             { label: "FAQ", href: "/faq" },
         ],
     },
     {
-        heading: "Company",
+        heading: "Organization",
         links: [
             { label: "About us", href: "/about" },
             { label: "Careers", href: "/careers" },

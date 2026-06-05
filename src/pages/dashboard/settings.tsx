@@ -2,8 +2,9 @@ import { useState, lazy, Suspense } from "react";
 import { useAuth } from "../../context/AuthContext";
 import {
   LucideUser,
-  LucideLock,
   LucideCreditCard,
+  LucideShieldCheck,
+  LucideLock,
   LucideLoader2,
 } from "lucide-react";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
@@ -13,14 +14,17 @@ import * as React from "react";
 const ProfileTab = lazy(() =>
   import("./settings/ProfileTab").then((m) => ({ default: m.default }))
 );
-const PasswordTab = lazy(() =>
-  import("./settings/PasswordTab").then((m) => ({ default: m.default }))
-);
 const BillingTab = lazy(() =>
   import("./settings/BillingTab").then((m) => ({ default: m.default }))
 );
+const DataPrivacyTab = lazy(() =>
+  import("./settings/DataPrivacyTab").then((m) => ({ default: m.default }))
+);
+const SecurityTab = lazy(() =>
+  import("./settings/SecurityTab").then((m) => ({ default: m.default }))
+);
 
-type Tab = "profile" | "password" | "billing";
+type Tab = "profile" | "security" | "billing" | "privacy";
 
 const Settings = () => {
   const { refreshProfile } = useAuth();
@@ -28,8 +32,9 @@ const Settings = () => {
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "profile", label: "Profile", icon: <LucideUser className="w-4 h-4" /> },
-    { id: "password", label: "Password", icon: <LucideLock className="w-4 h-4" /> },
+    { id: "security", label: "Security", icon: <LucideLock className="w-4 h-4" /> },
     { id: "billing", label: "Billing", icon: <LucideCreditCard className="w-4 h-4" /> },
+    { id: "privacy", label: "Privacy & data", icon: <LucideShieldCheck className="w-4 h-4" /> },
   ];
 
   return (
@@ -37,7 +42,7 @@ const Settings = () => {
       <DashboardHeader title="Settings" />
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-button-secondary rounded-xl p-1 max-w-md mb-8 overflow-x-auto">
+      <div className="flex gap-1 bg-button-secondary rounded-xl p-1 max-w-2xl mb-8 overflow-x-auto">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -62,8 +67,9 @@ const Settings = () => {
         }
       >
         {tab === "profile" && <ProfileTab onRefreshProfile={refreshProfile} />}
-        {tab === "password" && <PasswordTab />}
+        {tab === "security" && <SecurityTab />}
         {tab === "billing" && <BillingTab onRefreshProfile={refreshProfile} />}
+        {tab === "privacy" && <DataPrivacyTab />}
       </Suspense>
     </div>
   );
