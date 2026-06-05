@@ -67,7 +67,7 @@ export const MENU: MenuCategory[] = [
             { label: "About Us", href: "/about", desc: "Our mission, team, and the people behind TMAG.", icon: LucideInfo },
             { label: "How It Works", href: "/how-it-works", desc: "From questionnaire to validated travel plan.", icon: LucideSparkles },
             { label: "Plans", href: "/pricing", desc: "Personal plans and credit options that scale.", icon: LucideDollarSign },
-            { label: "For Companies", href: "/for-companies", desc: "Travel health programs for teams and HR.", icon: LucideBuilding2 },
+            { label: "For Organizations", href: "/for-companies", desc: "Travel health programs for teams and HR.", icon: LucideBuilding2 },
             { label: "Shop", href: "/shop", desc: "E-books and travel health essentials.", icon: LucideShoppingBag },
         ],
         feature: {

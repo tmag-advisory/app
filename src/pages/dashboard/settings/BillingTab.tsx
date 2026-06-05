@@ -390,7 +390,7 @@ const BillingTab = ({ onRefreshProfile }: BillingTabProps) => {
         <>
           <div className={cn(DASHBOARD_GLASS_SURFACE, "p-6")}>
             <h2 className="text-base font-semibold text-heading mb-4">
-              Company travel plans
+              Organization travel plans
             </h2>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="bg-background-primary rounded-xl p-4">

@@ -22,7 +22,7 @@ export type OnboardingState = {
 const steps: OnboardingStep[] = [
     { stage: 0, title: "Register", content: "Welcome to the onboarding process.", link: "/register", skippable: false, nextStage: 1 },
     { stage: 1, title: "Verify Email", content: "Please verify your email.", link: "/verify-email", skippable: false, nextStage: 2 },
-    { stage: 2, title: "User Type", content: "Select Between an Individual and a Company", link: "/user-type", skippable: false, nextStage: 3 },
+    { stage: 2, title: "User Type", content: "Select Between an Individual and an Organization", link: "/user-type", skippable: false, nextStage: 3 },
     { stage: 3, title: "Profile", content: "Update Some Other Core Details on the Profile", link: "/profile", skippable: false, nextStage: 4 },
     { stage: 4, title: "Welcome", content: "Learn what TMAG offers and your starting credits", link: "/onboarding", skippable: false, nextStage: undefined },
 ];

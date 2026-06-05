@@ -74,3 +74,27 @@ export function performRedirect(destination: RedirectDestination, navigate: Navi
 
     navigate(destination.path, { replace });
 }
+
+/**
+ * Normal post-authentication navigation (after a session has been established and
+ * any 2FA / forced-password-change / different-portal handling is done by the caller).
+ * Mirrors the branching the login page has always used: honor an explicit `redirect`
+ * query param, otherwise route by onboarding stage / verification / role.
+ */
+export function navigateAfterAuth(
+    user: AuthUser,
+    navigate: NavigateFunction,
+    redirect?: string | null,
+): void {
+    if (redirect?.startsWith("/") && !redirect.startsWith("//")) {
+        navigate(redirect, { replace: true });
+        return;
+    }
+    if (user.onboarding_stage > 4) {
+        performRedirect(getPostAuthRedirect(user), navigate);
+    } else if (!user.is_verified) {
+        navigate(`/verify-email?email=${encodeURIComponent(user.email)}`);
+    } else {
+        navigate("/onboarding");
+    }
+}

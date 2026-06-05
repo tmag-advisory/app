@@ -113,6 +113,77 @@ export interface AuthResponse {
   exp: number;
   extend?: Record<string, unknown>;
   settings?: UserSettingResponse;
+  must_change_password?: boolean;
+  redirect_to?: string | null;
+  redirect_message?: string | null;
+  // ─── Security (2FA + password rotation) ───
+  two_factor_required?: boolean;
+  two_factor_setup_required?: boolean;
+  two_factor_method?: TwoFactorMethod;
+  challenge_token?: string;
+  password_expired?: boolean;
+}
+
+export type TwoFactorMethod = "EMAIL_OTP" | "TOTP" | "SSO";
+
+export interface TwoFactorSetupResult {
+  method: TwoFactorMethod;
+  secret: string | null;
+  otpauthUri: string | null;
+  backupCodes: string[];
+}
+
+export interface TwoFactorChallengeResult {
+  method: TwoFactorMethod;
+}
+
+export interface Setup2faRequest {
+  challenge_token?: string;
+  method: TwoFactorMethod;
+}
+
+export interface Challenge2faRequest {
+  challenge_token: string;
+}
+
+export interface Verify2faRequest {
+  challenge_token: string;
+  code: string;
+  backup?: boolean;
+}
+
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
+export interface SelfDisable2faRequest {
+  current_password: string;
+}
+
+export interface TwoFactorRegenerateBackupResponse {
+  backup_codes: string[];
+}
+
+export interface PrivacyPolicyResponse {
+  id: number;
+  version: string;
+  content: string;
+  effective_date: string;
+  is_current: boolean;
+  updated_at: string;
+}
+
+export interface DeletionRequestResponse {
+  id: number;
+  user_id: number;
+  organization_id?: number | null;
+  type: "USER" | "ORG_BULK";
+  status: "PENDING_GRACE" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED" | "CANCELLED";
+  grace_deadline?: string | null;
+  requested_at?: string | null;
+  approved_at?: string | null;
+  reason?: string | null;
 }
 
 export interface GoogleAuthRequest {
@@ -947,6 +1018,9 @@ export interface ProfileResponse {
   updatedAt: string;
   userCreditPlan?: CreditPlan | null;
   settings?: UserSettingResponse;
+  // ─── Security (2FA) ───
+  two_factor_enabled?: boolean;
+  two_factor_method?: TwoFactorMethod;
 }
 
 export interface UpdateProfileRequest {
@@ -963,8 +1037,8 @@ export interface UpdateProfileRequest {
 export type ProfilePictureOption = "upload" | "initials" | "doctor";
 
 export interface UpdateProfilePasswordRequest {
-  OldPassword: string;
-  NewPassword: string;
+  current_password: string;
+  new_password: string;
 }
 
 
