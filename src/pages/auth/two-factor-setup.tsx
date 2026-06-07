@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -10,6 +10,7 @@ import {
     LucideSmartphone,
     LucideTriangleAlert,
 } from "lucide-react";
+import QRCode from "qrcode";
 import AnimateIn from "../../components/animations/AnimateIn";
 import { useAuth } from "../../context/AuthContext";
 import { authApi } from "../../api";
@@ -56,6 +57,17 @@ const TwoFactorSetup = () => {
     const [code, setCode] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        if (method === "TOTP" && setupResult?.otpauthUri && qrCanvasRef.current) {
+            QRCode.toCanvas(qrCanvasRef.current, setupResult.otpauthUri, {
+                width: 200,
+                margin: 2,
+                color: { dark: "#1a1a2e", light: "#ffffff" },
+            });
+        }
+    }, [setupResult?.otpauthUri, method]);
 
     if (!challengeToken) {
         return (
@@ -202,43 +214,60 @@ const TwoFactorSetup = () => {
             {step === "save-codes" && setupResult && (
                 <div className="space-y-5">
                     {method === "TOTP" && (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             <p className="text-sm text-body">
-                                Add this account to your authenticator app. Scan or paste the setup URI below, or
-                                enter the secret key manually.
+                                Scan this QR code with your authenticator app (Google Authenticator, Authy,
+                                1Password, etc.), or enter the secret key manually below.
                             </p>
                             {setupResult.otpauthUri && (
-                                <div className="rounded-2xl border border-border-light/60 bg-background-primary p-4">
-                                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                        Setup URI
-                                    </p>
-                                    <code className="block break-all text-xs text-heading">{setupResult.otpauthUri}</code>
-                                    <button
-                                        type="button"
-                                        onClick={() => copyText(setupResult!.otpauthUri!, "Setup URI")}
-                                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline cursor-pointer"
-                                    >
-                                        <LucideCopy className="w-3.5 h-3.5" aria-hidden="true" /> Copy URI
-                                    </button>
+                                <div className="flex justify-center">
+                                    <div className="rounded-2xl border border-border-light/60 bg-white p-4 inline-flex flex-col items-center gap-2">
+                                        <canvas ref={qrCanvasRef} width={200} height={200} className="rounded-lg" />
+                                        <p className="text-[10px] text-muted">
+                                            Scan with authenticator app
+                                        </p>
+                                    </div>
                                 </div>
                             )}
-                            {setupResult.secret && (
-                                <div className="rounded-2xl border-2 border-accent/40 bg-accent/5 p-4">
-                                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                                        Secret key
-                                    </p>
-                                    <code className="block break-all text-lg font-mono font-semibold text-heading tracking-wide">
-                                        {setupResult.secret}
-                                    </code>
-                                    <button
-                                        type="button"
-                                        onClick={() => copyText(setupResult!.secret!, "Secret key")}
-                                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline cursor-pointer"
-                                    >
-                                        <LucideCopy className="w-3.5 h-3.5" aria-hidden="true" /> Copy secret
-                                    </button>
+                            <details className="group">
+                                <summary className="cursor-pointer text-xs font-semibold text-accent hover:underline list-none flex items-center gap-1">
+                                    Manual entry options
+                                </summary>
+                                <div className="mt-3 space-y-3">
+                                    {setupResult.otpauthUri && (
+                                        <div className="rounded-2xl border border-border-light/60 bg-background-primary p-4">
+                                            <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                                Setup URI
+                                            </p>
+                                            <code className="block break-all text-xs text-heading">{setupResult.otpauthUri}</code>
+                                            <button
+                                                type="button"
+                                                onClick={() => copyText(setupResult!.otpauthUri!, "Setup URI")}
+                                                className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline cursor-pointer"
+                                            >
+                                                <LucideCopy className="w-3.5 h-3.5" aria-hidden="true" /> Copy URI
+                                            </button>
+                                        </div>
+                                    )}
+                                    {setupResult.secret && (
+                                        <div className="rounded-2xl border-2 border-accent/40 bg-accent/5 p-4">
+                                            <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                                Secret key
+                                            </p>
+                                            <code className="block break-all text-lg font-mono font-semibold text-heading tracking-wide">
+                                                {setupResult.secret}
+                                            </code>
+                                            <button
+                                                type="button"
+                                                onClick={() => copyText(setupResult!.secret!, "Secret key")}
+                                                className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline cursor-pointer"
+                                            >
+                                                <LucideCopy className="w-3.5 h-3.5" aria-hidden="true" /> Copy secret
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            </details>
                         </div>
                     )}
 

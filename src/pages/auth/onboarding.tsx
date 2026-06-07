@@ -2,14 +2,15 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LucideArrowRight, LucideCheck, LucideGift, LucideZap, LucideShield, LucideActivity, LucideMinus, LucidePlus, LucideSparkles } from "lucide-react";
-import { useUpsertOnboarding, useAdvanceOnboardingStage, useUpdateProfile, useOnboarding, useValidateCompanyCode, useMyCompanies, useInitiateCreditPurchase } from "../../api/hooks";
+import { useUpsertOnboarding, useAdvanceOnboardingStage, useUpdateProfile, useOnboarding, useValidateCompanyCode, useMyCompanies, useInitiateCreditPurchase, useLaunchDiscount } from "../../api/hooks";
 import type { BillingCurrency } from "../../api/types";
 import { useOnboardingStore } from "../../context/OnboardingContext";
 import { useAuth } from "../../context/AuthContext";
 import { getOnboardingCompletionRedirect, performRedirect } from "../../lib/roleRedirect";
+import { computeDiscount, formatCurrencyAmount } from "../../lib/launchDiscount";
 import { useCurrencyStore } from "../../stores/currencyStore";
 import CountryPicker from "../../components/CountryPicker";
-import { getAffiliateReferralCode, getStoredAffiliateDiscountRate } from "../../lib/affiliateTracking";
+import { getAffiliateReferralCode, getStoredAffiliateDiscountRate, refreshAffiliateDiscount } from "../../lib/affiliateTracking";
 
 // ─── Motion Variants ─────────────────────────────────────────
 
@@ -53,6 +54,8 @@ const Onboarding = () => {
     const { reset: resetOnboarding } = useOnboardingStore();
     const { selectedCurrency } = useCurrencyStore();
     const affiliateDiscountRate = getStoredAffiliateDiscountRate();
+    const { data: launchDiscount } = useLaunchDiscount();
+    const [validatedAffiliateRate, setValidatedAffiliateRate] = useState(0);
     const [searchParams] = useSearchParams();
     const { data: onboardingData } = useOnboarding();
     const { data: myCompanies } = useMyCompanies();
@@ -89,6 +92,25 @@ const Onboarding = () => {
     const [step, setStep] = useState(getInitialStep);
     const didMountRefresh = useRef(false);
     const consumedPostPayment = useRef(false);
+
+    // Validate affiliate code and refresh discount on mount
+    useEffect(() => {
+        const validateAffiliateCode = async () => {
+            if (affiliateDiscountRate > 0) {
+                try {
+                    const validated = await refreshAffiliateDiscount();
+                    if (validated?.active && validated.discount_rate > 0) {
+                        setValidatedAffiliateRate(validated.discount_rate);
+                    } else {
+                        setValidatedAffiliateRate(0);
+                    }
+                } catch {
+                    setValidatedAffiliateRate(0);
+                }
+            }
+        };
+        void validateAffiliateCode();
+    }, [affiliateDiscountRate]);
 
     // Consume ?step=welcome param from payment callback immediately on mount,
     // then remove it from the URL so re-renders don't re-trigger it.
@@ -785,13 +807,14 @@ const Onboarding = () => {
                                     selectedCurrency === "NGN" ?
                                         (plan?.basePriceNgn ?? 0)
                                         : (plan?.basePriceUsd ?? 0);
-                                const pricePerCredit =
-                                    affiliateDiscountRate > 0 ?
-                                        basePricePerCredit * (1 - affiliateDiscountRate / 100)
-                                        : basePricePerCredit;
+                                const launchPct = launchDiscount?.active ? launchDiscount.percentage : 0;
+                                const affiliatePct = validatedAffiliateRate > 0 ? validatedAffiliateRate : 0;
+                                const discount = computeDiscount(basePricePerCredit, launchPct, affiliatePct);
+                                const pricePerCredit = discount.final;
                                 const symbol =
                                     selectedCurrency === "NGN" ? "₦" : "$";
                                 const total = pricePerCredit * creditsToBuy;
+                                const originalTotal = discount.base * creditsToBuy;
 
                                 return (
                                     <motion.div
@@ -921,22 +944,44 @@ const Onboarding = () => {
 
                                             {/* Price summary */}
                                             <div className="pt-4 border-t border-border-light/60">
+                                                {/* Strike-through original price when discounts apply */}
+                                                {discount.active && (
+                                                    <div className="text-center mb-3">
+                                                        <p className="text-xs text-muted line-through">
+                                                            {symbol}
+                                                            {Math.round(originalTotal).toLocaleString()}
+                                                            {" "}original
+                                                        </p>
+                                                    </div>
+                                                )}
                                                 <div className="flex items-baseline justify-center gap-1.5 mb-1">
                                                     <span className="text-3xl font-serif text-heading tabular-nums">
                                                         {symbol}
-                                                        {total.toLocaleString()}
+                                                        {Math.round(total).toLocaleString()}
                                                     </span>
                                                     <span className="text-xs text-muted">total</span>
                                                 </div>
                                                 <p className="text-xs text-muted">
                                                     {symbol}
-                                                    {pricePerCredit.toLocaleString()}{" "}
+                                                    {Math.round(pricePerCredit).toLocaleString()}{" "}
                                                     per credit
                                                 </p>
-                                                {affiliateDiscountRate > 0 && (
-                                                    <span className="inline-block mt-2 text-[11px] font-semibold text-accent bg-accent/10 px-2.5 py-1 rounded-full">
-                                                        {affiliateDiscountRate}% affiliate discount applied
-                                                    </span>
+                                                {discount.active && (
+                                                    <div className="mt-3 space-y-1.5">
+                                                        {launchDiscount?.active && launchPct > 0 && (
+                                                            <span className="inline-block text-[11px] font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-200">
+                                                                {launchPct}% platform launch discount
+                                                            </span>
+                                                        )}
+                                                        {validatedAffiliateRate > 0 && (
+                                                            <span className="inline-block ml-1 text-[11px] font-semibold text-accent bg-accent/10 px-2.5 py-1 rounded-full">
+                                                                {validatedAffiliateRate}% affiliate discount
+                                                            </span>
+                                                        )}
+                                                        <p className="text-[11px] text-muted mt-2">
+                                                            Total savings: {discount.pctOff.toFixed(1)}% ({formatCurrencyAmount(discount.savings, selectedCurrency)})
+                                                        </p>
+                                                    </div>
                                                 )}
                                             </div>
                                         </motion.div>
