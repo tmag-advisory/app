@@ -330,7 +330,7 @@ const TwoFactorSetup = () => {
 
             {step === "verify" && (
                 <form onSubmit={submitVerify} className="space-y-4">
-                    <p className="text-sm text-body">
+                    <p className="text-sm text-body dark:text-black">
                         {method === "TOTP"
                             ? "Enter the 6-digit code from your authenticator app to finish enabling two-factor authentication."
                             : "Enter the 6-digit code we just emailed you to finish enabling two-factor authentication."}

@@ -112,7 +112,7 @@ const TwoFactorVerify = () => {
                 <LucideShieldCheck className="w-6 h-6 text-accent" aria-hidden="true" />
                 <h1 className="text-2xl md:text-3xl font-serif text-heading">Two-factor verification</h1>
             </div>
-            <p className="text-sm text-body mb-8">
+            <p className="text-sm text-body mb-8 dark:text-black">
                 {useBackup
                     ? "Enter one of your saved backup codes to continue."
                     : method === "TOTP"

@@ -146,11 +146,10 @@ const TwoFactorSetupModal = ({ isOpen, onClose, onComplete }: TwoFactorSetupModa
                         <div className="space-y-3">
                             <button
                                 onClick={() => setMethod("TOTP")}
-                                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${
-                                    method === "TOTP"
-                                        ? "border-accent bg-accent/5"
-                                        : "border-border-light hover:border-border-dark"
-                                }`}
+                                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${method === "TOTP"
+                                    ? "border-accent bg-accent/5"
+                                    : "border-border-light hover:border-border-dark"
+                                    }`}
                             >
                                 <div className={`p-2.5 rounded-lg ${method === "TOTP" ? "bg-accent text-white" : "bg-gray-100 text-muted"}`}>
                                     <LucideSmartphone className="w-5 h-5" />
@@ -165,11 +164,10 @@ const TwoFactorSetupModal = ({ isOpen, onClose, onComplete }: TwoFactorSetupModa
 
                             <button
                                 onClick={() => setMethod("EMAIL_OTP")}
-                                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${
-                                    method === "EMAIL_OTP"
-                                        ? "border-accent bg-accent/5"
-                                        : "border-border-light hover:border-border-dark"
-                                }`}
+                                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${method === "EMAIL_OTP"
+                                    ? "border-accent bg-accent/5"
+                                    : "border-border-light hover:border-border-dark"
+                                    }`}
                             >
                                 <div className={`p-2.5 rounded-lg ${method === "EMAIL_OTP" ? "bg-accent text-white" : "bg-gray-100 text-muted"}`}>
                                     <LucideMail className="w-5 h-5" />
@@ -230,7 +228,7 @@ const TwoFactorSetupModal = ({ isOpen, onClose, onComplete }: TwoFactorSetupModa
                                         {showSecret ? "Hide" : "Show"}
                                     </button>
                                 </div>
-                                <code className="text-xs font-mono bg-white rounded px-2 py-1.5 block break-all select-all">
+                                <code className="text-xs font-mono dark:text-black bg-white rounded px-2 py-1.5 block break-all select-all">
                                     {showSecret ? setupResult.secret : setupResult.secret.replace(/./g, "•")}
                                 </code>
                             </div>
@@ -251,7 +249,7 @@ const TwoFactorSetupModal = ({ isOpen, onClose, onComplete }: TwoFactorSetupModa
                                 value={verificationCode}
                                 onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                                 onKeyDown={(e) => { if (e.key === "Enter") void handleVerify(); }}
-                                className="w-full rounded-lg border border-border-light px-3 py-2.5 text-sm text-center text-lg tracking-[0.3em] font-mono focus:outline-none focus:ring-2 focus:ring-accent/40"
+                                className="w-full rounded-lg dark:text-black border border-border-light px-3 py-2.5 text-sm text-center text-lg tracking-[0.3em] font-mono focus:outline-none focus:ring-2 focus:ring-accent/40"
                                 placeholder="000000"
                             />
                         </div>
