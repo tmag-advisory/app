@@ -43,7 +43,7 @@ const steps: {
         icon: <LucideShieldCheck className="w-6 h-6" />,
         title: "Personalised guidance",
         description:
-            "Receive a downloadable health plan with vaccinations, medications, packing lists, and emergency contacts  ready to share with your doctor.",
+            "Receive a downloadable health plan with vaccinations, medications, packing lists, and emergency contacts  ready to share with your doctor",
     },
 ];
 
