@@ -491,15 +491,7 @@ const HeroSection = () => {
                 }}
             />
 
-            {/* Top mono tag */}
-            <div
-                aria-hidden
-                className="pointer-events-none absolute top-6 right-8 hidden lg:block select-none text-right"
-            >
-                <p className="font-mono text-[10px] tracking-widest text-brand-muted opacity-50">
-                    TMAG — GLOBAL HEALTH ADVISORY
-                </p>
-            </div>
+           
 
             <div className="relative z-10 mx-auto max-w-7xl">
                 <div className="grid lg:grid-cols-[1fr_0.9fr] lg:gap-12 items-center">
