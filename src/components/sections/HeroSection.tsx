@@ -491,8 +491,6 @@ const HeroSection = () => {
                 }}
             />
 
-           
-
             <div className="relative z-10 mx-auto max-w-7xl">
                 <div className="grid lg:grid-cols-[1fr_0.9fr] lg:gap-12 items-center">
                     {/* Left: copy */}
@@ -502,7 +500,7 @@ const HeroSection = () => {
                             className="flex flex-col items-start gap-3"
                         >
                             <span className="inline-flex items-center gap-2 min-w-80 text-wrap text-md text-muted py-1.5">
-                                Personalized travel risk guidance <br /> for travelers and organizations
+                                Personalized Travel Health Guidance
                                 {/*AI-Powered &middot; Physician-Validated*/}
                             </span>
                         </div>
@@ -525,7 +523,7 @@ const HeroSection = () => {
                             data-hero-anim
                             className="text-body leading-relaxed max-w-md sm:text-xl"
                         >
-                            Helping you identify, understand, and reduce preventable travel risks before departure.
+                            Get a personalized travel health assessment tailored to your destination, itinerary, and health profile.
                         </p>
 
                         <div
@@ -533,7 +531,7 @@ const HeroSection = () => {
                             className="flex flex-wrap items-center gap-4 mt-8"
                         >
                             <Button variant="primary" link="/pricing">
-                                Get Started
+                                Start My Assessment
                             </Button>
                         </div>
                     </div>
@@ -582,7 +580,7 @@ const HeroSection = () => {
                             height={14}
                             className="text-accent"
                         />
-                        Travel Advisories for 190+ countries
+                        Coverage for 190+ destinations
                     </span>
                     <span
                         aria-hidden
