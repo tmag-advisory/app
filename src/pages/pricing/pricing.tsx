@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { LucideCheck, LucideArrowRight } from "lucide-react";
+import { LucideCheck, LucideArrowRight, LucideSparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../../components/ui/Button";
 import AnimateIn from "../../components/animations/AnimateIn";
@@ -131,15 +131,17 @@ const PricingPage = () => {
 
             {/* Soft launch banner */}
             <div className="px-8 lg:px-16 max-w-5xl mx-auto mb-10">
-                <div className="relative isolate overflow-hidden rounded-2xl bg-linear-to-r from-emerald-500 via-emerald-600 to-amber-500 px-5 py-4 text-white sm:px-7">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                            <span className="text-xl" aria-hidden="true">🎉</span>
-                            <p className="text-sm sm:text-base font-semibold tracking-wide">
+                <div className="rounded-2xl border border-accent/20 bg-background-secondary px-5 py-4 sm:px-7">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-5">
+                        <div className="flex items-center gap-3 shrink-0">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/10 text-accent">
+                                <LucideSparkles className="h-4 w-4" />
+                            </span>
+                            <p className="text-sm sm:text-base font-semibold text-heading tracking-wide">
                                 Soft Launch Now Live
                             </p>
                         </div>
-                        <p className="text-sm sm:text-base font-medium text-emerald-50">
+                        <p className="text-sm text-body sm:border-l sm:border-accent/20 sm:pl-5">
                             From July 1–31, selected users can unlock complimentary access to Standard and Premium plans using an exclusive promo code.
                         </p>
                     </div>
