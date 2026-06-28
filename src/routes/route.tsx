@@ -103,6 +103,9 @@ const NotFound = lazy(() => import("../pages/not-found/not-found"));
 const ServerError = lazy(() => import("../pages/not-found/server-error"));
 const Unauthorized = lazy(() => import("../pages/not-found/unauthorized"));
 
+// Admin pages
+const PromoCodesAdmin = lazy(() => import("../pages/admin/promo-codes"));
+
 // Family member pages
 const FamilyLogin = lazy(() => import("../pages/family/login"));
 const FamilyDashboard = lazy(() => import("../pages/family/dashboard"));
@@ -321,6 +324,16 @@ const router = createBrowserRouter([
     // Error pages
     { path: "unauthorized", element: <Unauthorized /> },
     { path: "server-error", element: <ServerError /> },
+
+    // Admin — soft-launch promo tracking (page enforces superadmin/admin role)
+    {
+        path: "admin/promo-codes",
+        element: (
+            <ProtectedRoute>
+                <PromoCodesAdmin />
+            </ProtectedRoute>
+        ),
+    },
 
     // 404 catch-all
     {
