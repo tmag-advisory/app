@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { cn } from "../../lib/utils";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 import type { CreditPlan, CompanyAdminCreditQuoteResponse } from "../../api/types";
+import PromoCodeInput from "../../components/promo/PromoCodeInput";
 
 const creditPackages = [50, 100, 200];
 
@@ -65,6 +66,10 @@ const Billing = () => {
                 <StatCard label="Credits remaining" value={totalAllocated - totalUsed} icon={<LucideCoins className="w-4 h-4" />} accent />
                 <StatCard label="Total allocated" value={totalAllocated} icon={<LucideTrendingUp className="w-4 h-4" />} detail={`${totalUsed} used across company`} />
                 <StatCard label="Next renewal" value="Mar 15" icon={<LucideCalendar className="w-4 h-4" />} detail="Annual agreement" />
+            </div>
+
+            <div className={cn(DASHBOARD_GLASS_SURFACE, "p-5 mb-6 max-w-xl")}>
+                <PromoCodeInput audience="company" />
             </div>
 
             {/* Company plan info */}
