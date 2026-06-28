@@ -19,7 +19,6 @@ import PriceDiscountBadge from "../../components/pricing/PriceDiscountBadge";
 import IndividualPlanCard from "../../components/pricing/IndividualPlanCard";
 import SeatPlanCard from "../../components/pricing/SeatPlanCard";
 import { formatStackedPrice as formatPrice, formatCurrencyAmount } from "../../lib/launchDiscount";
-import { useLaunchDiscount } from "../../api";
 import SectionEyebrow from "../../components/ui/SectionEyebrow";
 
 type Audience = "individual" | "family" | "company";
@@ -52,8 +51,7 @@ const PricingPage = () => {
     const [audience, setAudience] = useState<Audience>(initialSelection.audience);
     const [affiliateDiscountRate, setAffiliateDiscountRate] = useState(getStoredAffiliateDiscountRate);
     const { selectedCurrency, setCurrency } = useCurrencyStore();
-    const { data: launchDiscount } = useLaunchDiscount();
-    const launchPct = launchDiscount?.active ? launchDiscount.percentage : 0;
+    const launchPct = 0;
 
     useEffect(() => {
         const selection = resolvePricingSelection(searchParams);
@@ -127,6 +125,23 @@ const PricingPage = () => {
                                 {cur === "USD" ? "$ USD" : "₦ NGN"}
                             </button>
                         ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Soft launch banner */}
+            <div className="px-8 lg:px-16 max-w-5xl mx-auto mb-10">
+                <div className="relative isolate overflow-hidden rounded-2xl bg-linear-to-r from-emerald-500 via-emerald-600 to-amber-500 px-5 py-4 text-white sm:px-7">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                            <span className="text-xl" aria-hidden="true">🎉</span>
+                            <p className="text-sm sm:text-base font-semibold tracking-wide">
+                                Soft Launch Now Live
+                            </p>
+                        </div>
+                        <p className="text-sm sm:text-base font-medium text-emerald-50">
+                            From July 1–31, selected users can unlock complimentary access to Standard and Premium plans using an exclusive promo code.
+                        </p>
                     </div>
                 </div>
             </div>
