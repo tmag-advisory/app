@@ -10,6 +10,8 @@ import { LucideLoader, LucideArrowLeft } from "lucide-react";
 import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 import type { BillingCurrency } from "../../api";
 import { getAffiliateReferralCode } from "../../lib/affiliateTracking";
+import PromoCodeInput from "../../components/promo/PromoCodeInput";
+import { clearPendingPromoCode, getPendingPromoCode, type PromoCode } from "../../api/promoCodes";
 
 const planLabels: Record<string, { name: string; color: string }> = {
     ESSENTIAL: { name: "Essential", color: "bg-gray-100 text-gray-700" },
@@ -49,6 +51,7 @@ const Register = () => {
         password: "",
         showPassword: false,
     });
+    const [promoCode, setPromoCode] = useState<PromoCode | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         try {
@@ -67,7 +70,9 @@ const Register = () => {
                 planCode: selectedPlan ?? undefined,
                 affiliate_referral_code: getAffiliateReferralCode(),
                 billing_currency: selectedCurrency as BillingCurrency,
+                promo_code: promoCode?.code ?? getPendingPromoCode(),
             });
+            clearPendingPromoCode();
             setRegisteredEmail(form.email);
             toast.success("Check your email for a verification code!", { id: toastkey });
             setStep("verify");
@@ -381,6 +386,10 @@ const Register = () => {
                     :   "Create Account"}
                 </button>
             </form>
+
+            <div className="mt-6">
+                <PromoCodeInput audience="individual" onApplied={setPromoCode} />
+            </div>
 
             <p className="text-sm text-body text-center mt-6">
                 Already have an account?{" "}
