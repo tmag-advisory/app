@@ -80,6 +80,7 @@ export interface RegisterRequest {
   affiliate_referral_code?: string;
   account_type?: string;
   billing_currency?: BillingCurrency;
+  promo_code?: string;
 }
 
 export interface ForgotPasswordRequest {
