@@ -27,6 +27,7 @@ import {
     refreshAffiliateDiscount,
 } from "../../lib/affiliateTracking";
 import { cn } from "../../lib/utils";
+import PromoCodeInput from "../../components/promo/PromoCodeInput";
 import { DASHBOARD_GLASS_SURFACE } from "../../components/dashboard/dashboardChrome";
 
 const BuyAdditionalPlan = () => {
@@ -123,6 +124,9 @@ const BuyAdditionalPlan = () => {
                     </div>
 
                     {/* Summary stats */}
+                    <div className="mb-6 max-w-md">
+                        <PromoCodeInput audience="individual" />
+                    </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                         <div className="bg-background-primary rounded-xl p-4">
                             <p className="text-xs text-muted mb-1">
